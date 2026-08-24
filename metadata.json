@@ -1,0 +1,6 @@
+{
+  "name": "Allôresto",
+  "description": "Plateforme de commande et livraison de repas à Niamey au Niger (particuliers, fonctionnaires, bureaux). Restaurant situé à la Grande Mosquée Mouhamar Khadafi, avec paiement Airtel Money, Moov Money, espèces et carte.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
