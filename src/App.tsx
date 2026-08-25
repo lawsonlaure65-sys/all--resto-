@@ -732,6 +732,7 @@ export function App() {
         onOpenCatering={() => setIsCateringOpen(true)}
         onOpenBlog={() => setIsBlogOpen(true)}
         onOpenContact={() => setIsContactOpen(true)}
+        onOpenChefAI={() => setIsChefAIOpen(true)}
       />
 
       {/* Responsive Mobile Bottom Navigation Bar */}

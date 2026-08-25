@@ -15,14 +15,12 @@ app.use(express.json());
 function getGenAIClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: {
-      headers: {
-        "User-Agent": "aistudio-build",
-      },
-    },
-  });
+  try {
+    return new GoogleGenAI({ apiKey });
+  } catch (err) {
+    console.error("Failed to initialize GoogleGenAI client:", err);
+    return null;
+  }
 }
 
 // Health check
@@ -34,49 +32,93 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// API: AllôChef Culinary AI Assistant (Gemini 3.7)
+// Fallback culinary recommendation generator for Niamey
+function generateLocalAlloChefReply(message: string, district?: string, budget?: number): string {
+  const lower = (message || "").toLowerCase();
+  
+  if (lower.includes("choukouya") || lower.includes("grillade") || lower.includes("mouton") || lower.includes("viande") || lower.includes("tchintchinga")) {
+    return `Excellente idée ! Pour les meilleures grillades du Sahel à Niamey, je vous recommande vivement le **Demi-Mouton & Grillades du Sahel** chez *Le Khadafi Palace & Grillades* (Grande Mosquée / Plateau) à 15 000 FCFA pour partager, ou les brochettes **Tchintchinga & Poulet Braisé** (2 500 - 4 000 FCFA). Livraison express garantie en moins de 25 min par Billo Express !`;
+  }
+
+  if (lower.includes("dambou") || lower.includes("terroir") || lower.includes("tradition") || lower.includes("niger") || lower.includes("sahel")) {
+    return `Pour un goût 100% authentique du Niger 🇳🇪, je vous suggère le **Dambou Royal au Poulet Fermier** chez *Saveurs du Niger & Dambou Express* (4 500 FCFA). Préparé selon la recette traditionnelle avec feuilles de moringa fraîches et piment doux du terroir. Un régal copieux très apprécié pour le déjeuner !`;
+  }
+
+  if (lower.includes("poisson") || lower.includes("capitaine") || lower.includes("fleuve") || lower.includes("braisé")) {
+    return `Pour les amateurs de poisson frais, rien ne vaut le **Capitaine Braisé du Fleuve Niger** chez *Le Fleuve Gourmand & Capitaine Braisé* (5 500 FCFA). Servi avec alloco croustillant, attiéké frais et sauce tomate-oignon pimentée maison !`;
+  }
+
+  if (lower.includes("midi") || lower.includes("bureau") || lower.includes("ministère") || lower.includes("rapide") || lower.includes("groupe") || lower.includes("collègue")) {
+    return `Pour le déjeuner au bureau à Niamey, nos formules express sont idéales : testez le **Menu Express Déjeuner Sahel** (3 500 FCFA avec boisson) ou la **Box Salariés & Ministères** livrée directement à votre bureau avec couverts biodégradables inclus !`;
+  }
+
+  if (lower.includes("burger") || lower.includes("pizza") || lower.includes("chawarma") || lower.includes("fast")) {
+    return `Envie d'un plaisir street-food de qualité ? Le **Chawarma Mixte XXL** chez *Le Cèdre du Liban & Chawarma Palace* (3 500 FCFA) ou le **Burger Sahel Double Fromage** (4 000 FCFA) sont les favoris absolus de nos clients à Niamey !`;
+  }
+
+  if (budget && budget <= 3500) {
+    return `Avec votre budget de ${budget.toLocaleString()} FCFA, je vous conseille le **Chawarma Royal** (2 500 FCFA) ou le **Riz au Gras Sahel & Poulet** (3 200 FCFA). Livraison économique en centre-ville à 1 000 FCFA !`;
+  }
+
+  return `Bonjour et bienvenue sur Allôresto Niamey 🇳🇪 ! En tant qu'AllôChef, je vous conseille aujourd'hui :
+1. 🥩 **Grillades & Choukouya Royal** chez *Le Khadafi Palace* (Grande Mosquée)
+2. 🍚 **Dambou Royal au Poulet** chez *Saveurs du Niger* (Plat traditionnel raffiné)
+3. 🐟 **Capitaine Braisé du Fleuve** chez *Le Fleuve Gourmand* (5 500 FCFA)
+
+Indiquez-moi votre budget, votre quartier à Niamey ou votre envie pour une recommandation sur mesure !`;
+}
+
+// API: AllôChef Culinary AI Assistant (Gemini 3.7 + Resilient Local Fallback)
 app.post("/api/allochef", async (req, res) => {
+  const { message, context, userPreferences, district, budget } = req.body;
+
   try {
-    const { message, context, userPreferences } = req.body;
     const ai = getGenAIClient();
 
-    if (!ai) {
-      return res.json({
-        success: true,
-        reply: "Voici mes recommandations personnalisées sur Allôresto Niamey 🇳🇪 ! Selon vos envies du moment, je vous suggère de tester le **Demi-Mouton & Grillades du Sahel** chez *Le Khadafi Palace & Grillades* (situé à la Grande Mosquée, livraison express au Plateau) ou le **Dambou Royal au Poulet** chez *Saveurs du Niger & Dambou Express* (4 500 FCFA, noté 4.9/5). Souhaitez-vous que je les ajoute directement à votre panier ?",
-        suggestedItems: ["Demi-Mouton & Grillades du Sahel", "Dambou Royal au Poulet"],
+    if (ai) {
+      const systemInstruction = `Tu es "AllôChef", le sommelier et assistant culinaire digital d'Allôresto Niger 🇳🇪, plateforme de commande et livraison de repas à Niamey.
+Restaurants partenaires phares :
+1. Le Khadafi Palace & Grillades (Grande Mosquée Khadafi / Plateau) : Demi-Mouton, Choukouya, Tchintchinga, Poulet braisé (4 500 à 15 000 FCFA).
+2. Saveurs du Niger & Dambou Express (Plateau) : Dambou Royal, Riz au gras, Sauce gombo (3 500 à 5 000 FCFA).
+3. Le Fleuve Gourmand (Corniche de Niamey) : Capitaine braisé du Fleuve Niger, Alloco, Attiéké (5 500 FCFA).
+4. Le Cèdre du Liban & Chawarma Palace (Yantala) : Chawarmas, Mezzés, Grillades mixtes (2 500 à 6 000 FCFA).
+5. L'Atelier du Burger Sahel (Koira Kano) : Burgers artisanaux, Frites maison (3 500 à 5 000 FCFA).
+
+Directives :
+- Réponds en français avec convivialité, énergie et chaleur sahélienne.
+- Mentionne les prix en FCFA (XOF).
+- Cite les quartiers de Niamey (Plateau, Koira Kano, Grande Mosquée, Yantala, Goudel, Harobanda).
+- Sois concis (1 à 3 paragraphes max) et incite à ajouter le plat au panier.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.7-flash",
+        contents: message || "Que me conseilles-tu pour mon repas à Niamey ce midi ?",
+        config: {
+          systemInstruction,
+          temperature: 0.75,
+        },
       });
+
+      if (response && response.text) {
+        return res.json({
+          success: true,
+          reply: response.text,
+        });
+      }
     }
 
-    const systemInstruction = `Tu es "AllôChef", l'assistant culinaire et sommelier digital d'Allôresto Niger 🇳🇪, la plateforme n°1 de commande et livraison de repas à Niamey.
-Ton rôle :
-- Aider l'utilisateur à choisir le repas parfait selon ses envies, budget en FCFA, quartier de livraison à Niamey (Plateau, Grande Mosquée Khadafi, Yantala, Koira Kano, Goudel, Gamkallé, Haro Banda, Terminus, etc.).
-- Proposer des restaurants et plats adaptés parmi la sélection Allôresto Niamey (Grillades du Sahel, Dambou traditionnel, Poulet braisé, Chawarmas, Burgers gourmets, Riz au gras, Pâtisserie du Fleuve).
-- Adapter pour les fonctionnaires, ministères et bureaux (repas rapides, formules midi, menus pour groupes/réunions).
-- Être chaleureux, enthousiaste, appétissant et concis (1 à 3 paragraphes maximum).
-- Indiquer les prix en FCFA (ex: 2 500 FCFA, 5 000 FCFA).
-- Terminer par une suggestion concrète invitant à commander avec livraison ou retrait.
-
-Contexte utilisateur : ${JSON.stringify(userPreferences || {})}`;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3.7-flash",
-      contents: message || "Que me conseilles-tu de bon à manger ce midi ?",
-      config: {
-        systemInstruction,
-        temperature: 0.75,
-      },
-    });
-
-    res.json({
+    // Fallback if AI response was empty or client uninitialized
+    const fallbackReply = generateLocalAlloChefReply(message, district, budget);
+    return res.json({
       success: true,
-      reply: response.text || "Je vous recommande de parcourir notre sélection de plats du jour !",
+      reply: fallbackReply,
     });
   } catch (error) {
-    console.error("AllôChef error:", error);
-    res.status(500).json({
-      success: false,
-      reply: "Désolé, AllôChef a rencontré un petit souci en cuisine. N'hésitez pas à parcourir directement les restaurants à proximité !",
+    console.error("AllôChef AI error, using resilient fallback:", error);
+    const fallbackReply = generateLocalAlloChefReply(message, district, budget);
+    return res.json({
+      success: true,
+      reply: fallbackReply,
     });
   }
 });

@@ -20,6 +20,7 @@ interface FooterProps {
   onOpenCatering?: () => void;
   onOpenBlog?: () => void;
   onOpenContact?: () => void;
+  onOpenChefAI?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -28,6 +29,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenCatering,
   onOpenBlog,
   onOpenContact,
+  onOpenChefAI,
 }) => {
   return (
     <footer className="bg-slate-950 border-t border-slate-800 text-slate-400 text-xs">
@@ -100,6 +102,17 @@ export const Footer: React.FC<FooterProps> = ({
               Services &amp; Événements
             </h4>
             <ul className="space-y-2 text-xs text-slate-300">
+              {onOpenChefAI && (
+                <li>
+                  <button
+                    onClick={onOpenChefAI}
+                    className="text-orange-400 font-bold hover:underline cursor-pointer text-left flex items-center gap-1.5"
+                  >
+                    <ChefHat className="w-3.5 h-3.5 text-amber-400" />
+                    <span>AllôChef IA (Conseiller Culinaire &amp; Sommelier)</span>
+                  </button>
+                </li>
+              )}
               <li>
                 <button
                   onClick={onOpenCatering}
