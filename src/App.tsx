@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Header } from "./components/Header";
 import { HeroBanner } from "./components/HeroBanner";
 import { FlashMidiBanner } from "./components/FlashMidiBanner";
@@ -29,7 +29,20 @@ import { DeliveryFeeCalculatorModal } from "./components/DeliveryFeeCalculatorMo
 import { DeliveryDistrictsWidget } from "./components/DeliveryDistrictsWidget";
 import { LogoPresentationModal } from "./components/LogoPresentationModal";
 import { DishesCatalogModal } from "./components/DishesCatalogModal";
+import { OrderHistoryModal } from "./components/OrderHistoryModal";
+import { MarketingAIModal } from "./components/MarketingAIModal";
+import { WhatsAppAutomationModal } from "./components/WhatsAppAutomationModal";
+import { DynamicFaqModal } from "./components/DynamicFaqModal";
+import { VisualNotificationToast, ToastNotification } from "./components/VisualNotificationToast";
 import { Footer } from "./components/Footer";
+
+import {
+  playSoundCartAdd,
+  playSoundOrderConfirmed,
+  playSoundStatusUpdate,
+  playSoundPromoApplied,
+  playSoundSuccessChime,
+} from "./utils/audioNotifications";
 
 import {
   UserRole,
@@ -46,7 +59,6 @@ import {
   CateringQuoteRequest,
   UserProfile,
 } from "./types";
-import { NiameyDistrict } from "./data/niameyDistrictsData";
 import {
   RESTAURANTS_DATA,
   INITIAL_ORDERS,
@@ -69,6 +81,8 @@ import {
   Users,
   ChefHat,
   BookOpen,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 export function App() {
@@ -88,6 +102,40 @@ export function App() {
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
   const [activeTrackingOrder, setActiveTrackingOrder] = useState<Order | null>(null);
   const [cateringQuotes, setCateringQuotes] = useState<CateringQuoteRequest[]>([]);
+
+  // Sound & Visual Notifications State
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [toasts, setToasts] = useState<ToastNotification[]>([]);
+
+  // Helper to add visual toast + sound
+  const showNotification = (
+    title: string,
+    message: string,
+    type: "success" | "info" | "warning" | "error" = "info",
+    soundType?: "cart" | "order" | "status" | "promo" | "success"
+  ) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    const newToast: ToastNotification = {
+      id,
+      title,
+      message,
+      type,
+      timestamp: new Date(),
+    };
+    setToasts((prev) => [newToast, ...prev.slice(0, 4)]);
+
+    if (soundEnabled) {
+      if (soundType === "cart") playSoundCartAdd();
+      else if (soundType === "order") playSoundOrderConfirmed();
+      else if (soundType === "status") playSoundStatusUpdate();
+      else if (soundType === "promo") playSoundPromoApplied();
+      else if (soundType === "success") playSoundSuccessChime();
+    }
+  };
+
+  const handleDismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   // Checkout Props passing
   const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
@@ -115,6 +163,12 @@ export function App() {
   const [isDishesCatalogOpen, setIsDishesCatalogOpen] = useState<boolean>(false);
   const [catalogMealMoment, setCatalogMealMoment] = useState<"all" | MealMoment>("all");
   const [selectedDistrictName, setSelectedDistrictName] = useState<string>("Plateau (Ministères & Ambassades)");
+
+  // New Requested Modals
+  const [isOrderHistoryOpen, setIsOrderHistoryOpen] = useState<boolean>(false);
+  const [isMarketingAIOpen, setIsMarketingAIOpen] = useState<boolean>(false);
+  const [isWhatsAppAutomationOpen, setIsWhatsAppAutomationOpen] = useState<boolean>(false);
+  const [isFaqOpen, setIsFaqOpen] = useState<boolean>(false);
 
   // Flattened all dishes across restaurants
   const allDishes = useMemo(() => RESTAURANTS_DATA.flatMap((r) => r.menu), []);
@@ -165,6 +219,13 @@ export function App() {
         ];
       }
     });
+
+    showNotification(
+      "Plat ajouté au panier 🛒",
+      `${quantity}x ${item.name} (${(unitPrice * quantity).toLocaleString()} FCFA)`,
+      "success",
+      "cart"
+    );
   };
 
   const handleUpdateQuantity = (id: string, newQty: number) => {
@@ -210,6 +271,12 @@ export function App() {
     setOrders((prev) => [newOrder, ...prev]);
     setCartItems([]);
     setActiveTrackingOrder(newOrder);
+    showNotification(
+      "Commande confirmée avec succès ! 🎉",
+      `Commande #${newOrder.id} transmise à ${newOrder.restaurantName}. Suivi Billo Express activé.`,
+      "success",
+      "order"
+    );
   };
 
   const handleUpdateOrderStatus = (orderId: string, nextStatus: OrderStatus) => {
@@ -219,18 +286,37 @@ export function App() {
     if (activeTrackingOrder && activeTrackingOrder.id === orderId) {
       setActiveTrackingOrder((prev) => (prev ? { ...prev, orderStatus: nextStatus } : null));
     }
+    showNotification(
+      "Statut de commande mis à jour",
+      `Commande #${orderId} est passée à l'étape : ${nextStatus.toUpperCase()}`,
+      "info",
+      "status"
+    );
   };
 
   // 1-Click Reorder handler
   const handleReorder = (order: Order) => {
     setCartItems(order.items);
+    setIsOrderHistoryOpen(false);
     setIsCartOpen(true);
+    showNotification(
+      "Articles réinjectés dans le panier 🔁",
+      `${order.items.length} article(s) de la commande #${order.id} prêts pour commande rapide.`,
+      "success",
+      "cart"
+    );
   };
 
   // Promo code direct application
   const handleApplyPromoCodeFromBanner = (code: string) => {
     setAppliedPromoCode(code);
     setAppliedDiscount(1500);
+    showNotification(
+      "Code promo appliqué ! 🎁",
+      `Remise de 1 500 FCFA activée avec le code ${code}`,
+      "success",
+      "promo"
+    );
   };
 
   // Add Daily Special directly to cart
@@ -273,6 +359,12 @@ export function App() {
   // Handle Catering Quote Submission
   const handleCateringQuoteSubmit = (quote: CateringQuoteRequest) => {
     setCateringQuotes((prev) => [quote, ...prev]);
+    showNotification(
+      "Demande de devis traiteur envoyée 🍽️",
+      "Notre équipe événementielle vous recontactera sous 2h ouvrées.",
+      "success",
+      "success"
+    );
   };
 
   // Filter Restaurants
@@ -304,7 +396,10 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-orange-500 selection:text-slate-950">
-      {/* Universal Header with Role, City, Group Order & Account Switching */}
+      {/* Visual Notification Toasts */}
+      <VisualNotificationToast toasts={toasts} onDismiss={handleDismissToast} />
+
+      {/* Universal Header with Role, City, Group Order, FAQ, Marketing AI & Account Switching */}
       <Header
         currentRole={currentRole}
         onChangeRole={setCurrentRole}
@@ -327,6 +422,28 @@ export function App() {
         onOpenContact={() => setIsContactOpen(true)}
         onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
         onOpenLogoModal={() => setIsLogoModalOpen(true)}
+        onOpenMenu={() => {
+          setCatalogMealMoment("all");
+          setIsDishesCatalogOpen(true);
+        }}
+        onOpenOrdersHistory={() => setIsOrderHistoryOpen(true)}
+        onOpenSauceBoxes={() => {
+          const el = document.getElementById("sauce-boxes-section");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        }}
+        onOpenMarketingAI={() => setIsMarketingAIOpen(true)}
+        onOpenWhatsAppAutomation={() => setIsWhatsAppAutomationOpen(true)}
+        onOpenFaq={() => setIsFaqOpen(true)}
+        soundEnabled={soundEnabled}
+        onToggleSound={() => {
+          setSoundEnabled((prev) => !prev);
+          showNotification(
+            soundEnabled ? "Notifications sonores désactivées" : "Notifications sonores activées 🔔",
+            soundEnabled ? "Les effets audio ont été mis en sourdine." : "Les bips et retours audio sont maintenant actifs.",
+            "info",
+            !soundEnabled ? "success" : undefined
+          );
+        }}
       />
 
       {/* Main Content Rendered by Role */}
@@ -378,13 +495,60 @@ export function App() {
                     </div>
                   </div>
 
-                  <button className="px-3 py-1.5 rounded-xl bg-slate-950 text-orange-400 font-bold text-xs flex items-center gap-1">
+                  <button className="px-3 py-1.5 rounded-xl bg-slate-950 text-orange-400 font-bold text-xs flex items-center gap-1 cursor-pointer">
                     <span>Suivre avec Billo Express</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
             )}
+
+            {/* Quick Action Navigation Bar */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
+              <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2 scrollbar-none">
+                <button
+                  onClick={() => {
+                    setCatalogMealMoment("all");
+                    setIsDishesCatalogOpen(true);
+                  }}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-bold whitespace-nowrap cursor-pointer transition"
+                >
+                  <UtensilsCrossed className="w-4 h-4" />
+                  <span>Grande Carte (65+ Plats)</span>
+                </button>
+
+                <button
+                  onClick={() => setIsOrderHistoryOpen(true)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs font-bold whitespace-nowrap cursor-pointer transition"
+                >
+                  <Clock className="w-4 h-4" />
+                  <span>Historique des Commandes</span>
+                </button>
+
+                <button
+                  onClick={() => setIsMarketingAIOpen(true)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-bold whitespace-nowrap cursor-pointer transition"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>IA Marketing &amp; Croissance</span>
+                </button>
+
+                <button
+                  onClick={() => setIsWhatsAppAutomationOpen(true)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold whitespace-nowrap cursor-pointer transition"
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Automatisation WhatsApp</span>
+                </button>
+
+                <button
+                  onClick={() => setIsFaqOpen(true)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-bold whitespace-nowrap cursor-pointer transition"
+                >
+                  <span>FAQ &amp; Guide Niamey</span>
+                </button>
+              </div>
+            </div>
 
             {/* Flash Midi Banner for Offices */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
@@ -492,7 +656,7 @@ export function App() {
             </section>
 
             {/* Section: Box Sauces Terroir & Bocaux Hermétiques */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div id="sauce-boxes-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <SauceBoxesSection
                 onAddSauceToCart={handleAddSauceToCart}
                 onOpenCatering={() => setIsCateringOpen(true)}
@@ -665,7 +829,12 @@ export function App() {
         isOpen={!!selectedRestaurantForBooking}
         onClose={() => setSelectedRestaurantForBooking(null)}
         onBookingConfirmed={(booking: TableBooking) => {
-          // booking saved
+          showNotification(
+            "Réservation de table confirmée ! 🍽️",
+            `Table réservée pour ${booking.guestCount} pers. le ${booking.date} à ${booking.time}`,
+            "success",
+            "success"
+          );
         }}
       />
 
@@ -688,7 +857,7 @@ export function App() {
         onOpenDataProtection={() => setIsHapdpModalOpen(true)}
       />
 
-      {/* 8b. Authentication Modal (Connexion / Inscription avec Email vérifié, mot de passe 'vu' et indicatif 🇳🇪) */}
+      {/* 8b. Authentication Modal */}
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
@@ -696,10 +865,21 @@ export function App() {
         onLoginSuccess={(user) => {
           setCurrentUser(user);
           setIsAuthOpen(false);
+          showNotification(
+            "Connexion réussie",
+            `Bienvenue ${user.name} sur Allôresto !`,
+            "success",
+            "success"
+          );
         }}
         onLogout={() => {
           setCurrentUser(null);
           setIsAuthOpen(false);
+          showNotification(
+            "Déconnexion",
+            "Vous avez été déconnecté.",
+            "info"
+          );
         }}
         onOpenDataProtection={() => {
           setIsAuthOpen(false);
@@ -778,21 +958,6 @@ export function App() {
         }}
       />
 
-      {/* PWA Mobile App Install Prompt for Android */}
-      <PwaInstallPrompt />
-
-      {/* Universal Footer */}
-      <Footer
-        onOpenPartnerModal={() => setIsPartnerModalOpen(true)}
-        onOpenDataProtection={() => setIsHapdpModalOpen(true)}
-        onOpenCatering={() => setIsCateringOpen(true)}
-        onOpenBlog={() => setIsBlogOpen(true)}
-        onOpenContact={() => setIsContactOpen(true)}
-        onOpenChefAI={() => setIsChefAIOpen(true)}
-        onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
-        onOpenLogoModal={() => setIsLogoModalOpen(true)}
-      />
-
       {/* 16. Présentation et Charte du Logo Intelligent Allôresto */}
       <LogoPresentationModal
         isOpen={isLogoModalOpen}
@@ -819,6 +984,74 @@ export function App() {
         }}
       />
 
+      {/* 18. Historique Complet des Commandes */}
+      <OrderHistoryModal
+        isOpen={isOrderHistoryOpen}
+        onClose={() => setIsOrderHistoryOpen(false)}
+        orders={orders}
+        onReorder={handleReorder}
+        onTrackOrder={(order) => {
+          setIsOrderHistoryOpen(false);
+          setActiveTrackingOrder(order);
+        }}
+        onContactSupport={() => {
+          setIsOrderHistoryOpen(false);
+          setIsContactOpen(true);
+        }}
+      />
+
+      {/* 19. IA Marketing & Automatisation de Croissance */}
+      <MarketingAIModal
+        isOpen={isMarketingAIOpen}
+        onClose={() => setIsMarketingAIOpen(false)}
+        onApplyDiscountCampaign={(code, discount) => {
+          setAppliedPromoCode(code);
+          setAppliedDiscount(discount);
+          showNotification(
+            "Campagne Marketing Activée ! 🚀",
+            `Code promo ${code} (${discount.toLocaleString()} FCFA) prêt pour vos clients.`,
+            "success",
+            "promo"
+          );
+        }}
+      />
+
+      {/* 20. Centre d'Automatisation WhatsApp */}
+      <WhatsAppAutomationModal
+        isOpen={isWhatsAppAutomationOpen}
+        onClose={() => setIsWhatsAppAutomationOpen(false)}
+        recentOrders={orders}
+      />
+
+      {/* 21. FAQ Dynamique & Assistance 24/7 */}
+      <DynamicFaqModal
+        isOpen={isFaqOpen}
+        onClose={() => setIsFaqOpen(false)}
+        onOpenContact={() => {
+          setIsFaqOpen(false);
+          setIsContactOpen(true);
+        }}
+        onOpenDistrictsCalculator={() => {
+          setIsFaqOpen(false);
+          setIsDistrictsModalOpen(true);
+        }}
+      />
+
+      {/* PWA Mobile App Install Prompt for Android */}
+      <PwaInstallPrompt />
+
+      {/* Universal Footer */}
+      <Footer
+        onOpenPartnerModal={() => setIsPartnerModalOpen(true)}
+        onOpenDataProtection={() => setIsHapdpModalOpen(true)}
+        onOpenCatering={() => setIsCateringOpen(true)}
+        onOpenBlog={() => setIsBlogOpen(true)}
+        onOpenContact={() => setIsContactOpen(true)}
+        onOpenChefAI={() => setIsChefAIOpen(true)}
+        onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
+        onOpenLogoModal={() => setIsLogoModalOpen(true)}
+      />
+
       {/* Responsive Mobile Bottom Navigation Bar */}
       <MobileBottomNav
         currentRole={currentRole}
@@ -830,10 +1063,20 @@ export function App() {
         onOpenGroupOrder={() => setIsGroupOrderOpen(true)}
         onOpenAccount={() => setIsAccountOpen(true)}
         onOpenTechPack={() => setIsTechPackOpen(true)}
+        onOpenMenu={() => {
+          setCatalogMealMoment("all");
+          setIsDishesCatalogOpen(true);
+        }}
+        onOpenOrdersHistory={() => setIsOrderHistoryOpen(true)}
+        onOpenSauceBoxes={() => {
+          const el = document.getElementById("sauce-boxes-section");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        }}
+        onOpenFaq={() => setIsFaqOpen(true)}
+        onOpenMarketingAI={() => setIsMarketingAIOpen(true)}
       />
     </div>
   );
 }
 
 export default App;
-

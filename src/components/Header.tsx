@@ -19,10 +19,17 @@ import {
   Phone,
   Compass,
   Layers,
+  HelpCircle,
+  Clock,
+  Volume2,
+  VolumeX,
+  Package,
+  Calendar,
+  MessageSquare,
+  TrendingUp,
 } from "lucide-react";
 import { UserRole, ServiceMode, CityOption, UserProfile } from "../types";
 import { CITIES_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
-import { NIAMEY_DISTRICTS_DATA } from "../data/niameyDistrictsData";
 import { BrandLogo } from "./BrandLogo";
 
 interface HeaderProps {
@@ -47,6 +54,14 @@ interface HeaderProps {
   onOpenContact?: () => void;
   onOpenDistrictsDirectory?: () => void;
   onOpenLogoModal?: () => void;
+  onOpenMenu?: () => void;
+  onOpenOrdersHistory?: () => void;
+  onOpenSauceBoxes?: () => void;
+  onOpenMarketingAI?: () => void;
+  onOpenWhatsAppAutomation?: () => void;
+  onOpenFaq?: () => void;
+  soundEnabled?: boolean;
+  onToggleSound?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -71,6 +86,14 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenContact,
   onOpenDistrictsDirectory,
   onOpenLogoModal,
+  onOpenMenu,
+  onOpenOrdersHistory,
+  onOpenSauceBoxes,
+  onOpenMarketingAI,
+  onOpenWhatsAppAutomation,
+  onOpenFaq,
+  soundEnabled = true,
+  onToggleSound,
 }) => {
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
@@ -127,15 +150,73 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
+          {/* Sound Notification Toggle */}
+          {onToggleSound && (
+            <button
+              onClick={onToggleSound}
+              className="text-[11px] font-bold text-white hover:text-amber-200 flex items-center gap-1 cursor-pointer bg-black/20 hover:bg-black/30 px-2 py-0.5 rounded-full border border-white/20 transition-colors"
+              title={soundEnabled ? "Notifications sonores activées (Cliquer pour couper)" : "Notifications sonores coupées (Cliquer pour activer)"}
+            >
+              {soundEnabled ? (
+                <>
+                  <Volume2 className="w-3 h-3 text-amber-300" />
+                  <span className="hidden sm:inline">Sons ON</span>
+                </>
+              ) : (
+                <>
+                  <VolumeX className="w-3 h-3 text-slate-400" />
+                  <span className="hidden sm:inline">Sons OFF</span>
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Marketing AI quick trigger */}
+          {onOpenMarketingAI && (
+            <button
+              onClick={onOpenMarketingAI}
+              className="text-[11px] font-extrabold text-amber-200 hover:text-white flex items-center gap-1 cursor-pointer bg-amber-950/60 hover:bg-amber-900/80 px-2 py-0.5 rounded-full border border-amber-400/40 transition-colors"
+              title="Pilote Automatique Commercial & Campagnes Virales WhatsApp"
+            >
+              <TrendingUp className="w-3 h-3 text-amber-300" />
+              <span>IA Marketing</span>
+            </button>
+          )}
+
+          {/* WhatsApp Automation quick trigger */}
+          {onOpenWhatsAppAutomation && (
+            <button
+              onClick={onOpenWhatsAppAutomation}
+              className="text-[11px] font-extrabold text-emerald-200 hover:text-white flex items-center gap-1 cursor-pointer bg-emerald-950/60 hover:bg-emerald-900/80 px-2 py-0.5 rounded-full border border-emerald-400/40 transition-colors"
+              title="Centre d'Automatisation & Dispatch WhatsApp"
+            >
+              <MessageSquare className="w-3 h-3 text-emerald-300" />
+              <span className="hidden md:inline">WhatsApp Auto</span>
+            </button>
+          )}
+
+          {/* Dynamic FAQ trigger */}
+          {onOpenFaq && (
+            <button
+              onClick={onOpenFaq}
+              className="text-[11px] font-bold text-white hover:text-amber-200 flex items-center gap-1 cursor-pointer"
+              title="Foire Aux Questions dynamique & aide"
+            >
+              <HelpCircle className="w-3 h-3 text-amber-300" />
+              <span className="hidden md:inline">FAQ</span>
+            </button>
+          )}
+
           {onOpenDistrictsDirectory && (
             <button
               onClick={onOpenDistrictsDirectory}
-              className="text-[11px] font-bold text-amber-200 hover:text-white flex items-center gap-1 cursor-pointer bg-black/20 hover:bg-black/30 px-2 py-0.5 rounded-full border border-amber-300/30 transition-colors"
+              className="text-[11px] font-bold text-amber-200 hover:text-white flex items-center gap-1 cursor-pointer bg-black/20 hover:bg-black/30 px-2 py-0.5 rounded-full border border-amber-300/30 transition-colors hidden xl:flex"
             >
               <Compass className="w-3 h-3 text-amber-300" />
-              <span>Frais par Quartier (1 000 F / 1 500 F)</span>
+              <span>Frais Quartiers</span>
             </button>
           )}
+
           <button
             onClick={onOpenContact}
             className="text-[11px] font-bold text-white hover:text-orange-100 flex items-center gap-1 cursor-pointer"
@@ -144,30 +225,23 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="hidden md:inline">+227 96 05 23 10</span>
             <span className="md:hidden">Contact</span>
           </button>
-          <button
-            onClick={onOpenPartnerModal}
-            className="text-[11px] font-bold underline hover:text-orange-100 cursor-pointer transition-colors flex items-center gap-1"
-          >
-            <Store className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Rejoindre comme Restaurant</span>
-          </button>
         </div>
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
-        {/* Brand Logo with Modern Clever Icon */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+        {/* Left: Brand Logo & Location */}
         <div className="flex items-center gap-3">
           <div
             onClick={onOpenLogoModal}
-            className="flex items-center gap-2 group cursor-pointer"
+            className="flex items-center gap-2 group cursor-pointer shrink-0"
             title="Cliquez pour découvrir le concept et la géométrie du logo Allôresto"
           >
             <BrandLogo variant="full" size="md" showTagline={false} />
           </div>
 
           {/* City / Location Selector */}
-          <div className="relative">
+          <div className="relative hidden sm:block">
             <button
               onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-200 transition-colors cursor-pointer"
@@ -230,126 +304,106 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Service Mode Switcher (Livraison / À Emporter / Réserver) */}
+        {/* Center: Explicit Navigation Buttons (Accueil, Menu, Commandes, Boxs, Événements) */}
         {currentRole === "client" && (
-          <div className="hidden lg:flex items-center p-1 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-semibold">
+          <div className="hidden lg:flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-bold">
+            {/* 1. Accueil */}
             <button
-              onClick={() => onChangeServiceMode("delivery")}
-              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
-                serviceMode === "delivery"
-                  ? "bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold shadow-md"
-                  : "text-slate-400 hover:text-white"
-              }`}
+              onClick={() => onChangeRole("client")}
+              className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer"
             >
-              🛵 Livraison Express
+              Accueil
             </button>
-            <button
-              onClick={() => onChangeServiceMode("takeaway")}
-              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
-                serviceMode === "takeaway"
-                  ? "bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold shadow-md"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              🛍️ À Emporter (Click &amp; Collect)
-            </button>
-            <button
-              onClick={() => onChangeServiceMode("booking")}
-              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
-                serviceMode === "booking"
-                  ? "bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold shadow-md"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              🍽️ Réserver une Table
-            </button>
-          </div>
-        )}
 
-        {/* Right Actions: Group Orders, Account, AI Concierge, Role Switcher, Cart */}
-        <div className="flex items-center gap-2">
-          {/* Catering / Events Button */}
-          {currentRole === "client" && onOpenCatering && (
-            <button
-              onClick={onOpenCatering}
-              className="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-bold transition cursor-pointer"
-            >
-              <ChefHat className="w-3.5 h-3.5 text-amber-400" />
-              <span>Traiteur &amp; Événements</span>
-            </button>
-          )}
+            {/* 2. Menu / Grande Carte 65+ plats */}
+            {onOpenMenu && (
+              <button
+                onClick={onOpenMenu}
+                className="px-3 py-1.5 rounded-xl bg-orange-500/15 text-orange-400 hover:bg-orange-500/25 border border-orange-500/30 transition flex items-center gap-1 cursor-pointer"
+                title="Consulter la carte complète de plus de 65 plats"
+              >
+                <UtensilsCrossed className="w-3.5 h-3.5" />
+                <span>Menu (65+ Plats)</span>
+              </button>
+            )}
 
-          {/* Blog Culinaire Button */}
-          {currentRole === "client" && onOpenBlog && (
-            <button
-              onClick={onOpenBlog}
-              className="hidden xl:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-bold transition cursor-pointer"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-orange-400" />
-              <span>Blog Culinaire</span>
-            </button>
-          )}
+            {/* 3. Commandes / Historique */}
+            {onOpenOrdersHistory && (
+              <button
+                onClick={onOpenOrdersHistory}
+                className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1 cursor-pointer"
+                title="Historique des commandes et reçus"
+              >
+                <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Commandes</span>
+              </button>
+            )}
 
-          {/* Group Order Trigger */}
-          {currentRole === "client" && (
+            {/* 4. Boxs Repas & Sauces */}
+            {onOpenSauceBoxes && (
+              <button
+                onClick={onOpenSauceBoxes}
+                className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1 cursor-pointer"
+                title="Boxs repas & sauces sahéliennes"
+              >
+                <Package className="w-3.5 h-3.5 text-amber-400" />
+                <span>Boxs</span>
+              </button>
+            )}
+
+            {/* 5. Événements / Traiteur */}
+            {onOpenCatering && (
+              <button
+                onClick={onOpenCatering}
+                className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1 cursor-pointer"
+                title="Traiteur, mariages & réunions ministérielles"
+              >
+                <ChefHat className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Évents</span>
+              </button>
+            )}
+
+            {/* 6. Groupe Bureau */}
             <button
               onClick={onOpenGroupOrder}
-              className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-bold transition cursor-pointer"
+              className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1 cursor-pointer"
             >
               <Users className="w-3.5 h-3.5 text-orange-400" />
               <span>Groupe Bureau</span>
             </button>
-          )}
+          </div>
+        )}
 
-          {/* Auth & User Account Triggers */}
+        {/* Right Actions: AI Chef, Account, Role Switcher, Cart */}
+        <div className="flex items-center gap-2">
+          {/* User Account / Sahel Club */}
           {currentRole === "client" && (
             <div className="flex items-center gap-1.5">
               {onOpenAuth && (
                 <button
                   onClick={onOpenAuth}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-bold transition cursor-pointer"
-                  title="Connexion ou Inscription avec Email vérifié"
+                  title="Connexion ou Profil"
                 >
                   <User className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">
-                    {currentUser ? currentUser.name.split(" ")[0] : "Connexion"}
+                    {currentUser ? currentUser.name.split(" ")[0] : "Compte"}
                   </span>
                 </button>
               )}
 
               <button
                 onClick={onOpenAccount}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-bold transition cursor-pointer"
+                className="hidden xl:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-bold transition cursor-pointer"
                 title="Club Sahel & Points de fidélité"
               >
                 <Award className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden md:inline">Fidélité</span>
+                <span>Fidélité</span>
               </button>
-
-              {onOpenContact && (
-                <button
-                  onClick={onOpenContact}
-                  className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition cursor-pointer"
-                  title="Coordonnées, WhatsApp, Support & Formulaire de contact"
-                >
-                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Contacts</span>
-                </button>
-              )}
             </div>
           )}
 
-          {/* Tech Pack & Supabase Schema Exporter */}
-          <button
-            onClick={onOpenTechPack}
-            className="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 border border-purple-500/40 text-purple-300 text-xs font-bold transition cursor-pointer shadow-sm"
-            title="Consulter le Schéma Supabase SQL & Architecture Option C"
-          >
-            <Database className="w-3.5 h-3.5 text-purple-400" />
-            <span>Pack Tech Supabase</span>
-          </button>
-
-          {/* AllôChef AI Assistant Trigger */}
+          {/* AllôChef AI Assistant */}
           <button
             id="allochef-nav-btn"
             onClick={onOpenChefAI}
@@ -403,7 +457,7 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Cart Button */}
+          {/* Cart Button (Panier Dynamique) */}
           {currentRole === "client" && (
             <button
               id="cart-nav-btn"
@@ -412,7 +466,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <ShoppingBag className="w-4 h-4" />
               <span className="hidden sm:inline">
-                {cartTotal > 0 ? `${cartTotal.toLocaleString()} FCFA` : "Panier"}
+                {cartTotal > 0 ? `${cartTotal.toLocaleString()} F` : "Panier"}
               </span>
               {cartCount > 0 && (
                 <span className="w-5 h-5 rounded-full bg-slate-950 text-orange-400 text-[11px] font-black flex items-center justify-center border border-orange-400/50">
@@ -426,4 +480,3 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
-
