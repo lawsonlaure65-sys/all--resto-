@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import confetti from "canvas-confetti";
 import {
@@ -24,9 +24,17 @@ import {
   Send,
   HelpCircle,
   AlertTriangle,
+  Compass,
+  Search,
 } from "lucide-react";
 import { CartItem, PaymentMethod, ServiceMode, Order } from "../types";
 import { LOCAL_PAYMENT_METHODS } from "../data/allorestoData";
+import {
+  NIAMEY_DISTRICTS_DATA,
+  calculateNiameyDeliveryFee,
+  NiameyDistrict,
+  isNiameyNightTime,
+} from "../data/niameyDistrictsData";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -41,6 +49,8 @@ interface CheckoutModalProps {
   promoCode?: string;
   tip: number;
   onOrderPlaced: (newOrder: Order) => void;
+  onOpenDistrictsDirectory?: () => void;
+  initialDistrictName?: string;
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -56,7 +66,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   promoCode,
   tip,
   onOrderPlaced,
+  onOpenDistrictsDirectory,
+  initialDistrictName,
 }) => {
+  const [selectedDistrictId, setSelectedDistrictId] = useState<string>("plateau");
   const [deliveryZone, setDeliveryZone] = useState<"centre" | "peripherie" | "mosquee_pickup">("centre");
   const [customerName, setCustomerName] = useState("Amadou Seyni");
   const [customerPhone, setCustomerPhone] = useState("🇳🇪 +227 90 12 34 56");
@@ -73,6 +86,25 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [mobileMoneyNumber, setMobileMoneyNumber] = useState("🇳🇪 +227 96 00 11 22");
   const [notifyWhatsApp, setNotifyWhatsApp] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync initial district if passed
+  useEffect(() => {
+    if (initialDistrictName) {
+      const match = NIAMEY_DISTRICTS_DATA.find(
+        (d) => d.name.toLowerCase() === initialDistrictName.toLowerCase()
+      );
+      if (match) {
+        setSelectedDistrictId(match.id);
+        if (match.zone === "relais_gratuit") {
+          setDeliveryZone("mosquee_pickup");
+        } else if (match.zone === "centre") {
+          setDeliveryZone("centre");
+        } else {
+          setDeliveryZone("peripherie");
+        }
+      }
+    }
+  }, [initialDistrictName]);
 
   const handleCopyNumber = (num: string) => {
     navigator.clipboard.writeText(num);
@@ -91,16 +123,30 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const currentHour = new Date().getHours();
   const isNightRate = currentHour >= 21 || (scheduledOption === "custom" && (customScheduledTime === "21:00" || customScheduledTime === "21:30"));
 
-  // Calculate delivery fee according to official table:
-  // Centre-ville: < 21h -> 1000 FCFA | >= 21h -> 1500 FCFA
-  // Périphérie: < 21h -> 1500 FCFA | >= 21h -> 2000 FCFA
-  // Mosquée / Takeaway: 0 FCFA
+  // Find active district from dataset
+  const activeDistrict = NIAMEY_DISTRICTS_DATA.find((d) => d.id === selectedDistrictId);
+
+  // Calculate delivery fee according to official table
   const calculatedDeliveryFee =
     serviceMode === "takeaway" || deliveryZone === "mosquee_pickup"
       ? 0
       : deliveryZone === "centre"
       ? isNightRate ? 1500 : 1000
       : isNightRate ? 2000 : 1500;
+
+  const handleDistrictChange = (districtId: string) => {
+    setSelectedDistrictId(districtId);
+    const d = NIAMEY_DISTRICTS_DATA.find((item) => item.id === districtId);
+    if (d) {
+      if (d.zone === "relais_gratuit") {
+        setDeliveryZone("mosquee_pickup");
+        setDeliveryAddress("Point de retrait : Grande Mosquée Kadhafi (Avenue de l'Islam)");
+      } else {
+        setDeliveryZone(d.zone);
+        setDeliveryAddress(`Quartier ${d.name}, Niamey`);
+      }
+    }
+  };
 
   const subtotal = items.reduce((acc, item) => acc + item.totalPrice, 0);
   const deliveryFee = calculatedDeliveryFee;
@@ -295,13 +341,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             )}
           </div>
 
-            {/* 2. Zone de Livraison & Tarifs Officiels */}
+            {/* 2. Zone de Livraison & Calculateur Automatique de Quartier */}
             {serviceMode === "delivery" && (
-              <div className="space-y-2 p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+              <div className="space-y-3 p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-orange-400" />
-                    <span>Zone de Livraison Allôresto</span>
+                    <Compass className="w-3.5 h-3.5 text-orange-400" />
+                    <span>Quartier &amp; Calculateur de Frais Niamey</span>
                   </span>
                   {isNightRate && (
                     <span className="px-2 py-0.5 rounded-full bg-amber-950 border border-amber-500/40 text-amber-300 text-[10px] font-bold">
@@ -310,43 +356,152 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {/* District Selector Dropdown + Direct Directory Trigger */}
+                <div className="space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <div className="relative flex-1">
+                      <select
+                        value={selectedDistrictId}
+                        onChange={(e) => handleDistrictChange(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-bold focus:outline-none focus:border-orange-500 cursor-pointer"
+                      >
+                        <optgroup label="📍 Centre-ville (1 000 F / 1 500 F nuit)">
+                          {NIAMEY_DISTRICTS_DATA.filter((d) => d.zone === "centre").map((d) => (
+                            <option key={d.id} value={d.id}>
+                              📍 {d.name} ({d.commune})
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="🗺️ Périphérie & Rive Droite (1 500 F / 2 000 F nuit)">
+                          {NIAMEY_DISTRICTS_DATA.filter((d) => d.zone === "peripherie").map((d) => (
+                            <option key={d.id} value={d.id}>
+                              🗺️ {d.name} ({d.commune})
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="🕌 Point de Retrait Offert (0 FCFA)">
+                          {NIAMEY_DISTRICTS_DATA.filter((d) => d.zone === "relais_gratuit").map((d) => (
+                            <option key={d.id} value={d.id}>
+                              🕌 {d.name} (0 FCFA)
+                            </option>
+                          ))}
+                        </optgroup>
+                      </select>
+                    </div>
+
+                    {onOpenDistrictsDirectory && (
+                      <button
+                        type="button"
+                        onClick={onOpenDistrictsDirectory}
+                        className="px-3 py-2 rounded-xl bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/40 text-orange-400 text-xs font-bold transition flex items-center gap-1 shrink-0 cursor-pointer"
+                        title="Ouvrir le répertoire complet des quartiers"
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Répertoire 50+</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Active District Info Pill */}
+                  {activeDistrict && (
+                    <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80 flex items-center justify-between text-xs">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-white text-[11px]">{activeDistrict.name}</span>
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-slate-800 text-slate-300">
+                            {activeDistrict.commune}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">
+                          Délai estimé : <strong>{activeDistrict.estimatedDeliveryTime}</strong> &bull; Flotte <strong>Billo Express</strong>
+                        </span>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-xs font-black text-orange-400 block">
+                          {calculatedDeliveryFee === 0 ? "0 FCFA" : `${calculatedDeliveryFee.toLocaleString()} FCFA`}
+                        </span>
+                        <span className="text-[9px] text-slate-500">
+                          {isNightRate ? "Tarif Nuit (≥21h)" : "Tarif Jour (<21h)"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Landmark quick suggestions */}
+                  {activeDistrict?.landmarks && activeDistrict.landmarks.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-semibold text-slate-400 block">
+                        Repères à proximité (cliquez pour ajouter aux précisions) :
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {activeDistrict.landmarks.map((lm, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => {
+                              setDeliveryNotes((prev) => (prev ? `${prev}, Près de ${lm}` : `Près de ${lm}`));
+                            }}
+                            className="px-2 py-0.5 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 text-[10px] border border-slate-800 hover:border-orange-500/40 transition cursor-pointer"
+                          >
+                            + {lm}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3 Quick Zone Tabs for manual override */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => setDeliveryZone("centre")}
-                    className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer ${
+                    onClick={() => {
+                      setDeliveryZone("centre");
+                      const firstCentre = NIAMEY_DISTRICTS_DATA.find((d) => d.zone === "centre");
+                      if (firstCentre) setSelectedDistrictId(firstCentre.id);
+                    }}
+                    className={`p-2 rounded-xl border text-left text-xs transition cursor-pointer ${
                       deliveryZone === "centre"
                         ? "bg-orange-500/20 border-orange-500 text-white font-bold"
                         : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
                     }`}
                   >
                     <span className="block font-bold">📍 Centre-ville</span>
-                    <span className="text-[10px] text-slate-400">Plateau, Mosquée, Yantala</span>
-                    <span className="text-orange-400 font-extrabold text-[11px] block mt-1">
+                    <span className="text-[10px] text-slate-400">Plateau, Yantala, Terminus...</span>
+                    <span className="text-orange-400 font-extrabold text-[11px] block mt-0.5">
                       {isNightRate ? "1 500 FCFA" : "1 000 FCFA"}
                     </span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setDeliveryZone("peripherie")}
-                    className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer ${
+                    onClick={() => {
+                      setDeliveryZone("peripherie");
+                      const firstPeripherie = NIAMEY_DISTRICTS_DATA.find((d) => d.zone === "peripherie");
+                      if (firstPeripherie) setSelectedDistrictId(firstPeripherie.id);
+                    }}
+                    className={`p-2 rounded-xl border text-left text-xs transition cursor-pointer ${
                       deliveryZone === "peripherie"
                         ? "bg-orange-500/20 border-orange-500 text-white font-bold"
                         : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
                     }`}
                   >
                     <span className="block font-bold">🗺️ Périphérie</span>
-                    <span className="text-[10px] text-slate-400">Koira Kano, Harobanda, Goudel</span>
-                    <span className="text-orange-400 font-extrabold text-[11px] block mt-1">
+                    <span className="text-[10px] text-slate-400">Koira Kano, Harobanda, Goudel...</span>
+                    <span className="text-orange-400 font-extrabold text-[11px] block mt-0.5">
                       {isNightRate ? "2 000 FCFA" : "1 500 FCFA"}
                     </span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setDeliveryZone("mosquee_pickup")}
-                    className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer ${
+                    onClick={() => {
+                      setDeliveryZone("mosquee_pickup");
+                      setSelectedDistrictId("grande-mosquee-kadhafi");
+                      setDeliveryAddress("Point de retrait : Grande Mosquée Kadhafi (Avenue de l'Islam)");
+                    }}
+                    className={`p-2 rounded-xl border text-left text-xs transition cursor-pointer ${
                       deliveryZone === "mosquee_pickup"
                         ? "bg-emerald-500/20 border-emerald-500 text-white font-bold"
                         : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
@@ -354,7 +509,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   >
                     <span className="block font-bold">🕌 Retrait Gratuit</span>
                     <span className="text-[10px] text-slate-400">Grande Mosquée Kadhafi</span>
-                    <span className="text-emerald-400 font-extrabold text-[11px] block mt-1">
+                    <span className="text-emerald-400 font-extrabold text-[11px] block mt-0.5">
                       0 FCFA (Offert)
                     </span>
                   </button>

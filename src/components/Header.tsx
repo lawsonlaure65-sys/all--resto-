@@ -17,9 +17,11 @@ import {
   ChefHat,
   BookOpen,
   Phone,
+  Compass,
 } from "lucide-react";
 import { UserRole, ServiceMode, CityOption, UserProfile } from "../types";
 import { CITIES_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
+import { NIAMEY_DISTRICTS_DATA } from "../data/niameyDistrictsData";
 
 interface HeaderProps {
   currentRole: UserRole;
@@ -41,6 +43,7 @@ interface HeaderProps {
   onOpenCatering?: () => void;
   onOpenBlog?: () => void;
   onOpenContact?: () => void;
+  onOpenDistrictsDirectory?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -63,6 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCatering,
   onOpenBlog,
   onOpenContact,
+  onOpenDistrictsDirectory,
 }) => {
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
@@ -119,6 +123,15 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
+          {onOpenDistrictsDirectory && (
+            <button
+              onClick={onOpenDistrictsDirectory}
+              className="text-[11px] font-bold text-amber-200 hover:text-white flex items-center gap-1 cursor-pointer bg-black/20 hover:bg-black/30 px-2 py-0.5 rounded-full border border-amber-300/30 transition-colors"
+            >
+              <Compass className="w-3 h-3 text-amber-300" />
+              <span>Frais par Quartier (1 000 F / 1 500 F)</span>
+            </button>
+          )}
           <button
             onClick={onOpenContact}
             className="text-[11px] font-bold text-white hover:text-orange-100 flex items-center gap-1 cursor-pointer"
@@ -167,8 +180,8 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {cityDropdownOpen && (
-              <div className="absolute left-0 mt-2 w-64 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="p-2 border-b border-slate-800 mb-1">
+              <div className="absolute left-0 mt-2 w-72 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="p-2 border-b border-slate-800 mb-1 space-y-1.5">
                   <button
                     onClick={handleDetectLocation}
                     disabled={isLocating}
@@ -177,8 +190,25 @@ export const Header: React.FC<HeaderProps> = ({
                     <Navigation className={`w-3.5 h-3.5 ${isLocating ? "animate-spin" : ""}`} />
                     <span>{isLocating ? "Localisation..." : "Me géolocaliser"}</span>
                   </button>
+
+                  {onOpenDistrictsDirectory && (
+                    <button
+                      onClick={() => {
+                        setCityDropdownOpen(false);
+                        onOpenDistrictsDirectory();
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs font-bold transition-all cursor-pointer shadow-sm"
+                    >
+                      <Compass className="w-3.5 h-3.5" />
+                      <span>Répertoire &amp; Frais des Quartiers</span>
+                    </button>
+                  )}
                 </div>
-                <div className="max-h-48 overflow-y-auto space-y-1">
+
+                <div className="max-h-52 overflow-y-auto space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 px-2 py-1 block uppercase tracking-wider">
+                    Villes &amp; Quartiers Phares :
+                  </span>
                   {CITIES_DATA.map((city) => (
                     <button
                       key={city.name}

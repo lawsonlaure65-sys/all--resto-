@@ -11,6 +11,7 @@ import {
   ChefHat,
   BookOpen,
   MessageCircle,
+  Compass,
 } from "lucide-react";
 import { ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 
@@ -21,6 +22,7 @@ interface FooterProps {
   onOpenBlog?: () => void;
   onOpenContact?: () => void;
   onOpenChefAI?: () => void;
+  onOpenDistrictsDirectory?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -30,6 +32,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenBlog,
   onOpenContact,
   onOpenChefAI,
+  onOpenDistrictsDirectory,
 }) => {
   return (
     <footer className="bg-slate-950 border-t border-slate-800 text-slate-400 text-xs">
@@ -175,10 +178,11 @@ export const Footer: React.FC<FooterProps> = ({
                 "Grande Mosquée Mouhamar Kadhafi",
                 "Avenue de l'Islam",
                 "Koira Kano",
-                "Koira Tegui",
+                "Harobanda",
                 "Yantala",
                 "Recasement",
                 "Goudel",
+                "Wadata",
                 "Dar-Es-Salam",
                 "Francophonie",
                 "Aéroport",
@@ -191,6 +195,16 @@ export const Footer: React.FC<FooterProps> = ({
                 </span>
               ))}
             </div>
+
+            {onOpenDistrictsDirectory && (
+              <button
+                onClick={onOpenDistrictsDirectory}
+                className="mt-3 w-full py-2 px-3 rounded-xl bg-gradient-to-r from-orange-500/20 to-amber-500/20 hover:from-orange-500/30 hover:to-amber-500/30 border border-orange-500/40 text-orange-300 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+              >
+                <Compass className="w-3.5 h-3.5 text-orange-400" />
+                <span>Calculer mes Frais de Livraison (50+ Quartiers)</span>
+              </button>
+            )}
           </div>
 
           {/* Col 4: PWA App Install & Security */}

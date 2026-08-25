@@ -25,6 +25,8 @@ import { CateringModal } from "./components/CateringModal";
 import { CulinaryBlogModal } from "./components/CulinaryBlogModal";
 import { PartnerRegistrationModal } from "./components/PartnerRegistrationModal";
 import { ContactModal } from "./components/ContactModal";
+import { DeliveryFeeCalculatorModal } from "./components/DeliveryFeeCalculatorModal";
+import { DeliveryDistrictsWidget } from "./components/DeliveryDistrictsWidget";
 import { Footer } from "./components/Footer";
 
 import {
@@ -41,6 +43,7 @@ import {
   CateringQuoteRequest,
   UserProfile,
 } from "./types";
+import { NiameyDistrict } from "./data/niameyDistrictsData";
 import {
   RESTAURANTS_DATA,
   INITIAL_ORDERS,
@@ -104,6 +107,8 @@ export function App() {
   const [isCateringOpen, setIsCateringOpen] = useState<boolean>(false);
   const [isBlogOpen, setIsBlogOpen] = useState<boolean>(false);
   const [isContactOpen, setIsContactOpen] = useState<boolean>(false);
+  const [isDistrictsModalOpen, setIsDistrictsModalOpen] = useState<boolean>(false);
+  const [selectedDistrictName, setSelectedDistrictName] = useState<string>("Plateau (Ministères & Ambassades)");
 
   // Cart Calculations
   const cartTotal = cartItems.reduce((sum, it) => sum + it.totalPrice, 0);
@@ -311,6 +316,7 @@ export function App() {
         onOpenCatering={() => setIsCateringOpen(true)}
         onOpenBlog={() => setIsBlogOpen(true)}
         onOpenContact={() => setIsContactOpen(true)}
+        onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
       />
 
       {/* Main Content Rendered by Role */}
@@ -474,6 +480,21 @@ export function App() {
               />
             </div>
 
+            {/* Section: Répertoire des Quartiers de Niamey & Calculateur de Frais */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <DeliveryDistrictsWidget
+                onOpenFullCalculator={() => setIsDistrictsModalOpen(true)}
+                onSelectDistrictForDelivery={(district) => {
+                  setSelectedDistrictName(district.name);
+                  if (cartItems.length > 0) {
+                    setIsCheckoutOpen(true);
+                  } else {
+                    setIsDistrictsModalOpen(true);
+                  }
+                }}
+              />
+            </div>
+
             {/* Strategic Value Proposition for Allôresto Users */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
               <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-orange-950/40 border border-orange-500/20 space-y-8">
@@ -600,6 +621,8 @@ export function App() {
         promoCode={appliedPromoCode}
         tip={selectedTip}
         onOrderPlaced={handleOrderPlaced}
+        onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
+        initialDistrictName={selectedDistrictName}
       />
 
       {/* 4. Live Order Tracker Modal */}
@@ -722,6 +745,20 @@ export function App() {
         }}
       />
 
+      {/* 15. Répertoire et Calculateur Officiel des Quartiers de Niamey */}
+      <DeliveryFeeCalculatorModal
+        isOpen={isDistrictsModalOpen}
+        onClose={() => setIsDistrictsModalOpen(false)}
+        selectedDistrictId={selectedDistrictName}
+        onSelectDistrict={(district) => {
+          setSelectedDistrictName(district.name);
+          setIsDistrictsModalOpen(false);
+          if (cartItems.length > 0) {
+            setIsCheckoutOpen(true);
+          }
+        }}
+      />
+
       {/* PWA Mobile App Install Prompt for Android */}
       <PwaInstallPrompt />
 
@@ -733,6 +770,7 @@ export function App() {
         onOpenBlog={() => setIsBlogOpen(true)}
         onOpenContact={() => setIsContactOpen(true)}
         onOpenChefAI={() => setIsChefAIOpen(true)}
+        onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
       />
 
       {/* Responsive Mobile Bottom Navigation Bar */}
