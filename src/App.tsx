@@ -13,11 +13,18 @@ import { GroupOrderModal } from "./components/GroupOrderModal";
 import { UserAccountModal } from "./components/UserAccountModal";
 import { HapdpDataModal } from "./components/HapdpDataModal";
 import { TechPackModal } from "./components/TechPackModal";
+import { MobileBottomNav } from "./components/MobileBottomNav";
 import { PwaInstallPrompt } from "./components/PwaInstallPrompt";
 import { RestaurantDashboard } from "./components/RestaurantDashboard";
 import { CourierDashboard } from "./components/CourierDashboard";
 import { AdminDashboard } from "./components/AdminDashboard";
+import { AuthModal } from "./components/AuthModal";
+import { DailySpecialCard } from "./components/DailySpecialCard";
+import { SauceBoxesSection } from "./components/SauceBoxesSection";
+import { CateringModal } from "./components/CateringModal";
+import { CulinaryBlogModal } from "./components/CulinaryBlogModal";
 import { PartnerRegistrationModal } from "./components/PartnerRegistrationModal";
+import { ContactModal } from "./components/ContactModal";
 import { Footer } from "./components/Footer";
 
 import {
@@ -29,8 +36,19 @@ import {
   Order,
   OrderStatus,
   TableBooking,
+  DailySpecial,
+  SauceBox,
+  CateringQuoteRequest,
+  UserProfile,
 } from "./types";
-import { RESTAURANTS_DATA, INITIAL_ORDERS } from "./data/allorestoData";
+import {
+  RESTAURANTS_DATA,
+  INITIAL_ORDERS,
+  DAILY_SPECIALS_DATA,
+  SAUCE_BOXES_DATA,
+  ALLORESTO_BRAND_INFO,
+  DEFAULT_USER_PROFILE,
+} from "./data/allorestoData";
 import {
   Store,
   Bike,
@@ -43,6 +61,8 @@ import {
   UtensilsCrossed,
   Layers,
   Users,
+  ChefHat,
+  BookOpen,
 } from "lucide-react";
 
 export function App() {
@@ -61,6 +81,7 @@ export function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
   const [activeTrackingOrder, setActiveTrackingOrder] = useState<Order | null>(null);
+  const [cateringQuotes, setCateringQuotes] = useState<CateringQuoteRequest[]>([]);
 
   // Checkout Props passing
   const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
@@ -70,6 +91,8 @@ export function App() {
   // Modals & Drawers Visibility
   const [selectedRestaurantForMenu, setSelectedRestaurantForMenu] = useState<Restaurant | null>(null);
   const [selectedRestaurantForBooking, setSelectedRestaurantForBooking] = useState<Restaurant | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(DEFAULT_USER_PROFILE);
+  const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
   const [isChefAIOpen, setIsChefAIOpen] = useState<boolean>(false);
@@ -78,6 +101,9 @@ export function App() {
   const [isAccountOpen, setIsAccountOpen] = useState<boolean>(false);
   const [isHapdpModalOpen, setIsHapdpModalOpen] = useState<boolean>(false);
   const [isTechPackOpen, setIsTechPackOpen] = useState<boolean>(false);
+  const [isCateringOpen, setIsCateringOpen] = useState<boolean>(false);
+  const [isBlogOpen, setIsBlogOpen] = useState<boolean>(false);
+  const [isContactOpen, setIsContactOpen] = useState<boolean>(false);
 
   // Cart Calculations
   const cartTotal = cartItems.reduce((sum, it) => sum + it.totalPrice, 0);
@@ -193,6 +219,48 @@ export function App() {
     setAppliedDiscount(1500);
   };
 
+  // Add Daily Special directly to cart
+  const handleAddDailySpecialToCart = (special: DailySpecial) => {
+    const menuItem: MenuItem = {
+      id: special.id,
+      name: special.title,
+      description: `${special.description} (Accompagnement : ${special.accompaniedBy})`,
+      price: special.price,
+      image: special.image,
+      category: "Plat du Jour",
+      isPopular: true,
+      isHalal: true,
+      preparationTime: 10,
+    };
+
+    handleAddToCart(menuItem, {}, 1);
+    setIsCartOpen(true);
+  };
+
+  // Add Sauce Box directly to cart
+  const handleAddSauceToCart = (sauce: SauceBox) => {
+    const menuItem: MenuItem = {
+      id: sauce.id,
+      name: sauce.name,
+      description: `${sauce.description} — ${sauce.volume} (Idéal avec: ${sauce.bestWith.join(", ")})`,
+      price: sauce.price,
+      image: sauce.image,
+      category: "Sauces & Terroir",
+      isPopular: sauce.isPopular,
+      isHalal: true,
+      isSpicy: sauce.spiceLevel.includes("Piquant") || sauce.spiceLevel.includes("Kan-Kan"),
+      preparationTime: 5,
+    };
+
+    handleAddToCart(menuItem, {}, 1);
+    setIsCartOpen(true);
+  };
+
+  // Handle Catering Quote Submission
+  const handleCateringQuoteSubmit = (quote: CateringQuoteRequest) => {
+    setCateringQuotes((prev) => [quote, ...prev]);
+  };
+
   // Filter Restaurants
   const filteredRestaurants = RESTAURANTS_DATA.filter((resto) => {
     // Cuisine filter
@@ -237,10 +305,16 @@ export function App() {
         onOpenPartnerModal={() => setIsPartnerModalOpen(true)}
         onOpenGroupOrder={() => setIsGroupOrderOpen(true)}
         onOpenAccount={() => setIsAccountOpen(true)}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        currentUser={currentUser}
+        onOpenTechPack={() => setIsTechPackOpen(true)}
+        onOpenCatering={() => setIsCateringOpen(true)}
+        onOpenBlog={() => setIsBlogOpen(true)}
+        onOpenContact={() => setIsContactOpen(true)}
       />
 
       {/* Main Content Rendered by Role */}
-      <main className="flex-1">
+      <main className="flex-1 pb-20 md:pb-0">
         {/* ======================================================== */}
         {/* 1. ESPACE CLIENT                                         */}
         {/* ======================================================== */}
@@ -287,14 +361,50 @@ export function App() {
               </div>
             )}
 
-            {/* Main Restaurants Directory Section */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-              {/* Flash Midi Banner for Offices */}
+            {/* Flash Midi Banner for Offices */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
               <FlashMidiBanner
                 onOpenGroupOrder={() => setIsGroupOrderOpen(true)}
                 onApplyPromoCode={handleApplyPromoCodeFromBanner}
               />
+            </div>
 
+            {/* Section: Plats du Jour & Suggestions Fraîches */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-800 pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px] font-black uppercase tracking-wider">
+                      ⚡ Plats du Jour &bull; 11h - 15h
+                    </span>
+                    <span className="text-xs text-slate-400 font-medium">Préparés ce matin à Niamey</span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
+                    Les Spécialités Fraîches du Sahel
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setIsChefAIOpen(true)}
+                  className="text-xs text-orange-400 font-bold hover:underline self-start sm:self-auto flex items-center gap-1 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Demander conseil à AllôChef IA</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {DAILY_SPECIALS_DATA.map((special) => (
+                  <DailySpecialCard
+                    key={special.id}
+                    special={special}
+                    onAddToCart={handleAddDailySpecialToCart}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {/* Main Restaurants Directory Section */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
                 <div>
                   <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
@@ -355,6 +465,14 @@ export function App() {
                 </div>
               )}
             </section>
+
+            {/* Section: Box Sauces Terroir & Bocaux Hermétiques */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <SauceBoxesSection
+                onAddSauceToCart={handleAddSauceToCart}
+                onOpenCatering={() => setIsCateringOpen(true)}
+              />
+            </div>
 
             {/* Strategic Value Proposition for Allôresto Users */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -430,7 +548,9 @@ export function App() {
         {/* ======================================================== */}
         {/* 4. ESPACE ADMIN                                          */}
         {/* ======================================================== */}
-        {currentRole === "admin" && <AdminDashboard />}
+        {currentRole === "admin" && (
+          <AdminDashboard onOpenTechPack={() => setIsTechPackOpen(true)} />
+        )}
       </main>
 
       {/* Global Modals & Drawers */}
@@ -526,6 +646,25 @@ export function App() {
         onOpenDataProtection={() => setIsHapdpModalOpen(true)}
       />
 
+      {/* 8b. Authentication Modal (Connexion / Inscription avec Email vérifié, mot de passe 'vu' et indicatif 🇳🇪) */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        currentUser={currentUser}
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
+          setIsAuthOpen(false);
+        }}
+        onLogout={() => {
+          setCurrentUser(null);
+          setIsAuthOpen(false);
+        }}
+        onOpenDataProtection={() => {
+          setIsAuthOpen(false);
+          setIsHapdpModalOpen(true);
+        }}
+      />
+
       {/* 9. HAPDP Data Protection Modal (Niger) */}
       <HapdpDataModal
         isOpen={isHapdpModalOpen}
@@ -538,6 +677,51 @@ export function App() {
         onClose={() => setIsPartnerModalOpen(false)}
       />
 
+      {/* 11. Tech Pack & Supabase Architecture Modal */}
+      <TechPackModal
+        isOpen={isTechPackOpen}
+        onClose={() => setIsTechPackOpen(false)}
+      />
+
+      {/* 12. Service Traiteur & Événements Modal */}
+      <CateringModal
+        isOpen={isCateringOpen}
+        onClose={() => setIsCateringOpen(false)}
+        onSubmitQuote={handleCateringQuoteSubmit}
+      />
+
+      {/* 13. Blog Culinaire & Saveurs du Sahel Modal */}
+      <CulinaryBlogModal
+        isOpen={isBlogOpen}
+        onClose={() => setIsBlogOpen(false)}
+      />
+
+      {/* 14. Rubrique Contacts & Support Officiel Allôresto */}
+      <ContactModal
+        isOpen={isContactOpen}
+        onClose={() => setIsContactOpen(false)}
+        onOrderNow={() => {
+          setIsContactOpen(false);
+          window.scrollTo({ top: 450, behavior: "smooth" });
+        }}
+        onOpenPartnerModal={() => {
+          setIsContactOpen(false);
+          setIsPartnerModalOpen(true);
+        }}
+        onOpenCourierSpace={() => {
+          setIsContactOpen(false);
+          setCurrentRole("courier");
+        }}
+        onOpenDataProtection={() => {
+          setIsContactOpen(false);
+          setIsHapdpModalOpen(true);
+        }}
+        onOpenCatering={() => {
+          setIsContactOpen(false);
+          setIsCateringOpen(true);
+        }}
+      />
+
       {/* PWA Mobile App Install Prompt for Android */}
       <PwaInstallPrompt />
 
@@ -545,6 +729,22 @@ export function App() {
       <Footer
         onOpenPartnerModal={() => setIsPartnerModalOpen(true)}
         onOpenDataProtection={() => setIsHapdpModalOpen(true)}
+        onOpenCatering={() => setIsCateringOpen(true)}
+        onOpenBlog={() => setIsBlogOpen(true)}
+        onOpenContact={() => setIsContactOpen(true)}
+      />
+
+      {/* Responsive Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        currentRole={currentRole}
+        onChangeRole={setCurrentRole}
+        cartCount={cartCount}
+        cartTotal={cartTotal}
+        onOpenCart={() => setIsCartOpen(true)}
+        onOpenChefAI={() => setIsChefAIOpen(true)}
+        onOpenGroupOrder={() => setIsGroupOrderOpen(true)}
+        onOpenAccount={() => setIsAccountOpen(true)}
+        onOpenTechPack={() => setIsTechPackOpen(true)}
       />
     </div>
   );

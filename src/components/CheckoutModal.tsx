@@ -18,8 +18,15 @@ import {
   Clock,
   Bike,
   Coins,
+  Copy,
+  Check,
+  Building2,
+  Send,
+  HelpCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { CartItem, PaymentMethod, ServiceMode, Order } from "../types";
+import { LOCAL_PAYMENT_METHODS } from "../data/allorestoData";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -50,18 +57,28 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   tip,
   onOrderPlaced,
 }) => {
+  const [deliveryZone, setDeliveryZone] = useState<"centre" | "peripherie" | "mosquee_pickup">("centre");
   const [customerName, setCustomerName] = useState("Amadou Seyni");
-  const [customerPhone, setCustomerPhone] = useState("+227 90 12 34 56");
+  const [customerPhone, setCustomerPhone] = useState("🇳🇪 +227 90 12 34 56");
   const [deliveryAddress, setDeliveryAddress] = useState("Quartier Plateau, Ministère des Finances, Niamey");
   const [deliveryNotes, setDeliveryNotes] = useState("Bureau 204, 2ème étage aile Ouest");
   const [scheduledOption, setScheduledOption] = useState<string>("asap");
   const [customScheduledTime, setCustomScheduledTime] = useState<string>("12:30");
   const [cashChangeAmount, setCashChangeAmount] = useState<number | undefined>(undefined);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("mobile_money");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("mynita");
+  const [paymentReference, setPaymentReference] = useState<string>("");
+  const [receiptProofAttached, setReceiptProofAttached] = useState<boolean>(false);
+  const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState<string>("Airtel Money");
-  const [mobileMoneyNumber, setMobileMoneyNumber] = useState("+227 96 00 11 22");
+  const [mobileMoneyNumber, setMobileMoneyNumber] = useState("🇳🇪 +227 96 00 11 22");
   const [notifyWhatsApp, setNotifyWhatsApp] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleCopyNumber = (num: string) => {
+    navigator.clipboard.writeText(num);
+    setCopiedNumber(num);
+    setTimeout(() => setCopiedNumber(null), 2500);
+  };
 
   // Card Mock Data
   const [cardNumber, setCardNumber] = useState("4532 •••• •••• 8892");
@@ -70,8 +87,23 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Determine if night rate applies (>= 21h00)
+  const currentHour = new Date().getHours();
+  const isNightRate = currentHour >= 21 || (scheduledOption === "custom" && (customScheduledTime === "21:00" || customScheduledTime === "21:30"));
+
+  // Calculate delivery fee according to official table:
+  // Centre-ville: < 21h -> 1000 FCFA | >= 21h -> 1500 FCFA
+  // Périphérie: < 21h -> 1500 FCFA | >= 21h -> 2000 FCFA
+  // Mosquée / Takeaway: 0 FCFA
+  const calculatedDeliveryFee =
+    serviceMode === "takeaway" || deliveryZone === "mosquee_pickup"
+      ? 0
+      : deliveryZone === "centre"
+      ? isNightRate ? 1500 : 1000
+      : isNightRate ? 2000 : 1500;
+
   const subtotal = items.reduce((acc, item) => acc + item.totalPrice, 0);
-  const deliveryFee = serviceMode === "takeaway" ? 0 : 1000;
+  const deliveryFee = calculatedDeliveryFee;
   const grandTotal = Math.max(0, subtotal + deliveryFee - discount + tip);
 
   const handleSubmitOrder = (e: React.FormEvent) => {
@@ -91,7 +123,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         createdAt: "À l'instant",
         customerName: customerName || "Client Allôresto Niamey",
         customerPhone: customerPhone || "+227 90 00 00 00",
-        deliveryAddress: serviceMode === "takeaway" ? "À emporter en restaurant" : deliveryAddress,
+        deliveryAddress:
+          serviceMode === "takeaway" || deliveryZone === "mosquee_pickup"
+            ? "Point de retrait : Grande Mosquée Mouhamar Kadhafi (Avenue de l'Islam)"
+            : deliveryAddress,
         city: city || "Niamey",
         serviceType: serviceMode,
         restaurantId,
@@ -109,16 +144,39 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         orderStatus: "received",
         estimatedDeliveryTime:
           scheduledOption === "asap"
-            ? serviceMode === "takeaway"
+            ? serviceMode === "takeaway" || deliveryZone === "mosquee_pickup"
               ? "15-20 min"
               : "20-30 min"
             : `Prévue pour ${finalScheduledTime}`,
         scheduledTime: finalScheduledTime,
         deliveryPartner: "Billo Express 🏍️",
         cashChangeAmount: paymentMethod === "cash" ? cashChangeAmount : undefined,
-        courierName: serviceMode === "delivery" ? "Ibrahim Oumarou (Billo Express)" : undefined,
-        courierPhone: serviceMode === "delivery" ? "+227 97 88 77 66" : undefined,
+        courierName: serviceMode === "delivery" && deliveryZone !== "mosquee_pickup" ? "Ibrahim Oumarou (Billo Express)" : undefined,
+        courierPhone: serviceMode === "delivery" && deliveryZone !== "mosquee_pickup" ? "+227 92 08 08 22" : undefined,
       };
+
+      if (notifyWhatsApp) {
+        const itemsSummary = items.map(it => `• ${it.quantity}x ${it.menuItem.name} (${it.totalPrice} FCFA)`).join("\n");
+        const currentPayOption = LOCAL_PAYMENT_METHODS.find(p => p.id === paymentMethod);
+        const paymentLabel = currentPayOption ? currentPayOption.name : paymentMethod;
+        const depositInfo = currentPayOption?.depositNumber ? ` (Numéro dépôt : ${currentPayOption.depositNumber})` : "";
+        const refInfo = paymentReference ? ` | Réf transaction : ${paymentReference}` : "";
+
+        const waText = encodeURIComponent(
+          `*NOUVELLE COMMANDE ALLÔRESTO #${newOrder.id}*\n` +
+          `_Vos envies, bien servies à Niamey._\n\n` +
+          `👤 *Client :* ${newOrder.customerName} (${newOrder.customerPhone})\n` +
+          `📍 *Lieu :* ${newOrder.deliveryAddress}\n` +
+          `🕒 *Horaire :* ${newOrder.scheduledTime || "Dès que possible"}\n` +
+          `🛵 *Livraison :* ${deliveryZone === "mosquee_pickup" ? "Retrait Grande Mosquée (0 FCFA)" : `${deliveryFee} FCFA (Billo Express)`}\n\n` +
+          `🍽️ *Plats commandés :*\n${itemsSummary}\n\n` +
+          `💰 *Total à payer :* ${grandTotal.toLocaleString()} FCFA\n` +
+          `💳 *Mode de règlement :* ${paymentLabel}${depositInfo}${refInfo}\n` +
+          `${cashChangeAmount ? `💵 *Monnaie demandée sur :* ${cashChangeAmount} FCFA\n` : ""}\n` +
+          `📞 Service Client Allôresto : +227 96 05 23 10 | WhatsApp : +227 70 03 25 52`
+        );
+        window.open(`https://wa.me/22770032552?text=${waText}`, "_blank");
+      }
 
       confetti({
         particleCount: 80,
@@ -237,12 +295,79 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             )}
           </div>
 
-          {/* 2. Coordonnées & Livraison */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-orange-400" />
-              <span>Vos Coordonnées &amp; Adresse à Niamey</span>
-            </h4>
+            {/* 2. Zone de Livraison & Tarifs Officiels */}
+            {serviceMode === "delivery" && (
+              <div className="space-y-2 p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-orange-400" />
+                    <span>Zone de Livraison Allôresto</span>
+                  </span>
+                  {isNightRate && (
+                    <span className="px-2 py-0.5 rounded-full bg-amber-950 border border-amber-500/40 text-amber-300 text-[10px] font-bold">
+                      🌙 Tarif de nuit (&ge; 21h00)
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryZone("centre")}
+                    className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer ${
+                      deliveryZone === "centre"
+                        ? "bg-orange-500/20 border-orange-500 text-white font-bold"
+                        : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <span className="block font-bold">📍 Centre-ville</span>
+                    <span className="text-[10px] text-slate-400">Plateau, Mosquée, Yantala</span>
+                    <span className="text-orange-400 font-extrabold text-[11px] block mt-1">
+                      {isNightRate ? "1 500 FCFA" : "1 000 FCFA"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryZone("peripherie")}
+                    className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer ${
+                      deliveryZone === "peripherie"
+                        ? "bg-orange-500/20 border-orange-500 text-white font-bold"
+                        : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <span className="block font-bold">🗺️ Périphérie</span>
+                    <span className="text-[10px] text-slate-400">Koira Kano, Harobanda, Goudel</span>
+                    <span className="text-orange-400 font-extrabold text-[11px] block mt-1">
+                      {isNightRate ? "2 000 FCFA" : "1 500 FCFA"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryZone("mosquee_pickup")}
+                    className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer ${
+                      deliveryZone === "mosquee_pickup"
+                        ? "bg-emerald-500/20 border-emerald-500 text-white font-bold"
+                        : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <span className="block font-bold">🕌 Retrait Gratuit</span>
+                    <span className="text-[10px] text-slate-400">Grande Mosquée Kadhafi</span>
+                    <span className="text-emerald-400 font-extrabold text-[11px] block mt-1">
+                      0 FCFA (Offert)
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Coordonnées & Livraison */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-orange-400" />
+                <span>Vos Coordonnées &amp; Adresse à Niamey</span>
+              </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -307,77 +432,388 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           </div>
 
           {/* 3. Moyen de Paiement */}
-          <div className="space-y-3 pt-4 border-t border-slate-800">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Mode de Règlement Sécurisé au Niger</span>
-            </h4>
-
-            {/* Payment Tabs */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("mobile_money")}
-                className={`p-3 rounded-2xl border text-center text-xs flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  paymentMethod === "mobile_money"
-                    ? "bg-cyan-500/20 border-cyan-500 text-white font-bold"
-                    : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
-                }`}
-              >
-                <Smartphone className="w-5 h-5 text-cyan-400" />
-                <span>Airtel / Moov Money</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("cash")}
-                className={`p-3 rounded-2xl border text-center text-xs flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  paymentMethod === "cash"
-                    ? "bg-orange-500/20 border-orange-500 text-white font-bold"
-                    : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
-                }`}
-              >
-                <Banknote className="w-5 h-5 text-emerald-400" />
-                <span>Espèces à la livraison</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("card")}
-                className={`p-3 rounded-2xl border text-center text-xs flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  paymentMethod === "card"
-                    ? "bg-orange-500/20 border-orange-500 text-white font-bold"
-                    : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
-                }`}
-              >
-                <CreditCard className="w-5 h-5 text-orange-400" />
-                <span>Carte Visa / Mastercard</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("apple_pay")}
-                className={`p-3 rounded-2xl border text-center text-xs flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  paymentMethod === "apple_pay"
-                    ? "bg-orange-500/20 border-orange-500 text-white font-bold"
-                    : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
-                }`}
-              >
-                <ShieldCheck className="w-5 h-5 text-amber-400" />
-                <span>Al Izza / Nita</span>
-              </button>
+          <div className="space-y-4 pt-4 border-t border-slate-800">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Mode de Règlement Sécurisé au Niger</span>
+              </h4>
+              <span className="text-[10px] text-amber-400 font-bold bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-500/20">
+                8 Options Disponibles
+              </span>
             </div>
 
-            {/* Sub-inputs depending on payment method */}
+            {/* Quick Filter / Category selector */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {LOCAL_PAYMENT_METHODS.map((method) => {
+                const isSelected = paymentMethod === method.id;
+                return (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setPaymentMethod(method.id)}
+                    className={`p-2.5 rounded-2xl border text-left flex flex-col justify-between gap-1 transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-gradient-to-br from-orange-500/20 to-amber-500/10 border-orange-500 text-white shadow-lg shadow-orange-500/15"
+                        : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-[11px] font-black text-white">{method.name}</span>
+                      {isSelected ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                      ) : (
+                        <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />
+                      )}
+                    </div>
+                    {method.depositNumber && (
+                      <span className="text-[10px] text-orange-400/90 font-mono font-bold truncate">
+                        {method.depositNumber}
+                      </span>
+                    )}
+                    <span className="text-[9px] text-slate-400 line-clamp-1">
+                      {method.badge}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Validation Notice for Mobile Agency Deposits */}
+            {["mynita", "amanata", "al_izza_business", "al_izza_transfer", "zeyna"].includes(paymentMethod) && (
+              <div className="p-3.5 rounded-2xl bg-amber-950/80 border border-amber-500/60 flex items-start gap-3 text-xs text-amber-200">
+                <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="font-black text-white block">
+                    ⚠️ Validation &amp; Préparation en Cuisine :
+                  </span>
+                  <p className="text-[11px] leading-relaxed text-amber-100">
+                    C'est <strong>après avoir effectué le dépôt et envoyé la capture d'écran ou le reçu</strong> que votre commande sera officiellement confirmée et préparée par le restaurant.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Detail Box: Mynita */}
+            {paymentMethod === "mynita" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-orange-950/20 border border-orange-500/40 space-y-3 animate-in fade-in">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-[10px] font-black">
+                        Dépôt Mynita
+                      </span>
+                      <span className="text-xs font-bold text-white">Allôresto Compte Mynita</span>
+                    </div>
+                    <p className="text-xs text-slate-300 mt-1">
+                      Effectuez un dépôt direct ou transfert Mynita du montant exact : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Numéro officiel de dépôt Mynita :</span>
+                    <span className="text-sm font-black text-orange-400 font-mono">+227 90 40 51 18</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyNumber("+227 90 40 51 18")}
+                    className="px-3 py-1.5 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 text-xs font-bold border border-orange-500/30 flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedNumber === "+227 90 40 51 18" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Référence de transaction Mynita ou nom de l'expéditeur :
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: MYN-884210 ou Nom de l'expéditeur"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Detail Box: Amanata */}
+            {paymentMethod === "amanata" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-cyan-950/20 border border-cyan-500/40 space-y-3 animate-in fade-in">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] font-black">
+                      Transfert Amanata
+                    </span>
+                    <span className="text-xs font-bold text-white">Allôresto Compte Amanata</span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Envoyez votre transfert d'argent Amanata d'un montant de <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Numéro officiel de dépôt Amanata :</span>
+                    <span className="text-sm font-black text-cyan-400 font-mono">+227 90 40 51 18</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyNumber("+227 90 40 51 18")}
+                    className="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 text-xs font-bold border border-cyan-500/30 flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedNumber === "+227 90 40 51 18" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Code de retrait / Référence SMS Amanata :
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: AMA-902143 ou Numéro téléphone expéditeur"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Detail Box: All-Iza Business */}
+            {paymentMethod === "al_izza_business" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-emerald-950/20 border border-emerald-500/40 space-y-3 animate-in fade-in">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black">
+                      All-Iza Business Pro
+                    </span>
+                    <span className="text-xs font-bold text-white">Compte Marchand All-Iza</span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Réglez via votre application ou compte marchand All-Iza Business : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Numéro de dépôt All-Iza Business :</span>
+                    <span className="text-sm font-black text-emerald-400 font-mono">+227 90 40 51 18</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyNumber("+227 90 40 51 18")}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs font-bold border border-emerald-500/30 flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedNumber === "+227 90 40 51 18" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Référence de validation All-Iza Business :
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: IZZ-BUS-1102"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Detail Box: All-Iza Transfer */}
+            {paymentMethod === "al_izza_transfer" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-amber-950/20 border border-amber-500/40 space-y-3 animate-in fade-in">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-black">
+                      All-Iza Transfer Guichet &amp; Mobile
+                    </span>
+                    <span className="text-xs font-bold text-white">Transfert Rapide All-Iza</span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Effectuez votre transfert d'argent All-Iza du montant de <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Numéro de dépôt All-Iza Transfer :</span>
+                    <span className="text-sm font-black text-amber-400 font-mono">+227 96 05 23 10</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyNumber("+227 96 05 23 10")}
+                    className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-xs font-bold border border-amber-500/30 flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedNumber === "+227 96 05 23 10" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Code de transfert All-Iza / Référence :
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: IZZ-TRF-5582"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Detail Box: Zeyna */}
+            {paymentMethod === "zeyna" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-purple-950/20 border border-purple-500/40 space-y-3 animate-in fade-in">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-[10px] font-black">
+                      Dépôt Zeyna
+                    </span>
+                    <span className="text-xs font-bold text-white">Allôresto Compte Zeyna</span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Effectuez votre dépôt direct Zeyna du montant de <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Numéro officiel de dépôt Zeyna :</span>
+                    <span className="text-sm font-black text-purple-400 font-mono">+227 96 05 23 10</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyNumber("+227 96 05 23 10")}
+                    className="px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 text-xs font-bold border border-purple-500/30 flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedNumber === "+227 96 05 23 10" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Code SMS / Référence Zeyna :
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: ZEY-44210"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Simulated Receipt Capture Attachment Option */}
+            {["mynita", "amanata", "al_izza_business", "al_izza_transfer", "zeyna"].includes(paymentMethod) && (
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">📸</span>
+                  <div>
+                    <span className="font-bold text-white block">Capture d'écran du reçu de dépôt</span>
+                    <span className="text-[10px] text-slate-400">
+                      {receiptProofAttached ? "✅ Reçu prêt à être transmis avec la commande" : "Joindre pour validation immédiate en cuisine"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setReceiptProofAttached(!receiptProofAttached)}
+                    className={`px-3 py-1.5 rounded-lg font-bold text-xs cursor-pointer transition ${
+                      receiptProofAttached
+                        ? "bg-emerald-500 text-slate-950"
+                        : "bg-slate-800 hover:bg-slate-700 text-slate-300"
+                    }`}
+                  >
+                    {receiptProofAttached ? "✓ Reçu joint" : "Ajouter capture"}
+                  </button>
+                  <a
+                    href="https://wa.me/22770032552?text=Bonjour%20Allôresto,%20je%20vous%20transmets%20la%20capture%20de%20mon%20dépôt"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                  >
+                    <Send className="w-3 h-3" />
+                    <span>WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Detail Box: Airtel Money / Moov Flooz */}
             {paymentMethod === "mobile_money" && (
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 animate-in fade-in">
                 <div className="flex gap-2">
-                  {["Airtel Money Niger", "Moov Flooz Niger", "Wave"].map((provider) => (
+                  {["Airtel Money (+227 96 05 23 10)", "Moov Flooz (+227 90 40 51 18)"].map((provider) => (
                     <button
                       key={provider}
                       type="button"
                       onClick={() => setMobileMoneyProvider(provider)}
-                      className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                         mobileMoneyProvider === provider
                           ? "bg-cyan-500/20 border-cyan-500 text-cyan-300"
                           : "bg-slate-900 border-slate-800 text-slate-400"
@@ -389,7 +825,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
                 <div>
                   <label className="block text-[10px] text-slate-400 mb-1">
-                    Numéro {mobileMoneyProvider} pour débit ou confirmation push :
+                    Votre numéro {mobileMoneyProvider} pour débit ou validation :
                   </label>
                   <input
                     type="tel"
@@ -401,47 +837,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
             )}
 
-            {paymentMethod === "card" && (
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 animate-in fade-in">
-                <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-                  <span>Paiement sécurisé 256-bit SSL</span>
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                </div>
-                <div>
-                  <input
-                    type="text"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
-                    placeholder="Numéro de carte bancaire"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-orange-500"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    value={cardExpiry}
-                    onChange={(e) => setCardExpiry(e.target.value)}
-                    placeholder="MM/AA"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-orange-500"
-                  />
-                  <input
-                    type="password"
-                    value={cardCvc}
-                    onChange={(e) => setCardCvc(e.target.value)}
-                    placeholder="CVC"
-                    maxLength={4}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-orange-500"
-                  />
-                </div>
-              </div>
-            )}
-
+            {/* Detail Box: Espèces à la livraison */}
             {paymentMethod === "cash" && (
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 animate-in fade-in">
                 <div className="text-xs text-slate-300 flex items-center gap-2">
                   <Banknote className="w-5 h-5 text-emerald-400 shrink-0" />
                   <p>
-                    Total à régler en espèces à la réception : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                    Total à régler en espèces au livreur Billo Express : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
                   </p>
                 </div>
 
@@ -500,12 +902,39 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
             )}
 
-            {paymentMethod === "apple_pay" && (
-              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-300 flex items-center gap-3">
-                <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0" />
-                <p>
-                  Règlement par transfert Al Izza Express ou Nita : code de retrait transmis par SMS lors de la confirmation.
-                </p>
+            {/* Detail Box: Carte Bancaire */}
+            {paymentMethod === "card" && (
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 animate-in fade-in">
+                <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+                  <span>Paiement sécurisé 256-bit SSL</span>
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(e.target.value)}
+                    placeholder="Numéro de carte bancaire"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    value={cardExpiry}
+                    onChange={(e) => setCardExpiry(e.target.value)}
+                    placeholder="MM/AA"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-orange-500"
+                  />
+                  <input
+                    type="password"
+                    value={cardCvc}
+                    onChange={(e) => setCardCvc(e.target.value)}
+                    placeholder="CVC"
+                    maxLength={4}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-orange-500"
+                  />
+                </div>
               </div>
             )}
           </div>

@@ -24,6 +24,7 @@ export interface MenuItem {
   isVegetarian?: boolean;
   isHalal?: boolean;
   isSpicy?: boolean;
+  isAvailable?: boolean;
   preparationTime?: number;
   options?: MenuItemOption[];
 }
@@ -63,7 +64,26 @@ export interface CartItem {
   participantName?: string; // For Group Orders (e.g., "Amadou", "Mariama")
 }
 
-export type PaymentMethod = "card" | "cash" | "mobile_money" | "apple_pay";
+export type PaymentMethod =
+  | "mynita"
+  | "amanata"
+  | "al_izza_business"
+  | "al_izza_transfer"
+  | "zeyna"
+  | "mobile_money"
+  | "cash"
+  | "card"
+  | "apple_pay";
+
+export interface LocalPaymentOption {
+  id: PaymentMethod;
+  name: string;
+  category: "mobile_agency" | "telco" | "cash" | "card";
+  depositNumber?: string;
+  depositName?: string;
+  instructions: string;
+  badge?: string;
+}
 
 export type OrderStatus = "received" | "preparing" | "delivering" | "delivered";
 
@@ -165,4 +185,61 @@ export interface UserProfile {
   sahelClubTier: "Bronze" | "Argent" | "Or" | "VIP Sahélien";
   savedAddresses: SavedAddress[];
   favoriteRestaurantIds: string[];
+  referralCode?: string;
+  referralCount?: number;
+}
+
+export interface DailySpecial {
+  id: string;
+  title: string;
+  restaurantName: string;
+  restaurantId: string;
+  description: string;
+  price: number;
+  originalPrice: number;
+  image: string;
+  servingsLeft: number;
+  availableUntil: string;
+  accompaniedBy: string;
+  tags: string[];
+}
+
+export interface CateringQuoteRequest {
+  id: string;
+  clientName: string;
+  clientPhone: string;
+  clientEmail?: string;
+  eventType: "mariage" | "bapteme" | "dot" | "anniversaire" | "brunch" | "entreprise" | "soutenance" | "pique_nique" | "box_sauces";
+  guestCount: number;
+  eventDate: string;
+  budgetFCFA: number;
+  location: string;
+  culinaryPreferences: string;
+  notes?: string;
+  status: "pending" | "quoted" | "confirmed";
+  createdAt: string;
+}
+
+export interface SauceBox {
+  id: string;
+  name: string;
+  volume: string; // e.g. "Bocal 500ml", "Grand Format 1L", "Pack Dégustation 3 x 250ml"
+  description: string;
+  price: number;
+  spiceLevel: "Doux" | "Moyen" | "Piquant Sahélien 🔥" | "Kan-Kan Explosif 🌶️🌶️";
+  bestWith: string[]; // e.g. ["Riz blanc", "Dambou", "Pintade", "Choukouya"]
+  image: string;
+  isPopular?: boolean;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  readTime: string;
+  category: string;
+  excerpt: string;
+  content: string;
+  author: string;
+  date: string;
+  image: string;
 }

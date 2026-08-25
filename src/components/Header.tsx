@@ -14,9 +14,12 @@ import {
   Users,
   Award,
   Database,
+  ChefHat,
+  BookOpen,
+  Phone,
 } from "lucide-react";
-import { UserRole, ServiceMode, CityOption } from "../types";
-import { CITIES_DATA } from "../data/allorestoData";
+import { UserRole, ServiceMode, CityOption, UserProfile } from "../types";
+import { CITIES_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 
 interface HeaderProps {
   currentRole: UserRole;
@@ -32,7 +35,12 @@ interface HeaderProps {
   onOpenPartnerModal: () => void;
   onOpenGroupOrder: () => void;
   onOpenAccount: () => void;
+  onOpenAuth?: () => void;
+  currentUser?: UserProfile | null;
   onOpenTechPack: () => void;
+  onOpenCatering?: () => void;
+  onOpenBlog?: () => void;
+  onOpenContact?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -49,7 +57,12 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPartnerModal,
   onOpenGroupOrder,
   onOpenAccount,
+  onOpenAuth,
+  currentUser,
   onOpenTechPack,
+  onOpenCatering,
+  onOpenBlog,
+  onOpenContact,
 }) => {
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
@@ -98,20 +111,28 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="bg-gradient-to-r from-orange-600 via-red-600 to-amber-600 px-4 py-1.5 text-xs text-white flex items-center justify-between">
         <div className="flex items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
           <span className="font-extrabold uppercase tracking-wider text-[10px] bg-black/30 px-2 py-0.5 rounded-full">
-            🔥 Offre Spéciale Niamey
+            🔥 {ALLORESTO_BRAND_INFO.tagline}
           </span>
           <span className="text-[11px] font-medium hidden sm:inline">
-            Livraison offerte dès 5 000 FCFA aux particuliers, ministères &amp; bureaux avec le code <strong className="underline">NIAMEY10</strong>
+            Point de retrait : <strong>{ALLORESTO_BRAND_INFO.pickupLocation}</strong> &bull; Partenaire : <strong>Billo Express</strong>
           </span>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
           <button
+            onClick={onOpenContact}
+            className="text-[11px] font-bold text-white hover:text-orange-100 flex items-center gap-1 cursor-pointer"
+          >
+            <Phone className="w-3 h-3 text-emerald-300" />
+            <span className="hidden md:inline">+227 96 05 23 10</span>
+            <span className="md:hidden">Contact</span>
+          </button>
+          <button
             onClick={onOpenPartnerModal}
             className="text-[11px] font-bold underline hover:text-orange-100 cursor-pointer transition-colors flex items-center gap-1"
           >
             <Store className="w-3.5 h-3.5" />
-            <span>Vous êtes restaurateur ? Rejoignez Allôresto</span>
+            <span className="hidden sm:inline">Rejoindre comme Restaurant</span>
           </button>
         </div>
       </div>
@@ -129,7 +150,7 @@ export const Header: React.FC<HeaderProps> = ({
                 Allô<span className="text-orange-500">resto</span>
               </span>
               <p className="text-[10px] text-slate-400 font-medium hidden md:block -mt-1">
-                Le meilleur de Niamey, livré au bureau ou chez vous
+                {ALLORESTO_BRAND_INFO.tagline}
               </p>
             </div>
           </a>
@@ -219,6 +240,28 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right Actions: Group Orders, Account, AI Concierge, Role Switcher, Cart */}
         <div className="flex items-center gap-2">
+          {/* Catering / Events Button */}
+          {currentRole === "client" && onOpenCatering && (
+            <button
+              onClick={onOpenCatering}
+              className="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-bold transition cursor-pointer"
+            >
+              <ChefHat className="w-3.5 h-3.5 text-amber-400" />
+              <span>Traiteur &amp; Événements</span>
+            </button>
+          )}
+
+          {/* Blog Culinaire Button */}
+          {currentRole === "client" && onOpenBlog && (
+            <button
+              onClick={onOpenBlog}
+              className="hidden xl:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-bold transition cursor-pointer"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-orange-400" />
+              <span>Blog Culinaire</span>
+            </button>
+          )}
+
           {/* Group Order Trigger */}
           {currentRole === "client" && (
             <button
@@ -230,15 +273,42 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* User Account / Sahel Club Trigger */}
+          {/* Auth & User Account Triggers */}
           {currentRole === "client" && (
-            <button
-              onClick={onOpenAccount}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-bold transition cursor-pointer"
-            >
-              <Award className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">Mon Compte</span>
-            </button>
+            <div className="flex items-center gap-1.5">
+              {onOpenAuth && (
+                <button
+                  onClick={onOpenAuth}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-bold transition cursor-pointer"
+                  title="Connexion ou Inscription avec Email vérifié"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">
+                    {currentUser ? currentUser.name.split(" ")[0] : "Connexion"}
+                  </span>
+                </button>
+              )}
+
+              <button
+                onClick={onOpenAccount}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-bold transition cursor-pointer"
+                title="Club Sahel & Points de fidélité"
+              >
+                <Award className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden md:inline">Fidélité</span>
+              </button>
+
+              {onOpenContact && (
+                <button
+                  onClick={onOpenContact}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition cursor-pointer"
+                  title="Coordonnées, WhatsApp, Support & Formulaire de contact"
+                >
+                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Contacts</span>
+                </button>
+              )}
+            </div>
           )}
 
           {/* Tech Pack & Supabase Schema Exporter */}
