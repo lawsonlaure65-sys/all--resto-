@@ -42,15 +42,27 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
   const [itemQty, setItemQty] = useState<number>(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [addedNotice, setAddedNotice] = useState(false);
+  
+  // Dietary & Taste Filters within restaurant menu
+  const [filterSpicyOnly, setFilterSpicyOnly] = useState(false);
+  const [filterVegeOnly, setFilterVegeOnly] = useState(false);
+  const [filterHalalOnly, setFilterHalalOnly] = useState(false);
+  const [filterNigerLocalOnly, setFilterNigerLocalOnly] = useState(false);
+  const [filterExpressOnly, setFilterExpressOnly] = useState(false);
 
   if (!restaurant || !isOpen) return null;
 
   const categories = Array.from(new Set(restaurant.menu.map((m) => m.category)));
 
-  const filteredMenuItems =
-    selectedCategory === "all"
-      ? restaurant.menu
-      : restaurant.menu.filter((m) => m.category === selectedCategory);
+  const filteredMenuItems = restaurant.menu.filter((m) => {
+    if (selectedCategory !== "all" && m.category !== selectedCategory) return false;
+    if (filterSpicyOnly && !m.isSpicy && (m.spiceLevel || 0) === 0) return false;
+    if (filterVegeOnly && !m.isVegetarian && !m.isVegan) return false;
+    if (filterHalalOnly && !m.isHalal) return false;
+    if (filterNigerLocalOnly && !m.isNigerLocal) return false;
+    if (filterExpressOnly && !m.isExpress && (m.preparationTime || 20) > 15) return false;
+    return true;
+  });
 
   const handleOpenItemConfig = (item: MenuItem) => {
     setSelectedItemForConfig(item);
@@ -171,45 +183,106 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
           )}
 
           {/* Categories Navigation Bar */}
-          <div className="p-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between gap-2 overflow-x-auto shrink-0">
-            <div className="flex items-center gap-1.5 overflow-x-auto">
-              <button
-                onClick={() => setSelectedCategory("all")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                  selectedCategory === "all"
-                    ? "bg-orange-500 text-slate-950"
-                    : "bg-slate-900 text-slate-400 hover:text-white"
-                }`}
-              >
-                Tout le menu
-              </button>
-              {categories.map((cat) => (
+          <div className="p-3 bg-slate-950 border-b border-slate-800 space-y-2 shrink-0">
+            <div className="flex items-center justify-between gap-2 overflow-x-auto">
+              <div className="flex items-center gap-1.5 overflow-x-auto">
                 <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => setSelectedCategory("all")}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    selectedCategory === cat
-                      ? "bg-orange-500 text-slate-950"
+                    selectedCategory === "all"
+                      ? "bg-orange-500 text-slate-950 shadow-sm"
                       : "bg-slate-900 text-slate-400 hover:text-white"
                   }`}
                 >
-                  {cat}
+                  Tout le menu
                 </button>
-              ))}
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                      selectedCategory === cat
+                        ? "bg-orange-500 text-slate-950 shadow-sm"
+                        : "bg-slate-900 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {restaurant.services.includes("booking") && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onBookTable(restaurant);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold hover:bg-amber-500/30 transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Réserver une table</span>
+                </button>
+              )}
             </div>
 
-            {restaurant.services.includes("booking") && (
+            {/* Quick Dietary Filters */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pt-1 text-[11px]">
               <button
-                onClick={() => {
-                  onClose();
-                  onBookTable(restaurant);
-                }}
-                className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold hover:bg-amber-500/30 transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
+                onClick={() => setFilterSpicyOnly(!filterSpicyOnly)}
+                className={`px-2.5 py-1 rounded-lg font-bold border transition cursor-pointer flex items-center gap-1 whitespace-nowrap ${
+                  filterSpicyOnly
+                    ? "bg-red-950 text-red-300 border-red-500"
+                    : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+                }`}
               >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Réserver une table</span>
+                <Flame className="w-3 h-3 text-red-400" />
+                <span>Épicé</span>
               </button>
-            )}
+
+              <button
+                onClick={() => setFilterVegeOnly(!filterVegeOnly)}
+                className={`px-2.5 py-1 rounded-lg font-bold border transition cursor-pointer flex items-center gap-1 whitespace-nowrap ${
+                  filterVegeOnly
+                    ? "bg-green-950 text-green-300 border-green-500"
+                    : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+                }`}
+              >
+                <span>🌱 Végétarien</span>
+              </button>
+
+              <button
+                onClick={() => setFilterHalalOnly(!filterHalalOnly)}
+                className={`px-2.5 py-1 rounded-lg font-bold border transition cursor-pointer flex items-center gap-1 whitespace-nowrap ${
+                  filterHalalOnly
+                    ? "bg-emerald-950 text-emerald-300 border-emerald-500"
+                    : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+                }`}
+              >
+                <span>🥩 Halal</span>
+              </button>
+
+              <button
+                onClick={() => setFilterNigerLocalOnly(!filterNigerLocalOnly)}
+                className={`px-2.5 py-1 rounded-lg font-bold border transition cursor-pointer flex items-center gap-1 whitespace-nowrap ${
+                  filterNigerLocalOnly
+                    ? "bg-amber-950 text-amber-300 border-amber-500"
+                    : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+                }`}
+              >
+                <span>🇳🇪 Terroir Niger</span>
+              </button>
+
+              <button
+                onClick={() => setFilterExpressOnly(!filterExpressOnly)}
+                className={`px-2.5 py-1 rounded-lg font-bold border transition cursor-pointer flex items-center gap-1 whitespace-nowrap ${
+                  filterExpressOnly
+                    ? "bg-cyan-950 text-cyan-300 border-cyan-500"
+                    : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+                }`}
+              >
+                <span>⚡ Express &lt; 15min</span>
+              </button>
+            </div>
           </div>
 
           {/* Menu Items Grid (Scrollable) */}
@@ -223,15 +296,20 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                 >
                   <div className="flex-1 flex flex-col justify-between">
                     <div>
-                      <div className="flex items-center gap-1.5 mb-1">
+                      <div className="flex flex-wrap items-center gap-1.5 mb-1">
                         {item.isPopular && (
                           <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
                             Populaire
                           </span>
                         )}
+                        {item.isNigerLocal && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            🇳🇪 Niger
+                          </span>
+                        )}
                         {item.isSpicy && (
                           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400">
-                            🌶️ Épicé
+                            {item.spiceLevel === 3 ? "🔥🔥 Kan-Kan" : item.spiceLevel === 2 ? "🌶️🌶️ Relevé" : "🌶️ Épicé"}
                           </span>
                         )}
                         {item.isHalal && (
@@ -242,6 +320,17 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                         {item.isVegetarian && (
                           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-500/20 text-green-400">
                             🌱 Végé
+                          </span>
+                        )}
+                        {item.isGlutenFree && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400">
+                            🌾 Sans Gluten
+                          </span>
+                        )}
+                        {item.preparationTime && (
+                          <span className="text-[9px] text-slate-400 flex items-center gap-0.5">
+                            <Clock className="w-2.5 h-2.5 text-amber-400" />
+                            <span>{item.preparationTime}m</span>
                           </span>
                         )}
                       </div>

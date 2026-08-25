@@ -12,8 +12,10 @@ import {
   BookOpen,
   MessageCircle,
   Compass,
+  Sparkles,
 } from "lucide-react";
 import { ALLORESTO_BRAND_INFO } from "../data/allorestoData";
+import { BrandLogo } from "./BrandLogo";
 
 interface FooterProps {
   onOpenPartnerModal: () => void;
@@ -23,6 +25,7 @@ interface FooterProps {
   onOpenContact?: () => void;
   onOpenChefAI?: () => void;
   onOpenDistrictsDirectory?: () => void;
+  onOpenLogoModal?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -33,6 +36,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenContact,
   onOpenChefAI,
   onOpenDistrictsDirectory,
+  onOpenLogoModal,
 }) => {
   return (
     <footer className="bg-slate-950 border-t border-slate-800 text-slate-400 text-xs">
@@ -40,18 +44,12 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Col 1: Brand Info & Contacts */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white font-bold shadow-md shadow-orange-500/20">
-                <UtensilsCrossed className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-lg font-black text-white">
-                  Allô<span className="text-orange-500">resto</span>
-                </span>
-                <span className="ml-1.5 px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold">
-                  Niamey 🇳🇪
-                </span>
-              </div>
+            <div
+              onClick={onOpenLogoModal}
+              className="cursor-pointer inline-block group"
+              title="Découvrir le logo et la charte graphique Allôresto"
+            >
+              <BrandLogo variant="full" size="md" showTagline={false} />
             </div>
 
             <p className="text-xs text-slate-300 font-medium italic">

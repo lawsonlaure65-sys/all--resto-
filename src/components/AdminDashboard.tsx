@@ -38,7 +38,8 @@ import {
   FileCheck,
 } from "lucide-react";
 import { RESTAURANTS_DATA, SAUCE_BOXES_DATA, BLOG_POSTS_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
-import { MenuItem, SauceBox, CateringQuoteRequest, Order } from "../types";
+import { MenuItem, SauceBox, CateringQuoteRequest, Order, DishCategory } from "../types";
+import { DishManagementModal, CATEGORIES_CONFIG } from "./DishManagementModal";
 
 interface AdminDashboardProps {
   onOpenTechPack?: () => void;
@@ -61,11 +62,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenTechPack }
   const [dishesList, setDishesList] = useState<MenuItem[]>(
     RESTAURANTS_DATA.flatMap((r) => r.menu)
   );
-  const [newDishName, setNewDishName] = useState("");
-  const [newDishPrice, setNewDishPrice] = useState(3500);
-  const [newDishCategory, setNewDishCategory] = useState("Grillades");
-  const [newDishDesc, setNewDishDesc] = useState("Spécialité nigérienne fraîche préparée à la commande.");
-  const [showAddDishModal, setShowAddDishModal] = useState(false);
+  const [showDishModal, setShowDishModal] = useState<boolean>(false);
+  const [editingDish, setEditingDish] = useState<MenuItem | null>(null);
+
+  // Dishes Filter & Search State
+  const [dishSearchQuery, setDishSearchQuery] = useState<string>("");
+  const [dishCategoryFilter, setDishCategoryFilter] = useState<string>("all");
+  const [dishFilterSpicy, setDishFilterSpicy] = useState<boolean>(false);
+  const [dishFilterVege, setDishFilterVege] = useState<boolean>(false);
+  const [dishFilterHalal, setDishFilterHalal] = useState<boolean>(false);
+  const [dishFilterNigerLocal, setDishFilterNigerLocal] = useState<boolean>(false);
+  const [dishFilterExpress, setDishFilterExpress] = useState<boolean>(false);
 
   // State: Sauce Boxes
   const [sauceBoxes, setSauceBoxes] = useState<SauceBox[]>(SAUCE_BOXES_DATA);
@@ -265,26 +272,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenTechPack }
     );
   };
 
-  // Add new dish to menu
-  const handleAddDish = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newDishName) return;
+  // Dish management modal actions
+  const handleOpenAddDish = () => {
+    setEditingDish(null);
+    setShowDishModal(true);
+  };
 
-    const newDish: MenuItem = {
-      id: "dish-" + Date.now(),
-      name: newDishName,
-      description: newDishDesc,
-      price: newDishPrice,
-      category: newDishCategory,
-      image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80",
-      preparationTime: 25,
-      isSpicy: false,
-      isAvailable: true,
-    };
+  const handleOpenEditDish = (dish: MenuItem) => {
+    setEditingDish(dish);
+    setShowDishModal(true);
+  };
 
-    setDishesList([newDish, ...dishesList]);
-    setNewDishName("");
-    setShowAddDishModal(false);
+  const handleSaveDishFromModal = (savedDish: MenuItem) => {
+    if (editingDish) {
+      // Update existing dish
+      setDishesList((prev) =>
+        prev.map((d) => (d.id === savedDish.id ? savedDish : d))
+      );
+    } else {
+      // Add new dish to the top
+      setDishesList((prev) => [savedDish, ...prev]);
+    }
+    setShowDishModal(false);
+    setEditingDish(null);
+  };
+
+  const handleDeleteDish = (dishId: string) => {
+    if (window.confirm("Êtes-vous sûr de vouloir retirer ce plat du menu Allôresto ?")) {
+      setDishesList((prev) => prev.filter((d) => d.id !== dishId));
+    }
   };
 
   // Update Catering Status
@@ -636,133 +652,294 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenTechPack }
       {/* TAB 3: DISHES & MENU MANAGEMENT */}
       {/* ======================================================== */}
       {activeAdminTab === "menu_dishes" && (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-900 border border-slate-800">
+        <div className="space-y-5">
+          {/* Header & Main Add Button */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl">
             <div>
-              <h3 className="text-base font-black text-white">Gestion du Menu &amp; Plats</h3>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 text-[10px] font-black uppercase tracking-wider">
+                  Menu &bull; Cuisine &bull; Photothèque
+                </span>
+                <span className="text-xs text-slate-400">{dishesList.length} plats enregistrés</span>
+              </div>
+              <h3 className="text-lg font-black text-white mt-1">Gestion Complète des Plats &amp; Cartes</h3>
               <p className="text-xs text-slate-400">
-                Gérez la disponibilité des plats, définissez le Plat du Jour et modifiez les tarifs en FCFA.
+                Ajoutez des photos directement de votre galerie, configurez les catégories (Africain, Européen, Boisson...) et filtres experts (Épicé, Végé, Halal, Niger).
               </p>
             </div>
+
             <button
-              onClick={() => setShowAddDishModal(true)}
-              className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-orange-500/20 cursor-pointer"
+              onClick={handleOpenAddDish}
+              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-orange-500/20 cursor-pointer shrink-0 transition-transform active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              <span>Ajouter un Plat au Menu</span>
+              <span>Ajouter un Plat (+ Photo Galerie)</span>
             </button>
           </div>
 
-          {/* Add Dish Modal simulation */}
-          {showAddDishModal && (
-            <form onSubmit={handleAddDish} className="p-5 rounded-2xl bg-slate-950 border border-orange-500/40 space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <h4 className="text-xs font-bold text-orange-400 uppercase tracking-wider">
-                  Nouveau Plat au Menu
-                </h4>
-                <button
-                  type="button"
-                  onClick={() => setShowAddDishModal(false)}
-                  className="text-xs text-slate-400 hover:text-white"
-                >
-                  Annuler
-                </button>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <input
-                  type="text"
-                  required
-                  placeholder="Nom du plat (ex: Demi-Poulet Braisé & Aloco)"
-                  value={newDishName}
-                  onChange={(e) => setNewDishName(e.target.value)}
-                  className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-orange-500"
-                />
-                <input
-                  type="number"
-                  required
-                  placeholder="Prix en FCFA"
-                  value={newDishPrice}
-                  onChange={(e) => setNewDishPrice(Number(e.target.value))}
-                  className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-orange-500"
-                />
-                <select
-                  value={newDishCategory}
-                  onChange={(e) => setNewDishCategory(e.target.value)}
-                  className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-orange-500"
-                >
-                  <option value="Grillades">Grillades du Sahel</option>
-                  <option value="Traditionnel">Traditionnel Nigérien</option>
-                  <option value="Burgers">Burgers &amp; Fast-Food</option>
-                  <option value="Pizzas">Pizzas</option>
-                  <option value="Boissons">Boissons &amp; Jus Frais</option>
-                </select>
-              </div>
+          {/* Search, Categories & Filter Bar */}
+          <div className="p-4 rounded-3xl bg-slate-900 border border-slate-800 space-y-3">
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Description du plat et accompagnements"
-                value={newDishDesc}
-                onChange={(e) => setNewDishDesc(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-orange-500"
+                placeholder="Rechercher par nom de plat, ingrédient ou description..."
+                value={dishSearchQuery}
+                onChange={(e) => setDishSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-orange-500"
               />
+            </div>
+
+            {/* Category Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               <button
-                type="submit"
-                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs cursor-pointer"
+                onClick={() => setDishCategoryFilter("all")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                  dishCategoryFilter === "all"
+                    ? "bg-orange-500 text-slate-950 font-black"
+                    : "bg-slate-950 text-slate-400 hover:text-white border border-slate-800"
+                }`}
               >
-                Enregistrer le plat
+                🍽️ Tous les Plats ({dishesList.length})
               </button>
-            </form>
-          )}
 
-          {/* Dishes Table */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {dishesList.map((dish) => (
-              <div
-                key={dish.id}
-                className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-start justify-between gap-3 hover:border-slate-700 transition"
+              {CATEGORIES_CONFIG.map((cat) => {
+                const isSelected = dishCategoryFilter === cat.id;
+                const count = dishesList.filter(
+                  (d) => d.dishCategory === cat.id || d.category.toLowerCase().includes(cat.label.toLowerCase())
+                ).length;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setDishCategoryFilter(cat.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                      isSelected
+                        ? "bg-orange-500 text-slate-950 font-black"
+                        : "bg-slate-950 text-slate-400 hover:text-white border border-slate-800"
+                    }`}
+                  >
+                    <span>{cat.icon}</span>
+                    <span>{cat.label}</span>
+                    <span className="text-[10px] opacity-75">({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Dietary Filter Pills */}
+            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-800/80">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Filtres :</span>
+
+              <button
+                onClick={() => setDishFilterNigerLocal(!dishFilterNigerLocal)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition cursor-pointer flex items-center gap-1 ${
+                  dishFilterNigerLocal
+                    ? "bg-amber-950 text-amber-300 border-amber-500"
+                    : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                }`}
               >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-black text-white">{dish.name}</span>
-                    {dish.isDailySpecial && (
-                      <span className="px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-500/40 text-[9px] font-bold">
-                        ⭐ Plat du Jour
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-400 line-clamp-1">{dish.description}</p>
-                  <div className="flex items-center gap-2 pt-1 text-xs">
-                    <span className="font-bold text-orange-400 font-mono">
-                      {dish.price.toLocaleString()} FCFA
-                    </span>
-                    <span className="text-slate-500">&bull;</span>
-                    <span className="text-[10px] text-slate-400">{dish.category}</span>
-                  </div>
-                </div>
+                <span>🇳🇪 Terroir Niger</span>
+              </button>
 
-                <div className="flex flex-col gap-1.5 shrink-0 items-end">
-                  <button
-                    onClick={() => handleToggleDishStock(dish.id)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition ${
-                      dish.isAvailable
-                        ? "bg-emerald-950 text-emerald-400 border border-emerald-500/30"
-                        : "bg-rose-950 text-rose-400 border border-rose-500/30"
-                    }`}
-                  >
-                    {dish.isAvailable ? "En Stock" : "Rupture Stock"}
-                  </button>
-                  <button
-                    onClick={() => handleToggleDailySpecial(dish.id)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition ${
-                      dish.isDailySpecial
-                        ? "bg-amber-500 text-slate-950 font-black"
-                        : "bg-slate-800 text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    {dish.isDailySpecial ? "Retirer Plat du Jour" : "Mettre en Plat du Jour"}
-                  </button>
+              <button
+                onClick={() => setDishFilterSpicy(!dishFilterSpicy)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition cursor-pointer flex items-center gap-1 ${
+                  dishFilterSpicy
+                    ? "bg-red-950 text-red-300 border-red-500"
+                    : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                }`}
+              >
+                <Flame className="w-3.5 h-3.5 text-red-400" />
+                <span>Épicé</span>
+              </button>
+
+              <button
+                onClick={() => setDishFilterHalal(!dishFilterHalal)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition cursor-pointer flex items-center gap-1 ${
+                  dishFilterHalal
+                    ? "bg-emerald-950 text-emerald-300 border-emerald-500"
+                    : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                }`}
+              >
+                <span>🥩 100% Halal</span>
+              </button>
+
+              <button
+                onClick={() => setDishFilterVege(!dishFilterVege)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition cursor-pointer flex items-center gap-1 ${
+                  dishFilterVege
+                    ? "bg-green-950 text-green-300 border-green-500"
+                    : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                }`}
+              >
+                <span>🌱 Végétarien</span>
+              </button>
+
+              <button
+                onClick={() => setDishFilterExpress(!dishFilterExpress)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition cursor-pointer flex items-center gap-1 ${
+                  dishFilterExpress
+                    ? "bg-cyan-950 text-cyan-300 border-cyan-500"
+                    : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                }`}
+              >
+                <span>⚡ Express &lt; 15 min</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Dishes Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {dishesList
+              .filter((dish) => {
+                if (dishSearchQuery.trim()) {
+                  const q = dishSearchQuery.toLowerCase();
+                  if (!dish.name.toLowerCase().includes(q) && !dish.description.toLowerCase().includes(q)) {
+                    return false;
+                  }
+                }
+                if (dishCategoryFilter !== "all") {
+                  if (dish.dishCategory) {
+                    if (dish.dishCategory !== dishCategoryFilter) return false;
+                  } else {
+                    const catConfig = CATEGORIES_CONFIG.find((c) => c.id === dishCategoryFilter);
+                    if (catConfig && !dish.category.toLowerCase().includes(catConfig.label.toLowerCase())) {
+                      return false;
+                    }
+                  }
+                }
+                if (dishFilterNigerLocal && !dish.isNigerLocal) return false;
+                if (dishFilterSpicy && !dish.isSpicy && (dish.spiceLevel || 0) === 0) return false;
+                if (dishFilterHalal && !dish.isHalal) return false;
+                if (dishFilterVege && !dish.isVegetarian && !dish.isVegan) return false;
+                if (dishFilterExpress && !dish.isExpress && (dish.preparationTime || 20) > 15) return false;
+                return true;
+              })
+              .map((dish) => (
+                <div
+                  key={dish.id}
+                  className="p-4 rounded-3xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between gap-3 shadow-md"
+                >
+                  <div className="flex gap-3.5">
+                    {/* Dish Photo Thumbnail with quick replace prompt */}
+                    <div
+                      onClick={() => handleOpenEditDish(dish)}
+                      className="relative w-24 h-24 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 cursor-pointer group"
+                    >
+                      <img
+                        src={dish.image}
+                        alt={dish.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                        <Edit2 className="w-5 h-5 text-orange-400" />
+                      </div>
+                    </div>
+
+                    {/* Dish Main Details */}
+                    <div className="flex-1 space-y-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-950 text-slate-300 border border-slate-800">
+                          {dish.category}
+                        </span>
+
+                        {dish.isDailySpecial && (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-500/40 text-[9px] font-black">
+                            ⭐ Plat du Jour
+                          </span>
+                        )}
+
+                        {dish.isNigerLocal && (
+                          <span className="px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 text-[9px] font-bold border border-amber-500/30">
+                            🇳🇪 Terroir
+                          </span>
+                        )}
+
+                        {dish.isSpicy && (
+                          <span className="px-1.5 py-0.5 rounded bg-red-950/80 text-red-300 text-[9px] font-bold border border-red-500/30">
+                            {dish.spiceLevel === 3 ? "🔥🔥 Kan-Kan" : dish.spiceLevel === 2 ? "🌶️🌶️ Relevé" : "🌶️ Épicé"}
+                          </span>
+                        )}
+
+                        {dish.isHalal && (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 text-[9px] font-bold border border-emerald-500/30">
+                            Halal
+                          </span>
+                        )}
+                        {dish.isVegetarian && (
+                          <span className="px-1.5 py-0.5 rounded bg-green-950/80 text-green-300 text-[9px] font-bold border border-green-500/30">
+                            🌱 Végé
+                          </span>
+                        )}
+                      </div>
+
+                      <h4 className="text-sm font-black text-white">{dish.name}</h4>
+                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                        {dish.description}
+                      </p>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <span className="font-extrabold text-orange-400 font-mono text-sm">
+                          {dish.price.toLocaleString()} FCFA
+                        </span>
+                        {dish.preparationTime && (
+                          <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-amber-400" />
+                            <span>{dish.preparationTime} min</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions Toolbar */}
+                  <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleToggleDishStock(dish.id)}
+                        className={`px-3 py-1.5 rounded-xl text-[11px] font-bold cursor-pointer transition border ${
+                          dish.isAvailable
+                            ? "bg-emerald-950/80 text-emerald-300 border-emerald-500/40"
+                            : "bg-rose-950/80 text-rose-300 border-rose-500/40"
+                        }`}
+                      >
+                        {dish.isAvailable ? "✓ En Stock" : "✕ Rupture"}
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleDailySpecial(dish.id)}
+                        className={`px-3 py-1.5 rounded-xl text-[11px] font-bold cursor-pointer transition border ${
+                          dish.isDailySpecial
+                            ? "bg-amber-500 text-slate-950 border-amber-400 font-black"
+                            : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
+                        }`}
+                      >
+                        {dish.isDailySpecial ? "⭐ Plat du Jour" : "Mettre du Jour"}
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleOpenEditDish(dish)}
+                        className="p-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-orange-400 border border-slate-800 transition cursor-pointer"
+                        title="Modifier photo, détails ou filtres"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteDish(dish.id)}
+                        className="p-2 rounded-xl bg-slate-950 hover:bg-rose-950 text-slate-400 hover:text-rose-400 border border-slate-800 transition cursor-pointer"
+                        title="Supprimer ce plat"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       )}
@@ -1033,6 +1210,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenTechPack }
             </div>
           </div>
         </div>
+      )}
+
+      {/* Dish Add/Edit Modal */}
+      {showDishModal && (
+        <DishManagementModal
+          isOpen={showDishModal}
+          onClose={() => {
+            setShowDishModal(false);
+            setEditingDish(null);
+          }}
+          onSaveDish={handleSaveDishFromModal}
+          initialDish={editingDish}
+        />
       )}
     </div>
   );

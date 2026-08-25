@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Header } from "./components/Header";
 import { HeroBanner } from "./components/HeroBanner";
 import { FlashMidiBanner } from "./components/FlashMidiBanner";
@@ -27,6 +27,8 @@ import { PartnerRegistrationModal } from "./components/PartnerRegistrationModal"
 import { ContactModal } from "./components/ContactModal";
 import { DeliveryFeeCalculatorModal } from "./components/DeliveryFeeCalculatorModal";
 import { DeliveryDistrictsWidget } from "./components/DeliveryDistrictsWidget";
+import { LogoPresentationModal } from "./components/LogoPresentationModal";
+import { DishesCatalogModal } from "./components/DishesCatalogModal";
 import { Footer } from "./components/Footer";
 
 import {
@@ -34,6 +36,7 @@ import {
   ServiceMode,
   Restaurant,
   MenuItem,
+  MealMoment,
   CartItem,
   Order,
   OrderStatus,
@@ -108,7 +111,13 @@ export function App() {
   const [isBlogOpen, setIsBlogOpen] = useState<boolean>(false);
   const [isContactOpen, setIsContactOpen] = useState<boolean>(false);
   const [isDistrictsModalOpen, setIsDistrictsModalOpen] = useState<boolean>(false);
+  const [isLogoModalOpen, setIsLogoModalOpen] = useState<boolean>(false);
+  const [isDishesCatalogOpen, setIsDishesCatalogOpen] = useState<boolean>(false);
+  const [catalogMealMoment, setCatalogMealMoment] = useState<"all" | MealMoment>("all");
   const [selectedDistrictName, setSelectedDistrictName] = useState<string>("Plateau (Ministères & Ambassades)");
+
+  // Flattened all dishes across restaurants
+  const allDishes = useMemo(() => RESTAURANTS_DATA.flatMap((r) => r.menu), []);
 
   // Cart Calculations
   const cartTotal = cartItems.reduce((sum, it) => sum + it.totalPrice, 0);
@@ -317,6 +326,7 @@ export function App() {
         onOpenBlog={() => setIsBlogOpen(true)}
         onOpenContact={() => setIsContactOpen(true)}
         onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
+        onOpenLogoModal={() => setIsLogoModalOpen(true)}
       />
 
       {/* Main Content Rendered by Role */}
@@ -337,6 +347,15 @@ export function App() {
               filterFastDelivery={filterFastDelivery}
               onToggleFastDelivery={() => setFilterFastDelivery(!filterFastDelivery)}
               onOpenChefAI={() => setIsChefAIOpen(true)}
+              onOpenLogoModal={() => setIsLogoModalOpen(true)}
+              onOpenDishesCatalog={() => {
+                setCatalogMealMoment("all");
+                setIsDishesCatalogOpen(true);
+              }}
+              onOpenDishesCatalogWithMoment={(moment) => {
+                setCatalogMealMoment(moment);
+                setIsDishesCatalogOpen(true);
+              }}
             />
 
             {/* Active Live Order Pill Banner if tracking */}
@@ -771,6 +790,33 @@ export function App() {
         onOpenContact={() => setIsContactOpen(true)}
         onOpenChefAI={() => setIsChefAIOpen(true)}
         onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
+        onOpenLogoModal={() => setIsLogoModalOpen(true)}
+      />
+
+      {/* 16. Présentation et Charte du Logo Intelligent Allôresto */}
+      <LogoPresentationModal
+        isOpen={isLogoModalOpen}
+        onClose={() => setIsLogoModalOpen(false)}
+      />
+
+      {/* 17. Grande Carte & Catalogue des Plats (Petit-déj, Déjeuner, Dîner, Menus du jour, Africain, Européen...) */}
+      <DishesCatalogModal
+        isOpen={isDishesCatalogOpen}
+        onClose={() => setIsDishesCatalogOpen(false)}
+        dishes={allDishes}
+        restaurants={RESTAURANTS_DATA}
+        initialMealMoment={catalogMealMoment}
+        onAddToCart={(item) => {
+          handleAddToCart(item, {}, 1);
+          setIsCartOpen(true);
+        }}
+        onSelectRestaurant={(resto) => setSelectedRestaurantForMenu(resto)}
+        onOpenRestaurantMenu={(restaurantId) => {
+          const foundResto = RESTAURANTS_DATA.find((r) => r.id === restaurantId);
+          if (foundResto) {
+            setSelectedRestaurantForMenu(foundResto);
+          }
+        }}
       />
 
       {/* Responsive Mobile Bottom Navigation Bar */}

@@ -13,19 +13,47 @@ export interface MenuItemOption {
   choices: MenuItemOptionChoice[];
 }
 
+export type MealMoment = "all" | "petit_dejeuner" | "dejeuner" | "diner" | "menu_du_jour";
+
+export type DishCategory =
+  | "petit_dejeuner"
+  | "menu_du_jour"
+  | "africain"
+  | "europeen"
+  | "entrees"
+  | "boissons"
+  | "desserts"
+  | "accompagnements"
+  | "grillades";
+
 export interface MenuItem {
   id: string;
   name: string;
   description: string;
   price: number;
   category: string;
+  dishCategory?: DishCategory;
   image: string;
   isPopular?: boolean;
   isVegetarian?: boolean;
+  isVegan?: boolean;
   isHalal?: boolean;
   isSpicy?: boolean;
+  spiceLevel?: number; // 0 = doux, 1 = modéré, 2 = relevé, 3 = volcan sahélien
+  isGlutenFree?: boolean;
+  isNigerLocal?: boolean; // 100% Spécialité Terroir Niger (Dambou, Choukouya, etc.)
+  isExpress?: boolean; // Prêt en < 15 min (Formule midi bureau)
+  isChefSpecial?: boolean;
+  isHealthy?: boolean;
+  isDailySpecial?: boolean;
+  isMenuDuJour?: boolean; // Formule Menu complet du jour
+  menuDuJourIncludes?: string; // e.g. "Entrée + Plat + Boisson Bissap"
+  mealMoments?: Array<"petit_dejeuner" | "dejeuner" | "diner" | "menu_du_jour">;
+  mealServiceTime?: string; // e.g. "Servi de 06h30 à 11h00"
   isAvailable?: boolean;
   preparationTime?: number;
+  calories?: number;
+  allergens?: string[];
   options?: MenuItemOption[];
 }
 

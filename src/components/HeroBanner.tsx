@@ -15,7 +15,7 @@ import {
   Percent,
   CheckCircle2,
 } from "lucide-react";
-import { CuisineFilter } from "../types";
+import { CuisineFilter, MealMoment } from "../types";
 import { CUISINES_DATA } from "../data/allorestoData";
 
 interface HeroBannerProps {
@@ -28,6 +28,9 @@ interface HeroBannerProps {
   filterFastDelivery: boolean;
   onToggleFastDelivery: () => void;
   onOpenChefAI: () => void;
+  onOpenLogoModal?: () => void;
+  onOpenDishesCatalog?: () => void;
+  onOpenDishesCatalogWithMoment?: (moment: "all" | MealMoment) => void;
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
@@ -40,6 +43,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   filterFastDelivery,
   onToggleFastDelivery,
   onOpenChefAI,
+  onOpenLogoModal,
+  onOpenDishesCatalog,
+  onOpenDishesCatalogWithMoment,
 }) => {
   const getCuisineIcon = (icon: string) => {
     switch (icon) {
@@ -71,10 +77,14 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-orange-500/10 border border-orange-500/30 text-orange-400 shadow-sm"
+            onClick={onOpenLogoModal}
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 shadow-sm transition ${
+              onOpenLogoModal ? "cursor-pointer" : ""
+            }`}
+            title="Découvrir le nouveau logo Allôresto"
           >
-            <Sparkles className="w-3.5 h-3.5 fill-current" />
-            <span>Niamey, Niger 🇳🇪 &bull; Grande Mosquée Mouhamar Khadafi</span>
+            <Sparkles className="w-3.5 h-3.5 fill-current text-amber-400" />
+            <span>Niamey, Niger 🇳🇪 &bull; Grande Mosquée Mouhamar Kadhafi &bull; Logo Officiel 2026</span>
           </motion.div>
 
           <motion.h1
@@ -134,6 +144,79 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </div>
           </motion.div>
 
+          {/* Moments de la Journée Quick Pills */}
+          <div className="pt-2 max-w-3xl mx-auto">
+            <div className="p-2.5 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-wrap items-center justify-center gap-2">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-1">
+                <Clock className="w-3.5 h-3.5 text-orange-400" />
+                <span>Moments :</span>
+              </span>
+
+              {/* Petit Déjeuner */}
+              <button
+                onClick={() => {
+                  if (onOpenDishesCatalogWithMoment) {
+                    onOpenDishesCatalogWithMoment("petit_dejeuner");
+                  } else if (onOpenDishesCatalog) {
+                    onOpenDishesCatalog();
+                  }
+                }}
+                className="px-3 py-1.5 rounded-xl bg-amber-950/50 hover:bg-amber-900/60 border border-amber-500/40 text-amber-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+              >
+                <span>🌅</span>
+                <span>Petit Déjeuner</span>
+                <span className="text-[10px] text-amber-400 font-mono opacity-80 hidden md:inline">06h30-11h</span>
+              </button>
+
+              {/* Déjeuner */}
+              <button
+                onClick={() => {
+                  if (onOpenDishesCatalogWithMoment) {
+                    onOpenDishesCatalogWithMoment("dejeuner");
+                  } else if (onOpenDishesCatalog) {
+                    onOpenDishesCatalog();
+                  }
+                }}
+                className="px-3 py-1.5 rounded-xl bg-orange-950/50 hover:bg-orange-900/60 border border-orange-500/40 text-orange-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+              >
+                <span>☀️</span>
+                <span>Déjeuner</span>
+                <span className="text-[10px] text-orange-400 font-mono opacity-80 hidden md:inline">11h30-15h30</span>
+              </button>
+
+              {/* Dîner */}
+              <button
+                onClick={() => {
+                  if (onOpenDishesCatalogWithMoment) {
+                    onOpenDishesCatalogWithMoment("diner");
+                  } else if (onOpenDishesCatalog) {
+                    onOpenDishesCatalog();
+                  }
+                }}
+                className="px-3 py-1.5 rounded-xl bg-indigo-950/50 hover:bg-indigo-900/60 border border-indigo-500/40 text-indigo-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+              >
+                <span>🌙</span>
+                <span>Dîner</span>
+                <span className="text-[10px] text-indigo-400 font-mono opacity-80 hidden md:inline">18h30-23h30</span>
+              </button>
+
+              {/* Menu du Jour / Plat du Jour */}
+              <button
+                onClick={() => {
+                  if (onOpenDishesCatalogWithMoment) {
+                    onOpenDishesCatalogWithMoment("menu_du_jour");
+                  } else if (onOpenDishesCatalog) {
+                    onOpenDishesCatalog();
+                  }
+                }}
+                className="px-3 py-1.5 rounded-xl bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+              >
+                <span>⭐</span>
+                <span>Plat / Menu du Jour</span>
+              </button>
+            </div>
+          </div>
+
           {/* Trust Highlights */}
           <div className="pt-2 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
@@ -160,6 +243,15 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 
             {/* Quick Filter Toggles */}
             <div className="flex items-center gap-2">
+              {onOpenDishesCatalog && (
+                <button
+                  onClick={onOpenDishesCatalog}
+                  className="px-3.5 py-1 rounded-full text-xs font-black bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 shadow-md shadow-orange-500/20 hover:from-orange-400 hover:to-amber-400 transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>🍲 Carte des Plats &amp; Filtres</span>
+                </button>
+              )}
+
               <button
                 onClick={onTogglePromo}
                 className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer ${

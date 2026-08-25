@@ -18,10 +18,12 @@ import {
   BookOpen,
   Phone,
   Compass,
+  Layers,
 } from "lucide-react";
 import { UserRole, ServiceMode, CityOption, UserProfile } from "../types";
 import { CITIES_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { NIAMEY_DISTRICTS_DATA } from "../data/niameyDistrictsData";
+import { BrandLogo } from "./BrandLogo";
 
 interface HeaderProps {
   currentRole: UserRole;
@@ -44,6 +46,7 @@ interface HeaderProps {
   onOpenBlog?: () => void;
   onOpenContact?: () => void;
   onOpenDistrictsDirectory?: () => void;
+  onOpenLogoModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -67,6 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenBlog,
   onOpenContact,
   onOpenDistrictsDirectory,
+  onOpenLogoModal,
 }) => {
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
@@ -152,21 +156,15 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Main Navigation Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
-        {/* Brand Logo */}
+        {/* Brand Logo with Modern Clever Icon */}
         <div className="flex items-center gap-3">
-          <a href="#" className="flex items-center gap-2 group cursor-pointer">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/30 group-hover:scale-105 transition-transform">
-              <UtensilsCrossed className="w-5 h-5 stroke-[2.5]" />
-            </div>
-            <div>
-              <span className="text-xl font-black tracking-tight text-white flex items-center gap-1">
-                Allô<span className="text-orange-500">resto</span>
-              </span>
-              <p className="text-[10px] text-slate-400 font-medium hidden md:block -mt-1">
-                {ALLORESTO_BRAND_INFO.tagline}
-              </p>
-            </div>
-          </a>
+          <div
+            onClick={onOpenLogoModal}
+            className="flex items-center gap-2 group cursor-pointer"
+            title="Cliquez pour découvrir le concept et la géométrie du logo Allôresto"
+          >
+            <BrandLogo variant="full" size="md" showTagline={false} />
+          </div>
 
           {/* City / Location Selector */}
           <div className="relative">

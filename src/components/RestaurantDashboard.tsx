@@ -12,11 +12,14 @@ import {
   Plus,
   Power,
   Edit2,
+  Trash2,
   ArrowRight,
   Package,
+  Flame,
 } from "lucide-react";
 import { Order, Restaurant, MenuItem, OrderStatus } from "../types";
 import { RESTAURANTS_DATA } from "../data/allorestoData";
+import { DishManagementModal } from "./DishManagementModal";
 
 interface RestaurantDashboardProps {
   orders: Order[];
@@ -31,6 +34,10 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
   const [activeTab, setActiveTab] = useState<"orders" | "menu" | "analytics">("orders");
   const [menuItems, setMenuItems] = useState<MenuItem[]>(RESTAURANTS_DATA[0].menu);
   const [isRestaurantOpen, setIsRestaurantOpen] = useState(true);
+  
+  // Dish modal state
+  const [showDishModal, setShowDishModal] = useState<boolean>(false);
+  const [editingDish, setEditingDish] = useState<MenuItem | null>(null);
 
   const currentResto =
     RESTAURANTS_DATA.find((r) => r.id === selectedRestoId) || RESTAURANTS_DATA[0];
@@ -41,8 +48,32 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
 
   const toggleItemStock = (itemId: string) => {
     setMenuItems((prev) =>
-      prev.map((item) => (item.id === itemId ? { ...item, isPopular: !item.isPopular } : item))
+      prev.map((item) => (item.id === itemId ? { ...item, isAvailable: !item.isAvailable } : item))
     );
+  };
+
+  const handleOpenAddDish = () => {
+    setEditingDish(null);
+    setShowDishModal(true);
+  };
+
+  const handleOpenEditDish = (dish: MenuItem) => {
+    setEditingDish(dish);
+    setShowDishModal(true);
+  };
+
+  const handleSaveDish = (dish: MenuItem) => {
+    if (editingDish) {
+      setMenuItems((prev) => prev.map((d) => (d.id === dish.id ? dish : d)));
+    } else {
+      setMenuItems((prev) => [dish, ...prev]);
+    }
+    setShowDishModal(false);
+    setEditingDish(null);
+  };
+
+  const handleDeleteDish = (dishId: string) => {
+    setMenuItems((prev) => prev.filter((d) => d.id !== dishId));
   };
 
   const totalRevenue = currentOrders.reduce((sum, o) => sum + o.subtotal, 0);
@@ -257,9 +288,12 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
               Articles au Menu ({menuItems.length})
             </h3>
-            <button className="px-3.5 py-2 rounded-xl bg-orange-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer">
+            <button
+              onClick={handleOpenAddDish}
+              className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-md transition"
+            >
               <Plus className="w-3.5 h-3.5" />
-              <span>Ajouter un plat</span>
+              <span>Ajouter un plat (+ Photo Galerie)</span>
             </button>
           </div>
 
@@ -267,17 +301,24 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
             {menuItems.map((item) => (
               <div
                 key={item.id}
-                className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-4"
+                className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-4 hover:border-slate-700 transition"
               >
                 <div className="flex items-center gap-3">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-14 h-14 rounded-xl object-cover"
-                    referrerPolicy="no-referrer"
-                  />
+                  <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-950 shrink-0">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    {item.isSpicy && (
+                      <span className="absolute top-1 left-1 bg-red-950/80 text-red-300 text-[8px] font-black px-1 rounded">
+                        🌶️
+                      </span>
+                    )}
+                  </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">{item.name}</h4>
+                    <h4 className="text-xs font-bold text-white line-clamp-1">{item.name}</h4>
                     <p className="text-[11px] text-slate-400">{item.category}</p>
                     <span className="text-xs font-extrabold text-orange-400">
                       {item.price.toLocaleString()} FCFA
@@ -285,22 +326,43 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => toggleItemStock(item.id)}
                     className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-colors cursor-pointer ${
-                      item.isPopular
+                      item.isAvailable !== false
                         ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
-                        : "bg-slate-800 border-slate-700 text-slate-400"
+                        : "bg-rose-500/20 border-rose-500/40 text-rose-300"
                     }`}
                   >
-                    {item.isPopular ? "En Stock" : "Rupture"}
+                    {item.isAvailable !== false ? "En Stock" : "Rupture"}
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenEditDish(item)}
+                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer"
+                    title="Modifier le plat"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
+      )}
+
+      {/* Dish Modal */}
+      {showDishModal && (
+        <DishManagementModal
+          isOpen={showDishModal}
+          onClose={() => {
+            setShowDishModal(false);
+            setEditingDish(null);
+          }}
+          onSaveDish={handleSaveDish}
+          initialDish={editingDish}
+        />
       )}
     </div>
   );
