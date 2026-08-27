@@ -35,6 +35,7 @@ import {
   NiameyDistrict,
   isNiameyNightTime,
 } from "../data/niameyDistrictsData";
+import { getJumuahStatus } from "../utils/jumuahSchedule";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -51,6 +52,7 @@ interface CheckoutModalProps {
   onOrderPlaced: (newOrder: Order) => void;
   onOpenDistrictsDirectory?: () => void;
   initialDistrictName?: string;
+  simulatedFridayPause?: boolean;
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -68,15 +70,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   onOrderPlaced,
   onOpenDistrictsDirectory,
   initialDistrictName,
+  simulatedFridayPause = false,
 }) => {
+  const jumuahStatus = getJumuahStatus(simulatedFridayPause);
+
   const [selectedDistrictId, setSelectedDistrictId] = useState<string>("plateau");
   const [deliveryZone, setDeliveryZone] = useState<"centre" | "peripherie" | "mosquee_pickup">("centre");
   const [customerName, setCustomerName] = useState("Amadou Seyni");
   const [customerPhone, setCustomerPhone] = useState("🇳🇪 +227 90 12 34 56");
   const [deliveryAddress, setDeliveryAddress] = useState("Quartier Plateau, Ministère des Finances, Niamey");
   const [deliveryNotes, setDeliveryNotes] = useState("Bureau 204, 2ème étage aile Ouest");
-  const [scheduledOption, setScheduledOption] = useState<string>("asap");
-  const [customScheduledTime, setCustomScheduledTime] = useState<string>("12:30");
+  const [scheduledOption, setScheduledOption] = useState<string>(
+    jumuahStatus.isPauseActive ? "custom" : "asap"
+  );
+  const [customScheduledTime, setCustomScheduledTime] = useState<string>(
+    jumuahStatus.isPauseActive ? "15:00" : "12:30"
+  );
   const [cashChangeAmount, setCashChangeAmount] = useState<number | undefined>(undefined);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("mynita");
   const [paymentReference, setPaymentReference] = useState<string>("");
@@ -273,36 +282,67 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         <form onSubmit={handleSubmitOrder} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
           {/* 1. Horaire & Créneau de Livraison */}
           <div className="space-y-3 p-4 rounded-2xl bg-slate-950 border border-orange-500/20">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              <span>Moment de livraison souhaité</span>
-            </h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                <span>Moment de livraison souhaité</span>
+              </h4>
+              <span className="text-[10px] text-amber-400 font-bold">
+                🕌 Règle Vendredi : Pause 11h-15h
+              </span>
+            </div>
+
+            {jumuahStatus.isPauseActive && (
+              <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2.5">
+                <span className="text-base">🕌</span>
+                <div>
+                  <p className="font-bold text-amber-300">
+                    Pause Prière du Jumu&apos;ah en cours (11h00 - 15h00)
+                  </p>
+                  <p className="text-[11px] text-amber-200/90 mt-0.5">
+                    Les livraisons immédiates sont suspendues pour respecter la grande prière du vendredi. Vous pouvez programmer votre commande pour une livraison dès <strong>15h00</strong>.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
                 type="button"
+                disabled={jumuahStatus.isPauseActive}
                 onClick={() => setScheduledOption("asap")}
-                className={`p-3 rounded-xl border text-left text-xs transition cursor-pointer ${
-                  scheduledOption === "asap"
-                    ? "bg-orange-500/20 border-orange-500 text-white font-bold"
-                    : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                className={`p-3 rounded-xl border text-left text-xs transition ${
+                  jumuahStatus.isPauseActive
+                    ? "opacity-40 cursor-not-allowed bg-slate-950 border-slate-800 text-slate-500"
+                    : scheduledOption === "asap"
+                    ? "bg-orange-500/20 border-orange-500 text-white font-bold cursor-pointer"
+                    : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white cursor-pointer"
                 }`}
               >
-                <span className="block font-bold">⚡ Dès que possible</span>
-                <span className="text-[10px] text-slate-400">Livraison en 45 à 60 mn</span>
+                <span className="block font-bold">
+                  {jumuahStatus.isPauseActive ? "⏸️ Pause Jumu'ah" : "⚡ Dès que possible"}
+                </span>
+                <span className="text-[10px] text-slate-400">
+                  {jumuahStatus.isPauseActive ? "Reprise à 15h00" : "Livraison en 45 à 60 mn"}
+                </span>
               </button>
 
               <button
                 type="button"
+                disabled={jumuahStatus.isPauseActive}
                 onClick={() => setScheduledOption("12:30")}
-                className={`p-3 rounded-xl border text-left text-xs transition cursor-pointer ${
-                  scheduledOption === "12:30"
-                    ? "bg-orange-500/20 border-orange-500 text-white font-bold"
-                    : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                className={`p-3 rounded-xl border text-left text-xs transition ${
+                  jumuahStatus.isPauseActive
+                    ? "opacity-40 cursor-not-allowed bg-slate-950 border-slate-800 text-slate-500"
+                    : scheduledOption === "12:30"
+                    ? "bg-orange-500/20 border-orange-500 text-white font-bold cursor-pointer"
+                    : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white cursor-pointer"
                 }`}
               >
                 <span className="block font-bold">🍱 Midi au Bureau (12h30)</span>
-                <span className="text-[10px] text-emerald-400 font-semibold">Idéal fonctionnaires &amp; salariés</span>
+                <span className="text-[10px] text-emerald-400 font-semibold">
+                  {jumuahStatus.isPauseActive ? "Fermé le Vendredi midi" : "Idéal fonctionnaires & salariés"}
+                </span>
               </button>
 
               <button
@@ -314,8 +354,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
                 }`}
               >
-                <span className="block font-bold">🕒 Choisir l'heure</span>
-                <span className="text-[10px] text-slate-400">Précommande programmée</span>
+                <span className="block font-bold">🕒 Choisir l&apos;heure</span>
+                <span className="text-[10px] text-slate-400">
+                  {jumuahStatus.isPauseActive ? "Créneaux dès 15h00" : "Précommande programmée"}
+                </span>
               </button>
             </div>
 
@@ -327,15 +369,35 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   onChange={(e) => setCustomScheduledTime(e.target.value)}
                   className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-bold focus:outline-none focus:border-orange-500"
                 >
-                  <option value="11:45">11h45</option>
-                  <option value="12:00">12h00</option>
-                  <option value="12:15">12h15</option>
-                  <option value="12:30">12h30</option>
-                  <option value="12:45">12h45</option>
-                  <option value="13:00">13h00</option>
-                  <option value="13:30">13h30</option>
-                  <option value="19:30">19h30 (Dîner)</option>
-                  <option value="20:00">20h00 (Dîner)</option>
+                  {jumuahStatus.isPauseActive || jumuahStatus.isFriday ? (
+                    <>
+                      <option value="15:00">15h00 (Reprise après Jumu'ah)</option>
+                      <option value="15:30">15h30</option>
+                      <option value="16:00">16h00</option>
+                      <option value="16:30">16h30</option>
+                      <option value="17:00">17h00</option>
+                      <option value="18:00">18h00</option>
+                      <option value="19:00">19h00 (Dîner)</option>
+                      <option value="19:30">19h30 (Dîner)</option>
+                      <option value="20:00">20h00 (Dîner)</option>
+                      <option value="20:30">20h30 (Dîner)</option>
+                      <option value="21:00">21h00</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="11:45">11h45</option>
+                      <option value="12:00">12h00</option>
+                      <option value="12:15">12h15</option>
+                      <option value="12:30">12h30</option>
+                      <option value="12:45">12h45</option>
+                      <option value="13:00">13h00</option>
+                      <option value="13:30">13h30</option>
+                      <option value="15:00">15h00</option>
+                      <option value="19:30">19h30 (Dîner)</option>
+                      <option value="20:00">20h00 (Dîner)</option>
+                      <option value="20:30">20h30 (Dîner)</option>
+                    </>
+                  )}
                 </select>
               </div>
             )}

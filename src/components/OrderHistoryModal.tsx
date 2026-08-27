@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Order, CartItem, MenuItem } from "../types";
 import { ALLORESTO_BRAND_INFO } from "../data/allorestoData";
+import { ReceiptTicketModal } from "./ReceiptTicketModal";
 
 interface OrderHistoryModalProps {
   isOpen: boolean;
@@ -287,105 +288,13 @@ export const OrderHistoryModal: React.FC<OrderHistoryModalProps> = ({
           )}
         </div>
 
-        {/* Modal Receipt Popup */}
+        {/* Modal Receipt Thermal Ticket */}
         {selectedReceiptOrder && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
-            <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4 text-slate-100">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">🧾</span>
-                  <div>
-                    <h3 className="text-base font-black text-white">Reçu Officiel Allôresto</h3>
-                    <p className="text-[11px] text-slate-400">Niamey, Niger &bull; Billo Express Logistique</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSelectedReceiptOrder(null)}
-                  className="p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Numéro de Commande :</span>
-                  <span className="font-mono font-bold text-orange-400">{selectedReceiptOrder.id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Date &amp; Heure :</span>
-                  <span className="font-semibold">{selectedReceiptOrder.createdAt}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Client :</span>
-                  <span className="font-semibold">{selectedReceiptOrder.customerName} ({selectedReceiptOrder.customerPhone})</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Restaurant Partenaire :</span>
-                  <span className="font-semibold">{selectedReceiptOrder.restaurantName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Adresse de Livraison :</span>
-                  <span className="font-semibold text-right max-w-xs">{selectedReceiptOrder.deliveryAddress}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Mode de Paiement :</span>
-                  <span className="font-bold text-emerald-400 uppercase">{selectedReceiptOrder.paymentMethod} (Payé)</span>
-                </div>
-              </div>
-
-              {/* Items Detail */}
-              <div className="space-y-2 border-t border-slate-800 pt-3 text-xs">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Détail des Plats
-                </span>
-                {selectedReceiptOrder.items.map((it, idx) => (
-                  <div key={idx} className="flex justify-between text-slate-300">
-                    <span>{it.quantity}x {it.menuItem.name}</span>
-                    <span className="font-mono">{it.totalPrice.toLocaleString()} FCFA</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Price summary */}
-              <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
-                <div className="flex justify-between text-slate-400">
-                  <span>Sous-total :</span>
-                  <span className="font-mono">{selectedReceiptOrder.subtotal.toLocaleString()} FCFA</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>Frais de livraison (Billo Express) :</span>
-                  <span className="font-mono">{selectedReceiptOrder.deliveryFee.toLocaleString()} FCFA</span>
-                </div>
-                {selectedReceiptOrder.discount > 0 && (
-                  <div className="flex justify-between text-emerald-400 font-bold">
-                    <span>Remise appliquée :</span>
-                    <span className="font-mono">-{selectedReceiptOrder.discount.toLocaleString()} FCFA</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-sm font-black text-white pt-2 border-t border-slate-800">
-                  <span>Total Réglé :</span>
-                  <span className="font-mono text-orange-400">{selectedReceiptOrder.total.toLocaleString()} FCFA</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-3 pt-2">
-                <button
-                  onClick={() => window.print()}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Imprimer la Facture</span>
-                </button>
-                <button
-                  onClick={() => setSelectedReceiptOrder(null)}
-                  className="py-2.5 px-6 rounded-xl bg-orange-500 text-slate-950 font-bold text-xs hover:bg-orange-400 transition cursor-pointer"
-                >
-                  Fermer
-                </button>
-              </div>
-            </div>
-          </div>
+          <ReceiptTicketModal
+            order={selectedReceiptOrder}
+            onClose={() => setSelectedReceiptOrder(null)}
+            onTrackOrder={onTrackOrder}
+          />
         )}
       </motion.div>
     </div>

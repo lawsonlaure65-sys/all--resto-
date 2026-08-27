@@ -38,6 +38,15 @@ const FAQ_ITEMS: FaqItem[] = [
     actionType: "catalog",
   },
   {
+    id: "faq-jumuah",
+    category: "delivery",
+    question: "Quels sont les horaires de livraison le vendredi (Prière du Jumu'ah) ?",
+    answer:
+      "Le vendredi, par respect pour la prière solennelle du Jumu'ah à la Grande Mosquée et dans toutes les mosquées de Niamey, les livraisons s'arrêtent impérativement à 11h00 pour reprendre à 15h00. Vous pouvez passer commande pendant cette période en précommande programmée pour être livré en priorité dès 15h00.",
+    actionLabel: "Consulter la Carte & Délais",
+    actionType: "catalog",
+  },
+  {
     id: "faq-2",
     category: "payment",
     question: "Quels moyens de paiement sont acceptés sur Allôresto ?",

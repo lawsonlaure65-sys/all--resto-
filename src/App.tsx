@@ -35,6 +35,9 @@ import { WhatsAppAutomationModal } from "./components/WhatsAppAutomationModal";
 import { DynamicFaqModal } from "./components/DynamicFaqModal";
 import { VisualNotificationToast, ToastNotification } from "./components/VisualNotificationToast";
 import { Footer } from "./components/Footer";
+import { ReceiptTicketModal } from "./components/ReceiptTicketModal";
+import { JumuahBanner } from "./components/JumuahBanner";
+import { getJumuahStatus } from "./utils/jumuahSchedule";
 
 import {
   playSoundCartAdd,
@@ -101,7 +104,12 @@ export function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
   const [activeTrackingOrder, setActiveTrackingOrder] = useState<Order | null>(null);
+  const [activeReceiptOrder, setActiveReceiptOrder] = useState<Order | null>(null);
+  const [simulatedFridayPause, setSimulatedFridayPause] = useState<boolean>(false);
   const [cateringQuotes, setCateringQuotes] = useState<CateringQuoteRequest[]>([]);
+
+  // Friday Jumu'ah schedule check
+  const jumuahStatus = getJumuahStatus(simulatedFridayPause);
 
   // Sound & Visual Notifications State
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
@@ -453,6 +461,31 @@ export function App() {
         {/* ======================================================== */}
         {currentRole === "client" && (
           <div>
+            {/* Friday Jumu'ah Prayer Delivery Pause Notice & Status Banner */}
+            <JumuahBanner
+              jumuahStatus={jumuahStatus}
+              simulatedFridayPause={simulatedFridayPause}
+              onToggleSimulatedFriday={() => {
+                const nextVal = !simulatedFridayPause;
+                setSimulatedFridayPause(nextVal);
+                showNotification(
+                  nextVal ? "Mode Vendredi Jumu'ah Activé 🕌" : "Mode Vendredi Jumu'ah Désactivé ✨",
+                  nextVal
+                    ? "Les livraisons directes sont en pause de 11h à 15h. Précommandes programmées autorisées."
+                    : "Horaires de livraison standard rétablis.",
+                  "info"
+                );
+              }}
+              onOpenScheduleOrder={() => {
+                if (cartItems.length > 0) {
+                  setIsCheckoutOpen(true);
+                } else {
+                  setCatalogMealMoment("all");
+                  setIsDishesCatalogOpen(true);
+                }
+              }}
+            />
+
             {/* Hero & Search Banner */}
             <HeroBanner
               searchQuery={searchQuery}
@@ -806,6 +839,7 @@ export function App() {
         onOrderPlaced={handleOrderPlaced}
         onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
         initialDistrictName={selectedDistrictName}
+        simulatedFridayPause={simulatedFridayPause}
       />
 
       {/* 4. Live Order Tracker Modal */}
@@ -813,6 +847,18 @@ export function App() {
         order={activeTrackingOrder}
         onClose={() => setActiveTrackingOrder(null)}
         onAdvanceStatus={handleUpdateOrderStatus}
+        onViewReceipt={(order) => setActiveReceiptOrder(order)}
+        simulatedFridayPause={simulatedFridayPause}
+      />
+
+      {/* 4b. Official Thermal Receipt Ticket Modal */}
+      <ReceiptTicketModal
+        order={activeReceiptOrder}
+        onClose={() => setActiveReceiptOrder(null)}
+        onTrackOrder={(order) => {
+          setActiveReceiptOrder(null);
+          setActiveTrackingOrder(order);
+        }}
       />
 
       {/* 5. AllôChef AI Concierge Modal (Gemini 3.7) */}
