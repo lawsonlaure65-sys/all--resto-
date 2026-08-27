@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <!-- Rich Teal Gradient for the iconic Allô Pin -->
+    <linearGradient id="allorestoTeal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#145F78" />
+      <stop offset="60%" stop-color="#0E4A5F" />
+      <stop offset="100%" stop-color="#093646" />
+    </linearGradient>
+
+    <!-- Vibrant Sahel Orange Gradient for the Digital & Delivery Cubes -->
+    <linearGradient id="sahelOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7D26" />
+      <stop offset="100%" stop-color="#F15A1A" />
+    </linearGradient>
+
+    <!-- Subtle drop shadows -->
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.25" flood-color="#000000" />
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <!-- 3 Digital Food-Tech / Express Delivery Cubes (Orange Sahel) -->
+    <!-- Top-most cube -->
+    <rect x="79" y="15" width="16" height="16" rx="3" fill="url(#sahelOrange)" />
+    <!-- Left-middle cube -->
+    <rect x="67" y="24" width="15" height="15" rx="3" fill="url(#sahelOrange)" />
+    <!-- Right-lower cube -->
+    <rect x="81" y="31" width="17" height="17" rx="3" fill="url(#sahelOrange)" />
+
+    <!-- Main Allôresto Pin & Speech Bubble (Deep Teal) -->
+    <path
+      d="M 50 20 
+         C 32 20 20 34 20 54 
+         C 20 66 26 76 33 82 
+         L 33 97 
+         L 46 87 
+         C 48 87 50 87 52 87 
+         C 69 87 83 73 83 55 
+         C 83 48 80 42 76 37 
+         L 64 37 
+         L 64 20 
+         Z"
+      fill="url(#allorestoTeal)"
+    />
+
+    <!-- Negative Space Culinary Fork (Pure Crisp White) -->
+    <!-- Prongs -->
+    <!-- Left Prong -->
+    <rect x="37" y="34" width="7" height="20" rx="3.5" fill="#FFFFFF" />
+    <!-- Center Prong -->
+    <rect x="47.5" y="34" width="7" height="20" rx="3.5" fill="#FFFFFF" />
+    <!-- Right Prong -->
+    <rect x="58" y="34" width="7" height="20" rx="3.5" fill="#FFFFFF" />
+
+    <!-- Fork Base / Cup -->
+    <path
+      d="M 37 46 
+         C 37 62 65 62 65 46 
+         Z"
+      fill="#FFFFFF"
+    />
+
+    <!-- Fork Handle / Stem extending down through bottom opening -->
+    <path
+      d="M 47.5 56 
+         L 54.5 56 
+         L 54.5 90 
+         L 47.5 90 
+         Z"
+      fill="#FFFFFF"
+    />
+  </g>
+</svg>

@@ -178,6 +178,7 @@ export interface TableBooking {
   date: string;
   time: string;
   guests: number;
+  guestCount?: number;
   specialRequests?: string;
   status: "confirmed" | "pending";
   createdAt: string;

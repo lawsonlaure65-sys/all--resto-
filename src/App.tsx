@@ -831,7 +831,7 @@ export function App() {
         onBookingConfirmed={(booking: TableBooking) => {
           showNotification(
             "Réservation de table confirmée ! 🍽️",
-            `Table réservée pour ${booking.guestCount} pers. le ${booking.date} à ${booking.time}`,
+            `Table réservée pour ${booking.guests || booking.guestCount || 2} pers. le ${booking.date} à ${booking.time}`,
             "success",
             "success"
           );

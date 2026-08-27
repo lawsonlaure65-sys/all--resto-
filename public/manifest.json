@@ -1,0 +1,28 @@
+{
+  "name": "Allôresto Niger — Livraison de Repas & Restaurants à Niamey",
+  "short_name": "Allôresto",
+  "description": "Vos restaurants & saveurs du Sahel livrés chez vous et au bureau à Niamey (Plateau, Koira Kano, Yantala, Harobanda...).",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#0F4C64",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

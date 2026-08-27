@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   CheckCircle2,
@@ -10,140 +10,130 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { soundManager } from "../utils/audioNotifications";
 
-export interface VisualNotification {
+export interface ToastNotification {
   id: string;
-  type: "success" | "info" | "promo" | "cart" | "order";
   title: string;
   message: string;
-  duration?: number;
+  type: "success" | "info" | "warning" | "error" | "promo" | "cart" | "order";
+  timestamp: Date;
   actionLabel?: string;
   onAction?: () => void;
 }
 
 interface VisualNotificationToastProps {
-  notification: VisualNotification | null;
-  onClose: () => void;
-  soundEnabled: boolean;
-  onToggleSound: () => void;
+  toasts: ToastNotification[];
+  onDismiss: (id: string) => void;
+  soundEnabled?: boolean;
+  onToggleSound?: () => void;
 }
 
 export const VisualNotificationToast: React.FC<VisualNotificationToastProps> = ({
-  notification,
-  onClose,
-  soundEnabled,
+  toasts,
+  onDismiss,
+  soundEnabled = true,
   onToggleSound,
 }) => {
-  useEffect(() => {
-    if (!notification) return;
+  if (!toasts || toasts.length === 0) return null;
 
-    // Play appropriate sound based on notification type
-    if (soundEnabled) {
-      if (notification.type === "cart") {
-        soundManager.playCartAdd();
-      } else if (notification.type === "order" || notification.type === "success") {
-        soundManager.playOrderSuccess();
-      } else if (notification.type === "promo") {
-        soundManager.playPromoAlert();
-      } else {
-        soundManager.playStatusUpdate();
-      }
-    }
-
-    const timer = setTimeout(() => {
-      onClose();
-    }, notification.duration || 4500);
-
-    return () => clearTimeout(timer);
-  }, [notification, soundEnabled, onClose]);
-
-  if (!notification) return null;
-
-  const getIcon = () => {
-    switch (notification.type) {
+  const getIcon = (type: string) => {
+    switch (type) {
       case "cart":
-        return <ShoppingBag className="w-5 h-5 text-orange-400" />;
+        return <ShoppingBag className="w-4 h-4 text-orange-400" />;
       case "order":
       case "success":
-        return <CheckCircle2 className="w-5 h-5 text-emerald-400" />;
+        return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
       case "promo":
-        return <Sparkles className="w-5 h-5 text-amber-400 animate-pulse" />;
+        return <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />;
+      case "warning":
+      case "error":
+        return <AlertCircle className="w-4 h-4 text-red-400" />;
       default:
-        return <Bell className="w-5 h-5 text-cyan-400" />;
+        return <Bell className="w-4 h-4 text-cyan-400" />;
     }
   };
 
-  const getBorderColor = () => {
-    switch (notification.type) {
+  const getBorderAndBg = (type: string) => {
+    switch (type) {
       case "cart":
-        return "border-orange-500/40 bg-slate-950/95 text-white shadow-orange-500/20";
+        return "border-orange-500/40 bg-slate-950/95 text-white shadow-orange-500/10";
       case "order":
       case "success":
-        return "border-emerald-500/40 bg-slate-950/95 text-white shadow-emerald-500/20";
+        return "border-emerald-500/40 bg-slate-950/95 text-white shadow-emerald-500/10";
       case "promo":
-        return "border-amber-500/40 bg-slate-950/95 text-white shadow-amber-500/20";
+        return "border-amber-500/40 bg-slate-950/95 text-white shadow-amber-500/10";
+      case "warning":
+      case "error":
+        return "border-red-500/40 bg-slate-950/95 text-white shadow-red-500/10";
       default:
-        return "border-slate-700 bg-slate-950/95 text-white shadow-slate-950/50";
+        return "border-slate-800 bg-slate-950/95 text-white shadow-slate-950/50";
     }
   };
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-50 max-w-sm w-full pointer-events-auto">
+    <div className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-50 max-w-sm w-full space-y-2 pointer-events-none">
       <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.9 }}
-          className={`p-4 rounded-2xl border backdrop-blur-xl shadow-2xl flex items-start gap-3.5 ${getBorderColor()}`}
-        >
-          <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 shrink-0">
-            {getIcon()}
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <h4 className="text-xs font-black text-white truncate">
-                {notification.title}
-              </h4>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  onClick={onToggleSound}
-                  className="text-slate-400 hover:text-white transition p-0.5 cursor-pointer"
-                  title={soundEnabled ? "Couper le son des notifications" : "Activer le son des notifications"}
-                >
-                  {soundEnabled ? (
-                    <Volume2 className="w-3.5 h-3.5 text-orange-400" />
-                  ) : (
-                    <VolumeX className="w-3.5 h-3.5 text-slate-500" />
-                  )}
-                </button>
-                <button
-                  onClick={onClose}
-                  className="text-slate-400 hover:text-white transition p-0.5 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
+        {toasts.map((toast) => (
+          <motion.div
+            key={toast.id}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.95 }}
+            layout
+            className={`p-3.5 rounded-2xl border backdrop-blur-xl shadow-2xl flex items-start gap-3 pointer-events-auto ${getBorderAndBg(
+              toast.type
+            )}`}
+          >
+            <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 shrink-0">
+              {getIcon(toast.type)}
             </div>
 
-            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-              {notification.message}
-            </p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="text-xs font-bold text-white truncate">
+                  {toast.title}
+                </h4>
+                <div className="flex items-center gap-1 shrink-0">
+                  {onToggleSound && (
+                    <button
+                      onClick={onToggleSound}
+                      className="text-slate-400 hover:text-white transition p-0.5 cursor-pointer"
+                      title={soundEnabled ? "Couper le son" : "Activer le son"}
+                    >
+                      {soundEnabled ? (
+                        <Volume2 className="w-3.5 h-3.5 text-orange-400" />
+                      ) : (
+                        <VolumeX className="w-3.5 h-3.5 text-slate-500" />
+                      )}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => onDismiss(toast.id)}
+                    className="text-slate-400 hover:text-white transition p-0.5 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
 
-            {notification.actionLabel && notification.onAction && (
-              <button
-                onClick={() => {
-                  notification.onAction?.();
-                  onClose();
-                }}
-                className="mt-2.5 px-3 py-1 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-[11px] transition cursor-pointer shadow-sm"
-              >
-                {notification.actionLabel}
-              </button>
-            )}
-          </div>
-        </motion.div>
+              <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
+                {toast.message}
+              </p>
+
+              {toast.actionLabel && toast.onAction && (
+                <button
+                  onClick={() => {
+                    toast.onAction?.();
+                    onDismiss(toast.id);
+                  }}
+                  className="mt-2 px-3 py-1 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-[11px] transition cursor-pointer shadow-sm"
+                >
+                  {toast.actionLabel}
+                </button>
+              )}
+            </div>
+          </motion.div>
+        ))}
       </AnimatePresence>
     </div>
   );
