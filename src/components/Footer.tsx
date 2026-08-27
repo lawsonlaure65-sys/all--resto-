@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { BrandLogo } from "./BrandLogo";
+import { BilloExpressLogo } from "./BilloExpressLogo";
 
 interface FooterProps {
   onOpenPartnerModal: () => void;
@@ -167,9 +168,15 @@ export const Footer: React.FC<FooterProps> = ({
             <h4 className="text-xs font-bold uppercase tracking-wider text-white">
               Zones de livraison à Niamey
             </h4>
-            <p className="text-[10px] text-slate-400 mb-1">
-              Partenaire logistique officiel : <strong>Billo Express</strong>
-            </p>
+            <div className="pt-1 pb-1">
+              <div
+                onClick={onOpenLogoModal}
+                className="cursor-pointer inline-block"
+                title="Découvrir le partenaire de livraison Bilo Express"
+              >
+                <BilloExpressLogo variant="badge" />
+              </div>
+            </div>
             <div className="flex flex-wrap gap-1.5">
               {[
                 "Plateau (Ministères)",

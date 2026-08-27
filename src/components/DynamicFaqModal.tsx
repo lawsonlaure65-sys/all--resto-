@@ -33,7 +33,7 @@ const FAQ_ITEMS: FaqItem[] = [
     category: "delivery",
     question: "Quels sont les délais et tarifs de livraison à Niamey ?",
     answer:
-      "Grâce à notre partenaire logistique exclusif Billo Express, les livraisons s'effectuent en moyenne entre 15 et 30 minutes après préparation en cuisine. Les tarifs sont de 1 000 FCFA pour le centre-ville (Plateau, Yantala, Koira Kano, Issa Béri, Gamkalley, etc.) et 1 500 FCFA pour la périphérie (Harobanda Rive Droite, Francophonie, Aéroport, Cité Députés). Le retrait sur place à la Grande Mosquée Kadhafi est 100% gratuit.",
+      "Grâce à notre partenaire logistique exclusif Billo Express, les livraisons s'effectuent de façon réaliste et sécurisée entre 45 et 60 minutes, incluant le temps de cuisson soignée en cuisine, les embouteillages aux heures de pointe et l'état des voies de la capitale. Les tarifs sont de 1 000 FCFA pour le centre-ville (Plateau, Yantala, Koira Kano, Issa Béri, Gamkalley, etc.) et 1 500 FCFA pour la périphérie (Harobanda Rive Droite, Francophonie, Aéroport, Cité Députés). Le retrait sur place à la Grande Mosquée Kadhafi est 100% gratuit.",
     actionLabel: "Voir la Carte des Quartiers",
     actionType: "catalog",
   },

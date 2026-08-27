@@ -27,24 +27,24 @@ export const NIAMEY_PRICING_RULES: NiameyPricingRule[] = [
     title: "🕌 Point de Retrait Gratuit",
     dayFee: 0,
     nightFee: 0,
-    timeEstimate: "10-15 min",
-    coverageDescription: "Grande Mosquée Mouhamar Kadhafi (Avenue de l'Islam) — Retrait sans frais de coursier.",
+    timeEstimate: "20-30 min",
+    coverageDescription: "Grande Mosquée Mouhamar Kadhafi (Avenue de l'Islam) — Retrait sur place sans frais de coursier après préparation.",
   },
   {
     zone: "centre",
     title: "📍 Centre-ville & Quartiers Urbains",
     dayFee: 1000,
     nightFee: 1500,
-    timeEstimate: "15-25 min",
-    coverageDescription: "Plateau (Ministères & Ambassades), Grande Mosquée, Yantala, Terminus, Château, Zongo, Boukoki, Gamkallé, Djemadjé, Kalley, Losso-Goungou.",
+    timeEstimate: "45-55 min",
+    coverageDescription: "Plateau (Ministères & Ambassades), Grande Mosquée, Yantala, Terminus, Château, Zongo, Boukoki, Gamkallé, Djemadjé, Kalley, Losso-Goungou. Délai tenant compte de la cuisson et de la circulation.",
   },
   {
     zone: "peripherie",
     title: "🗺️ Périphérie & Rive Droite",
     dayFee: 1500,
     nightFee: 2000,
-    timeEstimate: "25-40 min",
-    coverageDescription: "Koira Kano, Koira Tagui, Harobanda, Goudel, Wadata, Banifandou, Dar-es-Salam, Bobiel, Kirkissoye, Aéroport, Cité Députés, Saga, Tondibia, Francophonie.",
+    timeEstimate: "50-60 min",
+    coverageDescription: "Koira Kano, Koira Tagui, Harobanda, Goudel, Wadata, Banifandou, Dar-es-Salam, Bobiel, Kirkissoye, Aéroport, Cité Députés, Saga, Tondibia, Francophonie. Délai incluant traversée des ponts et axes sablonneux.",
   },
 ];
 
@@ -62,7 +62,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Ministère des Finances", "BCEAO", "Hôtel Bravia / Radisson Blu", "Palais Présidentiel", "Avenue du Général de Gaulle"],
     dayDeliveryFee: 1000,
     nightDeliveryFee: 1500,
-    estimatedDeliveryTime: "15-20 min",
+    estimatedDeliveryTime: "45-50 min",
     isPopular: true,
   },
   {
@@ -75,7 +75,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Grande Mosquée Khadafi", "Avenue de l'Islam", "Rond-Point Mosquée", "Boulevard Mali Béro"],
     dayDeliveryFee: 0,
     nightDeliveryFee: 0,
-    estimatedDeliveryTime: "10-15 min",
+    estimatedDeliveryTime: "20-30 min",
     isPopular: true,
   },
   {
@@ -88,7 +88,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Gare Terminus", "Camp Militaire Bagagi", "Rond-Point Maourey", "Avenue de l'Entente"],
     dayDeliveryFee: 1000,
     nightDeliveryFee: 1500,
-    estimatedDeliveryTime: "15-20 min",
+    estimatedDeliveryTime: "45-50 min",
     isPopular: true,
   },
   {
@@ -101,7 +101,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Grand Marché de Niamey", "Petit Marché", "Avenue du Commerce", "Banque Centrale"],
     dayDeliveryFee: 1000,
     nightDeliveryFee: 1500,
-    estimatedDeliveryTime: "15-25 min",
+    estimatedDeliveryTime: "45-55 min",
     isPopular: true,
   },
   {
@@ -114,7 +114,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Château d'Eau de Niamey", "Boulevard de l'Indépendance", "Pharmacie Château"],
     dayDeliveryFee: 1000,
     nightDeliveryFee: 1500,
-    estimatedDeliveryTime: "15-20 min",
+    estimatedDeliveryTime: "45-50 min",
   },
   {
     id: "boukoki-1-2-3-4",
@@ -126,7 +126,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Marché Boukoki", "Stade Municipal", "Boulevard Mali Béro Nord"],
     dayDeliveryFee: 1000,
     nightDeliveryFee: 1500,
-    estimatedDeliveryTime: "20-25 min",
+    estimatedDeliveryTime: "45-55 min",
     isPopular: true,
   },
   {
@@ -139,7 +139,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Rond-point Lazaret", "Clinique Gamkalley", "Axe Route Filingué"],
     dayDeliveryFee: 1000,
     nightDeliveryFee: 1500,
-    estimatedDeliveryTime: "20-25 min",
+    estimatedDeliveryTime: "45-55 min",
   },
   {
     id: "koira-kano",
@@ -151,7 +151,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Cité Koira Kano", "Clinique Magori", "Boulevard Tanimoune", "Ambassades Nord"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "25-30 min",
+    estimatedDeliveryTime: "50-60 min",
     isPopular: true,
   },
   {
@@ -164,7 +164,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Marché Banifandou", "Poste Dar-es-Salam", "Axe Ceinture Verte"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "25-35 min",
+    estimatedDeliveryTime: "50-60 min",
   },
   {
     id: "bobiel",
@@ -176,7 +176,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Échangeur Diori Hamani", "Complexe Scolaire Bobiel", "Route de Ouallam"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "30-35 min",
+    estimatedDeliveryTime: "50-60 min",
   },
   {
     id: "francophonie",
@@ -188,7 +188,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Villas Francophonie", "Route de l'Aéroport Nord"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "30-40 min",
+    estimatedDeliveryTime: "55-60 min",
   },
 
   // ==========================================
@@ -204,7 +204,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Corniche Yantala", "Hôtel Gaweye", "Ambassade de France", "Musée National Boubou Hama"],
     dayDeliveryFee: 1000,
     nightDeliveryFee: 1500,
-    estimatedDeliveryTime: "15-20 min",
+    estimatedDeliveryTime: "45-50 min",
     isPopular: true,
   },
   {
@@ -217,7 +217,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Palais des Congrès", "Avenue de l'Afrique", "Berges du Fleuve"],
     dayDeliveryFee: 1000,
     nightDeliveryFee: 1500,
-    estimatedDeliveryTime: "15-20 min",
+    estimatedDeliveryTime: "45-50 min",
   },
   {
     id: "goudel",
@@ -229,7 +229,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Château d'eau de Goudel", "Usine SEEN / NIGELEC", "Avenue Goudel"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "25-35 min",
+    estimatedDeliveryTime: "50-60 min",
     isPopular: true,
   },
   {
@@ -242,7 +242,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Carrefour Koira Tagui", "Axe Route de Tillabéri Nord"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "30-40 min",
+    estimatedDeliveryTime: "50-60 min",
   },
   {
     id: "tondibia",
@@ -254,7 +254,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Camp Militaire de Tondibia", "Base des Forces de Défense"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "35-45 min",
+    estimatedDeliveryTime: "55-60 min",
   },
 
   // ==========================================
@@ -270,7 +270,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Rond-point Gamkallé", "Avenue du Fleuve", "Quai des Pêcheurs"],
     dayDeliveryFee: 1000,
     nightDeliveryFee: 1500,
-    estimatedDeliveryTime: "15-25 min",
+    estimatedDeliveryTime: "45-55 min",
     isPopular: true,
   },
   {
@@ -283,7 +283,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Marché de Kalley", "Stade Général Seyni Kountché (SGSK)", "Avenue de l'OUA"],
     dayDeliveryFee: 1000,
     nightDeliveryFee: 1500,
-    estimatedDeliveryTime: "15-20 min",
+    estimatedDeliveryTime: "45-50 min",
     isPopular: true,
   },
   {
@@ -296,7 +296,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Marché Wadata", "Gare Voyageurs Wadata", "Maison des Artisans", "Boulevard Mali Béro Est"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "25-30 min",
+    estimatedDeliveryTime: "50-60 min",
     isPopular: true,
   },
   {
@@ -309,7 +309,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Villas Cité Députés", "Mosquée Fayçal", "Axe Route Dosso"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "25-35 min",
+    estimatedDeliveryTime: "50-60 min",
   },
   {
     id: "abidjan-poudriere",
@@ -321,7 +321,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Ancienne Poudrière", "Route de Torodi", "Carrefour Foulan Koira"],
     dayDeliveryFee: 1000,
     nightDeliveryFee: 1500,
-    estimatedDeliveryTime: "20-25 min",
+    estimatedDeliveryTime: "45-55 min",
   },
 
   // ==========================================
@@ -337,7 +337,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Marché Talladjé", "Rond-Point 6ème", "Village artisanal de Saga", "Riziculture Saga"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "25-35 min",
+    estimatedDeliveryTime: "50-60 min",
     isPopular: true,
   },
   {
@@ -350,7 +350,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Terminal Aéroport Diori Hamani", "Base Aérienne 101", "Hôtel Noom", "Voie Express Aéroport"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "30-40 min",
+    estimatedDeliveryTime: "55-60 min",
     isPopular: true,
   },
   {
@@ -363,7 +363,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Grand Marché à Bétail de Tourakou", "Poste de Péage Est", "Route de Fada"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "30-45 min",
+    estimatedDeliveryTime: "55-60 min",
   },
   {
     id: "zone-industrielle",
@@ -375,7 +375,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Sociétés Industrielles (BRANIGER / SOLANI)", "Magasins Généraux", "Douanes de Niamey"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "25-35 min",
+    estimatedDeliveryTime: "50-60 min",
   },
 
   // ==========================================
@@ -391,7 +391,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Sortie Pont Kennedy", "Rond-Point Harobanda", "Pharmacie Harobanda", "Avenue de l'Indépendance Rive Droite"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "25-35 min",
+    estimatedDeliveryTime: "50-60 min",
     isPopular: true,
   },
   {
@@ -404,7 +404,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Campus Universitaire UAM", "Rectorat UAM", "Hôpital National Lamordé", "FSS Faculté des Sciences de la Santé"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "25-35 min",
+    estimatedDeliveryTime: "50-60 min",
     isPopular: true,
   },
   {
@@ -417,7 +417,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Hôpital National Lamordé", "Écoles Professionnelles de Santé", "Carrefour Lamordé"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "25-35 min",
+    estimatedDeliveryTime: "50-60 min",
   },
   {
     id: "kirkissoye-karadje",
@@ -429,7 +429,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Sortie Pont de l'Amitié Sino-Nigérienne (2ème Pont)", "Marché Kirkissoye", "Route de Say"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "30-40 min",
+    estimatedDeliveryTime: "55-60 min",
   },
   {
     id: "nogare-bangabaye",
@@ -441,7 +441,7 @@ export const NIAMEY_DISTRICTS_DATA: NiameyDistrict[] = [
     landmarks: ["Axe Route de Say", "Rive Sud Fleuve Niger"],
     dayDeliveryFee: 1500,
     nightDeliveryFee: 2000,
-    estimatedDeliveryTime: "35-45 min",
+    estimatedDeliveryTime: "55-60 min",
   },
 ];
 
@@ -479,7 +479,7 @@ export function calculateNiameyDeliveryFee(
       zone: "relais_gratuit",
       zoneLabel: "Retrait Sur Place (0 FCFA)",
       isNightRate: isNight,
-      timeEstimate: "10-15 min",
+      timeEstimate: "20-30 min",
     };
   }
 
@@ -499,7 +499,7 @@ export function calculateNiameyDeliveryFee(
       zoneLabel: "🕌 Point Relais Grande Mosquée (Offert)",
       matchedDistrict: mosqueeDist,
       isNightRate: isNight,
-      timeEstimate: "10-15 min",
+      timeEstimate: "20-30 min",
     };
   }
 
@@ -559,7 +559,7 @@ export function calculateNiameyDeliveryFee(
       zone: "peripherie",
       zoneLabel: "Périphérie Niamey",
       isNightRate: isNight,
-      timeEstimate: "25-35 min",
+      timeEstimate: "50-60 min",
     };
   }
 
@@ -569,7 +569,7 @@ export function calculateNiameyDeliveryFee(
     zone: "centre",
     zoneLabel: "Centre-ville Niamey",
     isNightRate: isNight,
-    timeEstimate: "15-25 min",
+    timeEstimate: "45-55 min",
   };
 }
 

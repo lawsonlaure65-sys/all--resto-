@@ -377,8 +377,8 @@ export function App() {
     if (filterPromoOnly && !resto.promoBadge) {
       return false;
     }
-    // Fast delivery filter
-    if (filterFastDelivery && !resto.deliveryTime.includes("20")) {
+    // Fast delivery filter (Livraison Express <= 55 min)
+    if (filterFastDelivery && !resto.deliveryTime.includes("45-55") && !resto.deliveryTime.includes("45-50") && !resto.deliveryTime.includes("45")) {
       return false;
     }
     // Search query match (name, tagline, cuisine, or dishes)

@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Power,
 } from "lucide-react";
+import { BilloExpressLogo } from "./BilloExpressLogo";
 import { Order, OrderStatus } from "../types";
 
 interface CourierDashboardProps {
@@ -55,14 +56,14 @@ export const CourierDashboard: React.FC<CourierDashboardProps> = ({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header Profile & Online Toggle */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-            <Bike className="w-8 h-8" />
+      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="p-2 rounded-2xl bg-slate-950 border border-slate-800 shrink-0">
+            <BilloExpressLogo variant="badge" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-black text-white">Espace Livreur Niamey</h2>
+              <h2 className="text-xl sm:text-2xl font-black text-white">Espace Coursier Bilo Express</h2>
               <span
                 className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
                   isOnline

@@ -221,7 +221,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           <div className="pt-2 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-orange-400" />
-              Livraison rapide en <strong>20-25 min</strong>
+              Livraison soignée en <strong>45 à 60 mn</strong>
             </span>
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -270,7 +270,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                     : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
                 }`}
               >
-                ⚡ Moins de 30 min
+                ⚡ Livraison Express (&le; 50 min)
               </button>
             </div>
           </div>

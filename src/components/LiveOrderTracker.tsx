@@ -15,6 +15,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Order, OrderStatus } from "../types";
+import { BilloExpressLogo } from "./BilloExpressLogo";
 
 interface LiveOrderTrackerProps {
   order: Order | null;
@@ -196,24 +197,31 @@ export const LiveOrderTracker: React.FC<LiveOrderTrackerProps> = ({
 
           {/* Courier Contact Card */}
           {order.courierName && (
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3">
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold">
-                  {order.courierName.charAt(0)}
+                <div className="w-11 h-11 rounded-2xl bg-slate-900 border border-slate-800 p-1 flex items-center justify-center shrink-0">
+                  <BilloExpressLogo variant="icon" size="sm" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-white">{order.courierName}</h4>
-                  <p className="text-[11px] text-slate-400">Livreur certifié Allôresto (Note 4.9)</p>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-white">{order.courierName}</h4>
+                    <span className="px-1.5 py-0.2 rounded bg-orange-500/20 text-orange-400 text-[9px] font-bold">
+                      Bilo Express
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Livraison à Domicile Rapide &bull; Note 4.9/5
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                 <a
-                  href={`tel:${order.courierPhone}`}
-                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  href={`tel:${order.courierPhone || "22790405118"}`}
+                  className="flex-1 sm:flex-initial px-3 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <Phone className="w-3.5 h-3.5 text-orange-400" />
-                  <span>Appeler</span>
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Appeler le Livreur</span>
                 </a>
               </div>
             </div>

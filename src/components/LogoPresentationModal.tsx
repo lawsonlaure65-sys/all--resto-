@@ -19,8 +19,11 @@ import {
   Compass,
   Monitor,
   CheckCircle2,
+  Bike,
+  ShieldAlert,
 } from "lucide-react";
 import { BrandLogo } from "./BrandLogo";
+import { BilloExpressLogo } from "./BilloExpressLogo";
 
 interface LogoPresentationModalProps {
   isOpen: boolean;
@@ -31,8 +34,9 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [activeTab, setActiveTab] = useState<"concept" | "screens" | "palette" | "specs">("concept");
+  const [activeTab, setActiveTab] = useState<"concept" | "billo" | "screens" | "palette" | "specs">("billo");
   const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedBilloSvg, setCopiedBilloSvg] = useState(false);
   const [previewBg, setPreviewBg] = useState<"dark" | "light" | "teal" | "orange">("dark");
 
   if (!isOpen) return null;
@@ -83,6 +87,70 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  const billoSvgCode = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs>
+    <linearGradient id="navyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E3048" />
+      <stop offset="100%" stop-color="#0F1C2E" />
+    </linearGradient>
+    <linearGradient id="expressOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8A2B" />
+      <stop offset="100%" stop-color="#EB5915" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(50, 20)">
+    <path d="M 440 210 C 460 270 445 340 395 385 C 335 440 240 455 170 420 C 140 405 125 385 135 365 C 145 345 170 355 195 370 C 245 395 320 385 365 345 C 400 310 415 260 395 210 C 385 185 410 160 425 175 C 435 185 438 198 440 210 Z" fill="url(#expressOrange)"/>
+    <rect x="345" y="145" width="22" height="40" rx="2" fill="url(#navyGrad)"/>
+    <path d="M 300 120 L 415 210 L 395 210 L 300 138 L 205 210 L 185 210 Z" fill="url(#navyGrad)"/>
+    <g transform="translate(288, 175)" fill="url(#navyGrad)">
+      <rect x="0" y="0" width="10" height="10" rx="1.5"/>
+      <rect x="14" y="0" width="10" height="10" rx="1.5"/>
+      <rect x="0" y="14" width="10" height="10" rx="1.5"/>
+      <rect x="14" y="14" width="10" height="10" rx="1.5"/>
+    </g>
+    <g stroke="url(#navyGrad)" stroke-linecap="round">
+      <line x1="60" y1="318" x2="200" y2="318" stroke-width="6"/>
+      <line x1="100" y1="300" x2="190" y2="300" stroke-width="6"/>
+      <line x1="75" y1="336" x2="175" y2="336" stroke-width="5"/>
+    </g>
+    <circle cx="215" cy="335" r="35" stroke="url(#navyGrad)" stroke-width="14" fill="none"/>
+    <circle cx="395" cy="335" r="35" stroke="url(#navyGrad)" stroke-width="14" fill="none"/>
+    <path d="M 195 305 L 255 305 C 275 270 305 260 345 260 L 365 240 L 380 265 C 385 270 395 295 375 325 L 330 330 L 275 330 C 255 315 220 315 195 305 Z" fill="url(#navyGrad)"/>
+    <path d="M 372 250 C 385 250 395 260 390 275 L 375 275 Z" fill="url(#navyGrad)"/>
+    <g transform="translate(225, 230)">
+      <rect x="0" y="0" width="48" height="48" rx="7" fill="url(#expressOrange)"/>
+      <path d="M 24 10 L 36 15 L 36 28 C 36 36 24 40 24 40 C 24 40 12 36 12 28 L 12 15 Z" fill="#FFFFFF"/>
+    </g>
+  </g>
+  <g transform="translate(300, 480)" text-anchor="middle">
+    <text font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="58" letter-spacing="-1">
+      <tspan fill="#102A43">Bilo </tspan>
+      <tspan fill="#EB5915">Express</tspan>
+    </text>
+    <text y="44" font-family="'Plus Jakarta Sans', sans-serif" font-weight="600" font-size="24" fill="#334E68" letter-spacing="1.2">
+      Livraison à Domicile Rapide
+    </text>
+  </g>
+</svg>`;
+
+  const handleCopyBilloSvg = () => {
+    navigator.clipboard.writeText(billoSvgCode);
+    setCopiedBilloSvg(true);
+    setTimeout(() => setCopiedBilloSvg(false), 2000);
+  };
+
+  const handleDownloadBilloSvg = () => {
+    const blob = new Blob([billoSvgCode], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "billo-express-logo-officiel.svg";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
       <motion.div
@@ -125,6 +193,23 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
         {/* Tab Navigation */}
         <div className="flex items-center gap-2 px-5 sm:px-6 pt-3 border-b border-slate-800 overflow-x-auto scrollbar-none bg-slate-950/40">
           <button
+            onClick={() => setActiveTab("billo")}
+            className={`pb-3 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+              activeTab === "billo"
+                ? "border-orange-500 text-orange-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Bike className="w-3.5 h-3.5 text-orange-400" />
+            <span className="flex items-center gap-1.5">
+              <span>Logo Partenaire Bilo Express</span>
+              <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase">
+                Corrigé
+              </span>
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveTab("concept")}
             className={`pb-3 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 cursor-pointer whitespace-nowrap ${
               activeTab === "concept"
@@ -133,7 +218,7 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>1. Concept &amp; Symbologie</span>
+            <span>Logo Allôresto</span>
           </button>
 
           <button
@@ -145,7 +230,7 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
             }`}
           >
             <Monitor className="w-3.5 h-3.5" />
-            <span>2. Affichage Favicon &amp; Écrans</span>
+            <span>Favicon &amp; Écrans</span>
           </button>
 
           <button
@@ -157,7 +242,7 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
             }`}
           >
             <Palette className="w-3.5 h-3.5" />
-            <span>3. Palette de Couleurs</span>
+            <span>Palette de Couleurs</span>
           </button>
 
           <button
@@ -169,12 +254,163 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>4. Export Vectoriel &amp; Code</span>
+            <span>Code Source SVG</span>
           </button>
         </div>
 
         {/* Modal Body */}
         <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6">
+          {/* TAB 0: LOGO PARTENAIRE BILO EXPRESS (CORRIGÉ) */}
+          {activeTab === "billo" && (
+            <div className="space-y-6">
+              {/* Header Showcase Banner */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-3xl bg-slate-950 border border-slate-800">
+                <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Correction Orthographique Validée</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-400">
+                      &quot;Livrason&quot; &rarr; <strong>&quot;Livraison&quot;</strong>
+                    </span>
+                  </div>
+
+                  <h4 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    Logo Officiel Partenaire Bilo Express
+                  </h4>
+                  <p className="text-xs sm:text-sm text-slate-300 max-w-lg leading-relaxed">
+                    Le sous-titre a été corrigé avec l&apos;orthographe exacte en français :{" "}
+                    <strong className="text-orange-400">&quot;Livraison à Domicile Rapide&quot;</strong> (avec le <span className="underline font-bold text-white">i</span>). Le logo vectoriel haute fidélité intègre la toiture de maison avec fenêtre, le coursier express en moto avec lignes de vitesse, le colis orange sécurisé avec bouclier et l&apos;anneau dynamique.
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-2">
+                    <button
+                      onClick={handleCopyBilloSvg}
+                      className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md"
+                    >
+                      {copiedBilloSvg ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedBilloSvg ? "SVG Bilo Copié !" : "Copier le SVG Bilo Express"}</span>
+                    </button>
+
+                    <button
+                      onClick={handleDownloadBilloSvg}
+                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Télécharger (.svg)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Live Logo Visualizer in Dark / Light Card */}
+                <div className="flex flex-col items-center gap-3">
+                  <div
+                    className={`w-52 h-52 rounded-3xl p-5 flex flex-col items-center justify-center shadow-2xl transition-colors duration-300 border ${
+                      previewBg === "dark"
+                        ? "bg-slate-950 border-slate-800"
+                        : previewBg === "light"
+                        ? "bg-white border-slate-200"
+                        : previewBg === "teal"
+                        ? "bg-[#0F4C64] border-cyan-700"
+                        : "bg-[#F36C21] border-orange-400"
+                    }`}
+                  >
+                    <BilloExpressLogo
+                      variant="full"
+                      size="xl"
+                      theme={previewBg === "light" ? "light" : "dark"}
+                    />
+                  </div>
+
+                  {/* Contrast background switcher */}
+                  <div className="flex items-center gap-1.5 p-1 bg-slate-900 rounded-xl border border-slate-800">
+                    <button
+                      onClick={() => setPreviewBg("dark")}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                        previewBg === "dark" ? "bg-slate-800 text-white" : "text-slate-400"
+                      }`}
+                    >
+                      Sombre
+                    </button>
+                    <button
+                      onClick={() => setPreviewBg("light")}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                        previewBg === "light" ? "bg-white text-slate-900" : "text-slate-400"
+                      }`}
+                    >
+                      Clair
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Before vs After Correction Comparison */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Avant: Faute d'orthographe */}
+                <div className="p-5 rounded-2xl bg-red-950/20 border border-red-900/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-red-400 flex items-center gap-1.5">
+                      <ShieldAlert className="w-4 h-4 text-red-400" />
+                      <span>Version Précédente (Avec Coquille)</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black bg-red-500/20 text-red-300">
+                      Coquille &quot;Livrason&quot;
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    Le mot français &quot;Livraison&quot; était orthographié sans la lettre <strong>&quot;i&quot;</strong> :
+                  </p>
+                  <div className="p-3 rounded-xl bg-slate-950 border border-red-900/30 text-center font-mono text-sm text-red-300 line-through">
+                    &quot;Livrason à Domicile Rapide&quot;
+                  </div>
+                </div>
+
+                {/* Après: Correction Validée */}
+                <div className="p-5 rounded-2xl bg-emerald-950/20 border border-emerald-900/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>Version Officielle Corrigée</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300">
+                      Conforme 100%
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    Orthographe française rigoureusement rectifiée et typographie ré-alignée :
+                  </p>
+                  <div className="p-3 rounded-xl bg-slate-950 border border-emerald-900/30 text-center font-mono text-sm font-bold text-emerald-400">
+                    &quot;Livraison à Domicile Rapide&quot;
+                  </div>
+                </div>
+              </div>
+
+              {/* Variants Showcase */}
+              <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+                <h5 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Déclinaisons dans l&apos;Application Allôresto
+                </h5>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-400">Format Badge Coursier</span>
+                    <BilloExpressLogo variant="badge" />
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-400">Format Horizontal</span>
+                    <BilloExpressLogo variant="horizontal" />
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-400">Format Icône Pure</span>
+                    <BilloExpressLogo variant="icon" size="lg" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB 1: CONCEPT & SYMBOLOGIE */}
           {activeTab === "concept" && (
             <div className="space-y-6">

@@ -191,8 +191,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         estimatedDeliveryTime:
           scheduledOption === "asap"
             ? serviceMode === "takeaway" || deliveryZone === "mosquee_pickup"
-              ? "15-20 min"
-              : "20-30 min"
+              ? "20-30 min"
+              : "45-60 min"
             : `Prévue pour ${finalScheduledTime}`,
         scheduledTime: finalScheduledTime,
         deliveryPartner: "Billo Express 🏍️",
@@ -289,7 +289,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 }`}
               >
                 <span className="block font-bold">⚡ Dès que possible</span>
-                <span className="text-[10px] text-slate-400">Livraison express en 20-30 min</span>
+                <span className="text-[10px] text-slate-400">Livraison en 45 à 60 mn</span>
               </button>
 
               <button

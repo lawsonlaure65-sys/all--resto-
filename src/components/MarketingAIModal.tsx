@@ -41,7 +41,7 @@ const PRESET_CAMPAIGNS: MarketingCampaign[] = [
     title: "⚡ Rush Midi Ministères & Bureaux du Plateau",
     targetAudience: "Fonctionnaires, Cadres de Banques & Sociétés de Niamey",
     channel: "WhatsApp",
-    headline: "Votre Déjeuner Chaud Livré en 20 min au Bureau !",
+    headline: "Votre Déjeuner Chaud Livré en 45 à 60 mn au Bureau !",
     messageText:
       "🔥 *PAUSE DÉJEUNER SANS ATTENTE À NIAMEY !*\n\nVous êtes au bureau au Plateau, Koira Kano ou Yantala ?\nCommandez votre *Formule Midi Khady's Food* (Demi-Pintade Braisée, Riz au Gras & Jus de Bissap frais) livrée chaude directement à votre accueil avec *Billo Express* !\n\n🎁 *Code Promo Spécial :* `MIDI2026` (-500 FCFA sur votre commande)\n🛵 *Livraison express garantie.*\n\n👉 *Commandez en 2 clics sur Allôresto :* https://alloresto.ne",
     promoCode: "MIDI2026",

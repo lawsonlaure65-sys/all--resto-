@@ -20,6 +20,7 @@ import {
   isNiameyNightTime,
   NiameyDistrict,
 } from "../data/niameyDistrictsData";
+import { BilloExpressLogo } from "./BilloExpressLogo";
 
 interface DeliveryDistrictsWidgetProps {
   onOpenFullDirectory: () => void;
@@ -61,9 +62,12 @@ export const DeliveryDistrictsWidget: React.FC<DeliveryDistrictsWidgetProps> = (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
             {/* Left Column: Title & Explanation */}
             <div className="lg:col-span-7 space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-orange-500/10 border border-orange-500/30 text-orange-400">
-                <Bike className="w-3.5 h-3.5" />
-                <span>Calculateur de Frais de Livraison Express</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-orange-500/10 border border-orange-500/30 text-orange-400">
+                  <Bike className="w-3.5 h-3.5" />
+                  <span>Calculateur de Frais de Livraison Express</span>
+                </div>
+                <BilloExpressLogo variant="badge" />
               </div>
 
               <h3 className="text-xl sm:text-3xl font-black text-white tracking-tight">
@@ -71,7 +75,7 @@ export const DeliveryDistrictsWidget: React.FC<DeliveryDistrictsWidgetProps> = (
               </h3>
 
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Allôresto dessert l’ensemble des <strong>5 Communes de Niamey</strong> (Centre-ville, Périphérie, Rive Droite et Ministères). Tous nos tarifs sont fixes, transparents et garantis par notre flotte officielle <strong>Billo Express 🏍️</strong>.
+                Allôresto dessert l’ensemble des <strong>5 Communes de Niamey</strong> (Centre-ville, Périphérie, Rive Droite et Ministères). Tous nos tarifs sont fixes, transparents et garantis par notre partenaire officiel <strong>Bilo Express 🏍️</strong>.
               </p>
 
               {/* Quick district selector pills */}

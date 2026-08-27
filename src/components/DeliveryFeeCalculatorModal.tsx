@@ -25,6 +25,7 @@ import {
   searchNiameyDistricts,
   isNiameyNightTime,
 } from "../data/niameyDistrictsData";
+import { BilloExpressLogo } from "./BilloExpressLogo";
 
 interface DeliveryFeeCalculatorModalProps {
   isOpen: boolean;
@@ -407,10 +408,12 @@ export const DeliveryFeeCalculatorModal: React.FC<DeliveryFeeCalculatorModalProp
         </div>
 
         {/* Footer Note */}
-        <div className="p-3 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-2 shrink-0">
-          <div className="flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Livraisons assurées par <strong>Billo Express Niamey 🏍️</strong> &bull; Suivi GPS &amp; WhatsApp en direct.</span>
+        <div className="p-3 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-3 shrink-0">
+          <div className="flex items-center gap-3">
+            <BilloExpressLogo variant="horizontal" size="sm" showTagline={false} />
+            <span className="text-slate-400 text-[11px]">
+              &bull; Flotte officielle &bull; <strong>Livraison à Domicile Rapide</strong>
+            </span>
           </div>
           <span className="text-slate-500 text-[10px]">
             Pour toute demande d'entreprise ou commande de groupe : +227 96 05 23 10
