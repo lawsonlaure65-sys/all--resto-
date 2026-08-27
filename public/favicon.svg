@@ -1,72 +1,94 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <!-- Rich Teal Gradient for the iconic Allô Pin -->
-    <linearGradient id="allorestoTeal" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#145F78" />
-      <stop offset="60%" stop-color="#0E4A5F" />
-      <stop offset="100%" stop-color="#093646" />
+    <!-- Background Squircle Gradient for Universal Multi-Screen Visibility -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F4C64" />
+      <stop offset="60%" stop-color="#0B3C50" />
+      <stop offset="100%" stop-color="#062532" />
     </linearGradient>
 
-    <!-- Vibrant Sahel Orange Gradient for the Digital & Delivery Cubes -->
+    <!-- Glowing Rim Gradient -->
+    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.6" />
+      <stop offset="50%" stop-color="#F36C21" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#0F4C64" stop-opacity="0.3" />
+    </linearGradient>
+
+    <!-- Pin Inner Gradient -->
+    <linearGradient id="pinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#19718E" />
+      <stop offset="100%" stop-color="#0B3747" />
+    </linearGradient>
+
+    <!-- Sahel Orange Vibrant Gradient for Express Pixels -->
     <linearGradient id="sahelOrange" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF7D26" />
-      <stop offset="100%" stop-color="#F15A1A" />
+      <stop offset="0%" stop-color="#FFA043" />
+      <stop offset="50%" stop-color="#F36C21" />
+      <stop offset="100%" stop-color="#D84E0C" />
     </linearGradient>
 
-    <!-- Subtle drop shadows -->
-    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
-      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.25" flood-color="#000000" />
+    <!-- Subtle Drop Shadow -->
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.45" />
+    </filter>
+    
+    <filter id="pixelGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#F36C21" flood-opacity="0.4" />
     </filter>
   </defs>
 
-  <g filter="url(#shadow)">
-    <!-- 3 Digital Food-Tech / Express Delivery Cubes (Orange Sahel) -->
-    <!-- Top-most cube -->
-    <rect x="79" y="15" width="16" height="16" rx="3" fill="url(#sahelOrange)" />
-    <!-- Left-middle cube -->
-    <rect x="67" y="24" width="15" height="15" rx="3" fill="url(#sahelOrange)" />
-    <!-- Right-lower cube -->
-    <rect x="81" y="31" width="17" height="17" rx="3" fill="url(#sahelOrange)" />
+  <!-- Premium App Squircle Container (Guarantees crisp visibility on light/dark tabs & phone screens) -->
+  <rect x="24" y="24" width="464" height="464" rx="108" fill="url(#bgGrad)" stroke="url(#rimGrad)" stroke-width="8" filter="url(#softShadow)" />
 
-    <!-- Main Allôresto Pin & Speech Bubble (Deep Teal) -->
+  <g transform="translate(256, 256) scale(2.8) translate(-50, -50)">
+    <!-- 3 Digital / Delivery Pixels (Orange Sahel) with Subtle Glow -->
+    <g filter="url(#pixelGlow)">
+      <!-- Top-most cube -->
+      <rect x="70" y="10" width="16" height="16" rx="4" fill="url(#sahelOrange)" />
+      <!-- Left-middle cube -->
+      <rect x="58" y="20" width="15" height="15" rx="3.5" fill="url(#sahelOrange)" />
+      <!-- Right-lower cube -->
+      <rect x="72" y="27" width="17" height="17" rx="4" fill="url(#sahelOrange)" />
+    </g>
+
+    <!-- Main Allôresto Pin & Speech Bubble -->
     <path
-      d="M 50 20 
-         C 32 20 20 34 20 54 
-         C 20 66 26 76 33 82 
-         L 33 97 
-         L 46 87 
-         C 48 87 50 87 52 87 
-         C 69 87 83 73 83 55 
-         C 83 48 80 42 76 37 
-         L 64 37 
-         L 64 20 
+      d="M 46 16 
+         C 26 16 12 31 12 52 
+         C 12 65 19 76 27 82 
+         L 27 96 
+         L 41 87 
+         C 43 87 45 87 47 87 
+         C 66 87 81 72 81 53 
+         C 81 45 78 39 74 34 
+         L 61 34 
+         L 61 16 
          Z"
-      fill="url(#allorestoTeal)"
+      fill="url(#pinGrad)"
+      stroke="#1E82A4"
+      stroke-width="1.5"
     />
 
-    <!-- Negative Space Culinary Fork (Pure Crisp White) -->
+    <!-- Negative Space Culinary Fork (Crisp Clean White) -->
     <!-- Prongs -->
-    <!-- Left Prong -->
-    <rect x="37" y="34" width="7" height="20" rx="3.5" fill="#FFFFFF" />
-    <!-- Center Prong -->
-    <rect x="47.5" y="34" width="7" height="20" rx="3.5" fill="#FFFFFF" />
-    <!-- Right Prong -->
-    <rect x="58" y="34" width="7" height="20" rx="3.5" fill="#FFFFFF" />
+    <rect x="29" y="30" width="7" height="21" rx="3.5" fill="#FFFFFF" />
+    <rect x="40" y="30" width="7" height="21" rx="3.5" fill="#FFFFFF" />
+    <rect x="51" y="30" width="7" height="21" rx="3.5" fill="#FFFFFF" />
 
     <!-- Fork Base / Cup -->
     <path
-      d="M 37 46 
-         C 37 62 65 62 65 46 
+      d="M 29 43 
+         C 29 60 58 60 58 43 
          Z"
       fill="#FFFFFF"
     />
 
-    <!-- Fork Handle / Stem extending down through bottom opening -->
+    <!-- Fork Handle extending downward through base -->
     <path
-      d="M 47.5 56 
-         L 54.5 56 
-         L 54.5 90 
-         L 47.5 90 
+      d="M 40 53 
+         L 47 53 
+         L 47 89 
+         L 40 89 
          Z"
       fill="#FFFFFF"
     />

@@ -2,34 +2,55 @@
 <html lang="fr" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
     <title>Allôresto Niger — Livraison de Repas & Restaurants à Niamey</title>
-    <meta name="description" content="Allôresto : Commandez vos plats préférés, spécialités nigériennes, africaines et internationales avec livraison rapide à Niamey." />
+    <meta name="description" content="Allôresto : Commandez vos plats préférés, spécialités nigériennes, africaines et internationales avec livraison express à Niamey (Plateau, Koira Kano, Yantala, Harobanda...)." />
+    <meta name="keywords" content="Allôresto, livraison repas Niamey, restaurant Niger, Billo Express, Airtel Money, Moov Money, plat du jour, AllôChef" />
+    <meta name="author" content="Allôresto Niger" />
     
-    <!-- App & Browser Screen Icons (Favicon, Apple Touch, PWA) -->
+    <!-- Primary App & Screen Favicons (Desktop, Mobile & High-DPI Screens) -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg" />
+    <link rel="mask-icon" href="/favicon.svg" color="#0F4C64" />
+    
+    <!-- Web App Manifest (PWA Android & Chrome) -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#0F4C64" />
+    
+    <!-- Mobile Browser Toolbar & Screen Theming -->
+    <meta name="theme-color" content="#0F4C64" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#020617" media="(prefers-color-scheme: dark)" />
+    <meta name="msapplication-TileColor" content="#0F4C64" />
+    <meta name="msapplication-TileImage" content="/favicon.svg" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Allôresto" />
+    <meta name="application-name" content="Allôresto Niger" />
+    <meta name="format-detection" content="telephone=no" />
 
-    <!-- OpenGraph Metadata -->
-    <meta property="og:title" content="Allôresto Niger — Livraison de Repas & Restaurants" />
-    <meta property="og:description" content="Vos restaurants et spécialités du Sahel livrés chez vous et au bureau à Niamey." />
+    <!-- OpenGraph & Social Cards (WhatsApp, Facebook, LinkedIn) -->
+    <meta property="og:site_name" content="Allôresto Niger" />
+    <meta property="og:title" content="Allôresto Niger — Livraison de Repas & Restaurants à Niamey" />
+    <meta property="og:description" content="Vos restaurants et spécialités du Sahel livrés chez vous et au bureau à Niamey avec suivi en direct." />
     <meta property="og:image" content="/favicon.svg" />
+    <meta property="og:image:alt" content="Logo Officiel Allôresto Niger" />
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
+    
+    <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Allôresto Niger — Livraison Rapide à Niamey" />
+    <meta name="twitter:description" content="Commandez vos repas en ligne et faites-vous livrer par Billo Express à Niamey." />
+    <meta name="twitter:image" content="/favicon.svg" />
 
+    <!-- Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-slate-950 text-slate-100 font-['Plus_Jakarta_Sans',sans-serif]">
+  <body class="bg-slate-950 text-slate-100 font-['Plus_Jakarta_Sans',sans-serif] selection:bg-orange-500 selection:text-slate-950">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
