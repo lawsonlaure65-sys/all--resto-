@@ -37,7 +37,9 @@ import { VisualNotificationToast, ToastNotification } from "./components/VisualN
 import { Footer } from "./components/Footer";
 import { ReceiptTicketModal } from "./components/ReceiptTicketModal";
 import { JumuahBanner } from "./components/JumuahBanner";
+import { VoiceOrderModal } from "./components/VoiceOrderModal";
 import { getJumuahStatus } from "./utils/jumuahSchedule";
+import { loadStoredRestaurants } from "./services/dishStorageService";
 
 import {
   playSoundCartAdd,
@@ -86,6 +88,7 @@ import {
   BookOpen,
   Volume2,
   VolumeX,
+  Mic,
 } from "lucide-react";
 
 export function App() {
@@ -93,6 +96,9 @@ export function App() {
   const [currentRole, setCurrentRole] = useState<UserRole>("client");
   const [selectedCity, setSelectedCity] = useState<string>("Niamey (Plateau / Centre-Ville)");
   const [serviceMode, setServiceMode] = useState<ServiceMode>("delivery");
+
+  // Persistent Restaurants & Dishes State
+  const [restaurants, setRestaurants] = useState<Restaurant[]>(() => loadStoredRestaurants());
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -158,6 +164,7 @@ export function App() {
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
   const [isChefAIOpen, setIsChefAIOpen] = useState<boolean>(false);
+  const [isVoiceOrderOpen, setIsVoiceOrderOpen] = useState<boolean>(false);
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState<boolean>(false);
   const [isGroupOrderOpen, setIsGroupOrderOpen] = useState<boolean>(false);
   const [isAccountOpen, setIsAccountOpen] = useState<boolean>(false);
@@ -178,8 +185,8 @@ export function App() {
   const [isWhatsAppAutomationOpen, setIsWhatsAppAutomationOpen] = useState<boolean>(false);
   const [isFaqOpen, setIsFaqOpen] = useState<boolean>(false);
 
-  // Flattened all dishes across restaurants
-  const allDishes = useMemo(() => RESTAURANTS_DATA.flatMap((r) => r.menu), []);
+  // Flattened all dishes across stored restaurants
+  const allDishes = useMemo(() => restaurants.flatMap((r) => r.menu), [restaurants]);
 
   // Cart Calculations
   const cartTotal = cartItems.reduce((sum, it) => sum + it.totalPrice, 0);
@@ -376,7 +383,7 @@ export function App() {
   };
 
   // Filter Restaurants
-  const filteredRestaurants = RESTAURANTS_DATA.filter((resto) => {
+  const filteredRestaurants = restaurants.filter((resto) => {
     // Cuisine filter
     if (selectedCuisine !== "all" && resto.cuisineCategory !== selectedCuisine) {
       return false;
@@ -419,6 +426,7 @@ export function App() {
         cartTotal={cartTotal}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenChefAI={() => setIsChefAIOpen(true)}
+        onOpenVoiceOrder={() => setIsVoiceOrderOpen(true)}
         onOpenPartnerModal={() => setIsPartnerModalOpen(true)}
         onOpenGroupOrder={() => setIsGroupOrderOpen(true)}
         onOpenAccount={() => setIsAccountOpen(true)}
@@ -786,7 +794,10 @@ export function App() {
         {/* 4. ESPACE ADMIN                                          */}
         {/* ======================================================== */}
         {currentRole === "admin" && (
-          <AdminDashboard onOpenTechPack={() => setIsTechPackOpen(true)} />
+          <AdminDashboard
+            onOpenTechPack={() => setIsTechPackOpen(true)}
+            onUpdateRestaurants={(updated) => setRestaurants(updated)}
+          />
         )}
       </main>
 
@@ -1015,7 +1026,7 @@ export function App() {
         isOpen={isDishesCatalogOpen}
         onClose={() => setIsDishesCatalogOpen(false)}
         dishes={allDishes}
-        restaurants={RESTAURANTS_DATA}
+        restaurants={restaurants}
         initialMealMoment={catalogMealMoment}
         onAddToCart={(item) => {
           handleAddToCart(item, {}, 1);
@@ -1023,7 +1034,7 @@ export function App() {
         }}
         onSelectRestaurant={(resto) => setSelectedRestaurantForMenu(resto)}
         onOpenRestaurantMenu={(restaurantId) => {
-          const foundResto = RESTAURANTS_DATA.find((r) => r.id === restaurantId);
+          const foundResto = restaurants.find((r) => r.id === restaurantId);
           if (foundResto) {
             setSelectedRestaurantForMenu(foundResto);
           }
@@ -1083,6 +1094,51 @@ export function App() {
         }}
       />
 
+      {/* 22. Commande Vocale Intelligente (Speech Recognition Niger) */}
+      <VoiceOrderModal
+        isOpen={isVoiceOrderOpen}
+        onClose={() => setIsVoiceOrderOpen(false)}
+        availableDishes={allDishes}
+        onAddToCart={(dish, qty) => {
+          handleAddToCart(dish, {}, qty);
+          setIsCartOpen(true);
+          showNotification(
+            "Plat ajouté par la voix 🎙️",
+            `${qty}x ${dish.name} ajouté(s) à votre panier.`,
+            "success",
+            "cart"
+          );
+        }}
+        onDirectCheckout={(orderItems) => {
+          orderItems.forEach((item) => {
+            handleAddToCart(item.dish, {}, item.quantity);
+          });
+          setIsCheckoutOpen(true);
+          showNotification(
+            "Commande vocale prête pour livraison 🚀",
+            "Vérifiez l'adresse et le mode de règlement.",
+            "success",
+            "promo"
+          );
+        }}
+      />
+
+      {/* Floating Commande Vocale Trigger Button */}
+      {currentRole === "client" && (
+        <button
+          onClick={() => setIsVoiceOrderOpen(true)}
+          className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white font-black text-xs shadow-2xl shadow-orange-500/40 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/20 group"
+          title="Commander à la voix (Microphone)"
+        >
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-200 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+          </span>
+          <Mic className="w-4 h-4 text-white group-hover:animate-pulse" />
+          <span className="hidden sm:inline">Commande Vocale</span>
+        </button>
+      )}
+
       {/* PWA Mobile App Install Prompt for Android */}
       <PwaInstallPrompt />
 
@@ -1106,6 +1162,7 @@ export function App() {
         cartTotal={cartTotal}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenChefAI={() => setIsChefAIOpen(true)}
+        onOpenVoiceOrder={() => setIsVoiceOrderOpen(true)}
         onOpenGroupOrder={() => setIsGroupOrderOpen(true)}
         onOpenAccount={() => setIsAccountOpen(true)}
         onOpenTechPack={() => setIsTechPackOpen(true)}

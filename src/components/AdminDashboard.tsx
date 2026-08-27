@@ -36,16 +36,32 @@ import {
   Package,
   MapPin,
   FileCheck,
+  Download,
+  Upload,
+  HardDrive,
+  CheckCircle,
 } from "lucide-react";
 import { RESTAURANTS_DATA, SAUCE_BOXES_DATA, BLOG_POSTS_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
-import { MenuItem, SauceBox, CateringQuoteRequest, Order, DishCategory } from "../types";
+import { MenuItem, SauceBox, CateringQuoteRequest, Order, DishCategory, Restaurant } from "../types";
 import { DishManagementModal, CATEGORIES_CONFIG } from "./DishManagementModal";
+import {
+  loadStoredRestaurants,
+  addOrUpdateDishInStorage,
+  deleteDishFromStorage,
+  exportAllDataBackup,
+  importDataBackup,
+  resetStoredData,
+} from "../services/dishStorageService";
 
 interface AdminDashboardProps {
   onOpenTechPack?: () => void;
+  onUpdateRestaurants?: (restaurants: Restaurant[]) => void;
 }
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenTechPack }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({
+  onOpenTechPack,
+  onUpdateRestaurants,
+}) => {
   // Admin Authentication State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [adminEmail, setAdminEmail] = useState<string>("admin@alloresto.ne");
@@ -58,12 +74,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenTechPack }
     "overview" | "menu_dishes" | "sauce_boxes" | "customers_loyalty" | "couriers_delivery" | "events_catering" | "pages_content" | "deposits_validation"
   >("overview");
 
-  // State: Dishes & Menu
-  const [dishesList, setDishesList] = useState<MenuItem[]>(
-    RESTAURANTS_DATA.flatMap((r) => r.menu)
-  );
+  // State: Dishes & Menu (Initialized from LocalStorage persistence)
+  const [dishesList, setDishesList] = useState<MenuItem[]>(() => {
+    const stored = loadStoredRestaurants();
+    return stored.flatMap((r) => r.menu);
+  });
   const [showDishModal, setShowDishModal] = useState<boolean>(false);
   const [editingDish, setEditingDish] = useState<MenuItem | null>(null);
+  const [backupMessage, setBackupMessage] = useState<string | null>(null);
+  const backupFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Dishes Filter & Search State
   const [dishSearchQuery, setDishSearchQuery] = useState<string>("");
@@ -284,22 +303,79 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenTechPack }
   };
 
   const handleSaveDishFromModal = (savedDish: MenuItem) => {
-    if (editingDish) {
-      // Update existing dish
-      setDishesList((prev) =>
-        prev.map((d) => (d.id === savedDish.id ? savedDish : d))
-      );
-    } else {
-      // Add new dish to the top
-      setDishesList((prev) => [savedDish, ...prev]);
+    // 1. Update in permanent localStorage
+    const updatedRestaurants = addOrUpdateDishInStorage(savedDish);
+
+    // 2. Update local admin list
+    setDishesList(updatedRestaurants.flatMap((r) => r.menu));
+
+    // 3. Notify parent app state
+    if (onUpdateRestaurants) {
+      onUpdateRestaurants(updatedRestaurants);
     }
+
+    setBackupMessage(`Plat "${savedDish.name}" sauvegardé avec succès dans la base permanente !`);
+    setTimeout(() => setBackupMessage(null), 4000);
+
     setShowDishModal(false);
     setEditingDish(null);
   };
 
   const handleDeleteDish = (dishId: string) => {
-    if (window.confirm("Êtes-vous sûr de vouloir retirer ce plat du menu Allôresto ?")) {
-      setDishesList((prev) => prev.filter((d) => d.id !== dishId));
+    if (window.confirm("Êtes-vous sûr de vouloir retirer définitivement ce plat du menu Allôresto ?")) {
+      const updatedRestaurants = deleteDishFromStorage(dishId);
+      setDishesList(updatedRestaurants.flatMap((r) => r.menu));
+      if (onUpdateRestaurants) {
+        onUpdateRestaurants(updatedRestaurants);
+      }
+      setBackupMessage("Plat retiré et base de données synchronisée.");
+      setTimeout(() => setBackupMessage(null), 3000);
+    }
+  };
+
+  // Export JSON Backup
+  const handleExportBackup = () => {
+    exportAllDataBackup();
+    setBackupMessage("Fichier de sauvegarde exporté avec succès (sauvegarde locale sécurisée).");
+    setTimeout(() => setBackupMessage(null), 4000);
+  };
+
+  // Import JSON Backup File
+  const handleImportBackupFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) {
+        const success = importDataBackup(content);
+        if (success) {
+          const fresh = loadStoredRestaurants();
+          setDishesList(fresh.flatMap((r) => r.menu));
+          if (onUpdateRestaurants) {
+            onUpdateRestaurants(fresh);
+          }
+          setBackupMessage("Sauvegarde restaurée avec succès ! Les plats sont à jour.");
+        } else {
+          setBackupMessage("Erreur : Le fichier de sauvegarde est invalide.");
+        }
+        setTimeout(() => setBackupMessage(null), 5000);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Reset to default
+  const handleResetData = () => {
+    if (window.confirm("Voulez-vous réinitialiser les plats aux valeurs par défaut de Niamey ? Vos modifications locales seront remplacées.")) {
+      const reset = resetStoredData();
+      setDishesList(reset.flatMap((r) => r.menu));
+      if (onUpdateRestaurants) {
+        onUpdateRestaurants(reset);
+      }
+      setBackupMessage("Données réinitialisées aux valeurs initiales d'origine.");
+      setTimeout(() => setBackupMessage(null), 4000);
     }
   };
 
@@ -653,6 +729,76 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onOpenTechPack }
       {/* ======================================================== */}
       {activeAdminTab === "menu_dishes" && (
         <div className="space-y-5">
+          {/* Persistence & Backup Status Banner */}
+          <div className="p-4 rounded-3xl bg-slate-950 border border-emerald-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <HardDrive className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-white">Sauvegarde Permanente Automatique</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Active (LocalStorage)
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Tous les plats, photos compressées et prix ajoutés sont automatiquement conservés même après rechargement.
+                </p>
+              </div>
+            </div>
+
+            {/* Backup Action Buttons */}
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              <input
+                type="file"
+                ref={backupFileInputRef}
+                onChange={handleImportBackupFile}
+                accept=".json"
+                className="hidden"
+              />
+
+              <button
+                type="button"
+                onClick={handleExportBackup}
+                className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                title="Télécharger une copie JSON de tous les plats et cartes"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Exporter Sauvegarde</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => backupFileInputRef.current?.click()}
+                className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                title="Restaurer un fichier de sauvegarde JSON"
+              >
+                <Upload className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Restaurer</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetData}
+                className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-rose-950/60 border border-slate-800 hover:border-rose-500/40 text-slate-400 hover:text-rose-300 text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
+                title="Rétablir les 65+ plats d'origine de Niamey"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Défaut</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Backup message banner feedback */}
+          {backupMessage && (
+            <div className="p-3 rounded-2xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-200 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+              <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{backupMessage}</span>
+            </div>
+          )}
+
           {/* Header & Main Add Button */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl">
             <div>

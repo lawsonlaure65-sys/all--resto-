@@ -27,6 +27,7 @@ import {
   Calendar,
   MessageSquare,
   TrendingUp,
+  Mic,
 } from "lucide-react";
 import { UserRole, ServiceMode, CityOption, UserProfile } from "../types";
 import { CITIES_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
@@ -43,6 +44,7 @@ interface HeaderProps {
   cartTotal: number;
   onOpenCart: () => void;
   onOpenChefAI: () => void;
+  onOpenVoiceOrder?: () => void;
   onOpenPartnerModal: () => void;
   onOpenGroupOrder: () => void;
   onOpenAccount: () => void;
@@ -75,6 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
   cartTotal,
   onOpenCart,
   onOpenChefAI,
+  onOpenVoiceOrder,
   onOpenPartnerModal,
   onOpenGroupOrder,
   onOpenAccount,
@@ -401,6 +404,19 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>Fidélité</span>
               </button>
             </div>
+          )}
+
+          {/* Voice Order Trigger */}
+          {onOpenVoiceOrder && (
+            <button
+              id="voice-order-nav-btn"
+              onClick={onOpenVoiceOrder}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/40 hover:border-red-400 text-red-300 hover:text-white text-xs font-bold shadow-md cursor-pointer transition-all hover:scale-105"
+              title="Dicter ma commande vocale"
+            >
+              <Mic className="w-3.5 h-3.5 text-red-400 animate-pulse" />
+              <span className="hidden sm:inline">Commande Vocale</span>
+            </button>
           )}
 
           {/* AllôChef AI Assistant */}

@@ -13,6 +13,7 @@ import {
   Package,
   HelpCircle,
   TrendingUp,
+  Mic,
 } from "lucide-react";
 import { UserRole } from "../types";
 
@@ -23,6 +24,7 @@ interface MobileBottomNavProps {
   cartTotal: number;
   onOpenCart: () => void;
   onOpenChefAI: () => void;
+  onOpenVoiceOrder?: () => void;
   onOpenGroupOrder: () => void;
   onOpenAccount: () => void;
   onOpenTechPack: () => void;
@@ -40,6 +42,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   cartTotal,
   onOpenCart,
   onOpenChefAI,
+  onOpenVoiceOrder,
   onOpenGroupOrder,
   onOpenAccount,
   onOpenTechPack,
@@ -84,6 +87,17 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           >
             <Clock className="w-4 h-4 mb-0.5 text-cyan-400" />
             <span className="text-[9px]">Commandes</span>
+          </button>
+        )}
+
+        {/* Tab 3: Commande Vocale */}
+        {currentRole === "client" && onOpenVoiceOrder && (
+          <button
+            onClick={onOpenVoiceOrder}
+            className="flex flex-col items-center justify-center py-1 px-1.5 rounded-xl text-red-400 hover:text-red-300 transition-all cursor-pointer"
+          >
+            <Mic className="w-4 h-4 mb-0.5 text-red-400 animate-pulse" />
+            <span className="text-[9px] font-bold">Vocale</span>
           </button>
         )}
 

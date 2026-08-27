@@ -21,8 +21,12 @@ import {
   Wheat,
   ShieldCheck,
   Zap,
+  Smartphone,
+  CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
 import { MenuItem, DishCategory, MenuItemOption } from "../types";
+import { compressImageBase64 } from "../services/dishStorageService";
 
 interface DishManagementModalProps {
   isOpen: boolean;
@@ -159,7 +163,9 @@ export const DishManagementModal: React.FC<DishManagementModalProps> = ({
   initialDish,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [showPresetGallery, setShowPresetGallery] = useState(false);
 
   // Form Fields
@@ -221,28 +227,38 @@ export const DishManagementModal: React.FC<DishManagementModalProps> = ({
     }
   };
 
-  const processSelectedImageFile = (file: File) => {
+  const processSelectedImageFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       setErrorMessage("Le fichier sélectionné doit être une image (JPG, PNG, WEBP).");
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setErrorMessage("L'image est trop volumineuse (> 10 Mo). Veuillez choisir une photo optimisée.");
-      return;
-    }
-
     setErrorMessage(null);
-    setImageFileName(file.name);
-    setImageFileSize(`${(file.size / 1024).toFixed(1)} Ko`);
+    setIsCompressing(true);
+    const originalSizeKb = (file.size / 1024).toFixed(1);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setImage(event.target.result as string);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Compress to lightweight Base64 (max 1200px, 85% quality)
+      const compressed = await compressImageBase64(file, 1200, 900, 0.85);
+      const approxKb = Math.round((compressed.length * 0.75) / 1024);
+      
+      setImage(compressed);
+      setImageFileName(file.name);
+      setImageFileSize(`${approxKb} Ko (Compressé, source: ${originalSizeKb} Ko)`);
+    } catch (err) {
+      console.warn("Direct compression fallback to FileReader", err);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setImage(event.target.result as string);
+          setImageFileName(file.name);
+          setImageFileSize(`${(file.size / 1024).toFixed(1)} Ko`);
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsCompressing(false);
+    }
   };
 
   // Drag and drop handlers
@@ -421,7 +437,13 @@ export const DishManagementModal: React.FC<DishManagementModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
               {/* Photo Preview Card */}
               <div className="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-700 aspect-video md:aspect-square flex items-center justify-center group shadow-inner">
-                {image ? (
+                {isCompressing ? (
+                  <div className="flex flex-col items-center justify-center p-4 text-center space-y-2">
+                    <RefreshCw className="w-8 h-8 text-orange-400 animate-spin" />
+                    <span className="text-xs font-bold text-white">Optimisation de la photo...</span>
+                    <span className="text-[10px] text-slate-400">Compression rapide pour sauvegarde locale</span>
+                  </div>
+                ) : image ? (
                   <>
                     <img
                       src={image}
@@ -429,12 +451,13 @@ export const DishManagementModal: React.FC<DishManagementModalProps> = ({
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex flex-col justify-end p-3">
-                      <span className="text-[11px] font-bold text-white bg-slate-900/80 backdrop-blur-md px-2 py-0.5 rounded-md border border-slate-700 w-fit">
-                        {imageFileName || "Photo Actuelle"}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent flex flex-col justify-end p-3">
+                      <span className="text-[11px] font-bold text-white bg-slate-900/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700 w-fit flex items-center gap-1.5 shadow-md">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="truncate max-w-[140px]">{imageFileName || "Photo Actuelle"}</span>
                       </span>
                       {imageFileSize && (
-                        <span className="text-[9px] text-slate-300 mt-0.5">{imageFileSize}</span>
+                        <span className="text-[10px] text-slate-300 mt-1 font-mono">{imageFileSize}</span>
                       )}
                     </div>
                   </>
@@ -448,6 +471,7 @@ export const DishManagementModal: React.FC<DishManagementModalProps> = ({
 
               {/* Upload Dropzone & Action buttons */}
               <div className="md:col-span-2 space-y-3">
+                {/* Standard Photo Picker Input */}
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -456,28 +480,55 @@ export const DishManagementModal: React.FC<DishManagementModalProps> = ({
                   className="hidden"
                 />
 
+                {/* Direct Camera Capture Input */}
+                <input
+                  type="file"
+                  ref={cameraInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                />
+
+                {/* Direct Action Buttons: Camera vs Gallery */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="p-3 rounded-2xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-orange-950/50 transition cursor-pointer"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>Prendre Photo (Caméra)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-3 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                  >
+                    <ImageIcon className="w-4 h-4 text-orange-400" />
+                    <span>Choisir dans Photos / Galerie</span>
+                  </button>
+                </div>
+
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`p-6 rounded-2xl border-2 border-dashed transition-all text-center cursor-pointer flex flex-col items-center justify-center gap-2.5 ${
+                  className={`p-4 rounded-2xl border-2 border-dashed transition-all text-center cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
                     isDragOver
                       ? "border-orange-500 bg-orange-500/10 text-orange-300"
-                      : "border-slate-700 hover:border-orange-500/50 bg-slate-900/50 hover:bg-slate-900 text-slate-300"
+                      : "border-slate-800 hover:border-orange-500/50 bg-slate-900/40 hover:bg-slate-900/80 text-slate-400"
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-orange-500/20 text-orange-400 flex items-center justify-center shadow-lg shadow-orange-500/10">
-                    <Upload className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-white block">
-                      Cliquez pour parcourir votre Galerie Photos
-                    </span>
-                    <span className="text-[11px] text-slate-400 block mt-0.5">
-                      ou glissez-déposez l'image directement ici (JPG, PNG, WebP)
-                    </span>
-                  </div>
+                  <Upload className="w-4 h-4 text-orange-400" />
+                  <span className="text-[11px] font-semibold text-slate-300">
+                    Ou glissez-déposez l'image directement depuis vos dossiers
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    JPG, PNG, WebP &bull; Optimisation automatique
+                  </span>
                 </div>
 
                 {/* Direct Image URL input as quick alternative */}
