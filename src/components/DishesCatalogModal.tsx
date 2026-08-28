@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { MenuItem, DishCategory, MealMoment, Restaurant } from "../types";
 import { CATEGORIES_CONFIG } from "./DishManagementModal";
+import { useTranslation } from "../context/TranslationContext";
 
 export const MEAL_MOMENTS_CONFIG: {
   id: "all" | MealMoment;
@@ -90,16 +91,22 @@ interface DishesCatalogModalProps {
 export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
   isOpen,
   onClose,
-  dishes,
+  dishes: rawDishes,
   restaurants = [],
   initialMealMoment = "all",
   onAddToCart,
   onSelectRestaurant,
   onOpenRestaurantMenu,
 }) => {
+  const { currentLanguage, translateDishes, translateCategory, activeLanguageInfo } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMoment, setSelectedMoment] = useState<"all" | MealMoment>(initialMealMoment);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  // Translate all dishes based on current language
+  const dishes = useMemo(() => {
+    return translateDishes(rawDishes);
+  }, [rawDishes, translateDishes]);
 
   // Dietary & Taste Filter Toggles
   const [filterSpicy, setFilterSpicy] = useState(false);

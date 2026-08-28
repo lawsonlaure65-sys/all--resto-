@@ -13,11 +13,10 @@ import {
   Sparkles,
   ShoppingBag,
   Calendar,
-  Share2,
   Heart,
-  ChevronRight,
 } from "lucide-react";
 import { Restaurant, MenuItem, ServiceMode } from "../types";
+import { useTranslation } from "../context/TranslationContext";
 
 interface RestaurantMenuModalProps {
   restaurant: Restaurant | null;
@@ -29,29 +28,30 @@ interface RestaurantMenuModalProps {
 }
 
 export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
-  restaurant,
+  restaurant: rawRestaurant,
   isOpen,
   onClose,
   onAddToCart,
   onBookTable,
-  serviceMode,
 }) => {
+  const { currentLanguage, translateRestaurant, activeLanguageInfo } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedItemForConfig, setSelectedItemForConfig] = useState<MenuItem | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [itemQty, setItemQty] = useState<number>(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [addedNotice, setAddedNotice] = useState(false);
-  
-  // Dietary & Taste Filters within restaurant menu
+
+  // Dietary & Taste Filters
   const [filterSpicyOnly, setFilterSpicyOnly] = useState(false);
   const [filterVegeOnly, setFilterVegeOnly] = useState(false);
   const [filterHalalOnly, setFilterHalalOnly] = useState(false);
   const [filterNigerLocalOnly, setFilterNigerLocalOnly] = useState(false);
   const [filterExpressOnly, setFilterExpressOnly] = useState(false);
 
-  if (!restaurant || !isOpen) return null;
+  if (!rawRestaurant || !isOpen) return null;
 
+  const restaurant = translateRestaurant(rawRestaurant);
   const categories = Array.from(new Set(restaurant.menu.map((m) => m.category)));
 
   const filteredMenuItems = restaurant.menu.filter((m) => {
@@ -118,7 +118,15 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-slate-950/40" />
 
-            {/* Close & Share Top Buttons */}
+            {/* Translation indicator pill */}
+            {currentLanguage !== "fr" && (
+              <div className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/85 backdrop-blur-md border border-orange-500/40 text-[11px] text-orange-300 font-bold shadow-lg">
+                <Sparkles className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
+                <span>{activeLanguageInfo.flag} {activeLanguageInfo.label} (Gemini AI)</span>
+              </div>
+            )}
+
+            {/* Close & Favorite Top Buttons */}
             <div className="absolute top-4 right-4 flex items-center gap-2">
               <button
                 onClick={() => setIsFavorite(!isFavorite)}
@@ -194,7 +202,7 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                       : "bg-slate-900 text-slate-400 hover:text-white"
                   }`}
                 >
-                  Tout le menu
+                  {currentLanguage === "ha" ? "Dukkan Abinci" : currentLanguage === "zm" ? "Ŋwaarey Kulu" : currentLanguage === "en" ? "All Items" : "Tout le menu"}
                 </button>
                 {categories.map((cat) => (
                   <button
@@ -220,7 +228,7 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                   className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold hover:bg-amber-500/30 transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
                 >
                   <Calendar className="w-3.5 h-3.5" />
-                  <span>Réserver une table</span>
+                  <span>{currentLanguage === "ha" ? "Ajiye Tebur" : currentLanguage === "zm" ? "Teebur Za" : currentLanguage === "en" ? "Book Table" : "Réserver une table"}</span>
                 </button>
               )}
             </div>
@@ -236,7 +244,7 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                 }`}
               >
                 <Flame className="w-3 h-3 text-red-400" />
-                <span>Épicé</span>
+                <span>{currentLanguage === "ha" ? "Yaji" : currentLanguage === "zm" ? "Tonkol" : "Épicé"}</span>
               </button>
 
               <button
@@ -247,7 +255,7 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                     : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
                 }`}
               >
-                <span>🌱 Végétarien</span>
+                <span>🌱 {currentLanguage === "ha" ? "Kayan Gona" : currentLanguage === "zm" ? "Kobto" : "Végétarien"}</span>
               </button>
 
               <button
@@ -269,7 +277,7 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                     : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
                 }`}
               >
-                <span>🇳🇪 Terroir Niger</span>
+                <span>🇳🇪 {currentLanguage === "ha" ? "Abincin Nijar" : currentLanguage === "zm" ? "Niamey Ŋwaari" : "Terroir Niger"}</span>
               </button>
 
               <button
@@ -280,7 +288,7 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                     : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
                 }`}
               >
-                <span>⚡ Express &lt; 15min</span>
+                <span>⚡ Express &lt; 15m</span>
               </button>
             </div>
           </div>
@@ -353,7 +361,7 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                         className="px-2.5 py-1 rounded-xl bg-orange-500/10 group-hover:bg-orange-500 text-orange-400 group-hover:text-slate-950 text-xs font-bold flex items-center gap-1 transition-colors"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Ajouter</span>
+                        <span>{currentLanguage === "ha" ? "Zaba" : currentLanguage === "zm" ? "Za" : currentLanguage === "en" ? "Add" : "Ajouter"}</span>
                       </button>
                     </div>
                   </div>
@@ -451,24 +459,27 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                 >
                   <Minus className="w-3.5 h-3.5" />
                 </button>
-                <span className="font-extrabold text-sm text-white px-2">{itemQty}</span>
+                <span className="w-8 text-center font-black text-white text-sm">{itemQty}</span>
                 <button
                   type="button"
                   onClick={() => setItemQty(itemQty + 1)}
-                  className="w-8 h-8 rounded-xl bg-orange-500 text-slate-950 font-bold flex items-center justify-center hover:bg-orange-400 cursor-pointer"
+                  className="w-8 h-8 rounded-xl bg-orange-500 text-slate-950 flex items-center justify-center hover:bg-orange-400 font-black cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* Action Confirm Button */}
+            {/* Add to cart submit */}
             <button
+              type="button"
               onClick={handleConfirmAddToCart}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-black text-sm flex items-center justify-between px-6 shadow-xl shadow-orange-500/25 cursor-pointer transition-transform hover:scale-[1.01]"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 font-black text-sm flex items-center justify-center gap-2 hover:opacity-95 shadow-lg shadow-orange-500/20 cursor-pointer"
             >
-              <span>Ajouter à ma commande</span>
-              <span>{calculateConfiguredItemTotal().toLocaleString()} FCFA</span>
+              <ShoppingBag className="w-4 h-4" />
+              <span>
+                {currentLanguage === "ha" ? "Sanya a Kwando" : currentLanguage === "zm" ? "Daŋ Bata Ra" : currentLanguage === "en" ? "Add to Cart" : "Ajouter au Panier"} &bull; {calculateConfiguredItemTotal().toLocaleString()} FCFA
+              </span>
             </button>
           </motion.div>
         </div>

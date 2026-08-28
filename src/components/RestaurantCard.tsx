@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "motion/react";
 import { Star, Clock, Bike, Flame, Sparkles, MapPin, CheckCircle, ChevronRight } from "lucide-react";
 import { Restaurant, ServiceMode } from "../types";
+import { useTranslation } from "../context/TranslationContext";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -11,11 +12,13 @@ interface RestaurantCardProps {
 }
 
 export const RestaurantCard: React.FC<RestaurantCardProps> = ({
-  restaurant,
+  restaurant: rawRestaurant,
   serviceMode,
   onOpenMenu,
   onBookTable,
 }) => {
+  const { translateRestaurant } = useTranslation();
+  const restaurant = translateRestaurant(rawRestaurant);
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}

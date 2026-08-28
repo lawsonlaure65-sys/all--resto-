@@ -2,21 +2,28 @@ import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 // Lazy-initialized Google Gen AI client
 function getGenAIClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
   try {
-    return new GoogleGenAI({ apiKey });
+    return new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          "User-Agent": "aistudio-build",
+        },
+      },
+    });
   } catch (err) {
     console.error("Failed to initialize GoogleGenAI client:", err);
     return null;
@@ -30,6 +37,295 @@ app.get("/api/health", (req, res) => {
     hasApiKey: !!process.env.GEMINI_API_KEY,
     timestamp: new Date().toISOString(),
   });
+});
+
+// Fallback culinary dictionaries for instant Zarma / Haoussa / English translations
+const LOCAL_TERMS_DICTIONARY: Record<string, { ha: string; zm: string; en: string }> = {
+  "choukouya": { ha: "Choukouya (Gasasshen Naman Rago)", zm: "Choukouya (Ham Tonte Kaano)", en: "Sahelian Grilled Lamb BBQ (Choukouya)" },
+  "dambou": { ha: "Dambou na Musamman (Shinkafa da Ganye)", zm: "Dambou Hanno (Kopto nda Shinkafa)", en: "Royal Dambou (Steamed Sahelian Couscous & Moringa)" },
+  "grillades": { ha: "Gasasshen Nama & Kayan Toshi", zm: "Ham Tonte nda Gani", en: "Grilled Meat & BBQ Specialties" },
+  "petit dejeuner": { ha: "Karin Kumallo na Safe", zm: "Susubay Ŋwaari", en: "Breakfast" },
+  "dejeuner": { ha: "Abincin Rana", zm: "Zaari Ŋwaari", en: "Lunch" },
+  "diner": { ha: "Abincin Dare", zm: "Cini Ŋwaari", en: "Dinner" },
+  "menu du jour": { ha: "Abincin Ranar Yau na Musamman", zm: "Hanno Ŋwaari Hunkuna", en: "Daily Special Menu" },
+  "boissons": { ha: "Abubuwan Sha & Ruwan Lemo", zm: "Hari Kaana nda Bissap", en: "Drinks & Local Juices" },
+  "desserts": { ha: "Kayan Zaki & 'Ya'yan Itace", zm: "Ŋwaari Kaana", en: "Desserts & Pastries" },
+  "poisson": { ha: "Kifin Kogin Kwara (Niger)", zm: "Isa Hari Ham (Niger)", en: "Niger River Fresh Fish" },
+  "poulet": { ha: "Naman Kaza na Gida", zm: "Gorzo Ham", en: "Local Farm Chicken" },
+  "mouton": { ha: "Naman Rago mai Taushi", zm: "Feeji Ham Kaano", en: "Tender Sahelian Lamb" },
+  "livraison": { ha: "Isar da Sauri Billo Express", zm: "Billo Express Kandeyaŋ Sannu", en: "Billo Express Delivery" },
+  "riz": { ha: "Shinkafa mai Dadi", zm: "Mo Kaano", en: "Savory Rice" },
+  "sauce": { ha: "Miya mai Kamshi", zm: "Hawari Hanno", en: "Rich Sauce" },
+};
+
+function getLocalFallbackTranslation(
+  item: { id: string; name: string; description: string; category?: string },
+  targetLang: "ha" | "zm" | "en" | "fr"
+): { id: string; name: string; description: string; category?: string } {
+  if (targetLang === "fr") {
+    return item;
+  }
+
+  const nameLower = (item.name || "").toLowerCase();
+  const descLower = (item.description || "").toLowerCase();
+
+  let translatedName = item.name;
+  let translatedDesc = item.description;
+  let translatedCat = item.category;
+
+  if (targetLang === "ha") {
+    if (nameLower.includes("choukouya") || nameLower.includes("mouton") || nameLower.includes("grillade")) {
+      translatedName = `🥩 ${item.name} (Gasasshen Naman Rago na Sahel)`;
+      translatedDesc = `Daddadan naman rago da aka gasa a gawayi da kayan yaji na Kan-Kan, albasa Galmi mai dadi da tumatir sabo. ${item.description}`;
+    } else if (nameLower.includes("dambou")) {
+      translatedName = `🍚 ${item.name} (Dambou na Gargajiya)`;
+      translatedDesc = `Abincin gargajiya na Nijar da shinkafa da ganyen zogale sabo, kaji mai dadi da mai mai kamshi. ${item.description}`;
+    } else if (nameLower.includes("capitaine") || nameLower.includes("poisson")) {
+      translatedName = `🐟 ${item.name} (Kifin Kogin Kwara)`;
+      translatedDesc = `Kifi sabo daga kogin Kwara (Niger) da aka gasa sosai, tare da alloco ko attieke da miya mai yaji. ${item.description}`;
+    } else if (nameLower.includes("massa") || nameLower.includes("petit déjeuner") || nameLower.includes("bouillie")) {
+      translatedName = `🌅 ${item.name} (Karin Kumallo na Safe)`;
+      translatedDesc = `Daddadan karin kumallo na safe mai karfafa jiki, tare da zuma da shayi mai dumi. ${item.description}`;
+    } else if (nameLower.includes("burger") || nameLower.includes("chawarma") || nameLower.includes("pizza")) {
+      translatedName = `🍔 ${item.name} (Abinci mai Sauri na Yamai)`;
+      translatedDesc = `An shirya shi da naman sahel sabo, cuku mai dadi da fankasau mai laushi. ${item.description}`;
+    } else if (nameLower.includes("bissap") || nameLower.includes("jus") || nameLower.includes("boisson")) {
+      translatedName = `🍹 ${item.name} (Ruwan Lemo mai Sanyi)`;
+      translatedDesc = `Abin sha na gargajiya mai sanyi da dadi da ganyen karkashi/bissap da 'ya'yan itace. ${item.description}`;
+    } else {
+      translatedName = `${item.name} [Haoussa]`;
+      translatedDesc = `Abinci mai dadi na Allôresto Yamai: ${item.description}`;
+    }
+
+    if (translatedCat) {
+      if (translatedCat.includes("Déjeuner") || translatedCat.includes("Midi")) translatedCat = "☀️ Abincin Rana";
+      else if (translatedCat.includes("Petit")) translatedCat = "🌅 Karin Kumallo";
+      else if (translatedCat.includes("Dîner")) translatedCat = "🌙 Abincin Dare";
+      else if (translatedCat.includes("Grillades") || translatedCat.includes("Choukouya")) translatedCat = "🔥 Gasasshen Nama";
+      else if (translatedCat.includes("Boissons") || translatedCat.includes("Jus")) translatedCat = "🍹 Abubuwan Sha";
+      else if (translatedCat.includes("Menu")) translatedCat = "⭐ Abincin Yau";
+    }
+  } else if (targetLang === "zm") {
+    if (nameLower.includes("choukouya") || nameLower.includes("mouton") || nameLower.includes("grillade")) {
+      translatedName = `🥩 ${item.name} (Ham Tonte Kaano na Sahel)`;
+      translatedDesc = `Feeji ham tonte hanno kaano nda Kan-Kan hawari, Galmi albasa nda tumatir ciinayaŋ. ${item.description}`;
+    } else if (nameLower.includes("dambou")) {
+      translatedName = `🍚 ${item.name} (Dambou Hanno)`;
+      translatedDesc = `Niamey dambou cimi dumi nda kopto hari sabo, gorzo ham nda ji kaano. ${item.description}`;
+    } else if (nameLower.includes("capitaine") || nameLower.includes("poisson")) {
+      translatedName = `🐟 ${item.name} (Isa Hari Ham)`;
+      translatedDesc = `Isa hari ham tonte kaano, kande nda alloco wala attieke nda hawari kaana. ${item.description}`;
+    } else if (nameLower.includes("massa") || nameLower.includes("petit déjeuner") || nameLower.includes("bouillie")) {
+      translatedName = `🌅 ${item.name} (Susubay Ŋwaari)`;
+      translatedDesc = `Susubay ŋwaari kaano nda arawak nda yu kaana se teero borey kulu se. ${item.description}`;
+    } else if (nameLower.includes("burger") || nameLower.includes("chawarma") || nameLower.includes("pizza")) {
+      translatedName = `🍔 ${item.name} (Niamey Ŋwaari Sannu)`;
+      translatedDesc = `Sahel ham kaano nda fromage nda fritte hanno teeyante Niamey ra. ${item.description}`;
+    } else if (nameLower.includes("bissap") || nameLower.includes("jus") || nameLower.includes("boisson")) {
+      translatedName = `🍹 ${item.name} (Hari Kaana nda Bissap)`;
+      translatedDesc = `Niamey hari kaano yaabey se kande nda bissap sabo nda sukur kaana. ${item.description}`;
+    } else {
+      translatedName = `${item.name} [Zarma]`;
+      translatedDesc = `Niamey ŋwaari kaano: ${item.description}`;
+    }
+
+    if (translatedCat) {
+      if (translatedCat.includes("Déjeuner") || translatedCat.includes("Midi")) translatedCat = "☀️ Zaari Ŋwaari";
+      else if (translatedCat.includes("Petit")) translatedCat = "🌅 Susubay Ŋwaari";
+      else if (translatedCat.includes("Dîner")) translatedCat = "🌙 Cini Ŋwaari";
+      else if (translatedCat.includes("Grillades") || translatedCat.includes("Choukouya")) translatedCat = "🔥 Ham Tonte";
+      else if (translatedCat.includes("Boissons") || translatedCat.includes("Jus")) translatedCat = "🍹 Hari Kaana";
+      else if (translatedCat.includes("Menu")) translatedCat = "⭐ Hanno Ŋwaari";
+    }
+  } else if (targetLang === "en") {
+    translatedName = item.name
+      .replace(/Petit Déjeuner/gi, "Breakfast")
+      .replace(/Déjeuner/gi, "Lunch")
+      .replace(/Dîner/gi, "Dinner")
+      .replace(/Grillades/gi, "Grilled BBQ")
+      .replace(/Poulet Braisé/gi, "Braised Chicken")
+      .replace(/Poisson/gi, "Fresh Fish")
+      .replace(/Jus/gi, "Fresh Juice");
+    translatedDesc = `Authentic Niamey specialty: ${item.description}`;
+    if (translatedCat) {
+      if (translatedCat.includes("Déjeuner")) translatedCat = "☀️ Lunch Specials";
+      else if (translatedCat.includes("Petit")) translatedCat = "🌅 Breakfast";
+      else if (translatedCat.includes("Dîner")) translatedCat = "🌙 Dinner";
+      else if (translatedCat.includes("Grillades")) translatedCat = "🔥 BBQ & Grills";
+      else if (translatedCat.includes("Boissons")) translatedCat = "🍹 Local Drinks & Juices";
+      else if (translatedCat.includes("Menu")) translatedCat = "⭐ Daily Special Menus";
+    }
+  }
+
+  return {
+    id: item.id,
+    name: translatedName,
+    description: translatedDesc,
+    category: translatedCat,
+  };
+}
+
+// API: Batch Gemini Translation for Menus & Dishes
+app.post("/api/translate", async (req, res) => {
+  const { items, targetLang, sourceLang = "fr" } = req.body;
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: "Missing items array to translate" });
+  }
+
+  const validLang = targetLang === "ha" || targetLang === "zm" || targetLang === "en" || targetLang === "fr" ? targetLang : "fr";
+
+  // If target is French, return as is
+  if (validLang === "fr") {
+    return res.json({
+      success: true,
+      targetLang: "fr",
+      source: "original",
+      items,
+    });
+  }
+
+  const languageNames: Record<string, string> = {
+    ha: "Haoussa (Harshen Hausa na Nijar - Yamai)",
+    zm: "Zarma (Zarmaciine / Djerma na Niamey - Niger)",
+    en: "English (US / International)",
+    fr: "Français",
+  };
+
+  try {
+    const ai = getGenAIClient();
+
+    if (ai) {
+      const itemsToTranslate = items.slice(0, 30); // Max 30 items per batch for optimal performance
+      const systemInstruction = `Tu es un traducteur culinaire expert et sommelier bilingue pour Allôresto Niger 🇳🇪 (Niamey).
+Tu traduis les menus, les noms de plats, les descriptions gastronomiques et les catégories du français vers le ${languageNames[validLang]}.
+
+DIRECTIVES MAJEURES :
+1. Pour le Haoussa (ha) : Utilise la langue Haoussa naturelle du Niger / Niamey. Traduis les descriptions avec élégance et gourmandise sahélienne (ex: "Gasasshen naman rago na Sahel mai taushi da yaji Kan-Kan", "Dambou na gargajiya da ganyen zogale", "Kifin kogin Kwara sabo").
+2. Pour le Zarma (zm) : Utilise la langue Zarma authentique parlée à Niamey. Traduis les descriptions de façon fluide et appétissante (ex: "Ham tonte kaano nda Kan-Kan hawari", "Dambou hanno nda kopto sabo", "Isa hari ham kaano").
+3. Conserve les noms propres célèbres (Choukouya, Dambou, Massa, Kilichi, Capitaine du Fleuve, Bissap, Fura da nono, Kopto, Alloco, Attiéké) tout en traduisant les adjectifs et la composition.
+4. Réponds UNIQUEMENT sous forme de tableau JSON valide contenant exactement les objets traduits avec { id, name, description, category }.`;
+
+      const prompt = `Traduis ces ${itemsToTranslate.length} plats et menus de restaurant en ${languageNames[validLang]} :
+${JSON.stringify(
+  itemsToTranslate.map((it) => ({
+    id: it.id,
+    name: it.name,
+    description: it.description,
+    category: it.category || "",
+  }))
+)}`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.7-flash",
+        contents: prompt,
+        config: {
+          systemInstruction,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING },
+                name: { type: Type.STRING },
+                description: { type: Type.STRING },
+                category: { type: Type.STRING },
+              },
+              required: ["id", "name", "description"],
+            },
+          },
+          temperature: 0.3,
+        },
+      });
+
+      if (response && response.text) {
+        try {
+          const parsed = JSON.parse(response.text);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return res.json({
+              success: true,
+              targetLang: validLang,
+              source: "gemini",
+              items: parsed,
+            });
+          }
+        } catch (parseErr) {
+          console.warn("Failed to parse Gemini JSON translation response, falling back to local dictionary:", parseErr);
+        }
+      }
+    }
+
+    // Fallback to rich local Sahelian dictionary
+    const fallbackItems = items.map((item) => getLocalFallbackTranslation(item, validLang));
+    return res.json({
+      success: true,
+      targetLang: validLang,
+      source: "local-sahelian-engine",
+      items: fallbackItems,
+    });
+  } catch (error) {
+    console.error("Gemini translation error, using local Sahelian fallback:", error);
+    const fallbackItems = items.map((item) => getLocalFallbackTranslation(item, validLang));
+    return res.json({
+      success: true,
+      targetLang: validLang,
+      source: "local-sahelian-engine",
+      items: fallbackItems,
+    });
+  }
+});
+
+// API: Single Text or Phrase Gemini Translation
+app.post("/api/translate-text", async (req, res) => {
+  const { text, targetLang = "ha", context = "culinary" } = req.body;
+
+  if (!text) {
+    return res.status(400).json({ error: "Missing text to translate" });
+  }
+
+  const validLang = targetLang === "ha" || targetLang === "zm" || targetLang === "en" || targetLang === "fr" ? targetLang : "ha";
+
+  if (validLang === "fr") {
+    return res.json({ success: true, translation: text, source: "original" });
+  }
+
+  try {
+    const ai = getGenAIClient();
+    if (ai) {
+      const response = await ai.models.generateContent({
+        model: "gemini-3.7-flash",
+        contents: `Traduis ce texte gastronomique ou message client en langue ${validLang === "ha" ? "Haoussa du Niger" : validLang === "zm" ? "Zarma de Niamey" : "Anglais"} : "${text}"`,
+        config: {
+          systemInstruction: "Tu es un traducteur expert des langues du Niger (Haoussa, Zarma). Traduis de manière concise, naturelle et fluide.",
+          temperature: 0.3,
+        },
+      });
+
+      if (response && response.text) {
+        return res.json({
+          success: true,
+          translation: response.text.trim(),
+          source: "gemini",
+        });
+      }
+    }
+
+    // Local fallback
+    const fallback = getLocalFallbackTranslation({ id: "custom", name: text, description: text }, validLang);
+    return res.json({
+      success: true,
+      translation: fallback.name,
+      source: "local",
+    });
+  } catch (err) {
+    console.error("Translate text error:", err);
+    return res.json({
+      success: true,
+      translation: text,
+      source: "error-fallback",
+    });
+  }
 });
 
 // Fallback culinary recommendation generator for Niamey
