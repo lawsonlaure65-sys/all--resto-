@@ -15,7 +15,8 @@ import {
   TrendingUp,
   Mic,
 } from "lucide-react";
-import { UserRole } from "../types";
+import { UserRole, AppLanguage } from "../types";
+import { t } from "../utils/translations";
 
 interface MobileBottomNavProps {
   currentRole: UserRole;
@@ -33,6 +34,7 @@ interface MobileBottomNavProps {
   onOpenSauceBoxes?: () => void;
   onOpenFaq?: () => void;
   onOpenMarketingAI?: () => void;
+  currentLanguage?: AppLanguage;
 }
 
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
@@ -51,6 +53,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onOpenSauceBoxes,
   onOpenFaq,
   onOpenMarketingAI,
+  currentLanguage = "fr",
 }) => {
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/90 shadow-2xl px-1.5 py-1 safe-area-pb">
@@ -65,7 +68,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           }`}
         >
           <UtensilsCrossed className="w-4 h-4 mb-0.5" />
-          <span className="text-[9px]">Accueil</span>
+          <span className="text-[9px]">{t(currentLanguage, "home")}</span>
         </button>
 
         {/* Tab 2: Menu (65+ Plats) */}
@@ -75,7 +78,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             className="flex flex-col items-center justify-center py-1 px-1.5 rounded-xl text-slate-400 hover:text-orange-400 transition-all cursor-pointer"
           >
             <UtensilsCrossed className="w-4 h-4 mb-0.5 text-orange-400" />
-            <span className="text-[9px]">Menu</span>
+            <span className="text-[9px]">{t(currentLanguage, "menu")}</span>
           </button>
         )}
 
@@ -86,7 +89,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             className="flex flex-col items-center justify-center py-1 px-1.5 rounded-xl text-slate-400 hover:text-cyan-400 transition-all cursor-pointer"
           >
             <Clock className="w-4 h-4 mb-0.5 text-cyan-400" />
-            <span className="text-[9px]">Commandes</span>
+            <span className="text-[9px]">{t(currentLanguage, "orders")}</span>
           </button>
         )}
 
@@ -97,7 +100,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             className="flex flex-col items-center justify-center py-1 px-1.5 rounded-xl text-red-400 hover:text-red-300 transition-all cursor-pointer"
           >
             <Mic className="w-4 h-4 mb-0.5 text-red-400 animate-pulse" />
-            <span className="text-[9px] font-bold">Vocale</span>
+            <span className="text-[9px] font-bold">{t(currentLanguage, "voice_order")}</span>
           </button>
         )}
 
@@ -121,7 +124,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             className="flex flex-col items-center justify-center py-1 px-1.5 rounded-xl text-slate-400 hover:text-amber-400 transition-all cursor-pointer"
           >
             <Package className="w-4 h-4 mb-0.5 text-amber-400" />
-            <span className="text-[9px]">Boxs</span>
+            <span className="text-[9px]">{t(currentLanguage, "boxes")}</span>
           </button>
         )}
 
@@ -140,7 +143,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               )}
             </div>
             <span className="text-[9px] font-bold text-orange-400">
-              {cartTotal > 0 ? `${cartTotal.toLocaleString()} F` : "Panier"}
+              {cartTotal > 0 ? `${cartTotal.toLocaleString()} F` : t(currentLanguage, "cart")}
             </span>
           </button>
         ) : (
@@ -160,7 +163,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             className="flex flex-col items-center justify-center py-1 px-1.5 rounded-xl text-slate-400 hover:text-white transition-all cursor-pointer"
           >
             <User className="w-4 h-4 mb-0.5" />
-            <span className="text-[9px]">Compte</span>
+            <span className="text-[9px]">{t(currentLanguage, "account")}</span>
           </button>
         )}
       </div>

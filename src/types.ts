@@ -1,5 +1,7 @@
 export type UserRole = "client" | "restaurant" | "courier" | "admin";
 
+export type AppLanguage = "fr" | "en" | "ha" | "zm";
+
 export type ServiceMode = "delivery" | "takeaway" | "booking";
 
 export interface MenuItemOptionChoice {

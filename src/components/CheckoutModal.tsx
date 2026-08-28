@@ -27,7 +27,7 @@ import {
   Compass,
   Search,
 } from "lucide-react";
-import { CartItem, PaymentMethod, ServiceMode, Order } from "../types";
+import { CartItem, PaymentMethod, ServiceMode, Order, AppLanguage } from "../types";
 import { LOCAL_PAYMENT_METHODS } from "../data/allorestoData";
 import {
   NIAMEY_DISTRICTS_DATA,
@@ -36,6 +36,7 @@ import {
   isNiameyNightTime,
 } from "../data/niameyDistrictsData";
 import { getJumuahStatus } from "../utils/jumuahSchedule";
+import { generateWhatsAppOrderConfirmation } from "../utils/whatsappNotifications";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -53,6 +54,7 @@ interface CheckoutModalProps {
   onOpenDistrictsDirectory?: () => void;
   initialDistrictName?: string;
   simulatedFridayPause?: boolean;
+  currentLanguage?: AppLanguage;
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -71,6 +73,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   onOpenDistrictsDirectory,
   initialDistrictName,
   simulatedFridayPause = false,
+  currentLanguage = "fr",
 }) => {
   const jumuahStatus = getJumuahStatus(simulatedFridayPause);
 
@@ -213,29 +216,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       };
 
       if (notifyWhatsApp) {
-        const itemsSummary = items.map(it => `• ${it.quantity}x ${it.menuItem.name} (${it.totalPrice} FCFA)`).join("\n");
-        const currentPayOption = LOCAL_PAYMENT_METHODS.find(p => p.id === paymentMethod);
-        const paymentLabel = currentPayOption ? currentPayOption.name : paymentMethod;
-        const depositInfo = currentPayOption?.depositNumber ? ` (Numéro dépôt : ${currentPayOption.depositNumber})` : "";
-        const refInfo = paymentReference ? `\n🔖 *Réf / Code transaction :* ${paymentReference}` : "";
-        const receiptNotice = paymentMethod !== "cash" 
-          ? `\n\n⚠️ *CONDITION STRICTE DE PRÉPARATION :*\n_Ce n'est qu'après paiement par dépôt et envoi de votre reçu ou capture du reçu que la commande sera confirmée et passée en cuisine._\n📸 *Merci de joindre votre reçu ci-dessous.*`
-          : "";
-
-        const waText = encodeURIComponent(
-          `*NOUVELLE COMMANDE ALLÔRESTO #${newOrder.id}*\n` +
-          `_Vos envies, bien servies à Niamey._\n\n` +
-          `👤 *Client :* ${newOrder.customerName} (${newOrder.customerPhone})\n` +
-          `📍 *Lieu :* ${newOrder.deliveryAddress}\n` +
-          `🕒 *Horaire :* ${newOrder.scheduledTime || "Dès que possible"}\n` +
-          `🛵 *Livraison :* ${deliveryZone === "mosquee_pickup" ? "Retrait Grande Mosquée (0 FCFA)" : `${deliveryFee} FCFA (Billo Express)`}\n\n` +
-          `🍽️ *Plats commandés :*\n${itemsSummary}\n\n` +
-          `💰 *Total :* ${grandTotal.toLocaleString()} FCFA\n` +
-          `💳 *Moyen de paiement :* ${paymentLabel}${depositInfo}${refInfo}` +
-          `${cashChangeAmount ? `\n💵 *Monnaie demandée sur :* ${cashChangeAmount} FCFA` : ""}` +
-          `${receiptNotice}\n\n` +
-          `📞 Service Client Allôresto : +227 96 05 23 10 | WhatsApp : +227 70 03 25 52`
-        );
+        const message = generateWhatsAppOrderConfirmation(newOrder, currentLanguage);
+        const waText = encodeURIComponent(message);
         window.open(`https://wa.me/22770032552?text=${waText}`, "_blank");
       }
 

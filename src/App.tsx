@@ -67,6 +67,7 @@ import {
   SauceBox,
   CateringQuoteRequest,
   UserProfile,
+  AppLanguage,
 } from "./types";
 import {
   RESTAURANTS_DATA,
@@ -96,8 +97,9 @@ import {
 } from "lucide-react";
 
 export function App() {
-  // Navigation & Role State
+  // Navigation, Language & Role State
   const [currentRole, setCurrentRole] = useState<UserRole>("client");
+  const [currentLanguage, setCurrentLanguage] = useState<AppLanguage>("fr");
   const [selectedCity, setSelectedCity] = useState<string>("Niamey (Plateau / Centre-Ville)");
   const [serviceMode, setServiceMode] = useState<ServiceMode>("delivery");
 
@@ -324,8 +326,8 @@ export function App() {
         "order"
       );
       if (targetOrder) {
-        // Envoi automatique de la notification WhatsApp de confirmation
-        sendOrderConfirmationWhatsApp(targetOrder);
+        // Envoi automatique et multilingue de la notification WhatsApp de confirmation
+        sendOrderConfirmationWhatsApp(targetOrder, currentLanguage);
       }
     } else {
       playSoundStatusUpdate();
@@ -336,7 +338,7 @@ export function App() {
         "status"
       );
       if (targetOrder && (nextStatus === "delivering" || nextStatus === "delivered")) {
-        sendOrderStatusNotificationWhatsApp(targetOrder, nextStatus);
+        sendOrderStatusNotificationWhatsApp(targetOrder, nextStatus, currentLanguage);
       }
     }
   };
@@ -456,6 +458,8 @@ export function App() {
         onChangeServiceMode={setServiceMode}
         cartCount={cartCount}
         cartTotal={cartTotal}
+        currentLanguage={currentLanguage}
+        onChangeLanguage={setCurrentLanguage}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenChefAI={() => setIsChefAIOpen(true)}
         onOpenVoiceOrder={() => setIsVoiceOrderOpen(true)}
@@ -883,6 +887,7 @@ export function App() {
         onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
         initialDistrictName={selectedDistrictName}
         simulatedFridayPause={simulatedFridayPause}
+        currentLanguage={currentLanguage}
       />
 
       {/* 4. Live Order Tracker Modal */}
@@ -1131,12 +1136,16 @@ export function App() {
         isOpen={isVoiceOrderOpen}
         onClose={() => setIsVoiceOrderOpen(false)}
         availableDishes={allDishes}
-        onAddToCart={(dish, qty) => {
-          handleAddToCart(dish, {}, qty);
+        currentLanguage={currentLanguage}
+        onLanguageChange={setCurrentLanguage}
+        onAddToCart={(dish, optionsOrQty, quantity) => {
+          const actualQty = typeof optionsOrQty === "number" ? optionsOrQty : (quantity || 1);
+          const actualOpts = typeof optionsOrQty === "object" ? optionsOrQty : {};
+          handleAddToCart(dish, actualOpts, actualQty);
           setIsCartOpen(true);
           showNotification(
             "Plat ajouté par la voix 🎙️",
-            `${qty}x ${dish.name} ajouté(s) à votre panier.`,
+            `${actualQty}x ${dish.name} ajouté(s) à votre panier.`,
             "success",
             "cart"
           );
@@ -1192,6 +1201,7 @@ export function App() {
         onChangeRole={setCurrentRole}
         cartCount={cartCount}
         cartTotal={cartTotal}
+        currentLanguage={currentLanguage}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenChefAI={() => setIsChefAIOpen(true)}
         onOpenVoiceOrder={() => setIsVoiceOrderOpen(true)}

@@ -29,9 +29,10 @@ import {
   TrendingUp,
   Mic,
 } from "lucide-react";
-import { UserRole, ServiceMode, CityOption, UserProfile } from "../types";
+import { UserRole, ServiceMode, CityOption, UserProfile, AppLanguage } from "../types";
 import { CITIES_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { BrandLogo } from "./BrandLogo";
+import { SUPPORTED_LANGUAGES, t } from "../utils/translations";
 
 interface HeaderProps {
   currentRole: UserRole;
@@ -64,6 +65,8 @@ interface HeaderProps {
   onOpenFaq?: () => void;
   soundEnabled?: boolean;
   onToggleSound?: () => void;
+  currentLanguage?: AppLanguage;
+  onChangeLanguage?: (lang: AppLanguage) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -97,10 +100,15 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenFaq,
   soundEnabled = true,
   onToggleSound,
+  currentLanguage = "fr",
+  onChangeLanguage,
 }) => {
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+
+  const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === currentLanguage) || SUPPORTED_LANGUAGES[0];
 
   const handleDetectLocation = () => {
     setIsLocating(true);
@@ -153,7 +161,51 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          {/* Sound Notification Toggle */}
+            {/* Language Switcher Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/30 hover:bg-black/40 border border-white/25 text-white text-[11px] font-extrabold transition-colors cursor-pointer shadow-sm"
+                title="Changer de langue / Select language (Français, English, Haoussa, Zarma)"
+              >
+                <span>{currentLangObj.flag}</span>
+                <span className="font-bold">{currentLangObj.label}</span>
+                <ChevronDown className="w-3 h-3 opacity-70" />
+              </button>
+
+              {langDropdownOpen && (
+                <div className="absolute right-0 mt-1.5 w-52 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-1">
+                  <div className="px-3 py-1 text-[10px] uppercase font-black tracking-wider text-slate-400 border-b border-slate-800 mb-1">
+                    Langues Disponibles 🇳🇪
+                  </div>
+                  {SUPPORTED_LANGUAGES.map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => {
+                        if (onChangeLanguage) onChangeLanguage(l.code);
+                        setLangDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-colors cursor-pointer ${
+                        currentLanguage === l.code
+                          ? "bg-orange-500/20 text-orange-400 font-black border border-orange-500/30"
+                          : "text-slate-300 hover:text-white hover:bg-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{l.flag}</span>
+                        <div>
+                          <p className="font-bold leading-tight">{l.label}</p>
+                          <p className="text-[10px] text-slate-400">{l.native}</p>
+                        </div>
+                      </div>
+                      {currentLanguage === l.code && <Check className="w-3.5 h-3.5 text-orange-400" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Sound Notification Toggle */}
           {onToggleSound && (
             <button
               onClick={onToggleSound}
@@ -315,7 +367,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => onChangeRole("client")}
               className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer"
             >
-              Accueil
+              {t(currentLanguage, "home")}
             </button>
 
             {/* 2. Menu / Grande Carte 65+ plats */}
@@ -326,7 +378,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Consulter la carte complète de plus de 65 plats"
               >
                 <UtensilsCrossed className="w-3.5 h-3.5" />
-                <span>Menu (65+ Plats)</span>
+                <span>{t(currentLanguage, "menu_catalog")}</span>
               </button>
             )}
 
@@ -338,7 +390,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Historique des commandes et reçus"
               >
                 <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Commandes</span>
+                <span>{t(currentLanguage, "orders")}</span>
               </button>
             )}
 
@@ -350,7 +402,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Boxs repas & sauces sahéliennes"
               >
                 <Package className="w-3.5 h-3.5 text-amber-400" />
-                <span>Boxs</span>
+                <span>{t(currentLanguage, "boxes")}</span>
               </button>
             )}
 
@@ -362,7 +414,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Traiteur, mariages & réunions ministérielles"
               >
                 <ChefHat className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Évents</span>
+                <span>{t(currentLanguage, "events")}</span>
               </button>
             )}
 
@@ -372,7 +424,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1 cursor-pointer"
             >
               <Users className="w-3.5 h-3.5 text-orange-400" />
-              <span>Groupe Bureau</span>
+              <span>{t(currentLanguage, "group_order")}</span>
             </button>
           </div>
         )}
@@ -415,7 +467,7 @@ export const Header: React.FC<HeaderProps> = ({
               title="Dicter ma commande vocale"
             >
               <Mic className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-              <span className="hidden sm:inline">Commande Vocale</span>
+              <span className="hidden sm:inline">{t(currentLanguage, "voice_order")}</span>
             </button>
           )}
 
@@ -426,7 +478,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-orange-500/50 hover:border-orange-400 text-orange-400 text-xs font-bold shadow-lg shadow-orange-500/10 cursor-pointer transition-all hover:scale-105"
           >
             <Sparkles className="w-4 h-4 fill-current text-amber-400 animate-pulse" />
-            <span className="hidden sm:inline">AllôChef IA</span>
+            <span className="hidden sm:inline">{t(currentLanguage, "chef_ai")}</span>
           </button>
 
           {/* Role Switcher Menu */}

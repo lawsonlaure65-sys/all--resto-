@@ -18,9 +18,12 @@ import {
   Search,
   Radio,
   Zap,
+  Globe,
+  Languages,
 } from "lucide-react";
-import { MenuItem, CartItem } from "../types";
+import { MenuItem, CartItem, AppLanguage } from "../types";
 import { playSoundCartAdd, playSoundSuccessChime } from "../utils/audioNotifications";
+import { SUPPORTED_LANGUAGES, t } from "../utils/translations";
 
 interface RecognizedItem {
   dish: MenuItem;
@@ -38,27 +41,82 @@ interface VoiceOrderModalProps {
   onOpenCart?: () => void;
   onOpenCheckout?: () => void;
   onDirectCheckout?: (items: RecognizedItem[]) => void;
+  currentLanguage?: AppLanguage;
+  onLanguageChange?: (lang: AppLanguage) => void;
 }
 
-const VOICE_SAMPLE_PROMPTS = [
-  "Je voudrais 2 choukouya d'agneau et un jus de bissap",
-  "Un dambou royal au moringa et une bouteille d'eau",
-  "Deux assiettes de capitaine braisé du fleuve avec alloco",
-  "Un burger gourmet double cheddar et des frites",
-  "Le menu du jour complet avec boisson fraîche",
-  "Pintade braisée au Kan-Kan bien pimentée et 2 jus de gingembre",
-];
+const VOICE_PROMPTS_BY_LANG: Record<AppLanguage, string[]> = {
+  fr: [
+    "Je voudrais 2 choukouya d'agneau et un jus de bissap",
+    "Un dambou royal au moringa et une bouteille d'eau",
+    "Deux assiettes de capitaine braisé du fleuve avec alloco",
+    "Un burger gourmet double cheddar et des frites",
+    "Le menu du jour complet avec boisson fraîche",
+    "Pintade braisée au Kan-Kan bien pimentée et 2 jus de gingembre",
+  ],
+  en: [
+    "I'd like 2 grilled lamb choukouya and one cold bissap juice",
+    "One royal moringa dambou and a bottle of mineral water",
+    "Two plates of grilled Niger river captain fish with plantains",
+    "One gourmet double cheeseburger and crispy fries",
+    "The complete daily special meal with a fresh drink",
+    "Spicy grilled guinea fowl with Kan-Kan spice and 2 ginger juices",
+  ],
+  ha: [
+    "Ina son gasasshen naman rago (Choukouya) guda biyu da ruwan bissap",
+    "Dambou royal na zogale daya da ruwan sha mai sanyi",
+    "Kifin kogin Kwara (Capitaine) gasasshe guda biyu da dankali",
+    "Gasasshiyar kaza da yajin Kan-Kan da lemo guda biyu",
+    "Abincin rana na yau (Menu du jour) da abin sha",
+    "Dêguê na nono da zuma da gasasshen nama",
+  ],
+  zm: [
+    "Ay ba ham tonte (Choukouya) hinka nda bissap afo",
+    "Dambou royal kopto afo nda isa hari kaano",
+    "Isa hari ham (Capitaine) tonte hinka nda aloco",
+    "Gorba tonte nda yaji Kan-Kan nda hari kaana hinka",
+    "Zaari ŋwaari hanno (Menu du jour) nda hari kaano",
+    "Degue kosam nda yuuma nda ham tonte",
+  ],
+};
 
-// Helper to convert french number words to integers
-function parseQuantityFromText(text: string): number {
-  const normalized = text.toLowerCase();
-  if (normalized.includes("un ") || normalized.includes("une ") || normalized.startsWith("un") || normalized.startsWith("une")) return 1;
+// Helper to convert number words across 4 languages to integers
+function parseMultilingualQuantity(text: string, lang: AppLanguage): number {
+  const normalized = text.toLowerCase().trim();
+
+  // French
+  if (normalized.includes("un ") || normalized.includes("une ") || normalized.startsWith("un ") || normalized.startsWith("une ")) return 1;
   if (normalized.includes("deux ") || normalized.includes("2 ") || normalized.includes("2x")) return 2;
   if (normalized.includes("trois ") || normalized.includes("3 ") || normalized.includes("3x")) return 3;
   if (normalized.includes("quatre ") || normalized.includes("4 ") || normalized.includes("4x")) return 4;
   if (normalized.includes("cinq ") || normalized.includes("5 ") || normalized.includes("5x")) return 5;
   if (normalized.includes("six ") || normalized.includes("6 ")) return 6;
   if (normalized.includes("dix ") || normalized.includes("10 ")) return 10;
+
+  // English
+  if (normalized.includes("one ") || normalized.startsWith("one ") || normalized.includes("a ") || normalized.startsWith("a ")) return 1;
+  if (normalized.includes("two ") || normalized.startsWith("two ")) return 2;
+  if (normalized.includes("three ") || normalized.startsWith("three ")) return 3;
+  if (normalized.includes("four ") || normalized.startsWith("four ")) return 4;
+  if (normalized.includes("five ") || normalized.startsWith("five ")) return 5;
+  if (normalized.includes("six ") || normalized.startsWith("six ")) return 6;
+  if (normalized.includes("ten ") || normalized.startsWith("ten ")) return 10;
+
+  // Hausa: daya, biyu, uku, hudu, biyar, shida, goma
+  if (normalized.includes("daya") || normalized.includes("guda daya")) return 1;
+  if (normalized.includes("biyu") || normalized.includes("guda biyu")) return 2;
+  if (normalized.includes("uku") || normalized.includes("guda uku")) return 3;
+  if (normalized.includes("hudu") || normalized.includes("guda hudu")) return 4;
+  if (normalized.includes("biyar") || normalized.includes("guda biyar")) return 5;
+  if (normalized.includes("shida") || normalized.includes("goma")) return 6;
+
+  // Zarma: afo / fa, hinka, hinza, taaci, guu, iddu, iwey
+  if (normalized.includes("afo") || normalized.includes(" fa ") || normalized.endsWith(" fa")) return 1;
+  if (normalized.includes("hinka") || normalized.includes("inka")) return 2;
+  if (normalized.includes("hinza") || normalized.includes("inza")) return 3;
+  if (normalized.includes("taaci") || normalized.includes("taci")) return 4;
+  if (normalized.includes("guu") || normalized.includes("gu")) return 5;
+  if (normalized.includes("iddu") || normalized.includes("iwey")) return 6;
 
   const match = text.match(/(\d+)/);
   if (match) {
@@ -87,8 +145,11 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
   onOpenCart,
   onOpenCheckout,
   onDirectCheckout,
+  currentLanguage = "fr",
+  onLanguageChange,
 }) => {
   const effectiveDishes = availableDishes || allDishes || [];
+  const [selectedLang, setSelectedLang] = useState<AppLanguage>(currentLanguage);
   const [isListening, setIsListening] = useState<boolean>(false);
   const [transcript, setTranscript] = useState<string>("");
   const [detectedItems, setDetectedItems] = useState<RecognizedItem[]>([]);
@@ -97,20 +158,53 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
   const [manualInput, setManualInput] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [hasAddedSuccess, setHasAddedSuccess] = useState<boolean>(false);
+  const [audioFeedbackText, setAudioFeedbackText] = useState<string | null>(null);
 
   const recognitionRef = useRef<any>(null);
 
-  // Initialize Speech Recognition
+  // Sync selected lang
   useEffect(() => {
+    if (currentLanguage) {
+      setSelectedLang(currentLanguage);
+    }
+  }, [currentLanguage]);
+
+  // Determine speech recognition language code
+  const getRecognitionLangCode = (lang: AppLanguage): string => {
+    switch (lang) {
+      case "en":
+        return "en-US";
+      case "ha":
+        // Some browsers support ha-NG / ha-NE, fallback to fr-FR if not recognized
+        return "ha-NG";
+      case "zm":
+        // Zarma uses Nigerien French acoustic base
+        return "fr-FR";
+      case "fr":
+      default:
+        return "fr-FR";
+    }
+  };
+
+  // Initialize Speech Recognition
+  const initRecognition = (lang: AppLanguage) => {
     if (typeof window !== "undefined") {
       const SpeechRecognition =
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
       if (SpeechRecognition) {
+        if (recognitionRef.current) {
+          try {
+            recognitionRef.current.stop();
+          } catch (e) {
+            // ignore
+          }
+        }
+
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.lang = "fr-FR";
+        recognition.lang = getRecognitionLangCode(lang);
 
         recognition.onstart = () => {
           setIsListening(true);
@@ -124,18 +218,26 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
           }
           if (currentTranscript.trim()) {
             setTranscript(currentTranscript);
-            parseTranscriptAndMatchDishes(currentTranscript);
+            parseTranscriptAndMatchDishes(currentTranscript, lang);
           }
         };
 
         recognition.onerror = (event: any) => {
           console.warn("Speech recognition error:", event.error);
           if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-            setErrorMessage("Accès au microphone refusé. Vous pouvez aussi taper ou cliquer sur un exemple.");
+            setErrorMessage("Accès microphone non autorisé. Vous pouvez taper ou cliquer sur un exemple.");
+          } else if (event.error === "language-not-supported") {
+            // Fallback to fr-FR for acoustic processing with local dictionaries
+            try {
+              recognition.lang = "fr-FR";
+              recognition.start();
+            } catch (err) {
+              setErrorMessage("Mode vocal prêt en mode acoustique Sahel.");
+            }
           } else if (event.error === "no-speech") {
             // benign
           } else {
-            setErrorMessage(`Écoute interrompue (${event.error}). Cliquez sur le micro pour réessayer.`);
+            setErrorMessage(`Écoute en pause (${event.error}). Cliquez sur le micro pour relancer.`);
           }
           setIsListening(false);
         };
@@ -149,6 +251,27 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
         setSpeechSupported(false);
       }
     }
+  };
+
+  // Switch voice language
+  const handleSelectLanguage = (lang: AppLanguage) => {
+    setSelectedLang(lang);
+    if (onLanguageChange) onLanguageChange(lang);
+    initRecognition(lang);
+    if (isListening && recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+        setTimeout(() => {
+          recognitionRef.current.start();
+        }, 200);
+      } catch (e) {
+        // ignore
+      }
+    }
+  };
+
+  useEffect(() => {
+    initRecognition(selectedLang);
 
     return () => {
       if (recognitionRef.current) {
@@ -159,15 +282,16 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
         }
       }
     };
-  }, []);
+  }, [selectedLang]);
 
-  // Auto-start listening when opened
+  // Auto-start listening when modal opens
   useEffect(() => {
     if (isOpen) {
       setTranscript("");
       setDetectedItems([]);
       setErrorMessage(null);
       setHasAddedSuccess(false);
+      setAudioFeedbackText(null);
       startListening();
     } else {
       stopListening();
@@ -205,24 +329,39 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
     }
   };
 
-  // Smart Parser: matches spoken French sentences against the catalog of 65+ dishes
-  const parseTranscriptAndMatchDishes = (text: string) => {
+  // Multilingual Speech Synthesis voice feedback
+  const speakVoiceConfirmation = (text: string, lang: AppLanguage) => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        if (lang === "en") utterance.lang = "en-US";
+        else utterance.lang = "fr-FR";
+        utterance.rate = 1.0;
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        // ignore
+      }
+    }
+  };
+
+  // Smart Multilingual Parser (French / English / Hausa / Zarma)
+  const parseTranscriptAndMatchDishes = (text: string, lang: AppLanguage) => {
     setIsProcessing(true);
     const cleanedTranscript = cleanString(text);
     const matched: RecognizedItem[] = [];
 
-    // Split speech into clauses / segments (separated by "et", "avec", "puis", virgules)
+    // Split speech into clauses / segments (separated by multilingual connectors: et, da, nda, and, with, plus, puis)
     const clauses = cleanedTranscript
-      .split(/\bet\b|\bavec\b|\bplus\b|\bpuis\b|,|\./)
+      .split(/\bet\b|\band\b|\bda\b|\bnda\b|\bavec\b|\bwith\b|\bplus\b|\bpuis\b|,|\./)
       .map((c) => c.trim())
-      .filter((c) => c.length > 2);
+      .filter((c) => c.length > 1);
 
-    // If clauses are too generic, match full transcript against dishes
     const itemsToScan = clauses.length > 0 ? clauses : [cleanedTranscript];
 
     effectiveDishes.forEach((dish) => {
       const cleanDishName = cleanString(dish.name);
-      const cleanDishDesc = cleanString(dish.description);
+      const cleanDishDesc = cleanString(dish.description || "");
 
       // Key keywords of this dish
       const dishKeywords = cleanDishName.split(" ").filter((w) => w.length > 3);
@@ -231,38 +370,156 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
         let isMatch = false;
         let qty = 1;
 
-        // Direct full or substring match
+        // 1. Direct name match
         if (cleanDishName.includes(clause) || clause.includes(cleanDishName)) {
           isMatch = true;
-          qty = parseQuantityFromText(clause);
+          qty = parseMultilingualQuantity(clause, lang);
         } else {
           // Check keyword overlap
           const matchCount = dishKeywords.filter((k) => clause.includes(k)).length;
           if (dishKeywords.length > 0 && matchCount >= Math.min(2, dishKeywords.length)) {
             isMatch = true;
-            qty = parseQuantityFromText(clause);
+            qty = parseMultilingualQuantity(clause, lang);
           } else if (dishKeywords.length === 1 && matchCount === 1 && clause.length < 20) {
             isMatch = true;
-            qty = parseQuantityFromText(clause);
+            qty = parseMultilingualQuantity(clause, lang);
           }
         }
 
-        // Special common Sahelian aliases
+        // 2. Multilingual Keyword Mapping (Hausa / Zarma / English / French)
         if (!isMatch) {
-          if (clause.includes("choukouya") && cleanDishName.includes("choukouya")) isMatch = true;
-          else if (clause.includes("dambou") && cleanDishName.includes("dambou")) isMatch = true;
-          else if (clause.includes("capitaine") && cleanDishName.includes("capitaine")) isMatch = true;
-          else if (clause.includes("pintade") && cleanDishName.includes("pintade")) isMatch = true;
-          else if (clause.includes("bissap") && cleanDishName.includes("bissap")) isMatch = true;
-          else if (clause.includes("gingembre") && cleanDishName.includes("gingembre")) isMatch = true;
-          else if (clause.includes("degue") && cleanDishName.includes("degue")) isMatch = true;
-          else if (clause.includes("menu du jour") && (cleanDishName.includes("menu du jour") || dish.isMenuDuJour)) isMatch = true;
-          else if (clause.includes("burger") && cleanDishName.includes("burger")) isMatch = true;
-          else if (clause.includes("pizza") && cleanDishName.includes("pizza")) isMatch = true;
-          else if (clause.includes("alloco") && cleanDishName.includes("alloco")) isMatch = true;
+          // --- Choukouya / Grillades de Mouton ---
+          if (
+            (clause.includes("choukouya") ||
+              clause.includes("gasasshen nama") ||
+              clause.includes("naman rago") ||
+              clause.includes("ham tonte") ||
+              clause.includes("grilled lamb") ||
+              clause.includes("roast mutton") ||
+              clause.includes("mouton")) &&
+            (cleanDishName.includes("choukouya") || cleanDishName.includes("mouton") || cleanDishName.includes("agneau"))
+          ) {
+            isMatch = true;
+          }
+          // --- Poulet Braisé / Kaza / Ham Tonte ---
+          else if (
+            (clause.includes("kaza") ||
+              clause.includes("poulet") ||
+              clause.includes("grilled chicken") ||
+              clause.includes("chicken")) &&
+            cleanDishName.includes("poulet")
+          ) {
+            isMatch = true;
+          }
+          // --- Dambou Royal / Moringa / Kopto / Zogale ---
+          else if (
+            (clause.includes("dambou") ||
+              clause.includes("zogale") ||
+              clause.includes("kopto") ||
+              clause.includes("moringa") ||
+              clause.includes("couscous")) &&
+            cleanDishName.includes("dambou")
+          ) {
+            isMatch = true;
+          }
+          // --- Capitaine Braisé / Kifi / Isa Hari Ham / Fish ---
+          else if (
+            (clause.includes("capitaine") ||
+              clause.includes("kifin kwara") ||
+              clause.includes("kifi") ||
+              clause.includes("isa hari ham") ||
+              clause.includes("hano") ||
+              clause.includes("river fish") ||
+              clause.includes("captain fish")) &&
+            (cleanDishName.includes("capitaine") || cleanDishName.includes("poisson") || cleanDishName.includes("carpe"))
+          ) {
+            isMatch = true;
+          }
+          // --- Pintade Braisée / Gorba ---
+          else if (
+            (clause.includes("pintade") ||
+              clause.includes("gorba") ||
+              clause.includes("guinea fowl")) &&
+            cleanDishName.includes("pintade")
+          ) {
+            isMatch = true;
+          }
+          // --- Bissap / Sobodo / Hibiscus ---
+          else if (
+            (clause.includes("bissap") ||
+              clause.includes("sobodo") ||
+              clause.includes("hibiscus") ||
+              clause.includes("hari kaana")) &&
+            cleanDishName.includes("bissap")
+          ) {
+            isMatch = true;
+          }
+          // --- Gingembre / Ginger ---
+          else if (
+            (clause.includes("gingembre") || clause.includes("ginger") || clause.includes("citta")) &&
+            cleanDishName.includes("gingembre")
+          ) {
+            isMatch = true;
+          }
+          // --- Dêguê / Couscous de Mil / Kosam ---
+          else if (
+            (clause.includes("degue") || clause.includes("degue") || clause.includes("kosam") || clause.includes("nono")) &&
+            cleanDishName.includes("degue")
+          ) {
+            isMatch = true;
+          }
+          // --- Menu du Jour / Zaari ŋwaari / Abincin Rana ---
+          else if (
+            (clause.includes("menu du jour") ||
+              clause.includes("daily special") ||
+              clause.includes("abincin rana") ||
+              clause.includes("zaari ŋwaari")) &&
+            (cleanDishName.includes("menu du jour") || dish.isMenuDuJour)
+          ) {
+            isMatch = true;
+          }
+          // --- Burger & Frites ---
+          else if (
+            (clause.includes("burger") || clause.includes("cheeseburger")) &&
+            cleanDishName.includes("burger")
+          ) {
+            isMatch = true;
+          }
+          // --- Alloco / Plantain ---
+          else if (
+            (clause.includes("alloco") ||
+              clause.includes("plantain") ||
+              clause.includes("kolikoli") ||
+              clause.includes("doya")) &&
+            cleanDishName.includes("alloco")
+          ) {
+            isMatch = true;
+          }
+          // --- Riz au gras / Thieb / Shinkafa / Mo ---
+          else if (
+            (clause.includes("riz au gras") ||
+              clause.includes("thieb") ||
+              clause.includes("shinkafa") ||
+              clause.includes("jollof") ||
+              clause.includes("mo cina")) &&
+            (cleanDishName.includes("riz") || cleanDishName.includes("thieb"))
+          ) {
+            isMatch = true;
+          }
+          // --- Eau Minérale / Ruwa / Hari ---
+          else if (
+            (clause.includes("eau") ||
+              clause.includes("water") ||
+              clause.includes("ruwa") ||
+              clause.includes("ruwan sha") ||
+              clause.includes("hari")) &&
+            cleanDishName.includes("eau")
+          ) {
+            isMatch = true;
+          }
 
           if (isMatch) {
-            qty = parseQuantityFromText(clause);
+            qty = parseMultilingualQuantity(clause, lang);
           }
         }
 
@@ -281,6 +538,7 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
 
     if (matched.length > 0) {
       setDetectedItems(matched);
+      playSoundCartAdd();
     }
     setIsProcessing(false);
   };
@@ -288,14 +546,14 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
   const handleApplySamplePrompt = (prompt: string) => {
     setTranscript(prompt);
     setManualInput(prompt);
-    parseTranscriptAndMatchDishes(prompt);
+    parseTranscriptAndMatchDishes(prompt, selectedLang);
   };
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualInput.trim()) return;
     setTranscript(manualInput);
-    parseTranscriptAndMatchDishes(manualInput);
+    parseTranscriptAndMatchDishes(manualInput, selectedLang);
   };
 
   const handleUpdateItemQuantity = (index: number, delta: number) => {
@@ -324,13 +582,22 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
       onAddToCart(it.dish, it.selectedOptions, it.quantity);
     });
 
+    // Voice response feedback
+    const feedbackPhrases: Record<AppLanguage, string> = {
+      fr: `${detectedItems.length} plats ajoutés au panier avec succès !`,
+      en: `${detectedItems.length} items added to your cart!`,
+      ha: `An saka abinci ${detectedItems.length} a kwandon saya !`,
+      zm: `Ŋwaari ${detectedItems.length} daŋ bata ra hanno !`,
+    };
+    speakVoiceConfirmation(feedbackPhrases[selectedLang], selectedLang);
+
     playSoundSuccessChime();
     setHasAddedSuccess(true);
 
     setTimeout(() => {
       onClose();
       if (onOpenCart) onOpenCart();
-    }, 900);
+    }, 850);
   };
 
   // Direct checkout
@@ -363,23 +630,25 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+        className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
       >
         {/* Header */}
-        <div className="p-5 bg-gradient-to-r from-orange-950/70 via-slate-900 to-amber-950/60 border-b border-slate-800 flex items-center justify-between">
+        <div className="p-5 bg-gradient-to-r from-orange-950/80 via-slate-900 to-amber-950/70 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/25">
               <Mic className="w-5 h-5 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-black text-white">Commande Vocale Allôresto</h3>
+                <h3 className="text-base font-black text-white">
+                  {t(selectedLang, "voice_modal_title")}
+                </h3>
                 <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[10px] font-black uppercase">
-                  IA Reconnaissance
+                  4 Langues IA
                 </span>
               </div>
               <p className="text-xs text-slate-300">
-                Dictez votre commande en français naturel à Niamey &bull; Détection instantanée
+                {t(selectedLang, "voice_modal_subtitle")}
               </p>
             </div>
           </div>
@@ -392,6 +661,31 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
           </button>
         </div>
 
+        {/* Multilingual Selector Bar */}
+        <div className="px-5 py-2.5 bg-slate-950/70 border-b border-slate-800/80 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none">
+          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5 shrink-0">
+            <Globe className="w-3.5 h-3.5 text-orange-400" />
+            <span>Langue vocale :</span>
+          </span>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => handleSelectLanguage(lang.code)}
+                className={`px-2.5 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  selectedLang === lang.code
+                    ? "bg-orange-500 text-slate-950 shadow-md shadow-orange-500/20 font-black scale-105"
+                    : "bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800"
+                }`}
+              >
+                <span>{lang.flag}</span>
+                <span>{lang.native}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Scrollable Content Area */}
         <div className="p-5 overflow-y-auto space-y-5 flex-1 scrollbar-thin scrollbar-thumb-slate-700">
           {/* Main Visualizer / Microphone Center */}
@@ -399,8 +693,8 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
             {/* Animated Audio Wave Rings */}
             {isListening && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-48 h-48 rounded-full bg-orange-500/10 animate-ping opacity-75" />
-                <div className="w-32 h-32 rounded-full bg-orange-500/20 animate-pulse" />
+                <div className="w-52 h-52 rounded-full bg-orange-500/10 animate-ping opacity-75" />
+                <div className="w-36 h-36 rounded-full bg-orange-500/20 animate-pulse" />
               </div>
             )}
 
@@ -427,10 +721,18 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
                     isListening ? "text-orange-400 animate-pulse" : "text-slate-300"
                   }`}
                 >
-                  {isListening ? "🎙️ En écoute... Parlez maintenant !" : "Cliquez sur le micro pour parler"}
+                  {isListening
+                    ? t(selectedLang, "voice_listening")
+                    : t(selectedLang, "voice_click_to_speak")}
                 </span>
                 <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
-                  Exemple : &quot;Je veux 2 choukouya d&apos;agneau, un dambou et deux jus de bissap bien frais&quot;
+                  {selectedLang === "ha"
+                    ? "Misali : 'Ina son gasasshen nama (Choukouya) guda biyu da ruwan bissap'"
+                    : selectedLang === "zm"
+                    ? "Misali : 'Ay ba ham tonte (Choukouya) hinka nda bissap afo'"
+                    : selectedLang === "en"
+                    ? "Example: 'I'd like 2 grilled lamb and one cold bissap juice'"
+                    : "Exemple : 'Je veux 2 choukouya d'agneau et un jus de bissap bien frais'"}
                 </p>
               </div>
             </div>
@@ -441,7 +743,7 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
                 <div className="flex items-center justify-between text-[10px] uppercase font-bold text-slate-400">
                   <span className="flex items-center gap-1.5">
                     <Radio className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
-                    Texte Reconnu :
+                    Texte Reconnu ({selectedLang.toUpperCase()}) :
                   </span>
                   <button
                     onClick={() => {
@@ -468,15 +770,15 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
             )}
           </div>
 
-          {/* Quick Examples Pills */}
+          {/* Quick Multilingual Examples Pills */}
           <div className="space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Ou cliquez sur un exemple prêt à l&apos;emploi :</span>
+              <span>{t(selectedLang, "voice_example_prompt")}</span>
             </span>
 
             <div className="flex flex-wrap gap-2">
-              {VOICE_SAMPLE_PROMPTS.map((prompt, idx) => (
+              {VOICE_PROMPTS_BY_LANG[selectedLang]?.map((prompt, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleApplySamplePrompt(prompt)}
@@ -495,7 +797,15 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
               <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Ou écrivez votre commande ici (ex: 2 dambou, 1 bissap)..."
+                placeholder={
+                  selectedLang === "ha"
+                    ? "Ko ka rubuta a nan (misali: Choukouya 2, Bissap 1)..."
+                    : selectedLang === "zm"
+                    ? "Wala hantum ne (misali: Ham tonte 2, Bissap 1)..."
+                    : selectedLang === "en"
+                    ? "Or type your order here (e.g., 2 grilled lamb, 1 bissap)..."
+                    : "Ou écrivez votre commande ici (ex: 2 choukouya, 1 bissap)..."
+                }
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-orange-500"
@@ -514,7 +824,7 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-black uppercase tracking-wider text-slate-300">
-                  Plats Détectés ({detectedItems.length})
+                  {t(selectedLang, "voice_detected_items")} ({detectedItems.length})
                 </span>
                 {detectedItems.length > 0 && (
                   <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
@@ -537,7 +847,7 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
                   Aucun plat détecté pour l&apos;instant
                 </span>
                 <span className="text-[11px] text-slate-500 block">
-                  Activez le micro ci-dessus et dictez vos envies en toute simplicité.
+                  Activez le micro ci-dessus et dictez vos envies en Français, Anglais, Haoussa ou Zarma.
                 </span>
               </div>
             ) : (
@@ -627,12 +937,14 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
                 {hasAddedSuccess ? (
                   <>
                     <Check className="w-4 h-4 text-emerald-400" />
-                    <span>Ajouté au Panier !</span>
+                    <span>{t(selectedLang, "voice_speak_feedback")}</span>
                   </>
                 ) : (
                   <>
                     <ShoppingBag className="w-4 h-4 text-orange-400" />
-                    <span>Ajouter au Panier ({totalDetectedFCFA.toLocaleString()} FCFA)</span>
+                    <span>
+                      {t(selectedLang, "voice_add_all_to_cart")} ({totalDetectedFCFA.toLocaleString()} FCFA)
+                    </span>
                   </>
                 )}
               </button>
