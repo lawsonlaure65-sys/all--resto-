@@ -22,6 +22,7 @@ import {
 import { Order, OrderStatus } from "../types";
 import { BilloExpressLogo } from "./BilloExpressLogo";
 import { getJumuahStatus } from "../utils/jumuahSchedule";
+import { KitchenWhatsAppHub } from "./KitchenWhatsAppHub";
 
 interface LiveOrderTrackerProps {
   order: Order | null;
@@ -243,6 +244,9 @@ export const LiveOrderTracker: React.FC<LiveOrderTrackerProps> = ({
               </div>
             </div>
           )}
+
+          {/* Interactive Dynamic WhatsApp Communication Hub with Kitchen */}
+          <KitchenWhatsAppHub order={order} mode="client" />
 
           {/* Stepper Progression Bar */}
           <div className="space-y-4">

@@ -146,6 +146,17 @@ export interface Order {
   cashChangeAmount?: string; // e.g. "Prévoir la monnaie sur 10 000 FCFA"
   paymentReference?: string;
   receiptProofAttached?: boolean;
+  kitchenNotes?: string[];
+  cookingEtaMinutes?: number;
+  whatsappChatLogs?: KitchenWhatsAppMessage[];
+}
+
+export interface KitchenWhatsAppMessage {
+  id: string;
+  sender: "kitchen" | "client" | "system";
+  text: string;
+  timestamp: string;
+  type?: "confirmation" | "eta_update" | "custom_note" | "client_request" | "ready";
 }
 
 export interface GroupOrderMember {

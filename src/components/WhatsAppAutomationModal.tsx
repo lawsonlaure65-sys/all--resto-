@@ -14,6 +14,8 @@ import {
   Users,
   CheckCircle2,
   ExternalLink,
+  ChefHat,
+  Flame,
 } from "lucide-react";
 import { ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 
@@ -27,7 +29,7 @@ export const WhatsAppAutomationModal: React.FC<WhatsAppAutomationModalProps> = (
   onClose,
 }) => {
   const [selectedTemplate, setSelectedTemplate] = useState<
-    "order_client" | "billo_dispatch" | "cart_recovery" | "group_invite" | "status_update"
+    "order_client" | "kitchen_progress" | "client_request" | "billo_dispatch" | "cart_recovery" | "group_invite" | "status_update"
   >("order_client");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -47,10 +49,22 @@ export const WhatsAppAutomationModal: React.FC<WhatsAppAutomationModalProps> = (
 
   const templates = {
     order_client: {
-      title: "🧾 Confirmation de Commande Client",
-      target: "Envoyé au client après validation",
+      title: "🧾 Confirmation de Commande Client & Validation Dépôt",
+      target: "Envoyé au client après validation de son reçu de paiement",
       phone: "+227 70 03 25 52",
-      text: `✅ *COMMANDE CONFIRMÉE — ALLÔRESTO NIAMEY* 🍽️\n\nBonjour M./Mme,\nVotre commande *#CMD-2026-8801* a bien été reçue et transmise en cuisine chez *Khady's Food* !\n\n📦 *Articles :*\n- 1x Choukouya de Mouton Royal au Kan-Kan (4 500 F)\n- 2x Jus de Bissap frais Menthe 50cl (2 000 F)\n\n📍 *Adresse de livraison :* Ministère des Finances, Plateau, 3ème étage\n💵 *Total :* 7 500 FCFA (Frais Billo Express 1 000 F inclus)\n💳 *Paiement :* Mynita / Cash à la livraison\n🏍️ *Livreur :* Moussa (Billo Express Niamey) • +227 92 08 08 22\n\n👉 *Suivez votre livreur en temps réel sur notre app :* https://alloresto.ne`,
+      text: `✅ *COMMANDE CONFIRMÉE & EN CUISINE — ALLÔRESTO NIAMEY* 🍽️\n\nBonjour M./Mme,\nBonne nouvelle ! Votre paiement/dépôt a été validé et votre commande *#CMD-2026-8801* est *officiellement passée en cuisine* chez *Khady's Food* !\n\n👨‍🍳 *Statut Cuisine :* Cuisson lancée\n⏱️ *Temps de préparation estimé :* ~25 minutes\n\n📦 *Articles :*\n- 1x Choukouya de Mouton Royal au Kan-Kan (4 500 F)\n- 2x Jus de Bissap frais Menthe 50cl (2 000 F)\n\n📍 *Adresse de livraison :* Ministère des Finances, Plateau, 3ème étage\n💵 *Total :* 7 500 FCFA (Frais Billo Express 1 000 F inclus)\n💳 *Paiement :* Mynita (Validé ✅)\n🏍️ *Livreur assigné :* Ibrahim Oumarou (Billo Express Niamey) • +227 92 08 08 22\n\n👉 *Suivez la cuisson et votre livreur en temps réel sur notre app :* https://alloresto-niamey.com\n\n📞 Service Client : +227 96 05 23 10 | WhatsApp : +227 70 03 25 52`,
+    },
+    kitchen_progress: {
+      title: "👨‍🍳 Notification Cuisine Directe (Cuisson & Temps)",
+      target: "Envoyé dynamiquement par le chef pour alerter le client",
+      phone: "+227 70 03 25 52",
+      text: `🔥 *POINT CUISINE EN DIRECT — KHADY'S FOOD* 👨‍🍳\n\nBonjour M./Mme,\nLe chef cuisinier prépare actuellement votre commande *#CMD-2026-8801*.\n\n⏱️ *Temps restant estimé :* 10 minutes avant emballage thermique.\n📝 *Note du chef :* Viande en cours de braisage au feu doux avec sauce Kan-Kan bien relevée.\n\n🛵 Le coursier Billo Express est déjà alerté pour la prise en charge dès la fin de cuisson !\n👉 Suivi en direct : https://alloresto-niamey.com`,
+    },
+    client_request: {
+      title: "💬 Demande Client vers la Cuisine (Sauce / Piment / Couverts)",
+      target: "Envoyé par le client pour personnaliser sa préparation",
+      phone: "+227 70 03 25 52",
+      text: `👋 *MESSAGE CLIENT POUR LA CUISINE — COMMANDE #CMD-2026-8801*\n\n🏪 *Restaurant :* Khady's Food\n👤 *Client :* Amadou Seyni (+227 90 12 34 56)\n📌 *Sujet :* 🌶️ Préférence Piment & Couverts\n\n📝 *Détail de ma demande :*\n« Merci de bien vouloir servir le piment à part et d'ajouter 2 sets de couverts supplémentaires pour le bureau. »\n\nMerci pour votre réactivité ! 🍽️`,
     },
     billo_dispatch: {
       title: "🏍️ Fiche de Dispatch Livreur Billo Express",
@@ -62,19 +76,19 @@ export const WhatsAppAutomationModal: React.FC<WhatsAppAutomationModalProps> = (
       title: "🛒 Relance Panier Abandonné (+ Code Promo)",
       target: "Pour réengager un visiteur n'ayant pas finalisé",
       phone: "+227 70 03 25 52",
-      text: `👋 *Bonjour ! Vous avez faim à Niamey ?*\n\nNous avons remarqué que vous avez laissé des délices dans votre panier Allôresto (Choukouya de Mouton & Capitaine Braisé) !\n\n🎁 Pour vous régaler ce midi, voici un code promo exclusif de *-500 FCFA* : \`SAVOUR500\`\n\n👉 *Finalisez votre commande en 1 clic :* https://alloresto.ne\n🏍️ *Livraison express Billo Express chez vous ou au bureau !*`,
+      text: `👋 *Bonjour ! Vous avez faim à Niamey ?*\n\nNous avons remarqué que vous avez laissé des délices dans votre panier Allôresto (Choukouya de Mouton & Capitaine Braisé) !\n\n🎁 Pour vous régaler ce midi, voici un code promo exclusif de *-500 FCFA* : \`SAVOUR500\`\n\n👉 *Finalisez votre commande en 1 clic :* https://alloresto-niamey.com\n🏍️ *Livraison express Billo Express chez vous ou au bureau !*`,
     },
     group_invite: {
       title: "👥 Invitation Commande Groupée (Plateau / Ministères)",
       target: "À partager dans le groupe WhatsApp du bureau",
       phone: "",
-      text: `🍽️ *COMMANDE GROUPÉE DÉJEUNER DU BUREAU !*\n\nRejoignez la commande collective Allôresto initiée par *Amadou Seyni* chez *Khady's Food* pour le déjeuner d'aujourd'hui.\n\n🔑 *Code Session :* \`PLATEAU-MINISTERE-404\`\n⏱️ *Heure limite d'ajout :* 11h45\n🛵 *Livraison groupée à 12h30* au bureau !\n\n👉 *Ajoutez vos plats ici en 1 clic :* https://alloresto.ne`,
+      text: `🍽️ *COMMANDE GROUPÉE DÉJEUNER DU BUREAU !*\n\nRejoignez la commande collective Allôresto initiée par *Amadou Seyni* chez *Khady's Food* pour le déjeuner d'aujourd'hui.\n\n🔑 *Code Session :* \`PLATEAU-MINISTERE-404\`\n⏱️ *Heure limite d'ajout :* 11h45\n🛵 *Livraison groupée à 12h30* au bureau !\n\n👉 *Ajoutez vos plats ici en 1 clic :* https://alloresto-niamey.com`,
     },
     status_update: {
       title: "🛵 Alerte Livreur en Route",
       target: "Notification quand le livreur quitte le restaurant",
       phone: "+227 70 03 25 52",
-      text: `🏍️ *VOTRE LIVREUR EST EN ROUTE !*\n\nVotre repas chaud vient de quitter les cuisines ! Le livreur *Moussa (Billo Express)* arrive à votre adresse dans environ *10 à 15 minutes*.\n\n📞 Numéro direct du livreur : *+227 92 08 08 22*\n👉 Préparez votre règlement ou confirmez votre paiement Mynita. Bon appétit avec Allôresto !`,
+      text: `🏍️ *VOTRE LIVREUR EST EN ROUTE !*\n\nVotre repas chaud vient de quitter les cuisines ! Le livreur *Ibrahim Oumarou (Billo Express)* arrive à votre adresse dans environ *10 à 15 minutes*.\n\n📞 Numéro direct du livreur : *+227 92 08 08 22*\n👉 Préparez votre règlement ou confirmez votre paiement Mynita. Bon appétit avec Allôresto !`,
     },
   };
 
@@ -119,6 +133,8 @@ export const WhatsAppAutomationModal: React.FC<WhatsAppAutomationModalProps> = (
           {(
             [
               { key: "order_client", label: "Confirmation Client", icon: ShoppingBag },
+              { key: "kitchen_progress", label: "👨‍🍳 Cuisine ➔ Client", icon: ChefHat },
+              { key: "client_request", label: "💬 Client ➔ Cuisine", icon: Flame },
               { key: "billo_dispatch", label: "Dispatch Livreur Billo", icon: Bike },
               { key: "cart_recovery", label: "Relance Panier", icon: Sparkles },
               { key: "group_invite", label: "Partage Groupe Bureau", icon: Users },

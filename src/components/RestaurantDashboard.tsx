@@ -17,10 +17,11 @@ import {
   Package,
   Flame,
 } from "lucide-react";
-import { Order, Restaurant, MenuItem, OrderStatus } from "../types";
+import { Order, Restaurant, MenuItem, OrderStatus, KitchenWhatsAppMessage } from "../types";
 import { RESTAURANTS_DATA } from "../data/allorestoData";
 import { DishManagementModal } from "./DishManagementModal";
 import { sendOrderConfirmationWhatsApp } from "../utils/whatsappNotifications";
+import { KitchenWhatsAppHub } from "./KitchenWhatsAppHub";
 import { MessageSquare } from "lucide-react";
 
 interface RestaurantDashboardProps {
@@ -274,6 +275,9 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                       )}
                     </div>
                   </div>
+
+                  {/* Dynamic WhatsApp Communication Hub Cuisine ↔ Client */}
+                  <KitchenWhatsAppHub order={order} mode="kitchen" />
 
                   {/* Actions buttons */}
                   <div className="pt-2 border-t border-slate-800 flex flex-wrap gap-2">
