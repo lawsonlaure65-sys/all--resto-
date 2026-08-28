@@ -21,6 +21,10 @@ import {
   CheckCircle2,
   Bike,
   ShieldAlert,
+  Smile,
+  Flame,
+  Award,
+  Radio,
 } from "lucide-react";
 import { BrandLogo } from "./BrandLogo";
 import { BilloExpressLogo } from "./BilloExpressLogo";
@@ -34,7 +38,7 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [activeTab, setActiveTab] = useState<"concept" | "billo" | "screens" | "palette" | "specs">("billo");
+  const [activeTab, setActiveTab] = useState<"concept" | "billo" | "screens" | "palette" | "specs">("concept");
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedBilloSvg, setCopiedBilloSvg] = useState(false);
   const [previewBg, setPreviewBg] = useState<"dark" | "light" | "teal" | "orange">("dark");
@@ -43,30 +47,60 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
 
   const svgFullCode = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="512" height="512">
   <defs>
-    <linearGradient id="alloTealGrad" x1="20" y1="20" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#145F78"/>
-      <stop offset="50%" stop-color="#0F4C64"/>
-      <stop offset="100%" stop-color="#0A3748"/>
+    <linearGradient id="alloChefOrange" x1="18" y1="24" x2="110" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFA133"/>
+      <stop offset="35%" stop-color="#FF6B00"/>
+      <stop offset="100%" stop-color="#E63E00"/>
     </linearGradient>
-    <linearGradient id="alloOrangeGrad" x1="60" y1="10" x2="100" y2="50" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FF7E26"/>
-      <stop offset="100%" stop-color="#F15A1A"/>
+    <linearGradient id="alloTealPhone" x1="30" y1="10" x2="98" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2DD4BF"/>
+      <stop offset="50%" stop-color="#0F766E"/>
+      <stop offset="100%" stop-color="#0A3F3B"/>
+    </linearGradient>
+    <linearGradient id="alloSilverPlate" x1="20" y1="94" x2="108" y2="106" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#CBD5E1"/>
+      <stop offset="100%" stop-color="#64748B"/>
     </linearGradient>
   </defs>
-  <!-- 3 Digital / Delivery Pixels (Orange Sahel) -->
-  <rect x="79" y="15" width="16" height="16" rx="3.5" fill="url(#alloOrangeGrad)"/>
-  <rect x="67" y="24" width="15" height="15" rx="3.5" fill="url(#alloOrangeGrad)"/>
-  <rect x="81" y="31" width="17" height="17" rx="3.5" fill="url(#alloOrangeGrad)"/>
 
-  <!-- Main Allôresto Pin & Speech Bubble (Teal) -->
-  <path d="M 50 20 C 32 20 20 34 20 54 C 20 66 26 76 33 82 L 33 97 L 46 87 C 48 87 50 87 52 87 C 69 87 83 73 83 55 C 83 48 80 42 76 37 L 64 37 L 64 20 Z" fill="url(#alloTealGrad)"/>
+  <!-- Ondes Sonores & Vapeur d'Appétit "Allô" -->
+  <g stroke="#FFB74D" stroke-width="2.8" stroke-linecap="round" opacity="0.95">
+    <path d="M 44 18 C 50 12 56 10 64 10 C 72 10 78 12 84 18"/>
+    <path d="M 52 23 C 56 20 60 19 64 19 C 68 19 72 20 76 23"/>
+  </g>
+  <!-- Étoile Saveur -->
+  <path d="M 98 19 L 100 24 L 105 26 L 100 28 L 98 33 L 96 28 L 91 26 L 96 24 Z" fill="#FBBF24"/>
 
-  <!-- Negative Space 3-Prong Fork (Pure White) -->
-  <rect x="37" y="34" width="7" height="20" rx="3.5" fill="#FFFFFF"/>
-  <rect x="47.5" y="34" width="7" height="20" rx="3.5" fill="#FFFFFF"/>
-  <rect x="58" y="34" width="7" height="20" rx="3.5" fill="#FFFFFF"/>
-  <path d="M 37 46 C 37 62 65 62 65 46 Z" fill="#FFFFFF"/>
-  <path d="M 47.5 56 L 54.5 56 L 54.5 90 L 47.5 90 Z" fill="#FFFFFF"/>
+  <!-- Arceau Casque / Poignée Toque -->
+  <path d="M 46 36 C 46 25 82 25 82 36" stroke="url(#alloTealPhone)" stroke-width="6.5" stroke-linecap="round"/>
+  <circle cx="64" cy="27" r="6" fill="#FBBF24" stroke="#D97706" stroke-width="1.5"/>
+  <rect x="80" y="32" width="7" height="12" rx="3.5" fill="#0F766E"/>
+  <path d="M 85 41 C 88 44 87 49 82 52" stroke="#2DD4BF" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="80" cy="52.5" r="2" fill="#2DD4BF"/>
+
+  <!-- Cloche Gourmande -->
+  <path d="M 64 34 C 42 34 26 52 22 78 C 21 84 25 88 32 88 L 96 88 C 103 88 107 84 106 78 C 102 52 86 34 64 34 Z" fill="url(#alloChefOrange)"/>
+  <path d="M 64 39 C 50 39 37 49 32 64 C 30 68 33 70 36 68 C 40 56 50 46 64 45 C 67 45 68 41 66 39.5 C 65.5 39.2 64.8 39 64 39 Z" fill="#FFFFFF" opacity="0.45"/>
+
+  <!-- Visage Complice & Sourire -->
+  <path d="M 42 63 C 45 58 52 58 55 63" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"/>
+  <ellipse cx="74" cy="61" rx="4.8" ry="6" fill="#1E293B"/>
+  <circle cx="72.5" cy="59" r="2" fill="#FFFFFF"/>
+  <circle cx="76" cy="63" r="1" fill="#FFFFFF"/>
+  <circle cx="37" cy="69" r="3.5" fill="#EF4444" opacity="0.35"/>
+  <circle cx="81" cy="69" r="3.5" fill="#EF4444" opacity="0.35"/>
+  <path d="M 48 69 C 48 78 70 78 70 69 Z" fill="#1E293B"/>
+  <path d="M 55 74 C 55 77 63 77 63 74 Z" fill="#F43F5E"/>
+
+  <!-- Plateau & Propulsion -->
+  <path d="M 18 88 C 18 86 22 84 28 84 L 100 84 C 106 84 110 86 110 88 L 108 92 C 108 95 104 97 98 97 L 30 97 C 24 97 20 95 20 92 Z" fill="url(#alloSilverPlate)" stroke="#94A3B8" stroke-width="1"/>
+  <rect x="14" y="96" width="100" height="5" rx="2.5" fill="#475569"/>
+  <g stroke="#FF6B00" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+    <line x1="8" y1="76" x2="16" y2="76"/>
+    <line x1="4" y1="84" x2="13" y2="84"/>
+    <line x1="7" y1="92" x2="14" y2="92"/>
+  </g>
 </svg>`;
 
   const handleCopySvg = () => {
@@ -80,7 +114,7 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "alloresto-logo-officiel.svg";
+    a.download = "alloresto-nouveau-logo.svg";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -162,7 +196,7 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
         {/* Header with Title and Close button */}
         <div className="p-5 sm:p-6 border-b border-slate-800/80 bg-slate-900/60 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0F4C64] to-[#F36C21] p-0.5 flex items-center justify-center shadow-lg">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-orange-500 via-amber-500 to-teal-600 p-0.5 flex items-center justify-center shadow-lg">
               <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
                 <BrandLogo variant="icon" size="sm" />
               </div>
@@ -170,14 +204,14 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-black text-white">
-                  Identité Visuelle &amp; Favicon Allôresto
+                  Nouvelle Identité Visuelle Allôresto
                 </h3>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase">
-                  Logo Officiel
+                <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider">
+                  Nouveau Logo 2026
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Évolution de la marque, remplacement de &quot;DigitRestau&quot; par &quot;Allôresto&quot; et intégration favicon pour tous les écrans
+                Design moderne, ludique, intelligent et percutant : La Cloche Gourmande Connectée &amp; Souriante
               </p>
             </div>
           </div>
@@ -193,6 +227,18 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
         {/* Tab Navigation */}
         <div className="flex items-center gap-2 px-5 sm:px-6 pt-3 border-b border-slate-800 overflow-x-auto scrollbar-none bg-slate-950/40">
           <button
+            onClick={() => setActiveTab("concept")}
+            className={`pb-3 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+              activeTab === "concept"
+                ? "border-orange-500 text-orange-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Nouveau Logo Allôresto</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab("billo")}
             className={`pb-3 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 cursor-pointer whitespace-nowrap ${
               activeTab === "billo"
@@ -202,23 +248,11 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
           >
             <Bike className="w-3.5 h-3.5 text-orange-400" />
             <span className="flex items-center gap-1.5">
-              <span>Logo Partenaire Bilo Express</span>
+              <span>Partenaire Bilo Express</span>
               <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase">
                 Corrigé
               </span>
             </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("concept")}
-            className={`pb-3 px-3 text-xs font-bold transition-all border-b-2 flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-              activeTab === "concept"
-                ? "border-orange-500 text-orange-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Logo Allôresto</span>
           </button>
 
           <button
@@ -230,7 +264,7 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
             }`}
           >
             <Monitor className="w-3.5 h-3.5" />
-            <span>Favicon &amp; Écrans</span>
+            <span>Favicon &amp; Rendu 3D</span>
           </button>
 
           <button
@@ -242,7 +276,7 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
             }`}
           >
             <Palette className="w-3.5 h-3.5" />
-            <span>Palette de Couleurs</span>
+            <span>Harmonie des Couleurs</span>
           </button>
 
           <button
@@ -260,10 +294,200 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
 
         {/* Modal Body */}
         <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6">
-          {/* TAB 0: LOGO PARTENAIRE BILO EXPRESS (CORRIGÉ) */}
+          {/* TAB 1: NOUVEAU LOGO ALLÔRESTO (CONCEPT & SYMBOLOGIE) */}
+          {activeTab === "concept" && (
+            <div className="space-y-6">
+              {/* Main Interactive Stage */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-3xl bg-slate-950 border border-slate-800 shadow-xl">
+                <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-orange-400 bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Nouvelle Création Visuelle</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
+                      Approuvé Food-Tech
+                    </span>
+                  </div>
+
+                  <h4 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    La Cloche Gourmande Connectée
+                  </h4>
+                  <p className="text-xs sm:text-sm text-slate-300 max-w-md leading-relaxed">
+                    Un logo qui fusionne <strong>gastronomie</strong> (cloche de chef), <strong>technologie &amp; dialogue</strong> (arceau d&apos;écouteur &quot;Allô&quot; et ondes aromatiques), <strong>convivialité</strong> (clin d&apos;œil malicieux &amp; sourire gourmand) et <strong>vitesse de livraison</strong> (lignes de propulsion express).
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-2">
+                    <button
+                      onClick={handleCopySvg}
+                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md"
+                    >
+                      {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedCode ? "SVG Copié !" : "Copier le nouveau SVG"}</span>
+                    </button>
+
+                    <button
+                      onClick={handleDownloadSvg}
+                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Télécharger (.svg)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Live Reworked Logo Display with Background Toggles */}
+                <div className="flex flex-col items-center gap-3">
+                  <div
+                    className={`w-48 h-48 sm:w-56 sm:h-56 rounded-3xl p-6 flex flex-col items-center justify-center shadow-2xl transition-colors duration-300 border ${
+                      previewBg === "dark"
+                        ? "bg-slate-950 border-slate-800"
+                        : previewBg === "light"
+                        ? "bg-white border-slate-200"
+                        : previewBg === "teal"
+                        ? "bg-[#0A3F3B] border-teal-500/30"
+                        : "bg-[#E63E00] border-orange-400/30"
+                    }`}
+                  >
+                    <div className="w-24 h-24 sm:w-28 sm:h-28">
+                      <BrandLogo variant="icon" size="xl" />
+                    </div>
+                    <div className="mt-2 text-center">
+                      <div className="text-xl font-black tracking-tight flex items-center justify-center">
+                        <span
+                          className={
+                            previewBg === "light"
+                              ? "text-slate-950 font-black"
+                              : "text-white font-black"
+                          }
+                        >
+                          Allô
+                        </span>
+                        <span className="text-orange-500 font-black ml-0.5">
+                          resto
+                        </span>
+                        <span className="text-amber-400 font-black ml-0.5">!</span>
+                      </div>
+                      <span
+                        className={`text-[9px] font-bold uppercase tracking-wider block ${
+                          previewBg === "light" ? "text-slate-500" : "text-slate-300"
+                        }`}
+                      >
+                        Vos envies, bien servies !
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bg switchers */}
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 text-[10px] font-bold">
+                    <button
+                      onClick={() => setPreviewBg("dark")}
+                      className={`px-2 py-1 rounded-lg transition ${
+                        previewBg === "dark" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      Sombre
+                    </button>
+                    <button
+                      onClick={() => setPreviewBg("light")}
+                      className={`px-2 py-1 rounded-lg transition ${
+                        previewBg === "light" ? "bg-white text-slate-950 font-black" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      Clair
+                    </button>
+                    <button
+                      onClick={() => setPreviewBg("teal")}
+                      className={`px-2 py-1 rounded-lg transition ${
+                        previewBg === "teal" ? "bg-teal-700 text-white" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      Teal
+                    </button>
+                    <button
+                      onClick={() => setPreviewBg("orange")}
+                      className={`px-2 py-1 rounded-lg transition ${
+                        previewBg === "orange" ? "bg-orange-600 text-white font-black" : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      Orange
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* The 4 Core Pillars of this Redesign */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* 1. Amusant & Attachant */}
+                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                      <Smile className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-black text-white">1. Amusant &amp; Convivial</h5>
+                      <span className="text-[10px] text-amber-400 font-bold">Clin d&apos;œil &amp; Pommettes</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Un visage expressif intégré au dôme de la cloche qui donne immédiatement le sourire, humanise le service et crée un lien émotionnel fort avec les gourmets de Niamey.
+                  </p>
+                </div>
+
+                {/* 2. Intelligent & Double Lecture */}
+                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
+                      <Radio className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-black text-white">2. Intelligent &amp; Innovant</h5>
+                      <span className="text-[10px] text-teal-400 font-bold">Casque Allô + Ondes Wi-Fi</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    La poignée supérieure forme un arceau d&apos;appel &quot;Allô&quot; avec micro intégré diffusant des ondes aromatiques et technologiques pour symboliser la commande en 1 clic.
+                  </p>
+                </div>
+
+                {/* 3. Professionnel & Gastronomique */}
+                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold">
+                      <Utensils className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-black text-white">3. Professionnel &amp; Gastronomique</h5>
+                      <span className="text-[10px] text-orange-400 font-bold">Cloche &amp; Plateau Argenté</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Les codes du service de luxe (cloche sous plateau métallique) assurent la crédibilité auprès des restaurateurs partenaires et garantissent la fraîcheur des plats livrés.
+                  </p>
+                </div>
+
+                {/* 4. Percutant & Mémorable */}
+                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center font-bold">
+                      <Zap className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-black text-white">4. Percutant &amp; Ultra-Rapide</h5>
+                      <span className="text-[10px] text-red-400 font-bold">Lignes de Vitesse &amp; Étoile</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Des traits de propulsion latéraux et une étincelle dorée soulignent l&apos;efficacité record des livreurs Billo Express à travers tous les quartiers de Niamey.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 0: LOGO PARTENAIRE BILO EXPRESS */}
           {activeTab === "billo" && (
             <div className="space-y-6">
-              {/* Header Showcase Banner */}
               <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-3xl bg-slate-950 border border-slate-800">
                 <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
@@ -303,379 +527,62 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
                   </div>
                 </div>
 
-                {/* Live Logo Visualizer in Dark / Light Card */}
                 <div className="flex flex-col items-center gap-3">
-                  <div
-                    className={`w-52 h-52 rounded-3xl p-5 flex flex-col items-center justify-center shadow-2xl transition-colors duration-300 border ${
-                      previewBg === "dark"
-                        ? "bg-slate-950 border-slate-800"
-                        : previewBg === "light"
-                        ? "bg-white border-slate-200"
-                        : previewBg === "teal"
-                        ? "bg-[#0F4C64] border-cyan-700"
-                        : "bg-[#F36C21] border-orange-400"
-                    }`}
-                  >
+                  <div className="w-52 h-52 rounded-3xl p-5 flex flex-col items-center justify-center shadow-2xl bg-slate-950 border border-slate-800">
                     <BilloExpressLogo
                       variant="full"
                       size="xl"
-                      theme={previewBg === "light" ? "light" : "dark"}
+                      theme="dark"
                     />
                   </div>
-
-                  {/* Contrast background switcher */}
-                  <div className="flex items-center gap-1.5 p-1 bg-slate-900 rounded-xl border border-slate-800">
-                    <button
-                      onClick={() => setPreviewBg("dark")}
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
-                        previewBg === "dark" ? "bg-slate-800 text-white" : "text-slate-400"
-                      }`}
-                    >
-                      Sombre
-                    </button>
-                    <button
-                      onClick={() => setPreviewBg("light")}
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
-                        previewBg === "light" ? "bg-white text-slate-900" : "text-slate-400"
-                      }`}
-                    >
-                      Clair
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Before vs After Correction Comparison */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Avant: Faute d'orthographe */}
-                <div className="p-5 rounded-2xl bg-red-950/20 border border-red-900/40 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-red-400 flex items-center gap-1.5">
-                      <ShieldAlert className="w-4 h-4 text-red-400" />
-                      <span>Version Précédente (Avec Coquille)</span>
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-black bg-red-500/20 text-red-300">
-                      Coquille &quot;Livrason&quot;
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-300">
-                    Le mot français &quot;Livraison&quot; était orthographié sans la lettre <strong>&quot;i&quot;</strong> :
-                  </p>
-                  <div className="p-3 rounded-xl bg-slate-950 border border-red-900/30 text-center font-mono text-sm text-red-300 line-through">
-                    &quot;Livrason à Domicile Rapide&quot;
-                  </div>
-                </div>
-
-                {/* Après: Correction Validée */}
-                <div className="p-5 rounded-2xl bg-emerald-950/20 border border-emerald-900/40 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      <span>Version Officielle Corrigée</span>
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300">
-                      Conforme 100%
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-300">
-                    Orthographe française rigoureusement rectifiée et typographie ré-alignée :
-                  </p>
-                  <div className="p-3 rounded-xl bg-slate-950 border border-emerald-900/30 text-center font-mono text-sm font-bold text-emerald-400">
-                    &quot;Livraison à Domicile Rapide&quot;
-                  </div>
-                </div>
-              </div>
-
-              {/* Variants Showcase */}
-              <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
-                <h5 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Déclinaisons dans l&apos;Application Allôresto
-                </h5>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
-                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center gap-2">
-                    <span className="text-[10px] font-bold text-slate-400">Format Badge Coursier</span>
-                    <BilloExpressLogo variant="badge" />
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center gap-2">
-                    <span className="text-[10px] font-bold text-slate-400">Format Horizontal</span>
-                    <BilloExpressLogo variant="horizontal" />
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center gap-2">
-                    <span className="text-[10px] font-bold text-slate-400">Format Icône Pure</span>
-                    <BilloExpressLogo variant="icon" size="lg" />
-                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 1: CONCEPT & SYMBOLOGIE */}
-          {activeTab === "concept" && (
-            <div className="space-y-6">
-              {/* Main Interactive Stage */}
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-3xl bg-slate-950 border border-slate-800">
-                <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-orange-400 bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20">
-                    Refonte Réussie &bull; Allôresto Niger
-                  </span>
-                  <h4 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    Le Symbole Intelligent Allôresto
-                  </h4>
-                  <p className="text-xs sm:text-sm text-slate-300 max-w-md leading-relaxed">
-                    Remplacement complet de <em>&quot;DigitRestau&quot;</em> par l&apos;identité <strong>Allôresto</strong>, combinant le dialogue (&quot;Allô&quot;), la gastronomie (&quot;resto&quot;) et les pixels de livraison express.
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-2 pt-2">
-                    <button
-                      onClick={handleCopySvg}
-                      className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md"
-                    >
-                      {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedCode ? "SVG Copié !" : "Copier le code SVG"}</span>
-                    </button>
-
-                    <button
-                      onClick={handleDownloadSvg}
-                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Télécharger (.svg)</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Live Reworked Logo Display with Background Toggles */}
-                <div className="flex flex-col items-center gap-3">
-                  <div
-                    className={`w-44 h-44 sm:w-52 sm:h-52 rounded-3xl p-6 flex flex-col items-center justify-center shadow-2xl transition-colors duration-300 border ${
-                      previewBg === "dark"
-                        ? "bg-slate-950 border-slate-800"
-                        : previewBg === "light"
-                        ? "bg-white border-slate-200"
-                        : previewBg === "teal"
-                        ? "bg-[#0F4C64] border-cyan-400/30"
-                        : "bg-[#F36C21] border-orange-400/30"
-                    }`}
-                  >
-                    <div className="w-20 h-20 sm:w-24 sm:h-24">
-                      <BrandLogo variant="icon" size="xl" />
-                    </div>
-                    <div className="mt-2 text-center">
-                      <div className="text-lg font-black tracking-tight flex items-center justify-center">
-                        <span
-                          className={
-                            previewBg === "light"
-                              ? "text-[#0F4C64]"
-                              : previewBg === "teal" || previewBg === "orange"
-                              ? "text-white"
-                              : "text-white"
-                          }
-                        >
-                          Allô
-                        </span>
-                        <span
-                          className={
-                            previewBg === "orange"
-                              ? "text-slate-950 font-black ml-0.5"
-                              : "text-[#F36C21] font-black ml-0.5"
-                          }
-                        >
-                          resto
-                        </span>
-                      </div>
-                      <span
-                        className={`text-[9px] font-bold uppercase tracking-wider block ${
-                          previewBg === "light" ? "text-slate-500" : "text-slate-300"
-                        }`}
-                      >
-                        Niamey &bull; Niger
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Bg switchers */}
-                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 text-[10px] font-bold">
-                    <button
-                      onClick={() => setPreviewBg("dark")}
-                      className={`px-2 py-1 rounded-lg transition ${
-                        previewBg === "dark" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"
-                      }`}
-                    >
-                      Sombre
-                    </button>
-                    <button
-                      onClick={() => setPreviewBg("light")}
-                      className={`px-2 py-1 rounded-lg transition ${
-                        previewBg === "light" ? "bg-white text-slate-950 font-black" : "text-slate-400 hover:text-white"
-                      }`}
-                    >
-                      Clair
-                    </button>
-                    <button
-                      onClick={() => setPreviewBg("teal")}
-                      className={`px-2 py-1 rounded-lg transition ${
-                        previewBg === "teal" ? "bg-[#0F4C64] text-white" : "text-slate-400 hover:text-white"
-                      }`}
-                    >
-                      Teal
-                    </button>
-                    <button
-                      onClick={() => setPreviewBg("orange")}
-                      className={`px-2 py-1 rounded-lg transition ${
-                        previewBg === "orange" ? "bg-[#F36C21] text-slate-950 font-black" : "text-slate-400 hover:text-white"
-                      }`}
-                    >
-                      Orange
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Detailed Breakdown of the 4 Key Visual Pillars */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-[#0F4C64]/30 text-cyan-400 flex items-center justify-center text-xs font-bold">
-                      <Phone className="w-4 h-4" />
-                    </div>
-                    <h5 className="text-xs font-bold text-white">1. La Bulle / Pin &quot;Allô&quot;</h5>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Représente la communication directe, la commande par téléphone ou WhatsApp, et la géolocalisation précise des restaurants et clients à Niamey.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-white/20 text-white flex items-center justify-center text-xs font-bold">
-                      <Utensils className="w-4 h-4" />
-                    </div>
-                    <h5 className="text-xs font-bold text-white">2. La Fourchette en Espace Négatif</h5>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Découpée en blanc pur au centre de la bulle, elle symbolise les saveurs culinaires, la restauration de qualité et la gourmandise du terroir sahélien.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-[#F36C21]/20 text-orange-400 flex items-center justify-center text-xs font-bold">
-                      <Zap className="w-4 h-4" />
-                    </div>
-                    <h5 className="text-xs font-bold text-white">3. Les 3 Cubes Pixels &quot;Sahel Orange&quot;</h5>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Trois carrés dynamiques en ascension : la technologie digitale, la vitesse de livraison Billo Express et l&apos;union Clients + Restaurants + Livreurs.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">
-                      <CheckCircle2 className="w-4 h-4" />
-                    </div>
-                    <h5 className="text-xs font-bold text-white">4. Typographie &quot;Allôresto&quot;</h5>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Remplacement officiel de <strong>DigitRestau</strong> par <strong>Allôresto</strong> avec &quot;Allô&quot; en bleu profond et &quot;resto&quot; en orange chaud safrané.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: AFFICHAGE FAVICON & ÉCRANS */}
+          {/* TAB 2: AFFICHAGE FAVICON & RENDU 3D */}
           {activeTab === "screens" && (
             <div className="space-y-6">
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-950/40 to-slate-950 border border-cyan-500/20 space-y-1">
-                <h4 className="text-sm font-black text-white flex items-center gap-2">
-                  <Monitor className="w-4 h-4 text-cyan-400" />
-                  <span>Favicon &amp; Intégration sur tous les écrans</span>
-                </h4>
-                <p className="text-xs text-slate-300">
-                  Le logo est désormais configuré comme favicon officiel (SVG vectoriel haute fidélité) dans <code className="text-orange-400 font-mono">/favicon.svg</code>, <code className="text-orange-400 font-mono">/manifest.json</code> et les balises <code className="text-orange-400 font-mono">&lt;link rel=&quot;icon&quot;&gt;</code>.
-                </p>
-              </div>
-
-              {/* Simulation de l'onglet navigateur */}
-              <div className="space-y-2">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Aperçu dans l&apos;onglet du navigateur (Favicon 16x16 / 32x32)
-                </span>
-                <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 pr-3 border-r border-slate-800">
-                    <span className="w-3 h-3 rounded-full bg-red-500/80 inline-block" />
-                    <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
-                    <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
-                  </div>
-
-                  <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 max-w-sm">
-                    {/* Favicon icon */}
-                    <div className="w-4 h-4 shrink-0">
-                      <BrandLogo variant="icon" size="sm" />
-                    </div>
-                    <span className="text-xs font-bold text-white truncate">
-                      Allôresto Niger — Livraison de Repas à Niamey
+              {/* Rendu 3D & Mockup */}
+              <div className="p-5 rounded-3xl bg-slate-950 border border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-800 group">
+                  <img
+                    src="/src/assets/images/alloresto_brand_logo_1787950661282.jpg"
+                    alt="Rendu 3D Allôresto"
+                    className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-4">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Aperçu 3D Studio de Marque</span>
                     </span>
-                    <X className="w-3 h-3 text-slate-500 shrink-0 ml-auto" />
                   </div>
                 </div>
-              </div>
 
-              {/* Simulation Écran Smartphone & PWA */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-5 rounded-3xl bg-slate-950 border border-slate-800 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <Smartphone className="w-4 h-4 text-orange-400" />
-                      <span>Icône d&apos;Écran d&apos;Accueil Mobile (PWA)</span>
-                    </span>
-                    <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                      Installable
-                    </span>
-                  </div>
+                <div className="space-y-4">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-orange-400 bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20">
+                    Déclinaisons Multi-Supports
+                  </span>
+                  <h4 className="text-xl font-black text-white">
+                    Parfaite lisibilité du 16px au format 4K
+                  </h4>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Le nouveau logo vectoriel SVG a été conçu avec des proportions optiques calibrées : les yeux, le sourire et le casque restent parfaitement identifiables même à l&apos;échelle minuscule d&apos;un favicon d&apos;onglet navigateur (16x16 px).
+                  </p>
 
-                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
-                    {/* App icon */}
-                    <div className="w-16 h-16 rounded-2xl bg-[#0F4C64] p-2 flex items-center justify-center shadow-xl border border-cyan-400/20 shrink-0">
-                      <BrandLogo variant="icon" size="lg" />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-white">Allôresto</h5>
-                      <p className="text-xs text-slate-400">Niamey Delivery</p>
-                      <div className="flex items-center gap-1 text-[10px] text-amber-400 mt-1">
-                        <span>★★★★★</span>
-                        <span className="text-slate-400">(4.9/5)</span>
+                  {/* Navigation Tab Simulation */}
+                  <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">
+                      Aperçu Favicon Onglet Navigateur (16x16)
+                    </span>
+                    <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950 border border-slate-800">
+                      <div className="w-4 h-4">
+                        <BrandLogo variant="icon" size="sm" />
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-5 rounded-3xl bg-slate-950 border border-slate-800 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-cyan-400" />
-                      <span>Compatibilité Écrans &amp; Rétina</span>
-                    </span>
-                    <span className="text-[10px] text-cyan-400 font-bold bg-cyan-500/10 px-2 py-0.5 rounded-full">
-                      Vectoriel SVG
-                    </span>
-                  </div>
-
-                  <div className="space-y-2 text-xs text-slate-300">
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900">
-                      <span>Écrans Rétina &amp; 4K</span>
-                      <strong className="text-emerald-400">100% Net (Scalable)</strong>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900">
-                      <span>Navigateurs (Chrome, Safari, Firefox)</span>
-                      <strong className="text-emerald-400">Support SVG &amp; PNG</strong>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900">
-                      <span>PWA Android &amp; iOS</span>
-                      <strong className="text-emerald-400">Automatique</strong>
+                      <span className="text-xs font-bold text-white truncate">
+                        Allôresto Niger — Vos envies, bien servies !
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -686,42 +593,55 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
           {/* TAB 3: PALETTE DE COULEURS */}
           {activeTab === "palette" && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Color 1: Bleu Canard / Teal */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                {/* Color 1: Orange Solaire */}
                 <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-                  <div className="w-full h-20 rounded-xl bg-[#0F4C64] flex items-center justify-center text-white font-black text-xs shadow-inner">
-                    #0F4C64
+                  <div className="w-full h-16 rounded-xl bg-gradient-to-r from-[#FFA133] to-[#FF6B00] flex items-center justify-center text-slate-950 font-black text-xs shadow-inner">
+                    #FF6B00
                   </div>
                   <div>
-                    <h5 className="text-xs font-bold text-white">Bleu Canard Profond</h5>
+                    <h5 className="text-xs font-bold text-white">Orange Sahel Solaire</h5>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Confiance, professionnalisme, dialogue (&quot;Allô&quot;), contraste optimal.
+                      Gourmandise, chaleur humaine, appétit et énergie festive.
                     </p>
                   </div>
                 </div>
 
-                {/* Color 2: Orange Sahel */}
+                {/* Color 2: Jaune Safran */}
                 <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-                  <div className="w-full h-20 rounded-xl bg-[#F36C21] flex items-center justify-center text-slate-950 font-black text-xs shadow-inner">
-                    #F36C21
+                  <div className="w-full h-16 rounded-xl bg-[#FBBF24] flex items-center justify-center text-slate-950 font-black text-xs shadow-inner">
+                    #FBBF24
                   </div>
                   <div>
-                    <h5 className="text-xs font-bold text-white">Orange Sahel &amp; Safran</h5>
+                    <h5 className="text-xs font-bold text-white">Jaune Étoile Safran</h5>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Énergie, appétit, rapidité des livreurs Billo Express et chaleur du Niger.
+                      Éclat, excellence des chefs et saveurs authentiques.
                     </p>
                   </div>
                 </div>
 
-                {/* Color 3: Blanc Pur */}
+                {/* Color 3: Teal Connecté */}
                 <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-                  <div className="w-full h-20 rounded-xl bg-white flex items-center justify-center text-slate-950 font-black text-xs shadow-inner">
-                    #FFFFFF
+                  <div className="w-full h-16 rounded-xl bg-[#0F766E] flex items-center justify-center text-white font-black text-xs shadow-inner">
+                    #0F766E
                   </div>
                   <div>
-                    <h5 className="text-xs font-bold text-white">Blanc Pur (Espace Négatif)</h5>
+                    <h5 className="text-xs font-bold text-white">Teal Phone &amp; Connectivité</h5>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Clarté, hygiène alimentaire, pureté et lisibilité instantanée à toute taille.
+                      Technologie, fluidité du dialogue &quot;Allô&quot; et sécurité.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Color 4: Métal Argenté */}
+                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                  <div className="w-full h-16 rounded-xl bg-[#CBD5E1] flex items-center justify-center text-slate-950 font-black text-xs shadow-inner">
+                    #CBD5E1
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Argent Plateau Chef</h5>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Hygiène irréprochable, service soigné et distinction.
                     </p>
                   </div>
                 </div>
@@ -759,12 +679,13 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
           </span>
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs transition cursor-pointer"
+            className="px-5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-xs transition cursor-pointer shadow-md"
           >
-            Fermer
+            Appliquer &amp; Fermer
           </button>
         </div>
       </motion.div>
     </div>
   );
 };
+
