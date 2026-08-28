@@ -180,6 +180,70 @@ export const LiveOrderTracker: React.FC<LiveOrderTrackerProps> = ({
             </div>
           </div>
 
+          {/* Deposit / Receipt Validation Rule Notice */}
+          {order.orderStatus === "received" && order.paymentMethod !== "cash" && (
+            <div className="p-4 rounded-2xl bg-amber-950/90 border-2 border-amber-500/80 text-amber-200 text-xs space-y-2 shadow-xl shadow-amber-950/30 animate-pulse">
+              <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
+                <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+                <span>⏳ En attente de vérification du reçu de dépôt</span>
+              </div>
+              <p className="text-xs text-amber-100 leading-relaxed font-medium">
+                <strong>Règle importante Allôresto :</strong> Ce n&apos;est qu&apos;après paiement par dépôt et envoi du reçu ou capture du reçu que la commande sera confirmée et passée en cuisine.
+              </p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1 border-t border-amber-500/30 text-[11px]">
+                <span>
+                  Mode choisi : <strong>{order.paymentMethod.toUpperCase()}</strong>
+                  {order.paymentReference ? ` (Réf : ${order.paymentReference})` : ""}
+                </span>
+                <a
+                  href={`https://wa.me/22770032552?text=${encodeURIComponent(
+                    `Bonjour Allôresto, voici mon reçu de dépôt pour ma commande #${order.id} (${order.restaurantName} - ${order.total} FCFA). Merci de lancer la préparation !`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition shadow"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Envoyer mon reçu sur WhatsApp</span>
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Confirmed in Kitchen Notice */}
+          {order.orderStatus === "preparing" && (
+            <div className="p-4 rounded-2xl bg-emerald-950/90 border-2 border-emerald-500/80 text-emerald-200 text-xs space-y-2 shadow-xl shadow-emerald-950/30">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-emerald-300 font-black text-sm">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <span>🎉 Commande confirmée &amp; transmise en cuisine !</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+                  Paiement vérifié ✅
+                </span>
+              </div>
+              <p className="text-xs text-emerald-100 leading-relaxed font-medium">
+                Le reçu de dépôt a été validé. Le chef cuisinier prépare actuellement votre repas chaud chez <strong>{order.restaurantName}</strong>.
+              </p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1 border-t border-emerald-500/30 text-[11px]">
+                <span className="text-emerald-300">
+                  📲 Notification WhatsApp de confirmation envoyée au client ({order.customerPhone})
+                </span>
+                <a
+                  href={`https://wa.me/${(order.customerPhone || "22770032552").replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                    `✅ Commande #${order.id} Allôresto confirmée en cuisine chez ${order.restaurantName} (${order.total} FCFA). Livraison Billo Express en préparation !`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition shadow"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Renvoyer / Ouvrir WhatsApp</span>
+                </a>
+              </div>
+            </div>
+          )}
+
           {/* Stepper Progression Bar */}
           <div className="space-y-4">
             <div className="grid grid-cols-4 gap-2">

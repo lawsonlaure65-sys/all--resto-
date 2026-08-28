@@ -144,6 +144,8 @@ export interface Order {
   isGroupOrder?: boolean;
   groupSessionCode?: string;
   cashChangeAmount?: string; // e.g. "Prévoir la monnaie sur 10 000 FCFA"
+  paymentReference?: string;
+  receiptProofAttached?: boolean;
 }
 
 export interface GroupOrderMember {

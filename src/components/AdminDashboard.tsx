@@ -290,11 +290,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     );
   };
 
-  // Validate deposit receipt
+  // Validate deposit receipt & notify customer via WhatsApp
   const handleValidateDeposit = (id: string) => {
+    const deposit = depositOrders.find((d) => d.id === id);
     setDepositOrders((prev) =>
       prev.map((d) => (d.id === id ? { ...d, status: "verified" } : d))
     );
+
+    if (deposit) {
+      const cleanPhone = deposit.customerPhone.replace(/[^0-9]/g, "");
+      const waMessage = encodeURIComponent(
+        `✅ *COMMANDE CONFIRMÉE & EN CUISINE — ALLÔRESTO NIAMEY* 🍽️\n\n` +
+        `Bonjour *${deposit.customerName}*,\n` +
+        `Votre reçu de paiement ${deposit.paymentMethod} pour la commande *#${deposit.id}* d'un montant de *${deposit.amount.toLocaleString()} FCFA* (Réf: ${deposit.refCode}) a été *validé par la direction* !\n\n` +
+        `👨‍🍳 Votre repas est maintenant en cours de préparation en cuisine.\n` +
+        `🛵 Livraison Billo Express sous 25 à 35 minutes.\n\n` +
+        `👉 Suivez votre commande en direct : https://alloresto-niamey.com\n` +
+        `_Merci pour votre confiance sur Allôresto Niger !_ 🇳🇪`
+      );
+      window.open(`https://wa.me/${cleanPhone}?text=${waMessage}`, "_blank");
+    }
   };
 
   // Dish management modal actions
@@ -636,12 +651,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
               Répartition des Règlements par Moyen de Paiement
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {[
-                { name: "Mynita (+227 90 40 51 18)", share: "34%", vol: "7 769 000 FCFA", color: "border-orange-500/40 text-orange-400" },
-                { name: "Amanata (+227 90 40 51 18)", share: "22%", vol: "5 027 000 FCFA", color: "border-cyan-500/40 text-cyan-400" },
-                { name: "All-Iza Business & Transfer", share: "18%", vol: "4 113 000 FCFA", color: "border-emerald-500/40 text-emerald-400" },
-                { name: "Zeyna (+227 96 05 23 10)", share: "12%", vol: "2 742 000 FCFA", color: "border-purple-500/40 text-purple-400" },
+                { name: "1. Espèces (Livreur)", share: "28%", vol: "6 398 000 FCFA", color: "border-emerald-500/40 text-emerald-400" },
+                { name: "2. Mynita (+227 90 40 51 18)", share: "26%", vol: "5 941 000 FCFA", color: "border-orange-500/40 text-orange-400" },
+                { name: "3. Amanata (+227 90 40 51 18)", share: "18%", vol: "4 113 000 FCFA", color: "border-cyan-500/40 text-cyan-400" },
+                { name: "4. All-Iza Business (+227 90 40 51 18)", share: "14%", vol: "3 199 000 FCFA", color: "border-emerald-500/40 text-emerald-400" },
+                { name: "5. Zeyna (+227 90 40 51 18)", share: "8%", vol: "1 828 000 FCFA", color: "border-purple-500/40 text-purple-400" },
+                { name: "6. Airtel Money (+227 96 05 23 10)", share: "6%", vol: "1 371 000 FCFA", color: "border-red-500/40 text-red-400" },
               ].map((p, idx) => (
                 <div key={idx} className={`p-4 rounded-2xl bg-slate-950 border ${p.color} space-y-1`}>
                   <span className="text-[10px] font-bold text-slate-400 block">{p.name}</span>

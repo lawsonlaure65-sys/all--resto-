@@ -51,7 +51,7 @@ const FAQ_ITEMS: FaqItem[] = [
     category: "payment",
     question: "Quels moyens de paiement sont acceptés sur Allôresto ?",
     answer:
-      "Nous acceptons tous les moyens de paiement les plus populaires du Niger : Mynita (+227 90 40 51 18), Amanata (+227 90 40 51 18), Al-Izza, Flooz Moov Money, Zeyna, ainsi que le paiement en espèces (Cash) directement auprès du livreur Billo Express à la réception de votre repas.",
+      "Nous acceptons 6 moyens de paiement officiels au Niger : 1. En espèces au livreur Billo Express, 2. Mynita (dépôt : +227 90 40 51 18), 3. Amanata (dépôt : +227 90 40 51 18), 4. All-Iza Business (dépôt : +227 90 40 51 18), 5. Zeyna (dépôt : +227 90 40 51 18), 6. Airtel Money Niger (+227 96 05 23 10).",
   },
   {
     id: "faq-3",

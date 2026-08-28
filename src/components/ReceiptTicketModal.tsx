@@ -263,9 +263,15 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                 <div className="flex justify-between">
                   <span>RÈGLEMENT :</span>
                   <span className="font-bold text-slate-900 uppercase">
-                    {order.paymentMethod} &bull; {order.paymentStatus === "paid" ? "RÉGLÉ (VALIDÉ)" : "ESPÈCES À LA LIVRAISON"}
+                    {order.paymentMethod} &bull; {order.paymentStatus === "paid" ? "REÇU DÉPÔT VALIDÉ" : "ESPÈCES À LA LIVRAISON"}
                   </span>
                 </div>
+                {order.paymentReference && (
+                  <div className="flex justify-between text-amber-800 font-mono">
+                    <span>RÉF. DÉPÔT :</span>
+                    <span className="font-bold">{order.paymentReference}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>COURSIER ASSIGNÉ :</span>
                   <span className="font-bold text-slate-900">

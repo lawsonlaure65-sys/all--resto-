@@ -243,7 +243,7 @@ export const Footer: React.FC<FooterProps> = ({
             </button>
             <span className="flex items-center gap-1 text-slate-400">
               <ShieldCheck className="w-3.5 h-3.5 text-orange-400" />
-              <span>Mynita, Amanata, All-Iza, Zeyna, Airtel, Moov &amp; Espèces</span>
+              <span>Espèces, Mynita, Amanata, All-Iza, Zeyna &amp; Airtel Money</span>
             </span>
           </div>
         </div>

@@ -48,6 +48,10 @@ import {
   playSoundPromoApplied,
   playSoundSuccessChime,
 } from "./utils/audioNotifications";
+import {
+  sendOrderConfirmationWhatsApp,
+  sendOrderStatusNotificationWhatsApp,
+} from "./utils/whatsappNotifications";
 
 import {
   UserRole,
@@ -302,18 +306,39 @@ export function App() {
   };
 
   const handleUpdateOrderStatus = (orderId: string, nextStatus: OrderStatus) => {
+    const targetOrder = orders.find((o) => o.id === orderId);
+
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, orderStatus: nextStatus } : o))
     );
     if (activeTrackingOrder && activeTrackingOrder.id === orderId) {
       setActiveTrackingOrder((prev) => (prev ? { ...prev, orderStatus: nextStatus } : null));
     }
-    showNotification(
-      "Statut de commande mis à jour",
-      `Commande #${orderId} est passée à l'étape : ${nextStatus.toUpperCase()}`,
-      "info",
-      "status"
-    );
+
+    if (nextStatus === "preparing") {
+      playSoundOrderConfirmed();
+      showNotification(
+        "Commande confirmée & en cuisine ! 👨‍🍳",
+        `Commande #${orderId} validée. Notification WhatsApp de confirmation envoyée au client.`,
+        "success",
+        "order"
+      );
+      if (targetOrder) {
+        // Envoi automatique de la notification WhatsApp de confirmation
+        sendOrderConfirmationWhatsApp(targetOrder);
+      }
+    } else {
+      playSoundStatusUpdate();
+      showNotification(
+        "Statut de commande mis à jour 📲",
+        `Commande #${orderId} est passée à l'étape : ${nextStatus.toUpperCase()}`,
+        "info",
+        "status"
+      );
+      if (targetOrder && (nextStatus === "delivering" || nextStatus === "delivered")) {
+        sendOrderStatusNotificationWhatsApp(targetOrder, nextStatus);
+      }
+    }
   };
 
   // 1-Click Reorder handler

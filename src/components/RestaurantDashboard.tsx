@@ -20,6 +20,8 @@ import {
 import { Order, Restaurant, MenuItem, OrderStatus } from "../types";
 import { RESTAURANTS_DATA } from "../data/allorestoData";
 import { DishManagementModal } from "./DishManagementModal";
+import { sendOrderConfirmationWhatsApp } from "../utils/whatsappNotifications";
+import { MessageSquare } from "lucide-react";
 
 interface RestaurantDashboardProps {
   orders: Order[];
@@ -245,22 +247,54 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                     ))}
                   </div>
 
+                  {/* Payment & Receipt Verification Status */}
+                  <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-semibold">Mode de règlement :</span>
+                      <span className="font-bold text-white uppercase">{order.paymentMethod}</span>
+                      {order.paymentReference && (
+                        <span className="text-[10px] text-amber-400 font-mono block">
+                          Réf: {order.paymentReference}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      {order.paymentMethod === "cash" ? (
+                        <span className="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 text-[10px] font-bold">
+                          💵 Espèces à la livraison
+                        </span>
+                      ) : order.receiptProofAttached ? (
+                        <span className="px-2.5 py-1 rounded-full bg-emerald-950 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold">
+                          ✅ Reçu de dépôt vérifié
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-full bg-amber-950 border border-amber-500/40 text-amber-300 text-[10px] font-bold">
+                          ⚠️ Reçu à valider
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Actions buttons */}
-                  <div className="pt-2 border-t border-slate-800 flex gap-2">
+                  <div className="pt-2 border-t border-slate-800 flex flex-wrap gap-2">
                     {order.orderStatus === "received" && (
                       <button
                         onClick={() => onUpdateOrderStatus(order.id, "preparing")}
-                        className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                        className="flex-1 min-w-[200px] py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition"
                       >
                         <ChefHat className="w-3.5 h-3.5" />
-                        <span>Accepter &amp; Lancer Préparation</span>
+                        <span>
+                          {order.paymentMethod === "cash"
+                            ? "Accepter & Lancer Préparation"
+                            : "Valider Reçu & Passer en Cuisine"}
+                        </span>
                       </button>
                     )}
 
                     {order.orderStatus === "preparing" && (
                       <button
                         onClick={() => onUpdateOrderStatus(order.id, "delivering")}
-                        className="flex-1 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                        className="flex-1 min-w-[200px] py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
                       >
                         <Bike className="w-3.5 h-3.5" />
                         <span>Commande Prête &bull; Remettre au livreur</span>
@@ -273,6 +307,17 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                         <span>En cours de livraison avec {order.courierName || "Livreur"}</span>
                       </div>
                     )}
+
+                    {/* Quick WhatsApp Notification Button */}
+                    <button
+                      type="button"
+                      onClick={() => sendOrderConfirmationWhatsApp(order)}
+                      title="Envoyer ou renvoyer la confirmation WhatsApp au client"
+                      className="px-3 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Notifier WhatsApp</span>
+                    </button>
                   </div>
                 </div>
               ))}

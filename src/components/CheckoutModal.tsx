@@ -87,7 +87,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     jumuahStatus.isPauseActive ? "15:00" : "12:30"
   );
   const [cashChangeAmount, setCashChangeAmount] = useState<number | undefined>(undefined);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("mynita");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [paymentReference, setPaymentReference] = useState<string>("");
   const [receiptProofAttached, setReceiptProofAttached] = useState<boolean>(false);
   const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
@@ -195,7 +195,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         tip,
         total: grandTotal,
         paymentMethod,
-        paymentStatus: paymentMethod === "cash" ? "pending" : "paid",
+        paymentStatus: paymentMethod === "cash" ? "pending" : (receiptProofAttached ? "paid" : "pending"),
         orderStatus: "received",
         estimatedDeliveryTime:
           scheduledOption === "asap"
@@ -206,6 +206,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         scheduledTime: finalScheduledTime,
         deliveryPartner: "Billo Express 🏍️",
         cashChangeAmount: paymentMethod === "cash" ? cashChangeAmount : undefined,
+        paymentReference: paymentReference ? paymentReference.trim() : undefined,
+        receiptProofAttached,
         courierName: serviceMode === "delivery" && deliveryZone !== "mosquee_pickup" ? "Ibrahim Oumarou (Billo Express)" : undefined,
         courierPhone: serviceMode === "delivery" && deliveryZone !== "mosquee_pickup" ? "+227 92 08 08 22" : undefined,
       };
@@ -215,7 +217,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         const currentPayOption = LOCAL_PAYMENT_METHODS.find(p => p.id === paymentMethod);
         const paymentLabel = currentPayOption ? currentPayOption.name : paymentMethod;
         const depositInfo = currentPayOption?.depositNumber ? ` (Numéro dépôt : ${currentPayOption.depositNumber})` : "";
-        const refInfo = paymentReference ? ` | Réf transaction : ${paymentReference}` : "";
+        const refInfo = paymentReference ? `\n🔖 *Réf / Code transaction :* ${paymentReference}` : "";
+        const receiptNotice = paymentMethod !== "cash" 
+          ? `\n\n⚠️ *CONDITION STRICTE DE PRÉPARATION :*\n_Ce n'est qu'après paiement par dépôt et envoi de votre reçu ou capture du reçu que la commande sera confirmée et passée en cuisine._\n📸 *Merci de joindre votre reçu ci-dessous.*`
+          : "";
 
         const waText = encodeURIComponent(
           `*NOUVELLE COMMANDE ALLÔRESTO #${newOrder.id}*\n` +
@@ -225,9 +230,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           `🕒 *Horaire :* ${newOrder.scheduledTime || "Dès que possible"}\n` +
           `🛵 *Livraison :* ${deliveryZone === "mosquee_pickup" ? "Retrait Grande Mosquée (0 FCFA)" : `${deliveryFee} FCFA (Billo Express)`}\n\n` +
           `🍽️ *Plats commandés :*\n${itemsSummary}\n\n` +
-          `💰 *Total à payer :* ${grandTotal.toLocaleString()} FCFA\n` +
-          `💳 *Mode de règlement :* ${paymentLabel}${depositInfo}${refInfo}\n` +
-          `${cashChangeAmount ? `💵 *Monnaie demandée sur :* ${cashChangeAmount} FCFA\n` : ""}\n` +
+          `💰 *Total :* ${grandTotal.toLocaleString()} FCFA\n` +
+          `💳 *Moyen de paiement :* ${paymentLabel}${depositInfo}${refInfo}` +
+          `${cashChangeAmount ? `\n💵 *Monnaie demandée sur :* ${cashChangeAmount} FCFA` : ""}` +
+          `${receiptNotice}\n\n` +
           `📞 Service Client Allôresto : +227 96 05 23 10 | WhatsApp : +227 70 03 25 52`
         );
         window.open(`https://wa.me/22770032552?text=${waText}`, "_blank");
@@ -656,39 +662,39 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <span>Mode de Règlement Sécurisé au Niger</span>
               </h4>
               <span className="text-[10px] text-amber-400 font-bold bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-500/20">
-                8 Options Disponibles
+                6 Modes Disponibles
               </span>
             </div>
 
-            {/* Quick Filter / Category selector */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {LOCAL_PAYMENT_METHODS.map((method) => {
+            {/* 6 Payment Cards in Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {LOCAL_PAYMENT_METHODS.map((method, idx) => {
                 const isSelected = paymentMethod === method.id;
                 return (
                   <button
                     key={method.id}
                     type="button"
                     onClick={() => setPaymentMethod(method.id)}
-                    className={`p-2.5 rounded-2xl border text-left flex flex-col justify-between gap-1 transition-all cursor-pointer ${
+                    className={`p-3 rounded-2xl border text-left flex flex-col justify-between gap-1.5 transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-gradient-to-br from-orange-500/20 to-amber-500/10 border-orange-500 text-white shadow-lg shadow-orange-500/15"
+                        ? "bg-gradient-to-br from-orange-500/20 to-amber-500/10 border-orange-500 text-white shadow-lg shadow-orange-500/15 ring-1 ring-orange-500/50"
                         : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
                     }`}
                   >
                     <div className="flex items-center justify-between w-full">
-                      <span className="text-[11px] font-black text-white">{method.name}</span>
+                      <span className="text-xs font-black text-white">{method.name}</span>
                       {isSelected ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-orange-400 shrink-0" />
                       ) : (
-                        <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />
+                        <div className="w-3 h-3 rounded-full bg-slate-800" />
                       )}
                     </div>
                     {method.depositNumber && (
-                      <span className="text-[10px] text-orange-400/90 font-mono font-bold truncate">
+                      <span className="text-[11px] text-orange-400/90 font-mono font-bold truncate">
                         {method.depositNumber}
                       </span>
                     )}
-                    <span className="text-[9px] text-slate-400 line-clamp-1">
+                    <span className="text-[10px] text-slate-400 line-clamp-1">
                       {method.badge}
                     </span>
                   </button>
@@ -697,370 +703,30 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
 
             {/* Validation Notice for Mobile Agency Deposits */}
-            {["mynita", "amanata", "al_izza_business", "al_izza_transfer", "zeyna"].includes(paymentMethod) && (
-              <div className="p-3.5 rounded-2xl bg-amber-950/80 border border-amber-500/60 flex items-start gap-3 text-xs text-amber-200">
-                <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <span className="font-black text-white block">
-                    ⚠️ Validation &amp; Préparation en Cuisine :
+            {["mynita", "amanata", "al_izza_business", "zeyna", "mobile_money"].includes(paymentMethod) && (
+              <div className="p-4 rounded-2xl bg-amber-950/90 border-2 border-amber-500 flex items-start gap-3.5 text-xs text-amber-200 shadow-xl shadow-amber-950/40">
+                <AlertTriangle className="w-6 h-6 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-1.5">
+                  <span className="font-black text-amber-300 text-sm block tracking-wide">
+                    ⚠️ RÈGLE IMPORTANTE DE VALIDATION :
                   </span>
-                  <p className="text-[11px] leading-relaxed text-amber-100">
-                    C'est <strong>après avoir effectué le dépôt et envoyé la capture d'écran ou le reçu</strong> que votre commande sera officiellement confirmée et préparée par le restaurant.
+                  <p className="text-xs leading-relaxed text-amber-100 font-medium">
+                    Ce n&apos;est <strong>qu&apos;après paiement par dépôt et envoi du reçu ou capture du reçu</strong> que la commande sera confirmée et passée en cuisine.
+                  </p>
+                  <p className="text-[11px] text-amber-300/90">
+                    💡 <em>Effectuez votre dépôt vers le numéro indiqué ci-dessous, puis transmettez le reçu par WhatsApp ou joignez-le directement.</em>
                   </p>
                 </div>
               </div>
             )}
 
-            {/* Detail Box: Mynita */}
-            {paymentMethod === "mynita" && (
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-orange-950/20 border border-orange-500/40 space-y-3 animate-in fade-in">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-[10px] font-black">
-                        Dépôt Mynita
-                      </span>
-                      <span className="text-xs font-bold text-white">Allôresto Compte Mynita</span>
-                    </div>
-                    <p className="text-xs text-slate-300 mt-1">
-                      Effectuez un dépôt direct ou transfert Mynita du montant exact : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-medium">Numéro officiel de dépôt Mynita :</span>
-                    <span className="text-sm font-black text-orange-400 font-mono">+227 90 40 51 18</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyNumber("+227 90 40 51 18")}
-                    className="px-3 py-1.5 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 text-xs font-bold border border-orange-500/30 flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    {copiedNumber === "+227 90 40 51 18" ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-400">Copié !</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copier</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                    Référence de transaction Mynita ou nom de l'expéditeur :
-                  </label>
-                  <input
-                    type="text"
-                    value={paymentReference}
-                    onChange={(e) => setPaymentReference(e.target.value)}
-                    placeholder="Ex: MYN-884210 ou Nom de l'expéditeur"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-orange-500"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Detail Box: Amanata */}
-            {paymentMethod === "amanata" && (
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-cyan-950/20 border border-cyan-500/40 space-y-3 animate-in fade-in">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] font-black">
-                      Transfert Amanata
-                    </span>
-                    <span className="text-xs font-bold text-white">Allôresto Compte Amanata</span>
-                  </div>
-                  <p className="text-xs text-slate-300 mt-1">
-                    Envoyez votre transfert d'argent Amanata d'un montant de <strong>{grandTotal.toLocaleString()} FCFA</strong>.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-medium">Numéro officiel de dépôt Amanata :</span>
-                    <span className="text-sm font-black text-cyan-400 font-mono">+227 90 40 51 18</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyNumber("+227 90 40 51 18")}
-                    className="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 text-xs font-bold border border-cyan-500/30 flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    {copiedNumber === "+227 90 40 51 18" ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-400">Copié !</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copier</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                    Code de retrait / Référence SMS Amanata :
-                  </label>
-                  <input
-                    type="text"
-                    value={paymentReference}
-                    onChange={(e) => setPaymentReference(e.target.value)}
-                    placeholder="Ex: AMA-902143 ou Numéro téléphone expéditeur"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Detail Box: All-Iza Business */}
-            {paymentMethod === "al_izza_business" && (
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-emerald-950/20 border border-emerald-500/40 space-y-3 animate-in fade-in">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black">
-                      All-Iza Business Pro
-                    </span>
-                    <span className="text-xs font-bold text-white">Compte Marchand All-Iza</span>
-                  </div>
-                  <p className="text-xs text-slate-300 mt-1">
-                    Réglez via votre application ou compte marchand All-Iza Business : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-medium">Numéro de dépôt All-Iza Business :</span>
-                    <span className="text-sm font-black text-emerald-400 font-mono">+227 90 40 51 18</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyNumber("+227 90 40 51 18")}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs font-bold border border-emerald-500/30 flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    {copiedNumber === "+227 90 40 51 18" ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-400">Copié !</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copier</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                    Référence de validation All-Iza Business :
-                  </label>
-                  <input
-                    type="text"
-                    value={paymentReference}
-                    onChange={(e) => setPaymentReference(e.target.value)}
-                    placeholder="Ex: IZZ-BUS-1102"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Detail Box: All-Iza Transfer */}
-            {paymentMethod === "al_izza_transfer" && (
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-amber-950/20 border border-amber-500/40 space-y-3 animate-in fade-in">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-black">
-                      All-Iza Transfer Guichet &amp; Mobile
-                    </span>
-                    <span className="text-xs font-bold text-white">Transfert Rapide All-Iza</span>
-                  </div>
-                  <p className="text-xs text-slate-300 mt-1">
-                    Effectuez votre transfert d'argent All-Iza du montant de <strong>{grandTotal.toLocaleString()} FCFA</strong>.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-medium">Numéro de dépôt All-Iza Transfer :</span>
-                    <span className="text-sm font-black text-amber-400 font-mono">+227 96 05 23 10</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyNumber("+227 96 05 23 10")}
-                    className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-xs font-bold border border-amber-500/30 flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    {copiedNumber === "+227 96 05 23 10" ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-400">Copié !</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copier</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                    Code de transfert All-Iza / Référence :
-                  </label>
-                  <input
-                    type="text"
-                    value={paymentReference}
-                    onChange={(e) => setPaymentReference(e.target.value)}
-                    placeholder="Ex: IZZ-TRF-5582"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Detail Box: Zeyna */}
-            {paymentMethod === "zeyna" && (
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-purple-950/20 border border-purple-500/40 space-y-3 animate-in fade-in">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-[10px] font-black">
-                      Dépôt Zeyna
-                    </span>
-                    <span className="text-xs font-bold text-white">Allôresto Compte Zeyna</span>
-                  </div>
-                  <p className="text-xs text-slate-300 mt-1">
-                    Effectuez votre dépôt direct Zeyna du montant de <strong>{grandTotal.toLocaleString()} FCFA</strong>.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-medium">Numéro officiel de dépôt Zeyna :</span>
-                    <span className="text-sm font-black text-purple-400 font-mono">+227 96 05 23 10</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyNumber("+227 96 05 23 10")}
-                    className="px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 text-xs font-bold border border-purple-500/30 flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    {copiedNumber === "+227 96 05 23 10" ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-400">Copié !</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copier</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                    Code SMS / Référence Zeyna :
-                  </label>
-                  <input
-                    type="text"
-                    value={paymentReference}
-                    onChange={(e) => setPaymentReference(e.target.value)}
-                    placeholder="Ex: ZEY-44210"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Simulated Receipt Capture Attachment Option */}
-            {["mynita", "amanata", "al_izza_business", "al_izza_transfer", "zeyna"].includes(paymentMethod) && (
-              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">📸</span>
-                  <div>
-                    <span className="font-bold text-white block">Capture d'écran du reçu de dépôt</span>
-                    <span className="text-[10px] text-slate-400">
-                      {receiptProofAttached ? "✅ Reçu prêt à être transmis avec la commande" : "Joindre pour validation immédiate en cuisine"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <button
-                    type="button"
-                    onClick={() => setReceiptProofAttached(!receiptProofAttached)}
-                    className={`px-3 py-1.5 rounded-lg font-bold text-xs cursor-pointer transition ${
-                      receiptProofAttached
-                        ? "bg-emerald-500 text-slate-950"
-                        : "bg-slate-800 hover:bg-slate-700 text-slate-300"
-                    }`}
-                  >
-                    {receiptProofAttached ? "✓ Reçu joint" : "Ajouter capture"}
-                  </button>
-                  <a
-                    href="https://wa.me/22770032552?text=Bonjour%20Allôresto,%20je%20vous%20transmets%20la%20capture%20de%20mon%20dépôt"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center gap-1 cursor-pointer"
-                  >
-                    <Send className="w-3 h-3" />
-                    <span>WhatsApp</span>
-                  </a>
-                </div>
-              </div>
-            )}
-
-            {/* Detail Box: Airtel Money / Moov Flooz */}
-            {paymentMethod === "mobile_money" && (
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 animate-in fade-in">
-                <div className="flex gap-2">
-                  {["Airtel Money (+227 96 05 23 10)", "Moov Flooz (+227 90 40 51 18)"].map((provider) => (
-                    <button
-                      key={provider}
-                      type="button"
-                      onClick={() => setMobileMoneyProvider(provider)}
-                      className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                        mobileMoneyProvider === provider
-                          ? "bg-cyan-500/20 border-cyan-500 text-cyan-300"
-                          : "bg-slate-900 border-slate-800 text-slate-400"
-                      }`}
-                    >
-                      {provider}
-                    </button>
-                  ))}
-                </div>
-                <div>
-                  <label className="block text-[10px] text-slate-400 mb-1">
-                    Votre numéro {mobileMoneyProvider} pour débit ou validation :
-                  </label>
-                  <input
-                    type="tel"
-                    value={mobileMoneyNumber}
-                    onChange={(e) => setMobileMoneyNumber(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Detail Box: Espèces à la livraison */}
+            {/* Detail Box: 1. En espèces à la livraison */}
             {paymentMethod === "cash" && (
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 animate-in fade-in">
                 <div className="text-xs text-slate-300 flex items-center gap-2">
                   <Banknote className="w-5 h-5 text-emerald-400 shrink-0" />
                   <p>
-                    Total à régler en espèces au livreur Billo Express : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                    Total à régler en <strong>espèces</strong> au livreur Billo Express à la livraison : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
                   </p>
                 </div>
 
@@ -1119,38 +785,312 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
             )}
 
-            {/* Detail Box: Carte Bancaire */}
-            {paymentMethod === "card" && (
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 animate-in fade-in">
-                <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-                  <span>Paiement sécurisé 256-bit SSL</span>
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            {/* Detail Box: 2. Mynita */}
+            {paymentMethod === "mynita" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-orange-950/20 border border-orange-500/40 space-y-3 animate-in fade-in">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-[10px] font-black">
+                        Dépôt Mynita
+                      </span>
+                      <span className="text-xs font-bold text-white">Allôresto Compte Mynita</span>
+                    </div>
+                    <p className="text-xs text-slate-300 mt-1">
+                      Effectuez un dépôt direct ou transfert Mynita du montant exact : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                    </p>
+                  </div>
                 </div>
+
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Numéro officiel de dépôt Mynita :</span>
+                    <span className="text-sm font-black text-orange-400 font-mono">+227 90 40 51 18</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyNumber("+227 90 40 51 18")}
+                    className="px-3 py-1.5 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 text-xs font-bold border border-orange-500/30 flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedNumber === "+227 90 40 51 18" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
                 <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Référence de transaction Mynita ou nom de l'expéditeur :
+                  </label>
                   <input
                     type="text"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
-                    placeholder="Numéro de carte bancaire"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-orange-500"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: MYN-884210 ou Nom de l'expéditeur"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-orange-500"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+              </div>
+            )}
+
+            {/* Detail Box: 3. Amanata */}
+            {paymentMethod === "amanata" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-cyan-950/20 border border-cyan-500/40 space-y-3 animate-in fade-in">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] font-black">
+                      Dépôt Amanata
+                    </span>
+                    <span className="text-xs font-bold text-white">Allôresto Compte Amanata</span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Envoyez votre dépôt / transfert Amanata d'un montant de <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Numéro officiel de dépôt Amanata :</span>
+                    <span className="text-sm font-black text-cyan-400 font-mono">+227 90 40 51 18</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyNumber("+227 90 40 51 18")}
+                    className="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 text-xs font-bold border border-cyan-500/30 flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedNumber === "+227 90 40 51 18" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Code de retrait / Référence SMS Amanata :
+                  </label>
                   <input
                     type="text"
-                    value={cardExpiry}
-                    onChange={(e) => setCardExpiry(e.target.value)}
-                    placeholder="MM/AA"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-orange-500"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: AMA-902143 ou Numéro téléphone expéditeur"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-cyan-500"
                   />
+                </div>
+              </div>
+            )}
+
+            {/* Detail Box: 4. All-Iza Business */}
+            {paymentMethod === "al_izza_business" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-emerald-950/20 border border-emerald-500/40 space-y-3 animate-in fade-in">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black">
+                      All-Iza Business
+                    </span>
+                    <span className="text-xs font-bold text-white">Compte Marchand All-Iza</span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Réglez par dépôt ou virement All-Iza Business : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Numéro de dépôt All-Iza Business :</span>
+                    <span className="text-sm font-black text-emerald-400 font-mono">+227 90 40 51 18</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyNumber("+227 90 40 51 18")}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs font-bold border border-emerald-500/30 flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedNumber === "+227 90 40 51 18" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Référence de validation All-Iza Business :
+                  </label>
                   <input
-                    type="password"
-                    value={cardCvc}
-                    onChange={(e) => setCardCvc(e.target.value)}
-                    placeholder="CVC"
-                    maxLength={4}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-orange-500"
+                    type="text"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: IZZ-BUS-1102"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                   />
+                </div>
+              </div>
+            )}
+
+            {/* Detail Box: 5. Zeyna */}
+            {paymentMethod === "zeyna" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-purple-950/20 border border-purple-500/40 space-y-3 animate-in fade-in">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-[10px] font-black">
+                      Dépôt Zeyna
+                    </span>
+                    <span className="text-xs font-bold text-white">Allôresto Compte Zeyna</span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Effectuez votre dépôt direct Zeyna du montant de <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Numéro officiel de dépôt Zeyna :</span>
+                    <span className="text-sm font-black text-purple-400 font-mono">+227 90 40 51 18</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyNumber("+227 90 40 51 18")}
+                    className="px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 text-xs font-bold border border-purple-500/30 flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedNumber === "+227 90 40 51 18" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Code SMS / Référence Zeyna :
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: ZEY-44210"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Detail Box: 6. Airtel Money Niger */}
+            {paymentMethod === "mobile_money" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-red-950/20 border border-red-500/40 space-y-3 animate-in fade-in">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-black">
+                      Airtel Money Niger
+                    </span>
+                    <span className="text-xs font-bold text-white">Allôresto Compte Airtel Money</span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Effectuez votre transfert ou dépôt Airtel Money Niger : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Numéro officiel Airtel Money Niger :</span>
+                    <span className="text-sm font-black text-red-400 font-mono">+227 96 05 23 10</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyNumber("+227 96 05 23 10")}
+                    className="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-bold border border-red-500/30 flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedNumber === "+227 96 05 23 10" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Référence SMS de transaction ou votre numéro Airtel :
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: AIR-88319 ou +227 96 ..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-red-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Simulated Receipt Capture Attachment Option */}
+            {["mynita", "amanata", "al_izza_business", "zeyna", "mobile_money"].includes(paymentMethod) && (
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">📸</span>
+                  <div>
+                    <span className="font-bold text-white block">Capture d'écran du reçu de dépôt</span>
+                    <span className="text-[10px] text-slate-400">
+                      {receiptProofAttached ? "✅ Reçu prêt à être transmis avec la commande" : "Joindre pour validation immédiate en cuisine"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setReceiptProofAttached(!receiptProofAttached)}
+                    className={`px-3 py-1.5 rounded-lg font-bold text-xs cursor-pointer transition ${
+                      receiptProofAttached
+                        ? "bg-emerald-500 text-slate-950"
+                        : "bg-slate-800 hover:bg-slate-700 text-slate-300"
+                    }`}
+                  >
+                    {receiptProofAttached ? "✓ Reçu joint" : "Ajouter capture"}
+                  </button>
+                  <a
+                    href="https://wa.me/22770032552?text=Bonjour%20Allôresto,%20je%20vous%20transmets%20la%20capture%20de%20mon%20dépôt"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                  >
+                    <Send className="w-3 h-3" />
+                    <span>WhatsApp</span>
+                  </a>
                 </div>
               </div>
             )}
