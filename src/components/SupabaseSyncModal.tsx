@@ -15,11 +15,13 @@ import {
   Key,
   Globe,
   Terminal,
+  HelpCircle,
 } from "lucide-react";
 import {
   getSupabaseConfig,
   saveCustomSupabaseConfig,
   testSupabaseConnection,
+  sanitizeSupabaseUrl,
 } from "../services/supabaseClient";
 import {
   SUPABASE_SQL_SCHEMA,
@@ -58,7 +60,7 @@ export const SupabaseSyncModal: React.FC<SupabaseSyncModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       const config = getSupabaseConfig();
-      setSupabaseUrl(config.url || "");
+      setSupabaseUrl(config.url ? sanitizeSupabaseUrl(config.url) : "");
       setSupabaseKey(config.anonKey || "");
       setTestResult(null);
     }
@@ -70,8 +72,13 @@ export const SupabaseSyncModal: React.FC<SupabaseSyncModalProps> = ({
     setIsTesting(true);
     setTestResult(null);
 
-    // Save temporarily to test
-    saveCustomSupabaseConfig(supabaseUrl, supabaseKey);
+    const cleanUrl = sanitizeSupabaseUrl(supabaseUrl);
+    const cleanKey = supabaseKey.trim();
+    setSupabaseUrl(cleanUrl);
+    setSupabaseKey(cleanKey);
+
+    // Save sanitized to test
+    saveCustomSupabaseConfig(cleanUrl, cleanKey);
 
     const result = await testSupabaseConnection();
     setTestResult(result);
@@ -79,7 +86,12 @@ export const SupabaseSyncModal: React.FC<SupabaseSyncModalProps> = ({
   };
 
   const handleSaveConfig = async () => {
-    saveCustomSupabaseConfig(supabaseUrl, supabaseKey);
+    const cleanUrl = sanitizeSupabaseUrl(supabaseUrl);
+    const cleanKey = supabaseKey.trim();
+    setSupabaseUrl(cleanUrl);
+    setSupabaseKey(cleanKey);
+
+    saveCustomSupabaseConfig(cleanUrl, cleanKey);
     await handleTestConnection();
   };
 
@@ -261,18 +273,32 @@ export const SupabaseSyncModal: React.FC<SupabaseSyncModalProps> = ({
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
                   <span>Project URL Supabase (VITE_SUPABASE_URL) *</span>
-                  <span className="text-[10px] text-slate-500 font-mono">Ex: https://abcdefghijklm.supabase.co</span>
+                  <span className="text-[10px] text-emerald-400 font-mono font-bold">Format: https://[ID].supabase.co</span>
                 </label>
                 <div className="relative">
                   <Globe className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
-                    type="url"
+                    type="text"
                     value={supabaseUrl}
-                    onChange={(e) => setSupabaseUrl(e.target.value)}
-                    placeholder="https://votre-projet.supabase.co"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSupabaseUrl(val);
+                    }}
+                    onBlur={() => {
+                      if (supabaseUrl) {
+                        setSupabaseUrl(sanitizeSupabaseUrl(supabaseUrl));
+                      }
+                    }}
+                    placeholder="https://gimneagwmfymiykelkxx.supabase.co"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
                   />
                 </div>
+                {supabaseUrl.includes("/rest/v1") && (
+                  <p className="text-[11px] text-amber-400 mt-1 flex items-center gap-1 font-medium">
+                    <AlertTriangle className="w-3 h-3 shrink-0" />
+                    <span>Astuce : Ne mettez pas &quot;/rest/v1/&quot; à la fin. L&apos;URL doit s&apos;arrêter à &quot;.supabase.co&quot; (correction automatique appliquée au clic sur Tester).</span>
+                  </p>
+                )}
               </div>
 
               <div>
@@ -285,7 +311,7 @@ export const SupabaseSyncModal: React.FC<SupabaseSyncModalProps> = ({
                   <input
                     type="password"
                     value={supabaseKey}
-                    onChange={(e) => setSupabaseKey(e.target.value)}
+                    onChange={(e) => setSupabaseKey(e.target.value.trim())}
                     placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
                   />

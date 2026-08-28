@@ -4,6 +4,31 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 const SUPABASE_URL_KEY = "alloresto_supabase_url";
 const SUPABASE_ANON_KEY = "alloresto_supabase_anon_key";
 
+export function sanitizeSupabaseUrl(rawUrl: string): string {
+  if (!rawUrl) return "";
+  let url = rawUrl.trim();
+
+  // If user pasted the dashboard URL: https://supabase.com/dashboard/project/xyz
+  const dashboardMatch = url.match(/supabase\.com\/dashboard\/project\/([a-zA-Z0-9_-]+)/);
+  if (dashboardMatch && dashboardMatch[1]) {
+    return `https://${dashboardMatch[1]}.supabase.co`;
+  }
+
+  // Remove trailing slashes and common mistaken subpaths like /rest/v1, /rest/v1/, /auth/v1, etc.
+  url = url.replace(/\/+$/, ""); // remove trailing slashes
+  url = url.replace(/\/rest\/v1\/?$/i, "");
+  url = url.replace(/\/auth\/v1\/?$/i, "");
+  url = url.replace(/\/storage\/v1\/?$/i, "");
+  url = url.replace(/\/+$/, "");
+
+  // Ensure protocol
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = `https://${url}`;
+  }
+
+  return url;
+}
+
 export interface SupabaseConfig {
   url: string;
   anonKey: string;
@@ -13,31 +38,33 @@ export interface SupabaseConfig {
 
 export function getSupabaseConfig(): SupabaseConfig {
   const metaEnv = (import.meta as any).env || {};
-  const envUrl = metaEnv.VITE_SUPABASE_URL;
-  const envKey = metaEnv.VITE_SUPABASE_ANON_KEY;
+  const envUrl = metaEnv.VITE_SUPABASE_URL ? sanitizeSupabaseUrl(metaEnv.VITE_SUPABASE_URL) : "";
+  const envKey = metaEnv.VITE_SUPABASE_ANON_KEY ? metaEnv.VITE_SUPABASE_ANON_KEY.trim() : "";
 
-  if (envUrl && envKey && typeof envUrl === "string" && envUrl.startsWith("http")) {
-    return {
-      url: envUrl,
-      anonKey: envKey,
-      isConfigured: true,
-      source: "env",
-    };
-  }
-
+  // Priority to custom configured keys in localStorage if set, otherwise fallback to env
   try {
     const customUrl = localStorage.getItem(SUPABASE_URL_KEY);
     const customKey = localStorage.getItem(SUPABASE_ANON_KEY);
     if (customUrl && customKey && customUrl.startsWith("http")) {
+      const sanitized = sanitizeSupabaseUrl(customUrl);
       return {
-        url: customUrl,
-        anonKey: customKey,
+        url: sanitized,
+        anonKey: customKey.trim(),
         isConfigured: true,
         source: "custom",
       };
     }
   } catch (e) {
     // Ignore localStorage access errors
+  }
+
+  if (envUrl && envKey && envUrl.startsWith("http")) {
+    return {
+      url: envUrl,
+      anonKey: envKey,
+      isConfigured: true,
+      source: "env",
+    };
   }
 
   return {
@@ -51,8 +78,10 @@ export function getSupabaseConfig(): SupabaseConfig {
 export function saveCustomSupabaseConfig(url: string, anonKey: string): boolean {
   try {
     if (url && anonKey) {
-      localStorage.setItem(SUPABASE_URL_KEY, url.trim());
-      localStorage.setItem(SUPABASE_ANON_KEY, anonKey.trim());
+      const cleanUrl = sanitizeSupabaseUrl(url);
+      const cleanKey = anonKey.trim();
+      localStorage.setItem(SUPABASE_URL_KEY, cleanUrl);
+      localStorage.setItem(SUPABASE_ANON_KEY, cleanKey);
       // Re-initialize client
       cachedClient = null;
       return true;
