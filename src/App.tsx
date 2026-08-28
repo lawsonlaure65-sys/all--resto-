@@ -39,7 +39,7 @@ import { ReceiptTicketModal } from "./components/ReceiptTicketModal";
 import { JumuahBanner } from "./components/JumuahBanner";
 import { VoiceOrderModal } from "./components/VoiceOrderModal";
 import { getJumuahStatus } from "./utils/jumuahSchedule";
-import { loadStoredRestaurants } from "./services/dishStorageService";
+import { loadStoredRestaurants, syncFromSupabaseIfAvailable } from "./services/dishStorageService";
 
 import {
   playSoundCartAdd,
@@ -99,6 +99,13 @@ export function App() {
 
   // Persistent Restaurants & Dishes State
   const [restaurants, setRestaurants] = useState<Restaurant[]>(() => loadStoredRestaurants());
+
+  // Background Cloud Sync from Supabase on launch
+  useEffect(() => {
+    syncFromSupabaseIfAvailable((freshRestaurants) => {
+      setRestaurants(freshRestaurants);
+    });
+  }, []);
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState<string>("");

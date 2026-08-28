@@ -40,10 +40,15 @@ import {
   Upload,
   HardDrive,
   CheckCircle,
+  Cloud,
+  UploadCloud,
+  DownloadCloud,
 } from "lucide-react";
 import { RESTAURANTS_DATA, SAUCE_BOXES_DATA, BLOG_POSTS_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { MenuItem, SauceBox, CateringQuoteRequest, Order, DishCategory, Restaurant } from "../types";
 import { DishManagementModal, CATEGORIES_CONFIG } from "./DishManagementModal";
+import { SupabaseSyncModal } from "./SupabaseSyncModal";
+import { getSupabaseConfig } from "../services/supabaseClient";
 import {
   loadStoredRestaurants,
   addOrUpdateDishInStorage,
@@ -80,6 +85,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return stored.flatMap((r) => r.menu);
   });
   const [showDishModal, setShowDishModal] = useState<boolean>(false);
+  const [showSupabaseModal, setShowSupabaseModal] = useState<boolean>(false);
   const [editingDish, setEditingDish] = useState<MenuItem | null>(null);
   const [backupMessage, setBackupMessage] = useState<string | null>(null);
   const backupFileInputRef = React.useRef<HTMLInputElement>(null);
@@ -751,6 +757,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             {/* Backup Action Buttons */}
             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              <button
+                type="button"
+                onClick={() => setShowSupabaseModal(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-emerald-500/20"
+                title="Gérer la connexion et synchroniser avec Supabase PostgreSQL"
+              >
+                <Database className="w-3.5 h-3.5 text-white" />
+                <span>Base Supabase Cloud</span>
+              </button>
+
               <input
                 type="file"
                 ref={backupFileInputRef}
@@ -766,7 +782,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 title="Télécharger une copie JSON de tous les plats et cartes"
               >
                 <Download className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Exporter Sauvegarde</span>
+                <span>Exporter JSON</span>
               </button>
 
               <button
@@ -1368,6 +1384,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           }}
           onSaveDish={handleSaveDishFromModal}
           initialDish={editingDish}
+        />
+      )}
+
+      {/* Supabase PostgreSQL Cloud Sync Modal */}
+      {showSupabaseModal && (
+        <SupabaseSyncModal
+          isOpen={showSupabaseModal}
+          onClose={() => setShowSupabaseModal(false)}
+          restaurants={loadStoredRestaurants()}
+          onRestaurantsUpdated={(updated) => {
+            setDishesList(updated.flatMap((r) => r.menu));
+            if (onUpdateRestaurants) {
+              onUpdateRestaurants(updated);
+            }
+          }}
         />
       )}
     </div>

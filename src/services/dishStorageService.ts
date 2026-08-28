@@ -1,5 +1,11 @@
 import { Restaurant, MenuItem } from "../types";
 import { RESTAURANTS_DATA } from "../data/allorestoData";
+import {
+  saveDishToSupabase,
+  deleteDishFromSupabase,
+  fetchRestaurantsFromSupabase,
+} from "./supabaseDishService";
+import { getSupabaseConfig } from "./supabaseClient";
 
 const STORAGE_KEY_RESTAURANTS = "alloresto_restaurants_v2";
 const STORAGE_KEY_CUSTOM_DISHES = "alloresto_custom_dishes_v2";
@@ -72,6 +78,26 @@ export function loadStoredRestaurants(): Restaurant[] {
   return RESTAURANTS_DATA;
 }
 
+// Synchronize from Supabase in background
+export async function syncFromSupabaseIfAvailable(
+  onLoaded?: (restaurants: Restaurant[]) => void
+): Promise<Restaurant[] | null> {
+  const config = getSupabaseConfig();
+  if (!config.isConfigured) return null;
+
+  try {
+    const res = await fetchRestaurantsFromSupabase();
+    if (res.success && res.data && res.data.length > 0) {
+      saveStoredRestaurants(res.data);
+      if (onLoaded) onLoaded(res.data);
+      return res.data;
+    }
+  } catch (e) {
+    console.warn("Supabase load fallback:", e);
+  }
+  return null;
+}
+
 // Save entire restaurants list to LocalStorage
 export function saveStoredRestaurants(restaurants: Restaurant[]): boolean {
   try {
@@ -105,6 +131,15 @@ export function addOrUpdateDishInStorage(
   }
 
   const defaultRestoId = targetId || restaurants[0]?.id || "resto-khadys-food";
+
+  // Cloud sync to Supabase (non-blocking)
+  try {
+    saveDishToSupabase(dish, defaultRestoId).catch((e) => {
+      console.warn("Supabase background save:", e);
+    });
+  } catch (e) {
+    // Non-blocking
+  }
 
   // Check if dish already exists in any restaurant
   let updated = false;
@@ -155,6 +190,15 @@ export function deleteDishFromStorage(
     dishId = restaurantsOrDishId as string;
   }
 
+  // Cloud delete from Supabase (non-blocking)
+  try {
+    deleteDishFromSupabase(dishId).catch((e) => {
+      console.warn("Supabase background delete:", e);
+    });
+  } catch (e) {
+    // Non-blocking
+  }
+
   const updatedRestaurants = restaurants.map((resto) => ({
     ...resto,
     menu: resto.menu.filter((d) => d.id !== dishId),
@@ -163,6 +207,7 @@ export function deleteDishFromStorage(
   saveStoredRestaurants(updatedRestaurants);
   return updatedRestaurants;
 }
+
 
 // Export backup JSON (supports with or without arguments)
 export function exportAllDataBackup(restaurantsParam?: Restaurant[]): void {
