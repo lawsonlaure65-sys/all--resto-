@@ -20,6 +20,7 @@ import { CourierDashboard } from "./components/CourierDashboard";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { AuthModal } from "./components/AuthModal";
 import { DailySpecialCard } from "./components/DailySpecialCard";
+import { DailySpecialShareModal } from "./components/DailySpecialShareModal";
 import { SauceBoxesSection } from "./components/SauceBoxesSection";
 import { CateringModal } from "./components/CateringModal";
 import { CulinaryBlogModal } from "./components/CulinaryBlogModal";
@@ -197,6 +198,8 @@ export function App() {
   const [isMarketingAIOpen, setIsMarketingAIOpen] = useState<boolean>(false);
   const [isWhatsAppAutomationOpen, setIsWhatsAppAutomationOpen] = useState<boolean>(false);
   const [isFaqOpen, setIsFaqOpen] = useState<boolean>(false);
+  const [isSpecialShareOpen, setIsSpecialShareOpen] = useState<boolean>(false);
+  const [selectedSpecialForShare, setSelectedSpecialForShare] = useState<DailySpecial | null>(null);
 
   // Flattened all dishes across stored restaurants
   const allDishes = useMemo(() => restaurants.flatMap((r) => r.menu), [restaurants]);
@@ -664,6 +667,10 @@ export function App() {
                     key={special.id}
                     special={special}
                     onAddToCart={handleAddDailySpecialToCart}
+                    onShareSpecial={(spec) => {
+                      setSelectedSpecialForShare(spec);
+                      setIsSpecialShareOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -1115,6 +1122,13 @@ export function App() {
         isOpen={isWhatsAppAutomationOpen}
         onClose={() => setIsWhatsAppAutomationOpen(false)}
         recentOrders={orders}
+      />
+
+      {/* 20b. Partage Réseaux Sociaux & Affiche Flyer IA (Veille 20h / Matin 08h) */}
+      <DailySpecialShareModal
+        isOpen={isSpecialShareOpen}
+        onClose={() => setIsSpecialShareOpen(false)}
+        special={selectedSpecialForShare || DAILY_SPECIALS_DATA[0]}
       />
 
       {/* 21. FAQ Dynamique & Assistance 24/7 */}

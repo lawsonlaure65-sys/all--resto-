@@ -37,13 +37,39 @@ interface MarketingCampaign {
 
 const PRESET_CAMPAIGNS: MarketingCampaign[] = [
   {
+    id: "camp-veille-20h",
+    title: "🌙 Veille à 20h00 : Précommande Menu du Jour (Avant 21h)",
+    targetAudience: "Tous clients, Fonctionnaires, Entreprises & Familles de Niamey",
+    channel: "Statut",
+    headline: "Précommandez votre Plat du Jour avant 21h00 pour garantir votre déjeuner !",
+    messageText:
+      "🌙 *MENU DU JOUR DE DEMAIN — PRÉCOMMANDES OUVERTES JUSQU'À 21H !* 🔥🍲\n\nDemain midi à Niamey, le Chef Khady's Food & Allôresto vous réserve son fameux *Riz au Gras Impérial & Pintade Fumée du Fleuve* avec Jus de Bissap frais offert (3 000 FCFA) !\n\n⚠️ *RÈGLE D'OR :* Précommandez ce soir avant *21h00 au plus tard* pour garantir votre portion chaude livrée à votre bureau ou domicile dès 12h00 !\n\n🛵 Livraison Billo Express dans tout Niamey\n📲 Commandez en 1 clic : https://alloresto-niamey.vercel.app\n📞 WhatsApp Direct : +227 70 03 25 52\n\nSuivez nos créations : Facebook @Allôresto • Insta @allo_resteau • TikTok @allo_restau",
+    promoCode: "PRE21H",
+    discountValue: "-500 FCFA",
+    expectedConversion: "41.0%",
+    projectedRevenue: "+320 000 FCFA / jour",
+  },
+  {
+    id: "camp-matin-08h",
+    title: "☀️ Jour J à 08h00 : Flash Matinal & Dernières Portions",
+    targetAudience: "Travailleurs, Cadres du Plateau & Habitants de Niamey",
+    channel: "WhatsApp",
+    headline: "Bonjour Niamey ! Le Chef allume les fourneaux — Dernières portions disponibles",
+    messageText:
+      "☀️ *BONJOUR NIAMEY — PLAT DU JOUR FRAÎCHEMENT PRÉPARÉ !* 🍲🔥\n\nLes fourneaux tournent déjà chez Allôresto ! Les portions du jour partent très vite ce midi.\n\n✨ *Riz au Gras & Demi-Pintade Fumée* (3 000 FCFA)\n⚡ Livraison chrono 45-60 min par Billo Express à votre bureau ou domicile.\n\n⚠️ *Dernières portions disponibles !* Réservez avant rupture : https://alloresto-niamey.vercel.app\n📞 WhatsApp Express : +227 70 03 25 52\n\nFacebook : @Allôresto • Instagram : @allo_resteau • TikTok : @allo_restau",
+    promoCode: "MATIN08",
+    discountValue: "Jus Local Offert",
+    expectedConversion: "36.5%",
+    projectedRevenue: "+280 000 FCFA / midi",
+  },
+  {
     id: "camp-1",
     title: "⚡ Rush Midi Ministères & Bureaux du Plateau",
     targetAudience: "Fonctionnaires, Cadres de Banques & Sociétés de Niamey",
     channel: "WhatsApp",
     headline: "Votre Déjeuner Chaud Livré en 45 à 60 mn au Bureau !",
     messageText:
-      "🔥 *PAUSE DÉJEUNER SANS ATTENTE À NIAMEY !*\n\nVous êtes au bureau au Plateau, Koira Kano ou Yantala ?\nCommandez votre *Formule Midi Khady's Food* (Demi-Pintade Braisée, Riz au Gras & Jus de Bissap frais) livrée chaude directement à votre accueil avec *Billo Express* !\n\n🎁 *Code Promo Spécial :* `MIDI2026` (-500 FCFA sur votre commande)\n🛵 *Livraison express garantie.*\n\n👉 *Commandez en 2 clics sur Allôresto :* https://alloresto.ne",
+      "🔥 *PAUSE DÉJEUNER SANS ATTENTE À NIAMEY !*\n\nVous êtes au bureau au Plateau, Koira Kano ou Yantala ?\nCommandez votre *Formule Midi Khady's Food* (Demi-Pintade Braisée, Riz au Gras & Jus de Bissap frais) livrée chaude directement à votre accueil avec *Billo Express* !\n\n🎁 *Code Promo Spécial :* `MIDI2026` (-500 FCFA sur votre commande)\n🛵 *Livraison express garantie.*\n\n👉 *Commandez en 2 clics sur Allôresto :* https://alloresto-niamey.vercel.app",
     promoCode: "MIDI2026",
     discountValue: "-500 FCFA",
     expectedConversion: "28.5%",
@@ -56,7 +82,7 @@ const PRESET_CAMPAIGNS: MarketingCampaign[] = [
     channel: "Statut",
     headline: "Choukouya d'Agneau au Kan-Kan & Capitaine Braisé",
     messageText:
-      "🌙 *CE SOIR À NIAMEY : C'EST CHOUKOUYA TIME !* 🥩🔥\n\nLe goût authentique du Sahel directement chez vous :\n✨ *Choukouya de Mouton Royal* saupoudré d'épices Kan-Kan.\n✨ *Gros Capitaine Braisé* du Fleuve Niger avec Alloco doré.\n✨ *Boissons locales fraîches* (Bissap menthe, Jus de Baobab).\n\n📱 Paiement ultra simple par *Mynita, Amanata, Al-Izza ou Cash* à la livraison.\n👉 *Découvrez la Grande Carte du Soir :* https://alloresto.ne",
+      "🌙 *CE SOIR À NIAMEY : C'EST CHOUKOUYA TIME !* 🥩🔥\n\nLe goût authentique du Sahel directement chez vous :\n✨ *Choukouya de Mouton Royal* saupoudré d'épices Kan-Kan.\n✨ *Gros Capitaine Braisé* du Fleuve Niger avec Alloco doré.\n✨ *Boissons locales fraîches* (Bissap menthe, Jus de Baobab).\n\n📱 Paiement ultra simple par *Mynita, Amanata, Al-Izza ou Cash* à la livraison.\n👉 *Découvrez la Grande Carte du Soir :* https://alloresto-niamey.vercel.app",
     promoCode: "SAHEL2026",
     discountValue: "Jus Local Offert",
     expectedConversion: "22.0%",
@@ -69,7 +95,7 @@ const PRESET_CAMPAIGNS: MarketingCampaign[] = [
     channel: "SMS",
     headline: "Commencez la journée avec une bonne Omelette Galmi & Bouillie Arawak",
     messageText:
-      "🌅 *BONJOUR NIAMEY !* Allôresto vous livre votre petit déjeuner chaud dès 07h00 : Omelettes savoureuses aux oignons doux de Galmi, beignets Massa au miel et Café Touba chaud. Commandez dès maintenant : https://alloresto.ne",
+      "🌅 *BONJOUR NIAMEY !* Allôresto vous livre votre petit déjeuner chaud dès 07h00 : Omelettes savoureuses aux oignons doux de Galmi, beignets Massa au miel et Café Touba chaud. Commandez dès maintenant : https://alloresto-niamey.vercel.app",
     promoCode: "MATIN10",
     discountValue: "-10%",
     expectedConversion: "18.5%",
@@ -82,7 +108,7 @@ const PRESET_CAMPAIGNS: MarketingCampaign[] = [
     channel: "WhatsApp",
     headline: "Gagnez du temps : 1 commande groupée pour tout le service !",
     messageText:
-      "💼 *COMMANDE GROUPÉE ENTREPRISE SUR ALLÔRESTO*\nFini les fiches de commande manuelles ! Créez un lien de groupe pour vos collaborateurs au bureau et recevez toutes vos barquettes étiquetées en 1 seule livraison Billo Express avec reçu certifié.\n\n📞 Assistance dédiée WhatsApp : +227 70 03 25 52\n👉 https://alloresto.ne",
+      "💼 *COMMANDE GROUPÉE ENTREPRISE SUR ALLÔRESTO*\nFini les fiches de commande manuelles ! Créez un lien de groupe pour vos collaborateurs au bureau et recevez toutes vos barquettes étiquetées en 1 seule livraison Billo Express avec reçu certifié.\n\n📞 Assistance dédiée WhatsApp : +227 70 03 25 52\n👉 https://alloresto-niamey.vercel.app",
     promoCode: "PRO100",
     discountValue: "Livraison Offerte",
     expectedConversion: "34.0%",

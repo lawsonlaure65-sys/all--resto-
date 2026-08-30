@@ -335,6 +335,21 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               <button
                 type="button"
+                onClick={() => setScheduledOption("precommande_demain")}
+                className={`p-3 rounded-xl border text-left text-xs transition cursor-pointer ${
+                  scheduledOption === "precommande_demain"
+                    ? "bg-orange-500/20 border-orange-500 text-white font-bold"
+                    : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
+                }`}
+              >
+                <span className="block font-bold">🌙 Précommande Demain Midi</span>
+                <span className="text-[10px] text-amber-400 font-semibold">
+                  Avant 21h • Livré dès 12h00
+                </span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setScheduledOption("custom")}
                 className={`p-3 rounded-xl border text-left text-xs transition cursor-pointer ${
                   scheduledOption === "custom"
