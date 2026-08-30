@@ -16,8 +16,8 @@ const getEnv = (key: string, viteKey: string, fallback: string): string => {
 export const APP_CONFIG = {
   // Supabase Database & Auth
   supabase: {
-    url: getEnv("SUPABASE_URL", "VITE_SUPABASE_URL", "https://alloresto-niger-prod.supabase.co"),
-    anonKey: getEnv("SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY", ""),
+    url: getEnv("SUPABASE_URL", "VITE_SUPABASE_URL", "https://gimneagwmfymiykelkxx.supabase.co"),
+    anonKey: getEnv("SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY", "") || getEnv("SUPABASE_PUBLIC_ANON_KEY", "VITE_SUPABASE_PUBLIC_ANON_KEY", ""),
   },
 
   // Official Niger Deposit Accounts & Support

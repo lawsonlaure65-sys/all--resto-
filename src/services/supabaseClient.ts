@@ -39,7 +39,7 @@ export interface SupabaseConfig {
 export function getSupabaseConfig(): SupabaseConfig {
   const metaEnv = (import.meta as any).env || {};
   const envUrl = metaEnv.VITE_SUPABASE_URL ? sanitizeSupabaseUrl(metaEnv.VITE_SUPABASE_URL) : "";
-  const envKey = metaEnv.VITE_SUPABASE_ANON_KEY ? metaEnv.VITE_SUPABASE_ANON_KEY.trim() : "";
+  const envKey = (metaEnv.VITE_SUPABASE_ANON_KEY || metaEnv.VITE_SUPABASE_PUBLIC_ANON_KEY || metaEnv.SUPABASE_ANON_KEY || "") ? (metaEnv.VITE_SUPABASE_ANON_KEY || metaEnv.VITE_SUPABASE_PUBLIC_ANON_KEY || metaEnv.SUPABASE_ANON_KEY).trim() : "";
 
   // Priority to custom configured keys in localStorage if set, otherwise fallback to env
   try {
