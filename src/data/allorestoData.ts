@@ -998,6 +998,23 @@ export const ALLORESTO_BRAND_INFO = {
   contactPhone: "+227 96 05 23 10",
   whatsappOrders: "+227 70 03 25 52",
   whatsappNumber: "+227 70 03 25 52",
+  socialMedia: {
+    facebook: {
+      handle: "@Allôresto",
+      name: "Allôresto",
+      url: "https://facebook.com/Alloresto",
+    },
+    instagram: {
+      handle: "@allo_resteau",
+      name: "allo_resteau",
+      url: "https://instagram.com/allo_resteau",
+    },
+    tiktok: {
+      handle: "@allo_restau",
+      name: "allo_restau",
+      url: "https://tiktok.com/@allo_restau",
+    },
+  },
   email: "contact@alloresto.ne",
   emails: {
     general: "contact@alloresto.ne",

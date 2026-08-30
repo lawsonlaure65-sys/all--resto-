@@ -227,6 +227,52 @@ export const Footer: React.FC<FooterProps> = ({
                 <span className="text-[10px] text-emerald-400 font-semibold">Mode hors-ligne partiel &amp; Cache</span>
               </div>
             </div>
+            {/* Social Media Networks */}
+            <div className="pt-2 border-t border-slate-900 space-y-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                Suivez-nous sur les réseaux
+              </span>
+              <div className="flex flex-col gap-1.5 text-xs">
+                {/* Facebook */}
+                <a
+                  href={ALLORESTO_BRAND_INFO.socialMedia.facebook.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-slate-300 hover:text-blue-400 transition group"
+                >
+                  <span className="w-5 h-5 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center text-[11px] font-black group-hover:bg-blue-600 group-hover:text-white transition">
+                    f
+                  </span>
+                  <span>Facebook : <strong className="text-white group-hover:text-blue-400">{ALLORESTO_BRAND_INFO.socialMedia.facebook.handle}</strong></span>
+                </a>
+
+                {/* Instagram */}
+                <a
+                  href={ALLORESTO_BRAND_INFO.socialMedia.instagram.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-slate-300 hover:text-pink-400 transition group"
+                >
+                  <span className="w-5 h-5 rounded-lg bg-gradient-to-tr from-amber-500/20 via-pink-500/20 to-purple-500/20 text-pink-400 flex items-center justify-center text-[10px] font-black group-hover:from-amber-500 group-hover:via-pink-500 group-hover:to-purple-500 group-hover:text-white transition">
+                    📸
+                  </span>
+                  <span>Instagram : <strong className="text-white group-hover:text-pink-400">{ALLORESTO_BRAND_INFO.socialMedia.instagram.handle}</strong></span>
+                </a>
+
+                {/* TikTok */}
+                <a
+                  href={ALLORESTO_BRAND_INFO.socialMedia.tiktok.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-slate-300 hover:text-cyan-400 transition group"
+                >
+                  <span className="w-5 h-5 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[10px] font-black group-hover:bg-cyan-500 group-hover:text-black transition">
+                    🎵
+                  </span>
+                  <span>TikTok : <strong className="text-white group-hover:text-cyan-400">{ALLORESTO_BRAND_INFO.socialMedia.tiktok.handle}</strong></span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -343,6 +343,71 @@ export const ContactModal: React.FC<ContactModalProps> = ({
               </div>
             </div>
 
+            {/* Official Social Media Networks Card */}
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5 text-xs">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <span>📱 Réseaux Sociaux Officiels</span>
+              </h4>
+              <div className="grid grid-cols-1 gap-2 text-xs">
+                {/* Facebook */}
+                <a
+                  href={ALLORESTO_BRAND_INFO.socialMedia.facebook.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 text-slate-200 transition group"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-black group-hover:bg-blue-600 group-hover:text-white transition">
+                      f
+                    </span>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">Facebook</span>
+                      <strong className="text-white group-hover:text-blue-400 transition">{ALLORESTO_BRAND_INFO.socialMedia.facebook.handle}</strong>
+                    </div>
+                  </div>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition" />
+                </a>
+
+                {/* Instagram */}
+                <a
+                  href={ALLORESTO_BRAND_INFO.socialMedia.instagram.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 text-slate-200 transition group"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500/20 via-pink-500/20 to-purple-500/20 text-pink-400 flex items-center justify-center text-xs font-black group-hover:from-amber-500 group-hover:via-pink-500 group-hover:to-purple-500 group-hover:text-white transition">
+                      📸
+                    </span>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">Instagram</span>
+                      <strong className="text-white group-hover:text-pink-400 transition">{ALLORESTO_BRAND_INFO.socialMedia.instagram.handle}</strong>
+                    </div>
+                  </div>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition" />
+                </a>
+
+                {/* TikTok */}
+                <a
+                  href={ALLORESTO_BRAND_INFO.socialMedia.tiktok.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 text-slate-200 transition group"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-black group-hover:bg-cyan-500 group-hover:text-black transition">
+                      🎵
+                    </span>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block font-medium">TikTok</span>
+                      <strong className="text-white group-hover:text-cyan-400 transition">{ALLORESTO_BRAND_INFO.socialMedia.tiktok.handle}</strong>
+                    </div>
+                  </div>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition" />
+                </a>
+              </div>
+            </div>
+
             {/* Official Delivery Pricing Table */}
             <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
