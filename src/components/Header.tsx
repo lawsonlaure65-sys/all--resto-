@@ -361,24 +361,25 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Center: Explicit Navigation Buttons (Accueil, Menu, Commandes, Boxs, Événements) */}
         {currentRole === "client" && (
-          <div className="hidden lg:flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-bold">
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-bold">
             {/* 1. Accueil */}
             <button
               onClick={() => onChangeRole("client")}
-              className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              className="hidden lg:block px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer"
             >
               {t(currentLanguage, "home")}
             </button>
 
-            {/* 2. Menu / Grande Carte 65+ plats */}
+            {/* 2. Menu / Grande Carte 65+ plats - Toujours accessible */}
             {onOpenMenu && (
               <button
+                id="header-menu-catalog-btn"
                 onClick={onOpenMenu}
-                className="px-3 py-1.5 rounded-xl bg-orange-500/15 text-orange-400 hover:bg-orange-500/25 border border-orange-500/30 transition flex items-center gap-1 cursor-pointer"
-                title="Consulter la carte complète de plus de 65 plats"
+                className="px-3 py-1.5 rounded-xl bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/40 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                title="Consulter le menu et la carte complète de plus de 65 plats"
               >
                 <UtensilsCrossed className="w-3.5 h-3.5" />
-                <span>{t(currentLanguage, "menu_catalog")}</span>
+                <span className="font-extrabold">{t(currentLanguage, "menu_catalog")}</span>
               </button>
             )}
 
@@ -386,7 +387,7 @@ export const Header: React.FC<HeaderProps> = ({
             {onOpenOrdersHistory && (
               <button
                 onClick={onOpenOrdersHistory}
-                className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1 cursor-pointer"
+                className="hidden md:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
                 title="Historique des commandes et reçus"
               >
                 <Clock className="w-3.5 h-3.5 text-cyan-400" />
@@ -398,7 +399,7 @@ export const Header: React.FC<HeaderProps> = ({
             {onOpenSauceBoxes && (
               <button
                 onClick={onOpenSauceBoxes}
-                className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1 cursor-pointer"
+                className="hidden xl:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
                 title="Boxs repas & sauces sahéliennes"
               >
                 <Package className="w-3.5 h-3.5 text-amber-400" />
@@ -410,7 +411,7 @@ export const Header: React.FC<HeaderProps> = ({
             {onOpenCatering && (
               <button
                 onClick={onOpenCatering}
-                className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1 cursor-pointer"
+                className="hidden xl:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
                 title="Traiteur, mariages & réunions ministérielles"
               >
                 <ChefHat className="w-3.5 h-3.5 text-emerald-400" />
@@ -421,7 +422,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* 6. Groupe Bureau */}
             <button
               onClick={onOpenGroupOrder}
-              className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1 cursor-pointer"
+              className="hidden lg:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
             >
               <Users className="w-3.5 h-3.5 text-orange-400" />
               <span>{t(currentLanguage, "group_order")}</span>
