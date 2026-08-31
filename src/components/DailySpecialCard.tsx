@@ -1,7 +1,8 @@
 import React from "react";
-import { Sparkles, Clock, Flame, ShoppingBag, ArrowRight, ShieldCheck, MapPin, Share2, Calendar } from "lucide-react";
+import { Sparkles, Clock, Flame, ShoppingBag, ArrowRight, ShieldCheck, MapPin, Share2, Calendar, MessageCircle } from "lucide-react";
 import { DailySpecial } from "../types";
 import { useTranslation } from "../context/TranslationContext";
+import { shareDailySpecialOnWhatsApp } from "../utils/whatsappNotifications";
 
 interface DailySpecialCardProps {
   special: DailySpecial;
@@ -128,15 +129,25 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => shareDailySpecialOnWhatsApp(rawSpecial)}
+                className="px-4 py-3 rounded-2xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/40 font-bold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm"
+                title="Partager directement le plat du jour sur WhatsApp"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>WhatsApp</span>
+              </button>
+
               {onShareSpecial && (
                 <button
                   type="button"
                   onClick={() => onShareSpecial(rawSpecial)}
                   className="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs transition cursor-pointer flex items-center gap-1.5"
-                  title="Partager l'affiche sur les réseaux sociaux (Veille 20h / Matin 08h)"
+                  title="Générer l'affiche visuelle pour WhatsApp & Réseaux"
                 >
                   <Share2 className="w-4 h-4 text-orange-400" />
-                  <span>Partager l'Affiche</span>
+                  <span>Affiche IA</span>
                 </button>
               )}
 

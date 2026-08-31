@@ -456,3 +456,132 @@ export function sendOrderStatusNotificationWhatsApp(order: Order, status: OrderS
   const message = generateStatusUpdateMessage(order, status, safeLang);
   openWhatsAppDirect(order.customerPhone || ALLORESTO_BRAND_INFO.whatsappOrders, message);
 }
+
+/**
+ * Partage un restaurant complet sur WhatsApp (vers n'importe quel contact ou groupe)
+ */
+export function shareRestaurantOnWhatsApp(
+  restaurant: {
+    name: string;
+    cuisine?: string;
+    rating?: number;
+    reviewCount?: number;
+    address?: string;
+    deliveryTime?: string;
+    tagline?: string;
+    deliveryFee?: number;
+  }
+): void {
+  const ratingText = restaurant.rating ? `⭐ Note : ${restaurant.rating}/5 (${restaurant.reviewCount || 40}+ avis)\n` : "";
+  const cuisineText = restaurant.cuisine ? `✨ Spécialités : ${restaurant.cuisine}\n` : "";
+  const addressText = restaurant.address ? `📍 Quartier : ${restaurant.address}\n` : "";
+  const deliveryText = restaurant.deliveryTime ? `⏱️ Livraison express Billo : ${restaurant.deliveryTime}\n` : "";
+  const promoText = restaurant.tagline ? `📝 _"${restaurant.tagline}"_\n` : "";
+
+  const text =
+    `🍽️ *Découvre ce restaurant sur Allôresto Niamey !* 🇳🇪\n\n` +
+    `🏪 *${restaurant.name}*\n` +
+    `${cuisineText}` +
+    `${ratingText}` +
+    `${addressText}` +
+    `${deliveryText}` +
+    `${promoText}\n` +
+    `🛵 Commande en ligne sur Allôresto avec livraison rapide à Niamey !\n` +
+    `🔗 https://alloresto-niamey.com`;
+
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+}
+
+/**
+ * Partage un plat sur WhatsApp (avec prix, photo, description et badges)
+ */
+export function shareDishOnWhatsApp(
+  dish: {
+    name: string;
+    price: number;
+    description?: string;
+    preparationTime?: number;
+    isSpicy?: boolean;
+    isNigerLocal?: boolean;
+    isHalal?: boolean;
+    isVegetarian?: boolean;
+    category?: string;
+  },
+  restaurantName?: string
+): void {
+  const restoText = restaurantName ? `🏪 *Restaurant :* ${restaurantName}\n` : "";
+  const descText = dish.description ? `📝 *Description :* ${dish.description}\n` : "";
+  const prepText = dish.preparationTime ? `⏱️ *Préparation :* ~${dish.preparationTime} min\n` : "";
+  const nigerBadge = dish.isNigerLocal ? "🇳🇪 *Saveur Terroir Niger*\n" : "";
+  const spicyBadge = dish.isSpicy ? "🌶️ *Épicé / Kan-Kan*\n" : "";
+  const halalBadge = dish.isHalal ? "✅ *100% Halal*\n" : "";
+
+  const text =
+    `🍲 *Regarde ce plat appétissant sur Allôresto Niamey !* 😋🍽️\n\n` +
+    `🍛 *${dish.name}*\n` +
+    `💰 *Prix :* ${dish.price.toLocaleString()} FCFA\n` +
+    `${restoText}` +
+    `${descText}` +
+    `${prepText}` +
+    `${nigerBadge}` +
+    `${spicyBadge}` +
+    `${halalBadge}\n` +
+    `🛵 Commande-le vite sur Allôresto avec livraison express Billo à Niamey !\n` +
+    `🔗 https://alloresto-niamey.com`;
+
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+}
+
+/**
+ * Partage le Plat du Jour sur WhatsApp
+ */
+export function shareDailySpecialOnWhatsApp(special: {
+  title: string;
+  price: number;
+  originalPrice?: number;
+  availableUntil?: string;
+  servingsLeft?: number;
+  accompaniedBy?: string;
+  description?: string;
+}): void {
+  const origPriceText = special.originalPrice ? ` _(au lieu de ${special.originalPrice.toLocaleString()} FCFA)_` : "";
+  const untilText = special.availableUntil ? `⏰ *Disponible jusqu'à :* ${special.availableUntil} (${special.servingsLeft || 10} portions restantes)\n` : "";
+  const accText = special.accompaniedBy ? `✨ *Inclus :* ${special.accompaniedBy}\n` : "";
+  const descText = special.description ? `📝 *Détails :* ${special.description}\n` : "";
+
+  const text =
+    `⭐ *PLAT DU JOUR SUR ALLÔRESTO NIAMEY !* 🍽️🇳🇪\n\n` +
+    `🍛 *${special.title}*\n` +
+    `💰 *Prix Promo :* ${special.price.toLocaleString()} FCFA${origPriceText}\n` +
+    `${untilText}` +
+    `${accText}` +
+    `${descText}\n` +
+    `🛵 Précommande vite ta portion avant rupture de stock !\n` +
+    `🔗 https://alloresto-niamey.com`;
+
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+}
+
+/**
+ * Partage une Box Sauce sur WhatsApp
+ */
+export function shareSauceBoxOnWhatsApp(sauce: {
+  name: string;
+  price: number;
+  volume: string;
+  description: string;
+  bestWith?: string[];
+}): void {
+  const bestText = sauce.bestWith && sauce.bestWith.length > 0 ? `✨ *Idéal avec :* ${sauce.bestWith.join(", ")}\n` : "";
+  const text =
+    `🥫 *Box Sauces & Saveurs du Sahel sur Allôresto Niamey !* 🇳🇪\n\n` +
+    `📦 *${sauce.name}* (${sauce.volume})\n` +
+    `💰 *Prix :* ${sauce.price.toLocaleString()} FCFA\n` +
+    `📝 *Description :* ${sauce.description}\n` +
+    `${bestText}\n` +
+    `🛵 Commande tes bocaux de sauce artisanale prête à déguster sur Allôresto !\n` +
+    `🔗 https://alloresto-niamey.com`;
+
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+}
+

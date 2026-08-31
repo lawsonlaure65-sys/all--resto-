@@ -1,8 +1,9 @@
 import React from "react";
 import { motion } from "motion/react";
-import { Star, Clock, Bike, Flame, Sparkles, MapPin, CheckCircle, ChevronRight } from "lucide-react";
+import { Star, Clock, Bike, Flame, Sparkles, MapPin, CheckCircle, ChevronRight, MessageCircle } from "lucide-react";
 import { Restaurant, ServiceMode } from "../types";
 import { useTranslation } from "../context/TranslationContext";
+import { shareRestaurantOnWhatsApp } from "../utils/whatsappNotifications";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -53,6 +54,20 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
               </span>
             )}
           </div>
+
+          {/* Top Right: WhatsApp Quick Share Badge */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              shareRestaurantOnWhatsApp(restaurant);
+            }}
+            className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-black shadow-lg backdrop-blur-md border border-emerald-400/40 flex items-center gap-1.5 transition-transform active:scale-95 cursor-pointer z-10"
+            title="Partager ce restaurant sur WhatsApp"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            <span className="text-[11px]">Partager</span>
+          </button>
 
           {/* Delivery Time / Rating Overlay */}
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs">
@@ -128,14 +143,14 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
       </div>
 
       {/* Card Footer Actions */}
-      <div className="p-4 pt-0">
+      <div className="p-4 pt-0 flex items-center gap-2">
         {serviceMode === "booking" ? (
           <button
             onClick={(e) => {
               e.stopPropagation();
               onBookTable?.(restaurant);
             }}
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
           >
             <span>Réserver une table</span>
             <ChevronRight className="w-4 h-4" />
@@ -146,12 +161,25 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
               e.stopPropagation();
               onOpenMenu(restaurant);
             }}
-            className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-orange-500 text-slate-200 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer group-hover:bg-gradient-to-r group-hover:from-orange-500 group-hover:to-red-600"
+            className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-orange-500 text-slate-200 hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer group-hover:bg-gradient-to-r group-hover:from-orange-500 group-hover:to-red-600"
           >
-            <span>Consulter la carte &amp; Commander</span>
+            <span>Consulter la carte</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         )}
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            shareRestaurantOnWhatsApp(restaurant);
+          }}
+          className="p-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/40 transition cursor-pointer flex items-center justify-center gap-1.5 text-xs font-bold shrink-0 shadow-sm"
+          title="Partager ce restaurant sur WhatsApp"
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span className="hidden sm:inline">WhatsApp</span>
+        </button>
       </div>
     </motion.div>
   );

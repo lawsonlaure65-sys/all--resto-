@@ -1,8 +1,9 @@
 import React from "react";
-import { Package, Flame, Sparkles, Plus, Check, MapPin, ArrowRight } from "lucide-react";
+import { Package, Flame, Sparkles, Plus, Check, MapPin, ArrowRight, MessageCircle } from "lucide-react";
 import { SauceBox, MenuItem } from "../types";
 import { SAUCE_BOXES_DATA } from "../data/allorestoData";
 import { useTranslation } from "../context/TranslationContext";
+import { shareSauceBoxOnWhatsApp } from "../utils/whatsappNotifications";
 
 interface SauceBoxesSectionProps {
   onAddSauceToCart: (sauce: SauceBox) => void;
@@ -97,13 +98,27 @@ export const SauceBoxesSection: React.FC<SauceBoxesSectionProps> = ({
                   </span>
                 </div>
 
-                <button
-                  onClick={() => onAddSauceToCart(sauce)}
-                  className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-slate-950 text-xs font-black shadow-md shadow-orange-500/20 transition flex items-center gap-1 cursor-pointer transform active:scale-95"
-                >
-                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                  <span>{currentLanguage === "ha" ? "Zaba" : currentLanguage === "zm" ? "Za" : "Ajouter"}</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      shareSauceBoxOnWhatsApp(sauce);
+                    }}
+                    className="p-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 text-xs font-bold flex items-center justify-center transition-colors cursor-pointer"
+                    title="Partager cette box sauce sur WhatsApp"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    onClick={() => onAddSauceToCart(sauce)}
+                    className="px-3 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-slate-950 text-xs font-black shadow-md shadow-orange-500/20 transition flex items-center gap-1 cursor-pointer transform active:scale-95"
+                  >
+                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                    <span>{currentLanguage === "ha" ? "Zaba" : currentLanguage === "zm" ? "Za" : "Ajouter"}</span>
+                  </button>
+                </div>
               </div>
             </div>
           );
