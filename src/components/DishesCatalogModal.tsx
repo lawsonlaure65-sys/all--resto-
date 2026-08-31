@@ -292,7 +292,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
   return (
     <AnimatePresence>
       <div 
-        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto"
+        className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/90 backdrop-blur-md overflow-hidden"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
@@ -302,31 +302,28 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="w-full max-w-6xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh]"
+          className="w-full max-w-6xl h-full sm:h-[92vh] max-h-screen sm:max-h-[92vh] bg-slate-900 border-0 sm:border border-slate-800 rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 bg-slate-950 border-b border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shrink-0">
-          <div>
+        <div className="p-3.5 sm:p-5 bg-slate-950 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 text-[10px] font-black uppercase tracking-wider">
-                Explorez par Plats &amp; Saveurs 🇳🇪
+              <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 text-[9px] sm:text-[10px] font-black uppercase tracking-wider">
+                Explorez par Plats 🇳🇪
               </span>
-              <span className="text-xs text-slate-400">Niamey &bull; Livraison Express Billo 🏍️</span>
+              <span className="text-[10px] sm:text-xs text-slate-400 truncate">Niamey &bull; Billo 🏍️</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
-              Grande Carte &amp; Filtres Gastronomiques
+            <h2 className="text-base sm:text-xl font-black text-white mt-0.5 truncate">
+              Grande Carte &amp; Plats de Niamey
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Petit déjeuner, Déjeuner, Dîner, Menus du jour, spécialités africaines, européennes et régimes diététiques.
-            </p>
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 shrink-0">
             {activeFiltersCount > 0 && (
               <button
                 onClick={handleResetFilters}
-                className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700 text-xs font-semibold cursor-pointer transition"
+                className="px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700 text-[11px] font-semibold cursor-pointer transition"
               >
                 Réinitialiser ({activeFiltersCount})
               </button>
@@ -334,9 +331,10 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700 transition cursor-pointer ml-auto"
+              className="p-2 sm:p-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition cursor-pointer"
+              title="Fermer la carte"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
@@ -350,38 +348,28 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
         )}
 
         {/* ======================================================== */}
-        {/* SECTION 1: MOMENTS DE SERVICE (Petit-déj, Déjeuner, Dîner, Menu du Jour) */}
+        {/* SECTION 1: MOMENTS DE SERVICE (Scrollable / Compact) */}
         {/* ======================================================== */}
-        <div className="px-4 py-3 bg-slate-950/90 border-b border-slate-800/80 shrink-0">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-orange-400" />
-              <span>Moment du Repas &amp; Formules</span>
-            </span>
-            <span className="text-[10px] text-slate-500 hidden sm:inline">
-              Commandez selon le créneau horaire
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <div className="px-3 sm:px-4 py-2.5 bg-slate-950/90 border-b border-slate-800/80 shrink-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none sm:grid sm:grid-cols-5">
             {MEAL_MOMENTS_CONFIG.map((moment) => {
               const isSelected = selectedMoment === moment.id;
               return (
                 <button
                   key={moment.id}
                   onClick={() => setSelectedMoment(moment.id)}
-                  className={`p-2.5 rounded-2xl border transition-all text-left flex items-center gap-2.5 cursor-pointer ${
+                  className={`p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl border transition-all text-left flex items-center gap-1.5 sm:gap-2 cursor-pointer shrink-0 sm:shrink ${
                     isSelected
-                      ? "bg-slate-800/90 border-orange-500 shadow-md shadow-orange-500/10 text-white"
+                      ? "bg-slate-800/95 border-orange-500 shadow-md shadow-orange-500/10 text-white"
                       : "bg-slate-900/60 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700"
                   }`}
                 >
-                  <span className="text-xl shrink-0">{moment.icon}</span>
-                  <div className="min-w-0">
-                    <span className={`text-xs font-black block truncate ${isSelected ? "text-orange-400" : "text-slate-200"}`}>
+                  <span className="text-base sm:text-xl shrink-0">{moment.icon}</span>
+                  <div className="min-w-0 pr-1">
+                    <span className={`text-[11px] sm:text-xs font-black block whitespace-nowrap sm:truncate ${isSelected ? "text-orange-400" : "text-slate-200"}`}>
                       {moment.label}
                     </span>
-                    <span className="text-[9px] text-slate-400 block truncate font-mono">
+                    <span className="text-[8px] sm:text-[9px] text-slate-400 block whitespace-nowrap sm:truncate font-mono">
                       {moment.sublabel}
                     </span>
                   </div>
@@ -392,24 +380,24 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
         </div>
 
         {/* Search & Categories Bar */}
-        <div className="p-4 bg-slate-950 border-b border-slate-800 space-y-3 shrink-0">
+        <div className="p-2.5 sm:p-4 bg-slate-950 border-b border-slate-800 space-y-2 shrink-0">
           {/* Search Input */}
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Rechercher un plat (ex: Choukouya, Dambou, Capitaine braisé, Omelette, Menu du Jour, Dégué, Bissap...)"
+              placeholder="Rechercher un plat (Choukouya, Dambou, Capitaine braisé, Omelette, Dégué...)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-slate-900 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-orange-500"
+              className="w-full pl-9 pr-4 py-2 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-orange-500"
             />
           </div>
 
           {/* Main Category Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
             <button
               onClick={() => setSelectedCategory("all")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0 ${
                 selectedCategory === "all"
                   ? "bg-orange-500 text-slate-950 shadow-md shadow-orange-500/20 font-black"
                   : "bg-slate-900 text-slate-300 hover:text-white border border-slate-800"
@@ -429,7 +417,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                  className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0 ${
                     isSelected
                       ? "bg-orange-500 text-slate-950 shadow-md shadow-orange-500/20 font-black"
                       : "bg-slate-900 text-slate-300 hover:text-white border border-slate-800"
@@ -443,30 +431,30 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
             })}
           </div>
 
-          {/* Dietary & Taste Filter Chips */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-1">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-orange-400" />
-              <span>Régimes &amp; Préférences :</span>
+          {/* Dietary & Taste Filter Chips (Horizontal Scrollable) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+            <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1 shrink-0 mr-0.5">
+              <SlidersHorizontal className="w-3 h-3 text-orange-400" />
+              <span>Filtres :</span>
             </span>
 
             {/* Menu du Jour Only */}
             <button
               onClick={() => setFilterMenuDuJourOnly(!filterMenuDuJourOnly)}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 shrink-0 ${
                 filterMenuDuJourOnly
                   ? "bg-amber-950 text-amber-300 border-amber-500 shadow-sm"
                   : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
               }`}
             >
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              <span>⭐ Menu / Plat du Jour</span>
+              <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+              <span>⭐ Formule Menu du Jour</span>
             </button>
 
             {/* Terroir Niger */}
             <button
               onClick={() => setFilterNigerLocal(!filterNigerLocal)}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 shrink-0 ${
                 filterNigerLocal
                   ? "bg-amber-950 text-amber-300 border-amber-500"
                   : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
@@ -481,99 +469,99 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
                 setFilterSpicy(!filterSpicy);
                 if (filterSpicy) setSelectedSpiceLevel("all");
               }}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 shrink-0 ${
                 filterSpicy
                   ? "bg-red-950 text-red-300 border-red-500"
                   : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
               }`}
             >
-              <Flame className="w-3 h-3 text-red-400" />
+              <Flame className="w-2.5 h-2.5 text-red-400" />
               <span>Épicé / Kan-Kan</span>
             </button>
 
             {/* Halal */}
             <button
               onClick={() => setFilterHalal(!filterHalal)}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 shrink-0 ${
                 filterHalal
                   ? "bg-emerald-950 text-emerald-300 border-emerald-500"
                   : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
               }`}
             >
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+              <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
               <span>100% Halal</span>
             </button>
 
             {/* Végétarien */}
             <button
               onClick={() => setFilterVegetarian(!filterVegetarian)}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 shrink-0 ${
                 filterVegetarian
                   ? "bg-green-950 text-green-300 border-green-500"
                   : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
               }`}
             >
-              <Leaf className="w-3 h-3 text-green-400" />
+              <Leaf className="w-2.5 h-2.5 text-green-400" />
               <span>Végétarien</span>
             </button>
 
             {/* Végan */}
             <button
               onClick={() => setFilterVegan(!filterVegan)}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 shrink-0 ${
                 filterVegan
                   ? "bg-green-950 text-green-300 border-green-500"
                   : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
               }`}
             >
-              <Leaf className="w-3 h-3 text-green-400" />
+              <Leaf className="w-2.5 h-2.5 text-green-400" />
               <span>Végan</span>
             </button>
 
             {/* Sans Gluten */}
             <button
               onClick={() => setFilterGlutenFree(!filterGlutenFree)}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 shrink-0 ${
                 filterGlutenFree
                   ? "bg-yellow-950 text-yellow-300 border-yellow-500"
                   : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
               }`}
             >
-              <Wheat className="w-3 h-3 text-yellow-400" />
+              <Wheat className="w-2.5 h-2.5 text-yellow-400" />
               <span>Sans Gluten</span>
             </button>
 
             {/* Express < 15 min */}
             <button
               onClick={() => setFilterExpress(!filterExpress)}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 shrink-0 ${
                 filterExpress
                   ? "bg-cyan-950 text-cyan-300 border-cyan-500"
                   : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
               }`}
             >
-              <Zap className="w-3 h-3 text-cyan-400" />
+              <Zap className="w-2.5 h-2.5 text-cyan-400" />
               <span>Express &lt; 15 min</span>
             </button>
 
             {/* Chef Special */}
             <button
               onClick={() => setFilterChefSpecial(!filterChefSpecial)}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition cursor-pointer border flex items-center gap-1 shrink-0 ${
                 filterChefSpecial
                   ? "bg-purple-950 text-purple-300 border-purple-500"
                   : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
               }`}
             >
-              <Sparkles className="w-3 h-3 text-purple-400" />
+              <Sparkles className="w-2.5 h-2.5 text-purple-400" />
               <span>Choix du Chef</span>
             </button>
           </div>
         </div>
 
-        {/* Dishes Grid (Scrollable) */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-          <div className="flex items-center justify-between text-xs text-slate-400">
+        {/* Dishes Grid (Scrollable Body with min-h-0) */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-6 space-y-4 bg-slate-950/40">
+          <div className="flex items-center justify-between text-xs text-slate-400 px-1">
             <span>
               <strong>{filteredDishes.length}</strong> plat(s) trouvé(s)
             </span>
@@ -583,7 +571,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
           </div>
 
           {filteredDishes.length === 0 ? (
-            <div className="p-16 text-center bg-slate-950 rounded-3xl border border-slate-800 space-y-3">
+            <div className="p-10 sm:p-16 text-center bg-slate-950 rounded-2xl sm:rounded-3xl border border-slate-800 space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center mx-auto">
                 <Search className="w-6 h-6" />
               </div>
@@ -599,7 +587,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 pb-4">
               {filteredDishes.map((dish) => {
                 // Find restaurant name if available
                 const matchedResto = restaurants.find((r) =>
@@ -609,43 +597,48 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
                 return (
                   <div
                     key={dish.id}
-                    className="p-4 rounded-3xl bg-slate-950 border border-slate-800 hover:border-orange-500/40 transition-all flex flex-col justify-between group shadow-lg space-y-3"
+                    className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-slate-950 border border-slate-800/90 hover:border-orange-500/40 transition-all flex flex-col justify-between group shadow-lg space-y-2.5 sm:space-y-3"
                   >
-                    <div className="space-y-2.5">
+                    <div className="space-y-2">
                       {/* Dish Image Banner */}
-                      <div className="relative h-44 rounded-2xl overflow-hidden bg-slate-900">
+                      <div className="relative h-40 sm:h-44 rounded-xl sm:rounded-2xl overflow-hidden bg-slate-900">
                         <img
                           src={dish.image}
                           alt={dish.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           referrerPolicy="no-referrer"
+                          loading="lazy"
+                          onError={(e) => {
+                            // Fallback image if broken
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80";
+                          }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent" />
 
                         {/* Top Badges */}
-                        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 flex-wrap">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-900/90 text-white backdrop-blur-md border border-slate-700">
+                        <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-1 flex-wrap">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-slate-900/90 text-white backdrop-blur-md border border-slate-700">
                             {dish.category}
                           </span>
 
                           <div className="flex items-center gap-1">
                             {dish.isMenuDuJour && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-slate-950 shadow-md">
+                              <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-amber-500 text-slate-950 shadow-md">
                                 ⭐ Menu du Jour
                               </span>
                             )}
                             {dish.isDailySpecial && !dish.isMenuDuJour && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-orange-500 text-slate-950">
+                              <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-orange-500 text-slate-950">
                                 ⭐ Plat du Jour
                               </span>
                             )}
                             {dish.isNigerLocal && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/90 text-amber-300 border border-amber-500/50 backdrop-blur-md">
+                              <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-amber-950/90 text-amber-300 border border-amber-500/50 backdrop-blur-md">
                                 🇳🇪 Niger
                               </span>
                             )}
                             {dish.isHalal && (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-500/50 backdrop-blur-md">
+                              <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-500/50 backdrop-blur-md">
                                 Halal
                               </span>
                             )}
@@ -653,12 +646,12 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
                         </div>
 
                         {/* Bottom Info on Image */}
-                        <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-[11px] text-white">
-                          <span className="font-mono font-black text-orange-400 text-sm bg-slate-950/85 px-2.5 py-0.5 rounded-lg border border-orange-500/30">
+                        <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[11px] text-white">
+                          <span className="font-mono font-black text-orange-400 text-xs sm:text-sm bg-slate-950/90 px-2 py-0.5 rounded-lg border border-orange-500/30">
                             {dish.price.toLocaleString()} FCFA
                           </span>
 
-                          <span className="flex items-center gap-1 bg-slate-950/85 px-2 py-0.5 rounded-lg text-slate-300 text-[10px]">
+                          <span className="flex items-center gap-1 bg-slate-950/90 px-2 py-0.5 rounded-lg text-slate-300 text-[9px] sm:text-[10px]">
                             <Clock className="w-3 h-3 text-amber-400" />
                             <span>{dish.preparationTime || 15} min</span>
                           </span>
@@ -668,30 +661,30 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
                       {/* Dish Content */}
                       <div>
                         {/* Meal moments and dietary tags */}
-                        <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                        <div className="flex flex-wrap items-center gap-1 mb-1.5">
                           {/* Meal moments badges */}
                           {(dish.dishCategory === "petit_dejeuner" ||
                             (dish.mealMoments && dish.mealMoments.includes("petit_dejeuner"))) && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-950 text-amber-300 border border-amber-500/40 flex items-center gap-1">
-                              <span>🌅 Petit Déjeuner</span>
+                            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-amber-950 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                              <span>🌅 Petit Déj</span>
                             </span>
                           )}
 
                           {dish.mealMoments && dish.mealMoments.includes("dejeuner") && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-orange-950 text-orange-300 border border-orange-500/40 flex items-center gap-1">
+                            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-orange-950 text-orange-300 border border-orange-500/40 flex items-center gap-1">
                               <span>☀️ Déjeuner</span>
                             </span>
                           )}
 
                           {dish.mealMoments && dish.mealMoments.includes("diner") && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-indigo-950 text-indigo-300 border border-indigo-500/40 flex items-center gap-1">
+                            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-indigo-950 text-indigo-300 border border-indigo-500/40 flex items-center gap-1">
                               <span>🌙 Dîner</span>
                             </span>
                           )}
 
                           {/* Dietary Badges */}
                           {dish.isSpicy && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-red-950 text-red-300 border border-red-500/40 flex items-center gap-1">
+                            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-red-950 text-red-300 border border-red-500/40 flex items-center gap-0.5">
                               <Flame className="w-2.5 h-2.5 text-red-400" />
                               <span>
                                 {dish.spiceLevel === 3
@@ -703,39 +696,39 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
                             </span>
                           )}
                           {dish.isVegetarian && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-green-950 text-green-300 border border-green-500/40 flex items-center gap-1">
+                            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-green-950 text-green-300 border border-green-500/40 flex items-center gap-0.5">
                               <Leaf className="w-2.5 h-2.5 text-green-400" />
                               <span>Végé</span>
                             </span>
                           )}
                           {dish.isVegan && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-green-950 text-green-300 border border-green-500/40">
+                            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-green-950 text-green-300 border border-green-500/40">
                               🌿 Végan
                             </span>
                           )}
                           {dish.isGlutenFree && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-yellow-950 text-yellow-300 border border-yellow-500/40">
+                            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-yellow-950 text-yellow-300 border border-yellow-500/40">
                               🌾 Sans Gluten
                             </span>
                           )}
                           {dish.isExpress && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-cyan-950 text-cyan-300 border border-cyan-500/40">
+                            <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-cyan-950 text-cyan-300 border border-cyan-500/40">
                               ⚡ Express
                             </span>
                           )}
                         </div>
 
-                        <h4 className="text-sm font-bold text-white group-hover:text-orange-400 transition-colors">
+                        <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-orange-400 transition-colors">
                           {dish.name}
                         </h4>
-                        <p className="text-xs text-slate-400 line-clamp-2 mt-1 leading-relaxed">
+                        <p className="text-[11px] sm:text-xs text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">
                           {dish.description}
                         </p>
 
                         {/* If Menu du Jour formula inclusions */}
                         {dish.menuDuJourIncludes && (
-                          <div className="mt-2 p-2 rounded-xl bg-amber-950/40 border border-amber-500/30 text-[10px] text-amber-200 flex items-start gap-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                          <div className="mt-1.5 p-1.5 rounded-lg bg-amber-950/40 border border-amber-500/30 text-[9px] sm:text-[10px] text-amber-200 flex items-start gap-1">
+                            <Sparkles className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />
                             <span>
                               <strong>Formule Complète :</strong> {dish.menuDuJourIncludes}
                             </span>
@@ -744,7 +737,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
 
                         {/* Restaurant Source if found */}
                         {matchedResto && (
-                          <div className="mt-2 text-[10px] text-slate-400 flex items-center gap-1">
+                          <div className="mt-1.5 text-[9px] sm:text-[10px] text-slate-400 flex items-center gap-1">
                             <Store className="w-3 h-3 text-orange-400" />
                             <span className="truncate">{matchedResto.name}</span>
                           </div>
@@ -756,7 +749,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
                     <div className="pt-2 border-t border-slate-900 flex items-center gap-2">
                       <button
                         onClick={() => handleQuickAdd(dish)}
-                        className="flex-1 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md shadow-orange-500/20"
+                        className="w-full py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md shadow-orange-500/20 active:scale-95"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Ajouter au Panier</span>
@@ -770,9 +763,9 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 px-6 shrink-0">
-          <span>Paiement sécurisé par <strong>Mynita, Amanata, Al-Izza, Flooz &amp; Zeyna</strong></span>
-          <span className="text-orange-400 font-semibold">Allôresto Niamey 🇳🇪</span>
+        <div className="p-3 sm:p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-[10px] sm:text-xs text-slate-400 px-4 sm:px-6 shrink-0">
+          <span className="truncate pr-2">Paiement : <strong>Mynita, Amanata, Al-Izza, Flooz</strong></span>
+          <span className="text-orange-400 font-semibold shrink-0">Allôresto Niamey 🇳🇪</span>
         </div>
       </motion.div>
     </div>
