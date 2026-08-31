@@ -9,14 +9,15 @@ import { getSupabaseConfig } from "./supabaseClient";
 
 const STORAGE_KEY_RESTAURANTS = "alloresto_restaurants_v2";
 const STORAGE_KEY_CUSTOM_DISHES = "alloresto_custom_dishes_v2";
+const STORAGE_KEY_EMERGENCY_BACKUP = "alloresto_emergency_backup_v2";
 const STORAGE_KEY_LAST_BACKUP = "alloresto_last_backup_timestamp";
 
-// Helper for image compression to keep localStorage light & fast
+// Helper for image compression to keep localStorage light & fast (max ~40-60KB per image)
 export async function compressImageBase64(
   file: File,
-  maxWidth = 1200,
-  maxHeight = 900,
-  quality = 0.85
+  maxWidth = 800,
+  maxHeight = 600,
+  quality = 0.75
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -59,26 +60,49 @@ export async function compressImageBase64(
   });
 }
 
-// Load restaurants from LocalStorage or initialize with default RESTAURANTS_DATA
+// Load restaurants from LocalStorage, emergency backup, or fallback to RESTAURANTS_DATA
 export function loadStoredRestaurants(): Restaurant[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY_RESTAURANTS);
-    if (!stored) {
-      // First time: save default
-      saveStoredRestaurants(RESTAURANTS_DATA);
-      return RESTAURANTS_DATA;
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const dishCount = parsed.reduce((sum: number, r: any) => sum + (r.menu?.length || 0), 0);
+        if (dishCount > 0) {
+          return parsed;
+        }
+      }
     }
-    const parsed = JSON.parse(stored);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+
+    // Check emergency backup before resetting
+    const emergency = localStorage.getItem(STORAGE_KEY_EMERGENCY_BACKUP);
+    if (emergency) {
+      const parsedEmerg = JSON.parse(emergency);
+      if (Array.isArray(parsedEmerg) && parsedEmerg.length > 0) {
+        const dishCount = parsedEmerg.reduce((sum: number, r: any) => sum + (r.menu?.length || 0), 0);
+        if (dishCount > 0) {
+          saveStoredRestaurants(parsedEmerg);
+          return parsedEmerg;
+        }
+      }
     }
+
+    // First time: save default
+    saveStoredRestaurants(RESTAURANTS_DATA);
+    return RESTAURANTS_DATA;
   } catch (err) {
-    console.error("Error loading restaurants from localStorage, falling back to defaults:", err);
+    console.error("Error loading restaurants from localStorage, checking emergency backup:", err);
+    try {
+      const emergency = localStorage.getItem(STORAGE_KEY_EMERGENCY_BACKUP);
+      if (emergency) {
+        return JSON.parse(emergency);
+      }
+    } catch {}
   }
   return RESTAURANTS_DATA;
 }
 
-// Synchronize from Supabase in background
+// Synchronize from Supabase with anti-wipeout safeguard & automatic cloud seed
 export async function syncFromSupabaseIfAvailable(
   onLoaded?: (restaurants: Restaurant[]) => void
 ): Promise<Restaurant[] | null> {
@@ -86,11 +110,31 @@ export async function syncFromSupabaseIfAvailable(
   if (!config.isConfigured) return null;
 
   try {
+    const localRestos = loadStoredRestaurants();
+    const localDishCount = localRestos.reduce((s, r) => s + (r.menu?.length || 0), 0);
+
     const res = await fetchRestaurantsFromSupabase();
     if (res.success && res.data && res.data.length > 0) {
-      saveStoredRestaurants(res.data);
-      if (onLoaded) onLoaded(res.data);
-      return res.data;
+      const supabaseDishCount = res.data.reduce((s, r) => s + (r.menu?.length || 0), 0);
+
+      // ANTI-WIPEOUT SAFEGUARD:
+      // If Supabase has 0 dishes but local storage has dishes, DO NOT overwrite!
+      // Instead, automatically push local dishes to Supabase in the background!
+      if (supabaseDishCount === 0 && localDishCount > 0) {
+        console.warn("Supabase is empty. Automatically pushing local dishes to Supabase Cloud...");
+        const { syncAllLocalDataToSupabase } = await import("./supabaseDishService");
+        syncAllLocalDataToSupabase(localRestos).catch((e) => {
+          console.warn("Auto background seed failed:", e);
+        });
+        return localRestos;
+      }
+
+      // If Supabase has dishes, merge with any local custom dishes that are newer
+      if (supabaseDishCount > 0) {
+        saveStoredRestaurants(res.data);
+        if (onLoaded) onLoaded(res.data);
+        return res.data;
+      }
     }
   } catch (e) {
     console.warn("Supabase load fallback:", e);
@@ -98,15 +142,40 @@ export async function syncFromSupabaseIfAvailable(
   return null;
 }
 
-// Save entire restaurants list to LocalStorage
+// Save entire restaurants list to LocalStorage with emergency protection & quota recovery
 export function saveStoredRestaurants(restaurants: Restaurant[]): boolean {
+  if (!Array.isArray(restaurants) || restaurants.length === 0) {
+    return false;
+  }
+
+  const totalDishes = restaurants.reduce((sum, r) => sum + (r.menu?.length || 0), 0);
+
   try {
-    localStorage.setItem(STORAGE_KEY_RESTAURANTS, JSON.stringify(restaurants));
+    const json = JSON.stringify(restaurants);
+    localStorage.setItem(STORAGE_KEY_RESTAURANTS, json);
+    if (totalDishes > 0) {
+      localStorage.setItem(STORAGE_KEY_EMERGENCY_BACKUP, json);
+    }
     localStorage.setItem(STORAGE_KEY_LAST_BACKUP, new Date().toISOString());
     return true;
   } catch (err) {
-    console.error("Error saving restaurants to localStorage:", err);
-    return false;
+    console.error("Error saving restaurants to localStorage (quota exceeded or storage error):", err);
+    try {
+      // Emergency recovery: strip heavy base64 strings if quota exceeded to guarantee preservation
+      const stripped = restaurants.map((resto) => ({
+        ...resto,
+        menu: resto.menu.map((d) => ({
+          ...d,
+          image: d.image?.startsWith("data:") ? "" : d.image,
+        })),
+      }));
+      localStorage.setItem(STORAGE_KEY_RESTAURANTS, JSON.stringify(stripped));
+      localStorage.setItem(STORAGE_KEY_LAST_BACKUP, new Date().toISOString());
+      return true;
+    } catch (fallbackErr) {
+      console.error("Critical storage failure:", fallbackErr);
+      return false;
+    }
   }
 }
 

@@ -276,18 +276,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // Quick toggle dish stock
+  // Quick toggle dish stock with permanent storage
   const handleToggleDishStock = (dishId: string) => {
-    setDishesList((prev) =>
-      prev.map((d) => (d.id === dishId ? { ...d, isAvailable: !d.isAvailable } : d))
-    );
+    const targetDish = dishesList.find((d) => d.id === dishId);
+    if (!targetDish) return;
+    const updatedDish = { ...targetDish, isAvailable: !targetDish.isAvailable };
+    const updatedRestaurants = addOrUpdateDishInStorage(updatedDish);
+    setDishesList(updatedRestaurants.flatMap((r) => r.menu));
+    if (onUpdateRestaurants) {
+      onUpdateRestaurants(updatedRestaurants);
+    }
   };
 
-  // Quick toggle Daily Special
+  // Quick toggle Daily Special with permanent storage
   const handleToggleDailySpecial = (dishId: string) => {
-    setDishesList((prev) =>
-      prev.map((d) => (d.id === dishId ? { ...d, isDailySpecial: !d.isDailySpecial } : d))
-    );
+    const targetDish = dishesList.find((d) => d.id === dishId);
+    if (!targetDish) return;
+    const updatedDish = { ...targetDish, isDailySpecial: !targetDish.isDailySpecial };
+    const updatedRestaurants = addOrUpdateDishInStorage(updatedDish);
+    setDishesList(updatedRestaurants.flatMap((r) => r.menu));
+    if (onUpdateRestaurants) {
+      onUpdateRestaurants(updatedRestaurants);
+    }
   };
 
   // Validate deposit receipt & notify customer via WhatsApp

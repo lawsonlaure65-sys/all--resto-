@@ -269,22 +269,33 @@ export async function saveDishToSupabase(
     return { success: false, error: "Supabase non configuré" };
   }
 
-  const restoId = targetRestaurantId || "resto-khadys-food";
+    const restoId = targetRestaurantId || "resto-khadys-food";
 
   try {
-    // First ensure the restaurant exists
-    const { data: existingResto } = await client
-      .from("restaurants")
-      .select("id")
-      .eq("id", restoId)
-      .single();
+    // 1. Ensure restaurant exists in Supabase to respect foreign key constraint
+    const defaultResto = RESTAURANTS_DATA.find((r) => r.id === restoId) || {
+      id: restoId,
+      name: "Cuisine Allôresto Niamey",
+      tagline: "Spécialités Nigériennes & Sahéliennes",
+      cuisine: "Africain & Grillades",
+      cuisineCategory: "africain",
+      rating: 4.9,
+      reviewCount: 120,
+      deliveryTime: "25-40 min",
+      minOrder: 1000,
+      deliveryFee: 500,
+      address: "Niamey, Niger",
+      city: "Niamey",
+      image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
+      isOpen: true,
+      openingHours: "07h30 - 23h00",
+      phone: "+227 96 00 00 00",
+      services: ["delivery", "takeaway", "booking"],
+      menu: [],
+    };
+    await client.from("restaurants").upsert(mapRestaurantToSupabaseRow(defaultResto as Restaurant));
 
-    if (!existingResto) {
-      // Find matching default restaurant
-      const defaultResto = RESTAURANTS_DATA.find((r) => r.id === restoId) || RESTAURANTS_DATA[0];
-      await client.from("restaurants").upsert(mapRestaurantToSupabaseRow(defaultResto));
-    }
-
+    // 2. Upsert dish
     const row = mapDishToSupabaseRow(dish, restoId);
     const { error } = await client.from("dishes").upsert(row);
 
