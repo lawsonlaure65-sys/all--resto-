@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Store,
@@ -32,6 +32,7 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
+  RefreshCw,
 } from "lucide-react";
 import { Order, Restaurant, MenuItem, OrderStatus } from "../types";
 import { RESTAURANTS_DATA } from "../data/allorestoData";
@@ -43,6 +44,7 @@ import {
   authenticateRestaurantUser,
   logoutRestaurantSession,
   syncOrderStatusToSupabase,
+  fetchRestaurantOrdersFromSupabase,
   DEMO_RESTAURANT_ACCOUNTS,
   RestaurantUserSession,
 } from "../services/supabaseRestaurantService";
@@ -52,17 +54,23 @@ interface RestaurantDashboardProps {
   orders: Order[];
   onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
   onExitToClient?: () => void;
+  onCreateTestOrder?: () => void;
 }
 
 export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
   orders,
   onUpdateOrderStatus,
   onExitToClient,
+  onCreateTestOrder,
 }) => {
   // Session State
   const [session, setSession] = useState<RestaurantUserSession | null>(() =>
     getActiveRestaurantSession()
   );
+
+  // Supabase live orders state
+  const [supabaseOrders, setSupabaseOrders] = useState<Order[]>([]);
+  const [isLoadingSupabase, setIsLoadingSupabase] = useState(false);
 
   // Login Form State
   const [loginEmail, setLoginEmail] = useState("");
@@ -76,6 +84,31 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
   const [orderFilter, setOrderFilter] = useState<"all" | "pending" | "preparing" | "ready" | "delivered">("all");
   const [isRestaurantOpen, setIsRestaurantOpen] = useState(true);
   const [soundAlerts, setSoundAlerts] = useState(true);
+
+  // Refresh orders from Supabase
+  const refreshSupabaseOrders = async () => {
+    setIsLoadingSupabase(true);
+    try {
+      const fetched = await fetchRestaurantOrdersFromSupabase(
+        session?.restaurantId,
+        session?.restaurantName
+      );
+      if (fetched && fetched.length > 0) {
+        setSupabaseOrders(fetched);
+      }
+    } catch (e) {
+      console.warn("Could not fetch Supabase orders:", e);
+    } finally {
+      setIsLoadingSupabase(false);
+    }
+  };
+
+  // Poll Supabase orders on mount or when session changes
+  useEffect(() => {
+    refreshSupabaseOrders();
+    const interval = setInterval(refreshSupabaseOrders, 8000);
+    return () => clearInterval(interval);
+  }, [session]);
 
   // Dishes State
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
@@ -118,6 +151,7 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
         setSession(res.session);
         setLoginEmail("");
         setLoginPassword("");
+        refreshSupabaseOrders();
       } else {
         setLoginError(res.error || "Email ou mot de passe incorrect.");
       }
@@ -138,6 +172,7 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
     const res = await authenticateRestaurantUser(account.email, account.password);
     if (res.success && res.session) {
       setSession(res.session);
+      refreshSupabaseOrders();
     }
     setIsLoggingIn(false);
   };
@@ -148,10 +183,37 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
     setSession(null);
   };
 
-  // Filter orders for this restaurant
-  const filteredOrders = orders.filter((o) => {
+  // Combine parent orders with Supabase live orders (deduped by ID)
+  const allCombinedOrders = useMemo(() => {
+    const map = new Map<string, Order>();
+    // First add Supabase live orders
+    supabaseOrders.forEach((o) => {
+      map.set(o.id, o);
+    });
+    // Then add/override with parent orders
+    orders.forEach((o) => {
+      map.set(o.id, o);
+    });
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [orders, supabaseOrders]);
+
+  // Filter orders for this restaurant (or show all platform orders for Central Kitchen / Manager)
+  const filteredOrders = allCombinedOrders.filter((o) => {
     if (!session) return true;
+
+    const isCentralKitchen =
+      session.email?.toLowerCase().includes("restaurant@alloresto.ne") ||
+      session.email?.toLowerCase().includes("kitchen@alloresto.ne") ||
+      session.restaurantName?.toLowerCase().includes("allôresto") ||
+      session.restaurantName?.toLowerCase().includes("alloresto") ||
+      session.restaurantName?.toLowerCase().includes("administrateur") ||
+      session.role === "manager" ||
+      session.role === "admin";
+
     const matchId =
+      isCentralKitchen ||
       !o.restaurantId ||
       o.restaurantId === session.restaurantId ||
       o.restaurantName?.toLowerCase().includes(session.restaurantName?.toLowerCase() || "");
@@ -159,9 +221,23 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
     if (!matchId) return false;
 
     if (orderFilter === "all") return true;
-    if (orderFilter === "pending") return o.orderStatus === "received" || (o.orderStatus as string) === "pending";
-    if (orderFilter === "preparing") return o.orderStatus === "preparing";
-    if (orderFilter === "ready") return o.orderStatus === "delivering" || (o.orderStatus as string) === "ready";
+    if (orderFilter === "pending")
+      return (
+        o.orderStatus === "received" ||
+        (o.orderStatus as string) === "pending" ||
+        (o.orderStatus as string) === "to_confirm"
+      );
+    if (orderFilter === "preparing")
+      return (
+        o.orderStatus === "preparing" ||
+        (o.orderStatus as string) === "confirmed" ||
+        (o.orderStatus as string) === "in_preparation"
+      );
+    if (orderFilter === "ready")
+      return (
+        o.orderStatus === "delivering" ||
+        (o.orderStatus as string) === "ready"
+      );
     if (orderFilter === "delivered") return o.orderStatus === "delivered";
     return true;
   });
@@ -169,6 +245,10 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
   // Handle Order Status Update (Local + Supabase sync)
   const handleStatusChange = async (orderId: string, nextStatus: OrderStatus) => {
     onUpdateOrderStatus(orderId, nextStatus);
+    // Also update in local Supabase cache
+    setSupabaseOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, orderStatus: nextStatus } : o))
+    );
     if (session) {
       await syncOrderStatusToSupabase(orderId, session.restaurantId, nextStatus);
     }
@@ -515,17 +595,56 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
               ))}
             </div>
 
-            <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              Écoute temps réel active
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={refreshSupabaseOrders}
+                disabled={isLoadingSupabase}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                title="Recharger depuis Supabase"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-purple-400 ${isLoadingSupabase ? "animate-spin" : ""}`} />
+                <span>Actualiser Supabase</span>
+              </button>
+
+              {onCreateTestOrder && (
+                <button
+                  type="button"
+                  onClick={onCreateTestOrder}
+                  className="px-3 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-slate-950 text-xs font-black flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-orange-500/20"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Simuler commande</span>
+                </button>
+              )}
+              <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                Live
+              </span>
+            </div>
           </div>
 
           {filteredOrders.length === 0 ? (
-            <div className="p-12 text-center bg-slate-900 rounded-3xl border border-slate-800 text-slate-400 space-y-2">
-              <CheckCircle2 className="w-10 h-10 text-slate-600 mx-auto" />
-              <h4 className="text-base font-bold text-white">Aucune commande dans cette catégorie</h4>
-              <p className="text-xs">Les prochaines commandes apparaîtront ici automatiquement.</p>
+            <div className="p-8 sm:p-12 text-center bg-slate-900 rounded-3xl border border-slate-800 text-slate-400 space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-orange-500/10 text-orange-400 flex items-center justify-center mx-auto border border-orange-500/20">
+                <ChefHat className="w-7 h-7" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-base font-bold text-white">Aucune commande pour le moment</h4>
+                <p className="text-xs max-w-md mx-auto text-slate-400">
+                  Passez une commande depuis l&apos;écran client ou cliquez ci-dessous pour injecter immédiatement une commande test vers le Quartier Plateau.
+                </p>
+              </div>
+              {onCreateTestOrder && (
+                <button
+                  type="button"
+                  onClick={onCreateTestOrder}
+                  className="px-5 py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 mx-auto transition cursor-pointer shadow-lg shadow-orange-500/30"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>🚀 Créer une Commande Test (Moussa Garba • Plateau)</span>
+                </button>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

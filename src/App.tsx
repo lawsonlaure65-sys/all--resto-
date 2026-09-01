@@ -358,6 +358,72 @@ export function App() {
     }
   };
 
+  // Helper to generate a realistic instant test order (e.g. for Plateau)
+  const handleCreateTestOrder = () => {
+    const testOrder: Order = {
+      id: "CMD-" + Math.floor(1000 + Math.random() * 9000),
+      createdAt: "À l'instant",
+      customerName: "Moussa Garba",
+      customerPhone: "+227 90 12 34 56",
+      deliveryAddress: "Quartier Plateau, Ministère de l'Intérieur, Niamey",
+      city: "Niamey - Plateau (Ministères)",
+      serviceType: "delivery",
+      restaurantId: "resto-alloresto-kitchen",
+      restaurantName: "Allôresto Kitchen (Cuisine Centrale)",
+      restaurantPhone: "+227 96 05 23 10",
+      items: [
+        {
+          id: `item-${Date.now()}-1`,
+          menuItem: restaurants[0]?.menu[5] || RESTAURANTS_DATA[0].menu[5] || {
+            id: "kf-1",
+            name: "Choukouya Royal d'Agneau au Véritable Kan-Kan",
+            price: 4000,
+            category: "Grillades",
+            image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80",
+          } as MenuItem,
+          quantity: 2,
+          selectedOptions: { "Intensité du Kan-Kan": "Kan-Kan Traditionnel Relevé" },
+          unitPrice: 4000,
+          totalPrice: 8000,
+        },
+        {
+          id: `item-${Date.now()}-2`,
+          menuItem: restaurants[0]?.menu[10] || RESTAURANTS_DATA[0].menu[10] || {
+            id: "kf-baobab",
+            name: "Jus de Baobab Naturel Frais 33cl",
+            price: 1000,
+            category: "Boissons",
+            image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500&auto=format&fit=crop&q=80",
+          } as MenuItem,
+          quantity: 2,
+          selectedOptions: {},
+          unitPrice: 1000,
+          totalPrice: 2000,
+        },
+      ],
+      subtotal: 10000,
+      deliveryFee: 1000,
+      discount: 0,
+      tip: 500,
+      total: 11500,
+      paymentMethod: "cash",
+      paymentStatus: "pending",
+      orderStatus: "received",
+      estimatedDeliveryTime: "25-35 min",
+      deliveryPartner: "Billo Express Niamey 🏍️",
+      courierName: "Ibrahim Oumarou (Billo Express)",
+      courierPhone: "+227 92 08 08 22",
+    };
+
+    setOrders((prev) => [testOrder, ...prev]);
+    showNotification(
+      "Nouvelle commande en cuisine ! 🔔",
+      `Commande #${testOrder.id} de Moussa Garba reçue pour le Plateau (11 500 FCFA).`,
+      "success",
+      "order"
+    );
+  };
+
   // 1-Click Reorder handler
   const handleReorder = (order: Order) => {
     setCartItems(order.items);
@@ -833,6 +899,7 @@ export function App() {
             orders={orders}
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onExitToClient={() => setCurrentRole("client")}
+            onCreateTestOrder={handleCreateTestOrder}
           />
         )}
 
@@ -843,6 +910,7 @@ export function App() {
           <CourierDashboard
             orders={orders}
             onUpdateOrderStatus={handleUpdateOrderStatus}
+            onCreateTestOrder={handleCreateTestOrder}
           />
         )}
 
