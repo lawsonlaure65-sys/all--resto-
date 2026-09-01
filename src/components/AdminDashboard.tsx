@@ -43,6 +43,9 @@ import {
   Cloud,
   UploadCloud,
   DownloadCloud,
+  Printer,
+  Copy,
+  FileSignature,
 } from "lucide-react";
 import { RESTAURANTS_DATA, SAUCE_BOXES_DATA, BLOG_POSTS_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { MenuItem, SauceBox, CateringQuoteRequest, Order, DishCategory, Restaurant } from "../types";
@@ -76,8 +79,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Active Admin Section Tab
   const [activeAdminTab, setActiveAdminTab] = useState<
-    "overview" | "menu_dishes" | "sauce_boxes" | "customers_loyalty" | "couriers_delivery" | "events_catering" | "pages_content" | "deposits_validation"
+    "overview" | "menu_dishes" | "sauce_boxes" | "customers_loyalty" | "couriers_delivery" | "events_catering" | "pages_content" | "deposits_validation" | "partnership_contract"
   >("overview");
+
+  // State: Partnership Contract Generator
+  const [contractData, setContractData] = useState({
+    restaurantName: "Cuisine & Saveurs du Sahel",
+    rccm: "RCCM-NI-NIA-2026-B-1142",
+    nif: "NIF-89210-NE",
+    address: "Plateau, Boulevard du 15 Avril, Niamey",
+    representativeName: "Mme Mariama Ousmane",
+    representativeRole: "Gérante Propriétaire",
+    phone: "+227 96 44 33 22",
+    email: "contact@saveursdusahel.ne",
+    commissionRate: 15,
+    paymentFrequency: "Hebdomadaire (chaque lundi)",
+    paymentMethod: "Mobile Money (Airtel Money / Flooz)",
+    paymentDetails: "+227 96 44 33 22 (Airtel Money Pro)",
+  });
+  const [contractCopied, setContractCopied] = useState(false);
 
   // State: Dishes & Menu (Initialized from LocalStorage persistence)
   const [dishesList, setDishesList] = useState<MenuItem[]>(() => {
@@ -586,6 +606,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           { id: "customers_loyalty", label: "Clients & Parrainage", icon: Users, count: clientsList.length },
           { id: "couriers_delivery", label: "Livreurs & Logistique", icon: Bike, count: couriersList.length },
           { id: "events_catering", label: "Événements & Traiteur", icon: Calendar, badge: cateringQuotes.filter(c => c.status === "pending").length },
+          { id: "partnership_contract", label: "Contrat Partenaires 📄", icon: FileSignature },
           { id: "pages_content", label: "Pages & Bannières", icon: Layers },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -1367,7 +1388,399 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
 
       {/* ======================================================== */}
-      {/* TAB 8: PAGES & CONTENT MANAGEMENT */}
+      {/* TAB 8: PARTNERSHIP CONTRACT & LEGAL */}
+      {/* ======================================================== */}
+      {activeAdminTab === "partnership_contract" && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Header Banner */}
+          <div className="p-6 rounded-3xl bg-slate-900 border border-purple-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-500/30 text-[10px] font-bold">
+                  Document Juridique OHADA Niger 🇳🇪
+                </span>
+                <span className="text-xs text-slate-400">Réf : CONTRAT-PARTENARIAT-RESTO-2026-NE</span>
+              </div>
+              <h3 className="text-xl font-black text-white">
+                Contrat Cadre d&apos;Affiliation &amp; Partenariat Restaurateur
+              </h3>
+              <p className="text-xs text-slate-400">
+                13 Articles &amp; 3 Annexes certifiés : Commissions, Reversements, Délais 15-25 min, Sauces &amp; Charte Qualité Niamey.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const printContent = document.getElementById("printable-contract-content");
+                  if (printContent) {
+                    const printWindow = window.open("", "_blank");
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Contrat Partenariat Allôresto Niger - ${contractData.restaurantName}</title>
+                            <style>
+                              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 40px; color: #111; line-height: 1.6; font-size: 13px; }
+                              h1 { font-size: 20px; text-align: center; margin-bottom: 5px; color: #1e1b4b; }
+                              h2 { font-size: 15px; border-bottom: 2px solid #6366f1; padding-bottom: 4px; margin-top: 24px; color: #312e81; }
+                              h3 { font-size: 13px; color: #4338ca; margin-top: 16px; }
+                              .badge { background: #e0e7ff; color: #3730a3; padding: 3px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; }
+                              .preamble { background: #f8fafc; border-left: 4px solid #6366f1; padding: 12px; margin: 15px 0; }
+                              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                              th, td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; }
+                              th { background: #f1f5f9; }
+                              .highlight { color: #4338ca; font-weight: bold; }
+                              @media print { body { padding: 20px; } }
+                            </style>
+                          </head>
+                          <body>
+                            ${printContent.innerHTML}
+                          </body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                      printWindow.focus();
+                      setTimeout(() => {
+                        printWindow.print();
+                      }, 500);
+                    }
+                  }
+                }}
+                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-purple-600/30"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Imprimer / Exporter PDF</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const fullContractText = `# CONTRAT DE PARTENARIAT COMMERCIAL ET D'AFFILIATION RESTAURATEUR
+### Plateforme Numérique de Commande et Livraison « ALLÔRESTO NIGER »
+
+ENTRE LES SOUSSIGNÉS :
+1. La Société ALLÔRESTO NIGER SARL (Niamey, Niger)
+ET
+2. L'Établissement : ${contractData.restaurantName}
+- RCCM : ${contractData.rccm} | NIF : ${contractData.nif}
+- Adresse : ${contractData.address}
+- Représenté par : ${contractData.representativeName} (${contractData.representativeRole})
+- Contact : ${contractData.phone} | ${contractData.email}
+
+CONDITIONS PARTICULIÈRES :
+- Taux de Commission : ${contractData.commissionRate}% TTC par commande livrée.
+- Fréquence des Reversements : ${contractData.paymentFrequency}
+- Mode de Paiement : ${contractData.paymentMethod} (${contractData.paymentDetails})
+
+Consultez le fichier alloresto-contrat-partenariat-restaurant.md pour le texte intégral des 13 articles et 3 annexes.`;
+
+                  navigator.clipboard.writeText(fullContractText);
+                  setContractCopied(true);
+                  setTimeout(() => setContractCopied(false), 3000);
+                }}
+                className="px-3.5 py-2 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+              >
+                {contractCopied ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span className="text-emerald-400">Copié !</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 text-slate-400" />
+                    <span>Copier Résumé</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Form Prefill Accordion */}
+          <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Edit2 className="w-4 h-4 text-purple-400" />
+                  <span>Personnaliser les Champs du Contrat Partenaire</span>
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Remplissez ces informations pour générer un contrat prêt à être signé pour un nouveau restaurant à Niamey.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setContractData({
+                    restaurantName: "Restaurant Le Gourmet du Fleuve",
+                    rccm: "RCCM-NI-NIA-2026-A-4450",
+                    nif: "NIF-77210-NE",
+                    address: "Yantala Haut, Rive du Fleuve, Niamey",
+                    representativeName: "M. Harouna Abdoulaye",
+                    representativeRole: "Chef Propriétaire",
+                    phone: "+227 90 22 11 00",
+                    email: "gourmet.fleuve@gmail.com",
+                    commissionRate: 15,
+                    paymentFrequency: "Hebdomadaire (chaque lundi)",
+                    paymentMethod: "Mobile Money (Airtel Money / Flooz)",
+                    paymentDetails: "+227 90 22 11 00 (Airtel Money)",
+                  });
+                }}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-semibold cursor-pointer transition"
+              >
+                Exemple Restaurant Test
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  Nom du Restaurant Partenaire *
+                </label>
+                <input
+                  type="text"
+                  value={contractData.restaurantName}
+                  onChange={(e) => setContractData({ ...contractData, restaurantName: e.target.value })}
+                  placeholder="Ex : Le Dôme du Fleuve"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  RCCM du Restaurant *
+                </label>
+                <input
+                  type="text"
+                  value={contractData.rccm}
+                  onChange={(e) => setContractData({ ...contractData, rccm: e.target.value })}
+                  placeholder="RCCM-NI-NIA-2026-..."
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  NIF (Numéro Fiscal) *
+                </label>
+                <input
+                  type="text"
+                  value={contractData.nif}
+                  onChange={(e) => setContractData({ ...contractData, nif: e.target.value })}
+                  placeholder="NIF-..."
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  Adresse &amp; Quartier à Niamey *
+                </label>
+                <input
+                  type="text"
+                  value={contractData.address}
+                  onChange={(e) => setContractData({ ...contractData, address: e.target.value })}
+                  placeholder="Ex : Plateau, Boulevard 15 Avril"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  Nom du Représentant Légal *
+                </label>
+                <input
+                  type="text"
+                  value={contractData.representativeName}
+                  onChange={(e) => setContractData({ ...contractData, representativeName: e.target.value })}
+                  placeholder="M./Mme ..."
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  Qualité / Fonction *
+                </label>
+                <input
+                  type="text"
+                  value={contractData.representativeRole}
+                  onChange={(e) => setContractData({ ...contractData, representativeRole: e.target.value })}
+                  placeholder="Gérant(e) / Propriétaire"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  Taux de Commission (%) *
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={5}
+                    max={30}
+                    value={contractData.commissionRate}
+                    onChange={(e) => setContractData({ ...contractData, commissionRate: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">%</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  Fréquence des Versements *
+                </label>
+                <select
+                  value={contractData.paymentFrequency}
+                  onChange={(e) => setContractData({ ...contractData, paymentFrequency: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:border-purple-500"
+                >
+                  <option value="Hebdomadaire (chaque lundi)">Hebdomadaire (chaque lundi)</option>
+                  <option value="Bi-mensuelle (les 1er et 15)">Bi-mensuelle (les 1er et 15)</option>
+                  <option value="Mensuelle (fin de mois)">Mensuelle (fin de mois)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  Mode &amp; Coordonnées Reversement *
+                </label>
+                <input
+                  type="text"
+                  value={contractData.paymentDetails}
+                  onChange={(e) => setContractData({ ...contractData, paymentDetails: e.target.value })}
+                  placeholder="Ex : +227 96 00 00 00 (Airtel Money / Flooz)"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Live Document Preview Card */}
+          <div className="p-6 rounded-3xl bg-slate-950 border border-slate-800 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                <FileText className="w-4 h-4 text-purple-400" />
+                <span>Aperçu en Direct du Document Imprimable</span>
+              </span>
+              <span className="text-[11px] text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-semibold">
+                Prêt à signer &bull; 2 Exemplaires
+              </span>
+            </div>
+
+            {/* Printable Document Box */}
+            <div
+              id="printable-contract-content"
+              className="bg-white text-slate-900 rounded-2xl p-6 sm:p-10 text-xs sm:text-sm space-y-6 shadow-2xl leading-relaxed font-sans"
+            >
+              <div className="text-center border-b pb-4 space-y-1">
+                <h1 className="text-xl sm:text-2xl font-black text-indigo-950 tracking-tight">
+                  CONTRAT DE PARTENARIAT COMMERCIAL ET D&apos;AFFILIATION
+                </h1>
+                <p className="text-xs text-indigo-800 font-semibold">
+                  Plateforme Numérique de Commande et Livraison « ALLÔRESTO NIGER » 🇳🇪
+                </p>
+                <p className="text-[11px] text-slate-500">Conforme aux Actes Uniformes OHADA &amp; Droit Nigérien</p>
+              </div>
+
+              {/* Parties */}
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-3">
+                <p className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">Entre les Soussignés :</p>
+                <div className="space-y-1 text-slate-700">
+                  <p>
+                    <strong>1. La Société ALLÔRESTO NIGER SARL</strong>, au capital de 5 000 000 FCFA, immatriculée au RCCM de Niamey, NIF : 89210/NE, sise à Niamey (Plateau), représentée par sa Direction Générale.
+                  </p>
+                  <p className="text-right font-bold text-indigo-900">D&apos;UNE PART,</p>
+                </div>
+                <div className="space-y-1 text-slate-700 pt-2 border-t border-slate-200">
+                  <p>
+                    <strong>2. L&apos;Établissement / Restaurant : </strong>
+                    <span className="font-bold text-indigo-900 text-sm">{contractData.restaurantName}</span>
+                  </p>
+                  <p>
+                    Immatriculé au RCCM sous le N° : <span className="font-semibold">{contractData.rccm}</span> &bull; NIF : <span className="font-semibold">{contractData.nif}</span>
+                  </p>
+                  <p>
+                    Adresse de l&apos;établissement : <span className="font-semibold">{contractData.address}</span>
+                  </p>
+                  <p>
+                    Représenté(e) par : <span className="font-semibold">{contractData.representativeName}</span> ({contractData.representativeRole}) &bull; Téléphone : <span className="font-semibold">{contractData.phone}</span>
+                  </p>
+                  <p className="text-right font-bold text-indigo-900">D&apos;AUTRE PART.</p>
+                </div>
+              </div>
+
+              {/* Articles Highlights */}
+              <div className="space-y-4 text-xs text-slate-800">
+                <div>
+                  <h2 className="font-bold text-indigo-950 text-sm border-b pb-1">Article 1 : Objet du Partenariat</h2>
+                  <p className="mt-1 text-slate-700">
+                    ALLÔRESTO référence le Restaurant Partenaire sur sa plateforme, assurant la prise de commande en ligne, la gestion des encaissements et la livraison express aux clients de Niamey via sa flotte Billo Express.
+                  </p>
+                </div>
+
+                <div>
+                  <h2 className="font-bold text-indigo-950 text-sm border-b pb-1">Article 3 : Délais &amp; Engagements Restaurant</h2>
+                  <p className="mt-1 text-slate-700">
+                    Le Restaurant Partenaire s&apos;engage à préparer et emballer les repas dans un délai strict de <strong>15 à 25 minutes</strong> dès notification, dans des emballages hermétiques adaptés au transport sahélien.
+                  </p>
+                </div>
+
+                <div>
+                  <h2 className="font-bold text-indigo-950 text-sm border-b pb-1">Article 5 : Conditions Financières &amp; Commissions</h2>
+                  <p className="mt-1 text-slate-700">
+                    La commission ALLÔRESTO est fixée à <strong className="text-indigo-900 text-sm">{contractData.commissionRate}% TTC</strong> sur le chiffre d&apos;affaires des commandes livrées.
+                  </p>
+                </div>
+
+                <div>
+                  <h2 className="font-bold text-indigo-950 text-sm border-b pb-1">Article 6 : Reversements des Fonds</h2>
+                  <p className="mt-1 text-slate-700">
+                    Périodicité des reversements : <strong>{contractData.paymentFrequency}</strong>.<br />
+                    Coordonnées de versement : <strong>{contractData.paymentDetails}</strong>.
+                  </p>
+                </div>
+
+                <div>
+                  <h2 className="font-bold text-indigo-950 text-sm border-b pb-1">Article 13 : Droit Applicable &amp; Juridiction</h2>
+                  <p className="mt-1 text-slate-700">
+                    Le présent contrat est soumis au droit de la République du Niger et aux Actes Uniformes OHADA. Tout litige relève de la compétence exclusive du <strong>Tribunal de Commerce de Niamey</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Signatures */}
+              <div className="pt-6 border-t border-slate-300">
+                <p className="text-[11px] text-slate-500 text-center mb-4">
+                  Fait à Niamey, en deux (2) exemplaires originaux.
+                </p>
+                <div className="grid grid-cols-2 gap-8 text-center text-xs">
+                  <div className="p-4 border rounded-xl bg-slate-50">
+                    <p className="font-bold text-indigo-950">Pour ALLÔRESTO NIGER SARL</p>
+                    <p className="text-[11px] text-slate-500 mt-1">Direction Générale</p>
+                    <div className="h-16 flex items-center justify-center text-slate-400 italic text-[11px]">
+                      (Signature &amp; Cachet)
+                    </div>
+                  </div>
+                  <div className="p-4 border rounded-xl bg-slate-50">
+                    <p className="font-bold text-indigo-950">Pour {contractData.restaurantName}</p>
+                    <p className="text-[11px] text-slate-500 mt-1">{contractData.representativeName}</p>
+                    <div className="h-16 flex items-center justify-center text-slate-400 italic text-[11px]">
+                      (Mention « Lu et approuvé », Signature &amp; Cachet)
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* TAB 9: PAGES & CONTENT MANAGEMENT */}
       {/* ======================================================== */}
       {activeAdminTab === "pages_content" && (
         <div className="space-y-4">

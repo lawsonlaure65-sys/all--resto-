@@ -115,7 +115,7 @@ export interface LocalPaymentOption {
   badge?: string;
 }
 
-export type OrderStatus = "received" | "preparing" | "delivering" | "delivered";
+export type OrderStatus = "received" | "preparing" | "delivering" | "delivered" | "cancelled";
 
 export interface Order {
   id: string;

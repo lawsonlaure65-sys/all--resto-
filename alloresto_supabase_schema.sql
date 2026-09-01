@@ -635,3 +635,72 @@ with check (public.is_admin());
 
 -- 17. REALTIME REPLICATION
 alter publication supabase_realtime add table public.orders, public.deliveries, public.notifications;
+
+-- ==============================================================================
+-- 18. TABLEAU DE BORD RESTAURANT — RESTAURANT USERS & ORDERS
+-- ==============================================================================
+
+-- Table des utilisateurs restaurant (Accès gérants et chefs de cuisine)
+create table if not exists public.restaurant_users (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id text not null,
+  email text not null unique,
+  password_hash text not null,
+  full_name text,
+  phone text,
+  role text not null default 'manager',
+  is_active boolean not null default true,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+-- Table des commandes simplifiées pour le tableau de bord restaurant
+create table if not exists public.restaurant_orders (
+  id uuid primary key default gen_random_uuid(),
+  order_id text not null,
+  restaurant_id text not null,
+  order_number text not null,
+  customer_name text,
+  customer_phone text,
+  customer_address text,
+  items jsonb not null,
+  subtotal int not null,
+  delivery_fee int default 0,
+  total int not null,
+  status text not null default 'pending',
+  payment_method text default 'cash',
+  payment_status text default 'pending',
+  notes text,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+-- Index pour la performance
+create index if not exists restaurant_orders_resto_idx on public.restaurant_orders(restaurant_id);
+create index if not exists restaurant_orders_status_idx on public.restaurant_orders(status);
+create index if not exists restaurant_orders_created_idx on public.restaurant_orders(created_at desc);
+
+-- RLS
+alter table public.restaurant_users enable row level security;
+alter table public.restaurant_orders enable row level security;
+
+create policy "restaurant users: public select active"
+on public.restaurant_users for select to anon, authenticated
+using (is_active = true);
+
+create policy "restaurant orders: public select by resto"
+on public.restaurant_orders for select to anon, authenticated
+using (true);
+
+create policy "restaurant orders: public update status"
+on public.restaurant_orders for update to anon, authenticated
+using (true) with check (true);
+
+-- Comptes démo pré-configurés pour tester immédiatement
+insert into public.restaurant_users (restaurant_id, email, password_hash, full_name, role, is_active)
+values
+  ('resto-khadys-food', 'kitchen@alloresto.ne', 'alloresto2026', 'Allôresto Kitchen / Khady', 'Chef Gérant', true),
+  ('resto-saveurs-sahel', 'sahel@alloresto.ne', 'sahel2026', 'Saveurs du Sahel', 'Responsable Cuisine', true),
+  ('resto-gourmet-fleuve', 'gourmet@alloresto.ne', 'gourmet2026', 'Le Gourmet du Fleuve', 'Manager', true)
+on conflict (email) do nothing;
+

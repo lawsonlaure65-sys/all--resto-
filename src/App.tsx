@@ -100,7 +100,17 @@ import {
 
 export function App() {
   // Navigation, Language & Role State
-  const [currentRole, setCurrentRole] = useState<UserRole>("client");
+  const [currentRole, setCurrentRole] = useState<UserRole>(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      const roleParam = params.get("role") || params.get("espace");
+      if (roleParam === "restaurant" || path.includes("/restaurant")) return "restaurant";
+      if (roleParam === "courier" || roleParam === "livreur" || path.includes("/livreur")) return "courier";
+      if (roleParam === "admin" || path.includes("/admin")) return "admin";
+    }
+    return "client";
+  });
   const [currentLanguage, setCurrentLanguage] = useState<AppLanguage>("fr");
   const [selectedCity, setSelectedCity] = useState<string>("Niamey (Plateau / Centre-Ville)");
   const [serviceMode, setServiceMode] = useState<ServiceMode>("delivery");
@@ -822,6 +832,7 @@ export function App() {
           <RestaurantDashboard
             orders={orders}
             onUpdateOrderStatus={handleUpdateOrderStatus}
+            onExitToClient={() => setCurrentRole("client")}
           />
         )}
 
