@@ -29,6 +29,8 @@ import {
   VolumeX,
   Database,
   ExternalLink,
+  Eye,
+  EyeOff,
   ShieldCheck,
 } from "lucide-react";
 import { Order, Restaurant, MenuItem, OrderStatus } from "../types";
@@ -65,6 +67,7 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
   // Login Form State
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -237,14 +240,24 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                   <Lock className="w-3.5 h-3.5 text-orange-400" />
                   <span>Mot de passe / Code d&apos;accès</span>
                 </label>
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="w-full px-4 py-3 pr-12 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-1.5 cursor-pointer"
+                    title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4 text-orange-400" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               {loginError && (
