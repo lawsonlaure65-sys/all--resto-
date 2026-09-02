@@ -28,12 +28,15 @@ import {
   Receipt,
   LogOut,
   SlidersHorizontal,
+  Eye,
 } from "lucide-react";
 import { BilloExpressLogo } from "./BilloExpressLogo";
-import { Order, OrderStatus } from "../types";
+import { Order, OrderStatus, DriverProfile } from "../types";
 import { BILLO_COURIERS } from "./BilloExpressDispatchModal";
 import { playCourierHandoverSound, playKitchenOrderChime } from "../services/kitchenAudioService";
 import { fetchRestaurantOrdersFromSupabase } from "../services/supabaseRestaurantService";
+import { DriverOrderDetailModal } from "./DriverOrderDetailModal";
+import { DriverOrderDetailView } from "./DriverOrderDetailView";
 
 interface CourierDashboardProps {
   orders: Order[];
@@ -56,6 +59,7 @@ export const CourierDashboard: React.FC<CourierDashboardProps> = ({
   const [selectedDistrictFilter, setSelectedDistrictFilter] = useState<string>("all");
   
   // Modals & UI States
+  const [selectedOrderDetail, setSelectedOrderDetail] = useState<Order | null>(null);
   const [paymentCollectModalOrder, setPaymentCollectModalOrder] = useState<Order | null>(null);
   const [acceptedToast, setAcceptedToast] = useState<string | null>(null);
   const [isLoadingSupabase, setIsLoadingSupabase] = useState<boolean>(false);
@@ -494,15 +498,26 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
                       </div>
                     </div>
 
-                    {/* Action Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleTakeOrder(order)}
-                      className="w-full py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/25 transition-transform active:scale-98"
-                    >
-                      <Navigation className="w-4 h-4" />
-                      <span>Prendre la course (+{payout.toLocaleString()} FCFA)</span>
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedOrderDetail(order)}
+                        className="px-3 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs flex items-center justify-center gap-1 cursor-pointer transition border border-slate-700"
+                        title="Voir la fiche détaillée de la mission"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span className="hidden sm:inline">Détails</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTakeOrder(order)}
+                        className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/25 transition-transform active:scale-98"
+                      >
+                        <Navigation className="w-4 h-4" />
+                        <span>Prendre la course (+{payout.toLocaleString()} FCFA)</span>
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -587,30 +602,40 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
                     )}
                   </div>
 
-                  {/* Operational Action Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {/* GPS Route Link */}
-                    <a
-                      href={getGoogleMapsUrl(order.deliveryAddress)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs flex items-center justify-center gap-1.5 transition border border-slate-700"
-                    >
-                      <Navigation className="w-3.5 h-3.5" />
-                      <span>Itinéraire GPS Niamey</span>
-                    </a>
+                    {/* Operational Action Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {/* View Detail Page */}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedOrderDetail(order)}
+                        className="py-2.5 px-3 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 font-bold text-xs flex items-center justify-center gap-1.5 transition border border-cyan-500/30 cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Fiche Mission</span>
+                      </button>
 
-                    {/* WhatsApp Client */}
-                    <a
-                      href={getCustomerWhatsAppUrl(order)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>WhatsApp Client</span>
-                    </a>
-                  </div>
+                      {/* GPS Route Link */}
+                      <a
+                        href={getGoogleMapsUrl(order.deliveryAddress)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 transition border border-slate-700"
+                      >
+                        <Navigation className="w-3.5 h-3.5" />
+                        <span>GPS Niamey</span>
+                      </a>
+
+                      {/* WhatsApp Client */}
+                      <a
+                        href={getCustomerWhatsAppUrl(order)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>WhatsApp</span>
+                      </a>
+                    </div>
 
                   {/* Main Deliver Action */}
                   <button
@@ -749,6 +774,35 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
           </div>
         )}
       </AnimatePresence>
+      {/* Driver Order Detail Modal */}
+      <DriverOrderDetailModal
+        isOpen={!!selectedOrderDetail}
+        order={selectedOrderDetail}
+        driver={{
+          id: activeCourier.id,
+          fullName: activeCourier.name,
+          phone: activeCourier.phone,
+          motoPlate: activeCourier.plate,
+          vehicle: activeCourier.vehicle,
+          status: activeCourier.status === "available" ? "available" : "busy",
+          currentZone: activeCourier.zone,
+          avatar: activeCourier.avatar,
+          rating: activeCourier.rating,
+          completedDeliveries: activeCourier.completedDeliveries,
+        }}
+        onClose={() => setSelectedOrderDetail(null)}
+        onPickup={(orderId) => {
+          onUpdateOrderStatus(orderId, "delivering");
+          setSelectedOrderDetail(null);
+          setActiveTab("active");
+          setAcceptedToast(`Course #${orderId} acceptée !`);
+          setTimeout(() => setAcceptedToast(null), 5000);
+        }}
+        onDeliver={(ord) => {
+          setSelectedOrderDetail(null);
+          setPaymentCollectModalOrder(ord);
+        }}
+      />
     </div>
   );
 };
