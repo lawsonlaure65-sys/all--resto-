@@ -911,6 +911,7 @@ export function App() {
             orders={orders}
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onCreateTestOrder={handleCreateTestOrder}
+            onExitToClient={() => setCurrentRole("client")}
           />
         )}
 
@@ -1288,6 +1289,7 @@ export function App() {
         onOpenChefAI={() => setIsChefAIOpen(true)}
         onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
         onOpenLogoModal={() => setIsLogoModalOpen(true)}
+        onChangeRole={setCurrentRole}
       />
 
       {/* Responsive Mobile Bottom Navigation Bar */}

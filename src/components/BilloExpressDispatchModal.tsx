@@ -32,6 +32,19 @@ interface CourierDriver {
 
 export const BILLO_COURIERS: CourierDriver[] = [
   {
+    id: "courier-issoufou",
+    name: "Issoufou Moussa",
+    phone: "+22799000000",
+    whatsapp: "22799000000",
+    zone: "Plateau & Ministères (Secteur 1)",
+    vehicle: "Moto 125cc",
+    plate: "MTO-001",
+    rating: 5.0,
+    completedDeliveries: 450,
+    status: "available",
+    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80",
+  },
+  {
     id: "courier-1",
     name: "Oumarou Diallo",
     phone: "+22790112233",

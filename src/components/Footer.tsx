@@ -17,6 +17,8 @@ import {
 import { ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { BrandLogo } from "./BrandLogo";
 import { BilloExpressLogo } from "./BilloExpressLogo";
+import { UserRole } from "../types";
+import { Bike, Store } from "lucide-react";
 
 interface FooterProps {
   onOpenPartnerModal: () => void;
@@ -27,6 +29,7 @@ interface FooterProps {
   onOpenChefAI?: () => void;
   onOpenDistrictsDirectory?: () => void;
   onOpenLogoModal?: () => void;
+  onChangeRole?: (role: UserRole) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -38,6 +41,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenChefAI,
   onOpenDistrictsDirectory,
   onOpenLogoModal,
+  onChangeRole,
 }) => {
   return (
     <footer className="bg-slate-950 border-t border-slate-800 text-slate-400 text-xs">
@@ -143,9 +147,14 @@ export const Footer: React.FC<FooterProps> = ({
                 </button>
               </li>
               <li>
-                <span className="text-slate-300">
-                  🛵 Livraison Express Billo Express ({ALLORESTO_BRAND_INFO.deliveryPartner.contact})
-                </span>
+                <button
+                  type="button"
+                  onClick={() => onChangeRole && onChangeRole("courier")}
+                  className="text-cyan-400 font-bold hover:underline cursor-pointer text-left flex items-center gap-1.5"
+                >
+                  <Bike className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Espace Livreur Billo Express ({ALLORESTO_BRAND_INFO.deliveryPartner.contact})</span>
+                </button>
               </li>
               <li>
                 <span className="text-slate-300">
@@ -154,10 +163,12 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <button
-                  onClick={onOpenPartnerModal}
-                  className="text-emerald-400 font-bold hover:underline cursor-pointer text-left"
+                  type="button"
+                  onClick={() => onChangeRole && onChangeRole("restaurant")}
+                  className="text-emerald-400 font-bold hover:underline cursor-pointer text-left flex items-center gap-1.5"
                 >
-                  🏪 Rejoindre comme Restaurant Partenaire
+                  <Store className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Espace Restaurant Partenaire</span>
                 </button>
               </li>
             </ul>

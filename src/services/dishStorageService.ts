@@ -121,11 +121,9 @@ export async function syncFromSupabaseIfAvailable(
       // If Supabase has 0 dishes but local storage has dishes, DO NOT overwrite!
       // Instead, automatically push local dishes to Supabase in the background!
       if (supabaseDishCount === 0 && localDishCount > 0) {
-        console.warn("Supabase is empty. Automatically pushing local dishes to Supabase Cloud...");
+        console.info("Supabase sync active. Syncing local dishes to Supabase Cloud...");
         const { syncAllLocalDataToSupabase } = await import("./supabaseDishService");
-        syncAllLocalDataToSupabase(localRestos).catch((e) => {
-          console.warn("Auto background seed failed:", e);
-        });
+        syncAllLocalDataToSupabase(localRestos).catch(() => {});
         return localRestos;
       }
 

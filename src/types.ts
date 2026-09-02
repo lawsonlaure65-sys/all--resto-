@@ -115,7 +115,7 @@ export interface LocalPaymentOption {
   badge?: string;
 }
 
-export type OrderStatus = "received" | "preparing" | "delivering" | "delivered" | "cancelled";
+export type OrderStatus = "received" | "preparing" | "ready" | "delivering" | "delivered" | "cancelled";
 
 export interface Order {
   id: string;
@@ -286,4 +286,29 @@ export interface BlogPost {
   author: string;
   date: string;
   image: string;
+}
+
+export interface DriverProfile {
+  id: string;
+  fullName: string;
+  phone: string;
+  motoPlate: string;
+  vehicle: string;
+  status: "available" | "busy" | "offline";
+  currentZone: string;
+  avatar?: string;
+  rating?: number;
+  completedDeliveries?: number;
+}
+
+export interface DriverAssignment {
+  id: string;
+  driverId: string;
+  orderId: string;
+  restaurantOrderId?: string;
+  status: "available" | "accepted" | "picked_up" | "delivered" | "cancelled";
+  acceptedAt?: string;
+  pickedUpAt?: string;
+  deliveredAt?: string;
+  createdAt: string;
 }
