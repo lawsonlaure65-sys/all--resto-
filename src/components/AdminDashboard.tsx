@@ -831,22 +831,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   { delivery_district: "Koira Kano & Koira Tégui", total_orders: 38, total_revenue: 3420000 },
                   { delivery_district: "Yantala & Goudel", total_orders: 28, total_revenue: 2310000 },
                   { delivery_district: "Harobanda & Rive Droite", total_orders: 16, total_revenue: 1450000 },
-                ]).map((z, idx) => (
-                  <div key={idx} className="p-3 rounded-2xl bg-slate-950 border border-slate-800/80 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center font-black text-[10px]">
-                        {idx + 1}
+                ]).map((z, idx) => {
+                  const zoneTitle = z.zone_name || z.delivery_district || (z.zone_id ? `Zone ${z.zone_id}` : z.delivery_zone_id ? `Zone ${z.delivery_zone_id}` : `Secteur ${idx + 1}`);
+                  return (
+                    <div key={idx} className="p-3 rounded-2xl bg-slate-950 border border-slate-800/80 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center font-black text-[10px]">
+                          {idx + 1}
+                        </div>
+                        <span className="font-bold text-white">{zoneTitle}</span>
                       </div>
-                      <span className="font-bold text-white">{z.delivery_district}</span>
+                      <div className="text-right">
+                        <span className="font-mono text-emerald-400 font-bold block">
+                          {(z.total_revenue || 0).toLocaleString()} FCFA
+                        </span>
+                        <span className="text-[10px] text-slate-400">{z.total_orders} livraisons</span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="font-mono text-emerald-400 font-bold block">
-                        {(z.total_revenue || 0).toLocaleString()} FCFA
-                      </span>
-                      <span className="text-[10px] text-slate-400">{z.total_orders} livraisons</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

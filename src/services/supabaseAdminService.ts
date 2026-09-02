@@ -17,7 +17,10 @@ export interface AdminRestaurantStat {
 }
 
 export interface AdminZoneStat {
-  delivery_district: string;
+  zone_id?: string;
+  zone_name?: string;
+  delivery_zone_id?: string;
+  delivery_district?: string;
   total_orders: number;
   total_revenue: number;
 }
