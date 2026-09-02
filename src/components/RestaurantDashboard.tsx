@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Store,
@@ -33,10 +33,18 @@ import {
   EyeOff,
   ShieldCheck,
   RefreshCw,
+  Printer,
+  Bell,
+  BellRing,
+  Send,
+  Receipt,
 } from "lucide-react";
 import { Order, Restaurant, MenuItem, OrderStatus } from "../types";
 import { RESTAURANTS_DATA } from "../data/allorestoData";
 import { DishManagementModal } from "./DishManagementModal";
+import { KitchenThermalTicketModal } from "./KitchenThermalTicketModal";
+import { BilloExpressDispatchModal } from "./BilloExpressDispatchModal";
+import { playKitchenOrderChime } from "../services/kitchenAudioService";
 import { sendOrderConfirmationWhatsApp } from "../utils/whatsappNotifications";
 import { KitchenWhatsAppHub } from "./KitchenWhatsAppHub";
 import {
@@ -85,6 +93,15 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
   const [isRestaurantOpen, setIsRestaurantOpen] = useState(true);
   const [soundAlerts, setSoundAlerts] = useState(true);
 
+  // Thermal Ticket & Courier Dispatch Modals
+  const [ticketModalOrder, setTicketModalOrder] = useState<Order | null>(null);
+  const [dispatchModalOrder, setDispatchModalOrder] = useState<Order | null>(null);
+  const [newOrderAlertBanner, setNewOrderAlertBanner] = useState<string | null>(null);
+
+  // Track known order IDs to play audio alerts only on genuinely new orders
+  const knownOrderIdsRef = useRef<Set<string>>(new Set());
+  const isInitialLoadRef = useRef<boolean>(true);
+
   // Refresh orders from Supabase
   const refreshSupabaseOrders = async () => {
     setIsLoadingSupabase(true);
@@ -95,12 +112,31 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
       );
       if (fetched && fetched.length > 0) {
         setSupabaseOrders(fetched);
+
+        // Check if there are newly arrived incoming orders
+        const currentIds = new Set(fetched.map((o) => o.id));
+        if (!isInitialLoadRef.current && soundAlerts) {
+          const hasNew = fetched.some((o) => !knownOrderIdsRef.current.has(o.id));
+          if (hasNew) {
+            playKitchenOrderChime();
+            const newest = fetched[0];
+            setNewOrderAlertBanner(`Nouvelle commande #${newest.id} de ${newest.customerName} (${newest.total.toLocaleString()} FCFA) !`);
+            setTimeout(() => setNewOrderAlertBanner(null), 8000);
+          }
+        }
+        knownOrderIdsRef.current = currentIds;
+        isInitialLoadRef.current = false;
       }
     } catch (e) {
       console.warn("Could not fetch Supabase orders:", e);
     } finally {
       setIsLoadingSupabase(false);
     }
+  };
+
+  // Sound Bell Test
+  const handleTestKitchenChime = () => {
+    playKitchenOrderChime();
   };
 
   // Poll Supabase orders on mount or when session changes
@@ -251,6 +287,27 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
     );
     if (session) {
       await syncOrderStatusToSupabase(orderId, session.restaurantId, nextStatus);
+    }
+  };
+
+  // Handle Billo Express Courier Assignment
+  const handleAssignCourier = async (orderId: string, courierName: string, courierPhone: string) => {
+    onUpdateOrderStatus(orderId, "delivering");
+    setSupabaseOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              orderStatus: "delivering",
+              courierName,
+              courierPhone,
+              deliveryPartner: "Billo Express Niamey 🏍️",
+            }
+          : o
+      )
+    );
+    if (session) {
+      await syncOrderStatusToSupabase(orderId, session.restaurantId, "ready");
     }
   };
 
@@ -445,6 +502,16 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <button
             type="button"
+            onClick={handleTestKitchenChime}
+            title="Tester le carillon sonore de la cuisine"
+            className="px-3 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <BellRing className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Tester Sonnette 🔔</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setSoundAlerts(!soundAlerts)}
             title={soundAlerts ? "Sonnerie active" : "Sonnerie coupée"}
             className={`p-2.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
@@ -479,6 +546,33 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
           </button>
         </div>
       </div>
+
+      {/* New Order Alert Live Notification Banner */}
+      <AnimatePresence>
+        {newOrderAlertBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            className="p-4 rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-red-600 text-slate-950 font-black text-sm flex items-center justify-between shadow-2xl shadow-orange-500/40 border border-orange-300 animate-pulse"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🔔</span>
+              <div>
+                <p className="text-white font-black text-sm tracking-wide">NOUVELLE COMMANDE REÇUE EN CUISINE !</p>
+                <p className="text-orange-100 font-semibold text-xs">{newOrderAlertBanner}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setNewOrderAlertBanner(null)}
+              className="px-3 py-1 bg-black/40 hover:bg-black/60 text-white rounded-lg text-xs cursor-pointer"
+            >
+              Fermer
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* KPI Stats Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -738,6 +832,30 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                   {/* Dynamic WhatsApp Communication Hub Cuisine ↔ Client */}
                   <KitchenWhatsAppHub order={order} mode="kitchen" />
 
+                  {/* Assigned Courier Banner if active */}
+                  {order.courierName && (
+                    <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <Bike className="w-4 h-4 text-cyan-400" />
+                        <div>
+                          <span className="text-[10px] text-cyan-300 font-bold uppercase block">
+                            Coursier Assigné :
+                          </span>
+                          <strong className="text-white">{order.courierName}</strong>
+                        </div>
+                      </div>
+                      {order.courierPhone && (
+                        <a
+                          href={`tel:${order.courierPhone}`}
+                          className="px-2.5 py-1 rounded-xl bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 font-bold text-[11px] flex items-center gap-1 transition"
+                        >
+                          <Phone className="w-3 h-3" />
+                          <span>Appeler</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
+
                   {/* Action Buttons */}
                   <div className="pt-2 border-t border-slate-800 flex flex-wrap gap-2">
                     {order.orderStatus === "received" && (
@@ -745,10 +863,10 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                         <button
                           type="button"
                           onClick={() => handleStatusChange(order.id, "preparing")}
-                          className="flex-1 min-w-[180px] py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition"
+                          className="flex-1 min-w-[170px] py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition"
                         >
                           <ChefHat className="w-3.5 h-3.5" />
-                          <span>Accepter &amp; Lancer Préparation</span>
+                          <span>Accepter &amp; Cuisiner</span>
                         </button>
                         <button
                           type="button"
@@ -761,22 +879,54 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                     )}
 
                     {order.orderStatus === "preparing" && (
-                      <button
-                        type="button"
-                        onClick={() => handleStatusChange(order.id, "delivering")}
-                        className="flex-1 min-w-[200px] py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Commande Prête &bull; Remettre au livreur</span>
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleStatusChange(order.id, "delivering")}
+                          className="flex-1 min-w-[180px] py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Commande Prête</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDispatchModalOrder(order)}
+                          className="px-3 py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                          title="Assigner un coursier Billo Express"
+                        >
+                          <Bike className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Assigner Coursier</span>
+                        </button>
+                      </>
                     )}
 
                     {order.orderStatus === "delivering" && (
-                      <div className="flex-1 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 text-xs font-semibold text-center flex items-center justify-center gap-1.5">
-                        <Bike className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>En cours de livraison avec {order.courierName || "Livreur Billo Express"}</span>
-                      </div>
+                      <>
+                        <div className="flex-1 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 text-xs font-semibold text-center flex items-center justify-center gap-1.5">
+                          <Bike className="w-3.5 h-3.5 text-cyan-400" />
+                          <span className="truncate">En livraison : {order.courierName || "Billo Express"}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setDispatchModalOrder(order)}
+                          className="px-3 py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                          title="Changer de coursier"
+                        >
+                          <Bike className="w-3.5 h-3.5" />
+                        </button>
+                      </>
                     )}
+
+                    {/* Print Receipt Button */}
+                    <button
+                      type="button"
+                      onClick={() => setTicketModalOrder(order)}
+                      title="Imprimer le bon de commande / ticket de caisse"
+                      className="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Printer className="w-3.5 h-3.5 text-orange-400" />
+                      <span className="hidden sm:inline">Ticket</span>
+                    </button>
 
                     {/* Quick WhatsApp Notification */}
                     <button
@@ -786,7 +936,7 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                       className="px-3 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Notifier</span>
+                      <span className="hidden sm:inline">WhatsApp</span>
                     </button>
                   </div>
                 </div>
@@ -998,6 +1148,25 @@ CREATE TABLE IF NOT EXISTS public.restaurant_orders (
           }}
           onSaveDish={handleSaveDish}
           initialDish={editingDish}
+        />
+      )}
+
+      {/* Kitchen Thermal Receipt Print Modal */}
+      {ticketModalOrder && (
+        <KitchenThermalTicketModal
+          order={ticketModalOrder}
+          isOpen={!!ticketModalOrder}
+          onClose={() => setTicketModalOrder(null)}
+        />
+      )}
+
+      {/* Billo Express Courier Dispatch Modal */}
+      {dispatchModalOrder && (
+        <BilloExpressDispatchModal
+          order={dispatchModalOrder}
+          isOpen={!!dispatchModalOrder}
+          onClose={() => setDispatchModalOrder(null)}
+          onAssignCourier={handleAssignCourier}
         />
       )}
     </div>
