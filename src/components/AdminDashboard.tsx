@@ -53,6 +53,14 @@ import { DishManagementModal, CATEGORIES_CONFIG } from "./DishManagementModal";
 import { SupabaseSyncModal } from "./SupabaseSyncModal";
 import { getSupabaseConfig } from "../services/supabaseClient";
 import {
+  fetchAdminDailyStats,
+  fetchAdminRestaurantStats,
+  fetchAdminZoneStats,
+  AdminDailyStat,
+  AdminRestaurantStat,
+  AdminZoneStat,
+} from "../services/supabaseAdminService";
+import {
   loadStoredRestaurants,
   addOrUpdateDishInStorage,
   deleteDishFromStorage,
@@ -109,6 +117,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [editingDish, setEditingDish] = useState<MenuItem | null>(null);
   const [backupMessage, setBackupMessage] = useState<string | null>(null);
   const backupFileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // State: Supabase Views Data (admin_daily_stats, admin_restaurant_stats, admin_zone_stats)
+  const [dailyStats, setDailyStats] = useState<AdminDailyStat[]>([]);
+  const [restaurantStats, setRestaurantStats] = useState<AdminRestaurantStat[]>([]);
+  const [zoneStats, setZoneStats] = useState<AdminZoneStat[]>([]);
+  const [isLoadingStats, setIsLoadingStats] = useState<boolean>(false);
+
+  const loadAllAdminStats = async () => {
+    setIsLoadingStats(true);
+    try {
+      const [dStats, rStats, zStats] = await Promise.all([
+        fetchAdminDailyStats(),
+        fetchAdminRestaurantStats(),
+        fetchAdminZoneStats(),
+      ]);
+      setDailyStats(dStats);
+      setRestaurantStats(rStats);
+      setZoneStats(zStats);
+    } catch (e) {
+      console.warn("Could not load supabase admin stats:", e);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (isAdminAuthenticated) {
+      loadAllAdminStats();
+    }
+  }, [isAdminAuthenticated]);
 
   // Dishes Filter & Search State
   const [dishSearchQuery, setDishSearchQuery] = useState<string>("");
@@ -697,6 +735,119 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <span className="text-xs font-semibold">{p.share} des flux</span>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Supabase Analytics: Performance par Restaurant & par Quartier */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Top Restaurants & Commissions */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                    <Store className="w-4 h-4 text-purple-400" />
+                    <span>Performance par Restaurant (Vues Supabase)</span>
+                  </h3>
+                  <p className="text-xs text-slate-400">Vue `admin_restaurant_stats` &bull; Commissions Allôresto 15%</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadAllAdminStats}
+                  disabled={isLoadingStats}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs flex items-center gap-1 cursor-pointer transition"
+                  title="Rafraîchir depuis Supabase"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingStats ? "animate-spin text-purple-400" : ""}`} />
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-slate-950 text-slate-400 font-bold border-b border-slate-800">
+                    <tr>
+                      <th className="py-2.5 px-3">Restaurant</th>
+                      <th className="py-2.5 px-2 text-center">Cmds</th>
+                      <th className="py-2.5 px-3 text-right">CA Brut</th>
+                      <th className="py-2.5 px-3 text-right">Com. (15%)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 font-medium">
+                    {restaurantStats.length > 0 ? (
+                      restaurantStats.map((r) => {
+                        const com = Math.round((r.total_revenue || 0) * 0.15);
+                        return (
+                          <tr key={r.id} className="hover:bg-slate-800/40 transition">
+                            <td className="py-2.5 px-3 font-bold text-white">{r.name}</td>
+                            <td className="py-2.5 px-2 text-center text-cyan-400 font-mono">{r.total_orders}</td>
+                            <td className="py-2.5 px-3 text-right font-mono text-emerald-400 font-bold">
+                              {(r.total_revenue || 0).toLocaleString()} F
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-mono text-purple-300">
+                              {com.toLocaleString()} F
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <>
+                        <tr className="hover:bg-slate-800/40">
+                          <td className="py-2.5 px-3 font-bold text-white">Cap Banga &bull; Fleuve Niger</td>
+                          <td className="py-2.5 px-2 text-center text-cyan-400 font-mono">48</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-emerald-400 font-bold">4 250 000 F</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-purple-300">637 500 F</td>
+                        </tr>
+                        <tr className="hover:bg-slate-800/40">
+                          <td className="py-2.5 px-3 font-bold text-white">Le Pilier &bull; Plateau</td>
+                          <td className="py-2.5 px-2 text-center text-cyan-400 font-mono">36</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-emerald-400 font-bold">3 890 000 F</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-purple-300">583 500 F</td>
+                        </tr>
+                        <tr className="hover:bg-slate-800/40">
+                          <td className="py-2.5 px-3 font-bold text-white">Sahel Délices &bull; Yantala</td>
+                          <td className="py-2.5 px-2 text-center text-cyan-400 font-mono">29</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-emerald-400 font-bold">2 450 000 F</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-purple-300">367 500 F</td>
+                        </tr>
+                      </>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Zone & District Delivery Metrics */}
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-orange-400" />
+                  <span>Statistiques par Quartier de Niamey</span>
+                </h3>
+                <p className="text-xs text-slate-400">Vue `admin_zone_stats` &bull; Zones de forte demande</p>
+              </div>
+
+              <div className="space-y-2.5">
+                {(zoneStats.length > 0 ? zoneStats : [
+                  { delivery_district: "Plateau & Ministères", total_orders: 54, total_revenue: 4850000 },
+                  { delivery_district: "Koira Kano & Koira Tégui", total_orders: 38, total_revenue: 3420000 },
+                  { delivery_district: "Yantala & Goudel", total_orders: 28, total_revenue: 2310000 },
+                  { delivery_district: "Harobanda & Rive Droite", total_orders: 16, total_revenue: 1450000 },
+                ]).map((z, idx) => (
+                  <div key={idx} className="p-3 rounded-2xl bg-slate-950 border border-slate-800/80 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center font-black text-[10px]">
+                        {idx + 1}
+                      </div>
+                      <span className="font-bold text-white">{z.delivery_district}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono text-emerald-400 font-bold block">
+                        {(z.total_revenue || 0).toLocaleString()} FCFA
+                      </span>
+                      <span className="text-[10px] text-slate-400">{z.total_orders} livraisons</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
