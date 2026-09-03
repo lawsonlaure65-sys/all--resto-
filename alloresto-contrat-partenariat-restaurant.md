@@ -87,15 +87,24 @@ ALLÔRESTO s'engage à :
 
 ## ARTICLE 5 : COMMISSIONS ET CONDITIONS FINANCIÈRES
 
-### 5.1. Taux de Commission
-En contrepartie des services d'intermédiation technologique, de marketing et de logistique, ALLÔRESTO perçoit une commission calculée sur le montant total Hors Taxe (HT) / TTC des commandes générées via la Plateforme (hors frais de livraison payés par le client final).
+### 5.1. Formule d'Abonnement Mensuel
+Le Restaurant Partenaire souscrit à la formule suivante :
+- **Forfait de Lancement (Mois 1 à 6) :** **75 000 FCFA / mois TTC** (au lieu de 100 000 FCFA).
+- **Forfait Post-Lancement (À partir du Mois 7) :** **100 000 FCFA / mois TTC**.
 
-Le taux de commission convenu entre les Parties est fixé à :  
-👉 **`[TAUX DE COMMISSION, ex: 15% / 18% / 20%]` % TTC** par commande validée et livrée.
+### 5.2. Taux de Commission sur les Commandes
+- **Période de Lancement (Mois 1 à 6) :** **0% de commission**. Le Restaurant Partenaire encaisse l'intégralité de la valeur de ses plats vendus.
+- **Période Post-Lancement (À partir du Mois 7) :** **10% de commission** sur le montant des commandes hors livraison.
 
-### 5.2. Frais d'adhésion et d'intégration
-- Frais d'activation technique & prise de photos professionnelles : `[OFFERTS / MONTANT FCFA]`
-- Pas de frais d'abonnement mensuel fixe (facturation au résultat sur les ventes réelles).
+### 5.3. Frais de Livraison & Logistique Billo Express
+- Les frais de livraison sont **intégralement pris en charge et payés par le client final** selon la grille kilométrique de Niamey :
+  - **1 000 FCFA** pour les quartiers proches (Plateau, Centre-Ville).
+  - **1 500 à 2 000 FCFA** pour les quartiers périphériques (Yantala, Koira Kano, Bobiel, Harobanda, Bassora, Francophonie).
+- Aucun coût de livraison n'est facturé au Restaurant Partenaire.
+
+### 5.4. Frais d'activation et matériel
+- Frais d'installation technique et intégration du menu : **OFFERTS** dans le cadre du lancement Sahel 2026.
+- Application de gestion de commandes sur smartphone / tablette : **Fournie gratuitement**.
 
 ---
 

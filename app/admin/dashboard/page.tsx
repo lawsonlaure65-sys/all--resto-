@@ -114,6 +114,30 @@ export default function AdminDashboardPage() {
             <p className="text-blue-100 text-xs">Tableau de bord Niamey (Temps Réel)</p>
           </div>
           <div className="flex items-center gap-3">
+            <a
+              href="/app/admin/restaurants"
+              className="bg-indigo-500 hover:bg-indigo-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+            >
+              <span>🍽️ Restaurants</span>
+            </a>
+            <a
+              href="/app/admin/contracts"
+              className="bg-rose-500 hover:bg-rose-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+            >
+              <span>📜 Contrat Partenaire</span>
+            </a>
+            <a
+              href="/app/admin/subscriptions"
+              className="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+            >
+              <span>💳 Abonnements</span>
+            </a>
+            <a
+              href="/app/admin/exports"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+            >
+              <span>📥 Exports & Historique</span>
+            </a>
             <span className="text-xs bg-blue-700/60 px-2.5 py-1 rounded-full text-blue-100 hidden sm:inline">
               {admin.email}
             </span>
