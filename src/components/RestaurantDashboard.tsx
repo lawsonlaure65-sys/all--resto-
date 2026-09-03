@@ -500,6 +500,22 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
 
         {/* Action Controls & Logout */}
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <a
+            href="/app/restaurant/plans"
+            className="px-3 py-2.5 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/40 text-orange-300 text-xs font-bold flex items-center gap-1.5 transition"
+            title="Consulter les formules d'adhésion et tarifs"
+          >
+            <span>💳 Formules &amp; Tarifs</span>
+          </a>
+
+          <a
+            href="/app/restaurant/contract"
+            className="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-bold flex items-center gap-1.5 transition"
+            title="Consulter le contrat de partenariat signé"
+          >
+            <span>📜 Contrat</span>
+          </a>
+
           <button
             type="button"
             onClick={handleTestKitchenChime}

@@ -185,15 +185,23 @@ export const PartnerRegistrationModal: React.FC<PartnerRegistrationModalProps> =
               </select>
             </div>
 
-            <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 text-[11px] text-slate-300 space-y-1">
+            <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 text-[11px] text-slate-300 space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-amber-400">✨ Forfait Lancement 2026 :</span>
-                <span className="font-mono text-emerald-400 font-bold">75 000 FCFA/mois (0% comm.)</span>
+                <span className="font-bold text-amber-400">✨ 2 Options Tarifaires au Choix :</span>
+                <span className="font-mono text-emerald-400 font-bold">50 000 à 150 000 FCFA/mois</span>
               </div>
               <p className="text-slate-400 leading-tight">
-                Flotte Billo Express incluse, marketing et application de commande.
-                Vous pourrez également <a href="/app/admin/contracts" target="_blank" rel="noreferrer" className="text-orange-400 underline hover:text-orange-300 font-semibold">consulter ou signer le contrat numérique ici</a>.
+                Option 1 (Tarif unique 75 000 FCFA à 0% comm.) ou Option 2 (3 formules au choix : Standard, Premium, VIP). Flotte Billo Express incluse.
               </p>
+              <div className="flex items-center gap-3 pt-1">
+                <a href="/app/restaurant/plans" target="_blank" rel="noreferrer" className="text-orange-400 underline hover:text-orange-300 font-bold">
+                  👉 Comparer les 2 options &amp; Formules
+                </a>
+                <span className="text-slate-600">&bull;</span>
+                <a href="/app/restaurant/contract" target="_blank" rel="noreferrer" className="text-slate-400 underline hover:text-white">
+                  Contrat complet
+                </a>
+              </div>
             </div>
 
             <button

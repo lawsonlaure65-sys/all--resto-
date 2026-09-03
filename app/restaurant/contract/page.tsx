@@ -286,11 +286,24 @@ export default function RestaurantContractPage() {
           </div>
 
           <div className="flex items-center gap-2.5">
+            <a
+              href="/app/restaurant/plans"
+              className="px-3.5 py-2 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/40 text-orange-300 text-xs font-bold transition flex items-center gap-1.5"
+            >
+              <span>💳 Comparer les 2 Options</span>
+            </a>
+            <a
+              href="/api/contract/pdf"
+              download="contrat-alloresto-restaurant.txt"
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5 border border-slate-700"
+            >
+              <span>📄 Télécharger Texte</span>
+            </a>
             <button
               onClick={handlePrint}
               className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5 border border-slate-700 cursor-pointer"
             >
-              <span>🖨️ Télécharger PDF</span>
+              <span>🖨️ Imprimer PDF</span>
             </button>
             <button
               onClick={handleGoToDashboard}

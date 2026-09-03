@@ -3,6 +3,7 @@ import path from "path";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+import { setupContractPdfRoute } from "./server/contractPdfRoute";
 
 dotenv.config();
 
@@ -10,6 +11,9 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json({ limit: "10mb" }));
+
+// Route téléchargement contrat
+setupContractPdfRoute(app);
 
 // Lazy-initialized Google Gen AI client
 function getGenAIClient(): GoogleGenAI | null {
