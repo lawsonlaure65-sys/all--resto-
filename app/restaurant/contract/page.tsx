@@ -9,11 +9,75 @@ export default function RestaurantContractPage() {
   const [selectedRestoId, setSelectedRestoId] = useState<string>('');
   const [managerName, setManagerName] = useState<string>('');
   const [managerPhone, setManagerPhone] = useState<string>('+227 ');
+  const [selectedPlan, setSelectedPlan] = useState<'standard' | 'premium' | 'vip'>('premium');
   const [accepted, setAccepted] = useState(false);
   const [acceptedLaunchTerms, setAcceptedLaunchTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [signed, setSigned] = useState(false);
   const [signedRecord, setSignedRecord] = useState<any>(null);
+
+  const plans = [
+    {
+      id: 'standard',
+      name: 'Standard (Starter)',
+      tag: 'Petits maquis & Fast-foods',
+      price: 50000,
+      commission: 15,
+      description: 'Idéal pour démarrer sans risque avec un budget maîtrisé.',
+      features: [
+        'Visibilité complète sur l’app Allôresto',
+        'Dashboard Cuisine & alertes commandes',
+        'Flotte de livraison Billo Express incluse',
+        'Frais de livraison payés par le client final',
+        'Commission : 15% par commande livrée',
+      ],
+      color: 'border-slate-700 bg-slate-900/60',
+      activeColor: 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500',
+      badge: 'Starter',
+      badgeClass: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
+    },
+    {
+      id: 'premium',
+      name: 'Premium (Populaire)',
+      tag: 'Restaurants établis (Plateau, Yantala)',
+      price: 75000,
+      commission: 10,
+      popular: true,
+      description: 'Le choix équilibré recommandé pour 65% des restaurants de Niamey.',
+      features: [
+        'Tout ce qui est inclus dans le Standard',
+        '⭐ Mise en avant dans les catégories & filtres',
+        '⭐ Bannières promotionnelles & notifications push',
+        '⭐ Support opérationnel prioritaire 7j/7',
+        'Commission réduite : 10% par commande livrée',
+      ],
+      color: 'border-amber-500/50 bg-amber-500/5',
+      activeColor: 'border-amber-500 bg-amber-500/15 ring-2 ring-amber-500',
+      badge: 'Recommandé 65%',
+      badgeClass: 'bg-amber-500 text-slate-950 font-black',
+    },
+    {
+      id: 'vip',
+      name: 'VIP / Traiteur',
+      tag: 'Grands restaurants, Hôtels & Traiteurs',
+      price: 150000,
+      commission: 0,
+      description: 'Pour gros volumes de vente : rentabilité maximale à 0% de prélèvement !',
+      features: [
+        'Tout ce qui est inclus dans le Premium',
+        '🌟 ZÉRO COMMISSION (0%) : Vous gardez 100% de vos ventes',
+        '🌟 Badge officiel "Restaurant Partenaire Certifié VIP"',
+        '🌟 Shooting photo pro de votre carte offert',
+        '🌟 Responsable de compte dédié Allôresto',
+      ],
+      color: 'border-purple-500/40 bg-purple-500/5',
+      activeColor: 'border-purple-500 bg-purple-500/15 ring-2 ring-purple-500',
+      badge: '0% Commission',
+      badgeClass: 'bg-purple-500/20 text-purple-300 border border-purple-500/30',
+    },
+  ];
+
+  const currentPlan = plans.find((p) => p.id === selectedPlan) || plans[1];
 
   useEffect(() => {
     // 1. Tenter de charger le restaurant connecté via localStorage
@@ -96,32 +160,33 @@ export default function RestaurantContractPage() {
       const signName = managerName || chosenResto?.name || 'Gérant Partenaire';
 
       if (supabase) {
-        // 1. Enregistrer la signature du contrat
+        // 1. Enregistrer la signature du contrat avec la formule choisie
         const { error: contractErr } = await supabase.from('restaurant_contracts').upsert({
           restaurant_id: targetId,
           contract_signed: true,
           signed_at: nowIso,
-          signed_by: `${signName} (Signé en ligne)`,
+          signed_by: `${signName} (Formule ${currentPlan.name})`,
           signed_ip: 'Niamey - Espace Cuisine Web',
-          version: '1.0-Lancement-Niamey-2026',
+          version: `2.0-${currentPlan.id.toUpperCase()}-2026`,
         });
 
         if (contractErr) {
           console.warn('Note contract insert:', contractErr.message);
         }
 
-        // 2. Créer l'abonnement initial (75 000 FCFA - Mois 1 à 6)
+        // 2. Créer l'abonnement initial selon la formule choisie
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + 1);
 
         await supabase.from('restaurant_subscriptions').insert({
           restaurant_id: targetId,
-          amount_xof: 75000,
+          amount_xof: currentPlan.price,
+          plan_type: selectedPlan,
+          commission_rate: currentPlan.commission,
           start_date: nowIso.split('T')[0],
           end_date: endDate.toISOString().split('T')[0],
           status: 'active',
           payment_date: nowIso.split('T')[0],
-          plan_type: 'launch_offer_6m',
           payment_method: 'mobile_money',
           auto_renew: true,
         });
@@ -133,12 +198,13 @@ export default function RestaurantContractPage() {
       setSignedRecord({
         restaurant_id: targetId,
         signed_by: signName,
+        plan: currentPlan,
         signed_at: nowIso,
-        ref: `ALLORESTO-NIAMEY-${Date.now().toString().slice(-6)}`,
+        ref: `ALLORESTO-${currentPlan.id.toUpperCase()}-${Date.now().toString().slice(-6)}`,
       });
 
       setSigned(true);
-      alert('✅ Contrat accepté avec succès ! Votre restaurant est activé sur Allôresto Niamey avec la formule de lancement à 75 000 FCFA.');
+      alert(`✅ Contrat accepté avec succès ! Votre restaurant est activé sur Allôresto Niamey avec la formule ${currentPlan.name} (${currentPlan.price.toLocaleString('fr-FR')} FCFA/mois).`);
     } catch (error: any) {
       console.error(error);
       alert("Erreur lors de l'acceptation du contrat : " + (error?.message || 'Vérifiez la connexion Supabase'));
@@ -172,15 +238,17 @@ export default function RestaurantContractPage() {
               Contrat Signé avec Succès ! 🎉
             </h1>
             <p className="text-slate-300 text-xs sm:text-sm mt-2 leading-relaxed">
-              Votre établissement est officiellement référencé sur <strong>Allôresto Niamey</strong> avec la logistique <strong>Billo Express</strong>.
+              Votre établissement est officiellement activé sur <strong>Allôresto Niamey</strong> avec la logistique <strong>Billo Express</strong>.
             </p>
           </div>
 
-          <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left font-mono text-xs space-y-1.5 text-slate-300">
+          <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left font-mono text-xs space-y-2 text-slate-300">
             <div><span className="text-slate-500">Signataire :</span> <strong className="text-white">{signedRecord?.signed_by || managerName || 'Gérant'}</strong></div>
-            <div><span className="text-slate-500">Formule :</span> <strong className="text-amber-400">Offre Lancement Sahel (75 000 FCFA/mois - 0% comm.)</strong></div>
+            <div><span className="text-slate-500">Formule souscrite :</span> <strong className="text-amber-400">{signedRecord?.plan?.name || currentPlan.name}</strong></div>
+            <div><span className="text-slate-500">Tarif Mensuel :</span> <span className="text-white font-bold">{signedRecord?.plan?.price?.toLocaleString('fr-FR') || currentPlan.price.toLocaleString('fr-FR')} FCFA / mois</span></div>
+            <div><span className="text-slate-500">Commission Commandes :</span> <span className="text-emerald-400 font-bold">{signedRecord?.plan?.commission ?? currentPlan.commission}%</span></div>
             <div><span className="text-slate-500">Statut :</span> <strong className="text-emerald-400">Actif &amp; Prêt à recevoir des commandes</strong></div>
-            <div><span className="text-slate-500">Date :</span> <span className="text-slate-300">{new Date(signedRecord?.signed_at || Date.now()).toLocaleDateString('fr-FR')}</span></div>
+            <div><span className="text-slate-500">Référence Certificat :</span> <span className="text-slate-400">{signedRecord?.ref || 'ALLORESTO-NIAMEY-2026'}</span></div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -188,7 +256,7 @@ export default function RestaurantContractPage() {
               onClick={handleGoToDashboard}
               className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs transition shadow-lg shadow-orange-500/20 cursor-pointer"
             >
-              🍳 Accéder à l'Espace Cuisine
+              🍳 Accéder au Dashboard Cuisine
             </button>
             <button
               onClick={handlePrint}
@@ -288,35 +356,103 @@ export default function RestaurantContractPage() {
             </div>
 
             <div>
-              <h3 className="font-bold text-white text-xs uppercase tracking-wider mb-1">ARTICLE 4 : CONDITIONS FINANCIÈRES (OPTION RECOMMANDÉE)</h3>
-              <div className="bg-slate-900 border border-amber-500/40 rounded-2xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-amber-400">📌 Offre de Lancement (Mois 1 à 6) :</span>
-                  <span className="text-xs font-mono font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">0% DE COMMISSION</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                    <div className="text-slate-400">Abonnement Mensuel Fixe :</div>
-                    <div className="text-white font-bold font-mono text-sm">75 000 FCFA / mois</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">(Au lieu de 100 000 FCFA)</div>
-                  </div>
-                  <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-                    <div className="text-slate-400">Commission sur les Ventes :</div>
-                    <div className="text-emerald-400 font-bold font-mono text-sm">0 % (Zéro Prélèvement)</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">Vous gardez 100% du prix des plats</div>
-                  </div>
-                </div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-bold text-white text-xs uppercase tracking-wider">
+                  ARTICLE 4 : CHOIX DE LA FORMULE TARIFAIRE (3 NIVEAUX)
+                </h3>
+                <span className="text-[11px] text-amber-400 font-medium">
+                  👉 Cliquez sur la formule de votre choix
+                </span>
+              </div>
 
-                <div className="pt-2 border-t border-slate-800">
-                  <span className="text-xs font-bold text-slate-300">📌 Tarifs à partir du Mois 7 :</span>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Abonnement à <strong>100 000 FCFA / mois</strong> avec <strong>10% de commission</strong> sur les commandes.
-                  </p>
-                </div>
+              {/* Grille des 3 Formules Interactives */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {plans.map((p) => {
+                  const isSelected = selectedPlan === p.id;
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => setSelectedPlan(p.id as any)}
+                      className={`relative p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
+                        isSelected ? p.activeColor : `${p.color} hover:border-slate-600`
+                      }`}
+                    >
+                      {p.popular && (
+                        <div className="absolute -top-2.5 right-3 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow">
+                          ⭐ Le plus choisi (65%)
+                        </div>
+                      )}
 
-                <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-300">
-                  <strong>🛵 Frais de Livraison :</strong> 1 000 FCFA (Centre/Plateau) à 2 000 FCFA (Périphérie) intégralement payés par le client. Aucun coût de coursier pour le restaurant.
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${p.badgeClass}`}>
+                            {p.badge}
+                          </span>
+                          <input
+                            type="radio"
+                            name="selected_plan"
+                            checked={isSelected}
+                            onChange={() => setSelectedPlan(p.id as any)}
+                            className="text-orange-500 focus:ring-orange-500"
+                          />
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-black text-white">{p.name}</h4>
+                          <p className="text-[10px] text-slate-400">{p.tag}</p>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-800">
+                          <div className="text-lg font-black font-mono text-white">
+                            {p.price.toLocaleString('fr-FR')}{' '}
+                            <span className="text-xs font-normal text-slate-400">FCFA/mois</span>
+                          </div>
+                          <div className="text-xs font-bold text-emerald-400 font-mono mt-0.5">
+                            Commission : {p.commission}% {p.commission === 0 && '🎉 ZÉRO COMM.'}
+                          </div>
+                        </div>
+
+                        <p className="text-[11px] text-slate-300 leading-snug pt-1">
+                          {p.description}
+                        </p>
+
+                        <ul className="space-y-1.5 text-[11px] text-slate-300 pt-2 border-t border-slate-800/80">
+                          {p.features.map((feat, idx) => (
+                            <li key={idx} className="flex items-start gap-1.5">
+                              <span className="text-emerald-400 shrink-0 font-bold">•</span>
+                              <span className="leading-tight">{feat}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="mt-3 pt-2">
+                        <div
+                          className={`w-full py-1.5 rounded-xl text-center text-xs font-bold transition ${
+                            isSelected
+                              ? 'bg-orange-500 text-slate-950 shadow'
+                              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                          }`}
+                        >
+                          {isSelected ? '✓ Formule Sélectionnée' : 'Choisir cette formule'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Remarque Frais de Livraison */}
+              <div className="mt-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-[11px] text-slate-300 flex items-center justify-between">
+                <div>
+                  <strong>🛵 Frais de Livraison Billo Express :</strong> 1 000 FCFA (Plateau/Centre) à 2 000 FCFA (Périphérie).
+                  <span className="text-slate-400 block sm:inline sm:ml-1">
+                    Intégralement payés par le client final à chaque commande.
+                  </span>
                 </div>
+                <span className="text-emerald-400 font-bold font-mono text-xs whitespace-nowrap ml-2">
+                  0 FCFA pour le restaurant
+                </span>
               </div>
             </div>
 
@@ -405,7 +541,7 @@ export default function RestaurantContractPage() {
                   className="mt-0.5 w-4 h-4 rounded text-orange-500 focus:ring-orange-500 bg-slate-950 border-slate-700"
                 />
                 <span>
-                  <strong>Je souscris à l'Offre de Lancement :</strong> Abonnement mensuel de <strong>75 000 FCFA</strong> avec <strong>0% de commission</strong> sur mes commandes pendant les 6 premiers mois.
+                  <strong>Je valide mon choix pour la Formule {currentPlan.name} :</strong> Abonnement mensuel de <strong>{currentPlan.price.toLocaleString('fr-FR')} FCFA</strong> avec <strong>{currentPlan.commission}% de commission</strong> sur mes commandes Allôresto.
                 </span>
               </label>
             </div>
@@ -416,7 +552,9 @@ export default function RestaurantContractPage() {
               disabled={loading || !accepted || !acceptedLaunchTerms}
               className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-sm shadow-xl shadow-orange-500/20 disabled:opacity-50 transition cursor-pointer"
             >
-              {loading ? 'Activation et signature en cours...' : '✅ Accepter, Signer et Activer mon Restaurant'}
+              {loading
+                ? 'Activation et signature en cours...'
+                : `✅ Signer et Activer mon Restaurant (${currentPlan.name} - ${currentPlan.price.toLocaleString('fr-FR')} FCFA)`}
             </button>
 
             <p className="text-[11px] text-slate-400 text-center">

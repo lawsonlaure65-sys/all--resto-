@@ -17,11 +17,20 @@ export default function ContractAcceptancePage() {
   const [managerName, setManagerName] = useState('');
   const [managerTitle, setManagerTitle] = useState('Gérant(e)');
   const [phone, setPhone] = useState('+227 ');
+  const [selectedPlan, setSelectedPlan] = useState<'standard' | 'premium' | 'vip'>('premium');
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptPayment, setAcceptPayment] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [signatureInfo, setSignatureInfo] = useState<any>(null);
+
+  const plans = [
+    { id: 'standard', name: 'Standard (Starter)', price: 50000, commission: 15, tag: 'Fast-foods & petits maquis' },
+    { id: 'premium', name: 'Premium (Populaire)', price: 75000, commission: 10, popular: true, tag: 'Restaurants établis (Plateau, Yantala)' },
+    { id: 'vip', name: 'VIP / Traiteur', price: 150000, commission: 0, tag: 'Grands restaurants & hôtels (0% commission)' },
+  ];
+
+  const currentPlan = plans.find((p) => p.id === selectedPlan) || plans[1];
 
   useEffect(() => {
     async function loadRestos() {
@@ -60,9 +69,9 @@ export default function ContractAcceptancePage() {
           restaurant_id: selectedRestaurantId,
           contract_signed: true,
           signed_at: signDate,
-          signed_by: `${managerName} (${managerTitle})`,
+          signed_by: `${managerName} (${managerTitle} - Formule ${currentPlan.name})`,
           signed_ip: 'En ligne (Allôresto Portal Niamey)',
-          version: '1.0-Lancement-2026',
+          version: `2.0-${currentPlan.id.toUpperCase()}-2026`,
         });
 
         // Activer ou mettre à jour l'onboarding
@@ -73,6 +82,23 @@ export default function ContractAcceptancePage() {
           manager_name: managerName,
           manager_phone: phone,
           reviewed_at: signDate,
+        });
+
+        // Créer l'abonnement selon la formule choisie
+        const endDate = new Date();
+        endDate.setMonth(endDate.getMonth() + 1);
+
+        await supabase.from('restaurant_subscriptions').insert({
+          restaurant_id: selectedRestaurantId,
+          amount_xof: currentPlan.price,
+          plan_type: selectedPlan,
+          commission_rate: currentPlan.commission,
+          start_date: signDate.split('T')[0],
+          end_date: endDate.toISOString().split('T')[0],
+          status: 'active',
+          payment_date: signDate.split('T')[0],
+          payment_method: 'mobile_money',
+          auto_renew: true,
         });
 
         // Activer le restaurant s'il était inactif
@@ -86,8 +112,9 @@ export default function ContractAcceptancePage() {
         restaurantName: selectedResto?.name || 'Restaurant Partenaire',
         managerName,
         managerTitle,
+        plan: currentPlan,
         signedAt: new Date().toLocaleString('fr-FR'),
-        ref: `ALLORESTO-SIGN-${Date.now().toString().slice(-6)}`,
+        ref: `ALLORESTO-${currentPlan.id.toUpperCase()}-${Date.now().toString().slice(-6)}`,
       });
 
       setIsSigned(true);
@@ -157,7 +184,7 @@ export default function ContractAcceptancePage() {
               <div className="text-slate-400">Réf. Contrat : <span className="text-amber-400">{signatureInfo?.ref}</span></div>
               <div className="text-slate-400">Signataire : <span className="text-white">{signatureInfo?.managerName} ({signatureInfo?.managerTitle})</span></div>
               <div className="text-slate-400">Date/Heure : <span className="text-white">{signatureInfo?.signedAt}</span></div>
-              <div className="text-slate-400">Formule : <span className="text-emerald-400 font-bold">Lancement 6 mois (75 000 FCFA - 0% comm.)</span></div>
+              <div className="text-slate-400">Formule : <span className="text-emerald-400 font-bold">{signatureInfo?.plan?.name || currentPlan.name} ({signatureInfo?.plan?.price?.toLocaleString('fr-FR') || currentPlan.price.toLocaleString('fr-FR')} FCFA - {signatureInfo?.plan?.commission ?? currentPlan.commission}% comm.)</span></div>
             </div>
 
             <div className="flex flex-wrap justify-center gap-3 pt-2">
@@ -228,12 +255,22 @@ export default function ContractAcceptancePage() {
               </div>
 
               <div>
-                <h3 className="font-bold text-white uppercase text-xs tracking-wider mb-2">ARTICLE 3 : CONDITIONS FINANCIÈRES &amp; TARIFS</h3>
-                <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-800 space-y-1 text-xs">
-                  <div><strong>1. Forfait de Lancement (Mois 1 à 6) :</strong> 75 000 FCFA / mois TTC.</div>
-                  <div><strong>2. Commission sur Commandes :</strong> 0% de prélèvement pendant les 6 premiers mois (le restaurant conserve 100% de la valeur des plats).</div>
-                  <div><strong>3. Période Post-Lancement (À partir du Mois 7) :</strong> 100 000 FCFA / mois et 10% de commission sur les commandes.</div>
-                  <div><strong>4. Frais de Livraison :</strong> Réglés directement par le client final (1 000 à 2 000 FCFA selon le quartier).</div>
+                <h3 className="font-bold text-white uppercase text-xs tracking-wider mb-2">ARTICLE 3 : CONDITIONS FINANCIÈRES &amp; TARIFS (3 NIVEAUX)</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  {plans.map((p) => (
+                    <div key={p.id} className="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-1">
+                      <div className="font-bold text-white text-xs flex items-center justify-between">
+                        <span>{p.name}</span>
+                        {p.popular && <span className="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">Populaire</span>}
+                      </div>
+                      <div className="text-orange-400 font-mono font-bold">{p.price.toLocaleString('fr-FR')} FCFA/mois</div>
+                      <div className="text-emerald-400 text-[11px] font-mono">Commission : {p.commission}%</div>
+                      <div className="text-[10px] text-slate-400">{p.tag}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 text-[11px] text-slate-400">
+                  🛵 <strong>Frais de livraison Billo Express :</strong> 1 000 à 2 000 FCFA intégralement payés par le client à chaque commande. 0 FCFA pour le restaurant.
                 </div>
               </div>
 
@@ -323,6 +360,42 @@ export default function ContractAcceptancePage() {
                 </div>
               </div>
 
+              {/* Sélection de la formule */}
+              <div className="space-y-2 pt-2 border-t border-slate-700/60">
+                <label className="block font-bold text-slate-300 text-xs">Formule d'abonnement choisie *</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {plans.map((p) => {
+                    const isSelected = selectedPlan === p.id;
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => setSelectedPlan(p.id as any)}
+                        className={`p-3 rounded-xl border text-xs cursor-pointer transition ${
+                          isSelected
+                            ? 'bg-orange-500/10 border-orange-500 text-white'
+                            : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-600'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between font-bold">
+                          <span>{p.name}</span>
+                          <input
+                            type="radio"
+                            name="contract_plan"
+                            checked={isSelected}
+                            onChange={() => setSelectedPlan(p.id as any)}
+                            className="text-orange-500 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div className="text-orange-400 font-mono font-bold mt-1">
+                          {p.price.toLocaleString('fr-FR')} FCFA/mois
+                        </div>
+                        <div className="text-[11px] text-emerald-400 font-mono">Commission : {p.commission}%</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Checkboxes d'engagement */}
               <div className="space-y-3 pt-2 text-xs text-slate-300 border-t border-slate-700/60">
                 <label className="flex items-start gap-3 cursor-pointer">
@@ -348,8 +421,8 @@ export default function ContractAcceptancePage() {
                     className="mt-0.5 w-4 h-4 rounded text-orange-500 focus:ring-orange-500 bg-slate-900 border-slate-700"
                   />
                   <span>
-                    Je valide la formule de lancement : <strong>75 000 FCFA / mois</strong> avec <strong>0% de commission</strong> sur
-                    les commandes pour les 6 premiers mois.
+                    Je valide la formule <strong>{currentPlan.name}</strong> : <strong>{currentPlan.price.toLocaleString('fr-FR')} FCFA / mois</strong> avec <strong>{currentPlan.commission}% de commission</strong> sur
+                    les commandes Allôresto.
                   </span>
                 </label>
               </div>
