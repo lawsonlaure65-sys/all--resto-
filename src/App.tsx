@@ -34,6 +34,9 @@ import { OrderHistoryModal } from "./components/OrderHistoryModal";
 import { MarketingAIModal } from "./components/MarketingAIModal";
 import { WhatsAppAutomationModal } from "./components/WhatsAppAutomationModal";
 import { DynamicFaqModal } from "./components/DynamicFaqModal";
+import { HowItWorksModal } from "./components/HowItWorksModal";
+import RestaurantPlansPage from "../app/restaurant/plans/page";
+import RestaurantContractPage from "../app/restaurant/contract/page";
 import { VisualNotificationToast, ToastNotification } from "./components/VisualNotificationToast";
 import { Footer } from "./components/Footer";
 import { ReceiptTicketModal } from "./components/ReceiptTicketModal";
@@ -210,6 +213,23 @@ export function App() {
   const [isMarketingAIOpen, setIsMarketingAIOpen] = useState<boolean>(false);
   const [isWhatsAppAutomationOpen, setIsWhatsAppAutomationOpen] = useState<boolean>(false);
   const [isFaqOpen, setIsFaqOpen] = useState<boolean>(false);
+  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState<boolean>(false);
+  const [isPlansOpen, setIsPlansOpen] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      return path.includes("/restaurant/plans") || params.get("view") === "plans" || params.get("page") === "plans";
+    }
+    return false;
+  });
+  const [isContractOpen, setIsContractOpen] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      return path.includes("/restaurant/contract") || params.get("view") === "contract" || params.get("page") === "contract";
+    }
+    return false;
+  });
   const [isSpecialShareOpen, setIsSpecialShareOpen] = useState<boolean>(false);
   const [selectedSpecialForShare, setSelectedSpecialForShare] = useState<DailySpecial | null>(null);
 
@@ -567,6 +587,9 @@ export function App() {
         onOpenMarketingAI={() => setIsMarketingAIOpen(true)}
         onOpenWhatsAppAutomation={() => setIsWhatsAppAutomationOpen(true)}
         onOpenFaq={() => setIsFaqOpen(true)}
+        onOpenHowItWorks={() => setIsHowItWorksOpen(true)}
+        onOpenPlans={() => setIsPlansOpen(true)}
+        onOpenContract={() => setIsContractOpen(true)}
         soundEnabled={soundEnabled}
         onToggleSound={() => {
           setSoundEnabled((prev) => !prev);
@@ -900,6 +923,8 @@ export function App() {
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onExitToClient={() => setCurrentRole("client")}
             onCreateTestOrder={handleCreateTestOrder}
+            onOpenPlans={() => setIsPlansOpen(true)}
+            onOpenContract={() => setIsContractOpen(true)}
           />
         )}
 
@@ -1080,6 +1105,8 @@ export function App() {
       <PartnerRegistrationModal
         isOpen={isPartnerModalOpen}
         onClose={() => setIsPartnerModalOpen(false)}
+        onOpenPlans={() => setIsPlansOpen(true)}
+        onOpenContract={() => setIsContractOpen(true)}
       />
 
       {/* 11. Tech Pack & Supabase Architecture Modal */}
@@ -1225,7 +1252,63 @@ export function App() {
           setIsFaqOpen(false);
           setIsDistrictsModalOpen(true);
         }}
+        onOpenHowItWorks={() => {
+          setIsFaqOpen(false);
+          setIsHowItWorksOpen(true);
+        }}
       />
+
+      {/* 21b. Comment ça marche ? (Guide explicatif & onboarding complet) */}
+      <HowItWorksModal
+        isOpen={isHowItWorksOpen}
+        onClose={() => setIsHowItWorksOpen(false)}
+        onOpenPartnerModal={() => {
+          setIsHowItWorksOpen(false);
+          setIsPartnerModalOpen(true);
+        }}
+        onOpenPlans={() => {
+          setIsHowItWorksOpen(false);
+          setIsPlansOpen(true);
+        }}
+        onOpenCourierSpace={() => {
+          setIsHowItWorksOpen(false);
+          setCurrentRole("courier");
+        }}
+      />
+
+      {/* 21c. Formules & Grille Tarifaire Restaurant Partenaire */}
+      {isPlansOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950">
+          <RestaurantPlansPage
+            onClose={() => setIsPlansOpen(false)}
+            onOpenContract={() => {
+              setIsPlansOpen(false);
+              setIsContractOpen(true);
+            }}
+            onGoToDashboard={() => {
+              setIsPlansOpen(false);
+              setCurrentRole("restaurant");
+            }}
+          />
+        </div>
+      )}
+
+      {/* 21d. Contrat Partenaire Officiel Restaurant */}
+      {isContractOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950">
+          <RestaurantContractPage
+            onClose={() => setIsContractOpen(false)}
+            onOpenPlans={() => {
+              setIsContractOpen(false);
+              setIsPlansOpen(true);
+            }}
+            onGoToDashboard={() => {
+              setIsContractOpen(false);
+              setCurrentRole("restaurant");
+            }}
+          />
+        </div>
+      )}
 
       {/* 22. Commande Vocale Intelligente (Speech Recognition Niger) */}
       <VoiceOrderModal
@@ -1290,6 +1373,9 @@ export function App() {
         onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
         onOpenLogoModal={() => setIsLogoModalOpen(true)}
         onChangeRole={setCurrentRole}
+        onOpenHowItWorks={() => setIsHowItWorksOpen(true)}
+        onOpenPlans={() => setIsPlansOpen(true)}
+        onOpenContract={() => setIsContractOpen(true)}
       />
 
       {/* Responsive Mobile Bottom Navigation Bar */}

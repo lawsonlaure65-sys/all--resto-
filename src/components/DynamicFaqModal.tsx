@@ -112,6 +112,9 @@ interface DynamicFaqModalProps {
   onOpenGroupOrder?: () => void;
   onOpenCatering?: () => void;
   onOpenContact?: () => void;
+  onOpenDistrictsCalculator?: () => void;
+  onOpenHowItWorks?: () => void;
+  onOpenPlans?: () => void;
 }
 
 export const DynamicFaqModal: React.FC<DynamicFaqModalProps> = ({
@@ -121,6 +124,9 @@ export const DynamicFaqModal: React.FC<DynamicFaqModalProps> = ({
   onOpenGroupOrder,
   onOpenCatering,
   onOpenContact,
+  onOpenDistrictsCalculator,
+  onOpenHowItWorks,
+  onOpenPlans,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -222,6 +228,29 @@ export const DynamicFaqModal: React.FC<DynamicFaqModalProps> = ({
               </button>
             ))}
           </div>
+
+          {(onOpenHowItWorks || onOpenPlans) && (
+            <div className="flex items-center gap-2 pt-1">
+              {onOpenHowItWorks && (
+                <button
+                  type="button"
+                  onClick={onOpenHowItWorks}
+                  className="px-3 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>💡 Guide complet : Comment ça marche ?</span>
+                </button>
+              )}
+              {onOpenPlans && (
+                <button
+                  type="button"
+                  onClick={onOpenPlans}
+                  className="px-3 py-1 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 border border-orange-500/30 text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>💳 Formules &amp; Tarifs Restaurant</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* FAQ Accordions List */}

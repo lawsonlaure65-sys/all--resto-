@@ -6,11 +6,15 @@ import { X, Store, CheckCircle2, Phone, Mail, MapPin, Utensils, Send, ArrowRight
 interface PartnerRegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenPlans?: () => void;
+  onOpenContract?: () => void;
 }
 
 export const PartnerRegistrationModal: React.FC<PartnerRegistrationModalProps> = ({
   isOpen,
   onClose,
+  onOpenPlans,
+  onOpenContract,
 }) => {
   const [restaurantName, setRestaurantName] = useState("");
   const [managerName, setManagerName] = useState("");
@@ -194,13 +198,39 @@ export const PartnerRegistrationModal: React.FC<PartnerRegistrationModalProps> =
                 Option 1 (Tarif unique 75 000 FCFA à 0% comm.) ou Option 2 (3 formules au choix : Standard, Premium, VIP). Flotte Billo Express incluse.
               </p>
               <div className="flex items-center gap-3 pt-1">
-                <a href="/app/restaurant/plans" target="_blank" rel="noreferrer" className="text-orange-400 underline hover:text-orange-300 font-bold">
-                  👉 Comparer les 2 options &amp; Formules
-                </a>
+                {onOpenPlans ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenPlans();
+                    }}
+                    className="text-orange-400 underline hover:text-orange-300 font-bold cursor-pointer text-xs"
+                  >
+                    👉 Comparer les 2 options &amp; Formules
+                  </button>
+                ) : (
+                  <a href="/app/restaurant/plans" target="_blank" rel="noreferrer" className="text-orange-400 underline hover:text-orange-300 font-bold text-xs">
+                    👉 Comparer les 2 options &amp; Formules
+                  </a>
+                )}
                 <span className="text-slate-600">&bull;</span>
-                <a href="/app/restaurant/contract" target="_blank" rel="noreferrer" className="text-slate-400 underline hover:text-white">
-                  Contrat complet
-                </a>
+                {onOpenContract ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenContract();
+                    }}
+                    className="text-slate-400 underline hover:text-white cursor-pointer text-xs"
+                  >
+                    Contrat complet
+                  </button>
+                ) : (
+                  <a href="/app/restaurant/contract" target="_blank" rel="noreferrer" className="text-slate-400 underline hover:text-white text-xs">
+                    Contrat complet
+                  </a>
+                )}
               </div>
             </div>
 

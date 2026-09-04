@@ -30,6 +30,9 @@ interface FooterProps {
   onOpenDistrictsDirectory?: () => void;
   onOpenLogoModal?: () => void;
   onChangeRole?: (role: UserRole) => void;
+  onOpenHowItWorks?: () => void;
+  onOpenPlans?: () => void;
+  onOpenContract?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -42,6 +45,9 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenDistrictsDirectory,
   onOpenLogoModal,
   onChangeRole,
+  onOpenHowItWorks,
+  onOpenPlans,
+  onOpenContract,
 }) => {
   return (
     <footer className="bg-slate-950 border-t border-slate-800 text-slate-400 text-xs">
@@ -171,6 +177,39 @@ export const Footer: React.FC<FooterProps> = ({
                   <span>Espace Restaurant Partenaire</span>
                 </button>
               </li>
+              {onOpenHowItWorks && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={onOpenHowItWorks}
+                    className="text-amber-300 hover:text-white font-bold cursor-pointer text-left flex items-center gap-1.5 transition"
+                  >
+                    <span>💡 Comment ça marche ? (Guide complet)</span>
+                  </button>
+                </li>
+              )}
+              {onOpenPlans && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={onOpenPlans}
+                    className="text-orange-400 hover:text-orange-300 font-bold cursor-pointer text-left flex items-center gap-1.5 transition"
+                  >
+                    <span>💳 Formules &amp; Tarifs Restaurant</span>
+                  </button>
+                </li>
+              )}
+              {onOpenContract && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={onOpenContract}
+                    className="text-slate-300 hover:text-white cursor-pointer text-left flex items-center gap-1.5 transition"
+                  >
+                    <span>📜 Contrat Partenaire &amp; Adhésion</span>
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 

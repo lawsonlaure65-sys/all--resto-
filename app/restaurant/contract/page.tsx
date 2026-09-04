@@ -3,7 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { getSupabaseClient } from '../../../src/services/supabaseClient';
 
-export default function RestaurantContractPage() {
+interface RestaurantContractPageProps {
+  onClose?: () => void;
+  onOpenPlans?: () => void;
+  onGoToDashboard?: () => void;
+}
+
+export default function RestaurantContractPage({
+  onClose,
+  onOpenPlans,
+  onGoToDashboard,
+}: RestaurantContractPageProps = {}) {
   const [restaurant, setRestaurant] = useState<any>(null);
   const [restaurantsList, setRestaurantsList] = useState<any[]>([]);
   const [selectedRestoId, setSelectedRestoId] = useState<string>('');
@@ -218,6 +228,14 @@ export default function RestaurantContractPage() {
   };
 
   const handleGoToDashboard = () => {
+    if (onClose) {
+      onClose();
+      return;
+    }
+    if (onGoToDashboard) {
+      onGoToDashboard();
+      return;
+    }
     if (typeof window !== 'undefined') {
       window.location.href = '/?role=restaurant';
     }
@@ -286,12 +304,22 @@ export default function RestaurantContractPage() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <a
-              href="/app/restaurant/plans"
-              className="px-3.5 py-2 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/40 text-orange-300 text-xs font-bold transition flex items-center gap-1.5"
-            >
-              <span>💳 Comparer les 2 Options</span>
-            </a>
+            {onOpenPlans ? (
+              <button
+                type="button"
+                onClick={onOpenPlans}
+                className="px-3.5 py-2 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/40 text-orange-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>💳 Comparer les 2 Options</span>
+              </button>
+            ) : (
+              <a
+                href="/app/restaurant/plans"
+                className="px-3.5 py-2 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/40 text-orange-300 text-xs font-bold transition flex items-center gap-1.5"
+              >
+                <span>💳 Comparer les 2 Options</span>
+              </a>
+            )}
             <a
               href="/api/contract/pdf"
               download="contrat-alloresto-restaurant.txt"
@@ -311,6 +339,16 @@ export default function RestaurantContractPage() {
             >
               Retour Cuisine
             </button>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition border border-slate-700 cursor-pointer"
+                title="Fermer cette page"
+              >
+                ✕ Fermer
+              </button>
+            )}
           </div>
         </header>
 

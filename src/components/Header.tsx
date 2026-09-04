@@ -28,6 +28,9 @@ import {
   MessageSquare,
   TrendingUp,
   Mic,
+  Info,
+  CreditCard,
+  FileText,
 } from "lucide-react";
 import { UserRole, ServiceMode, CityOption, UserProfile, AppLanguage } from "../types";
 import { CITIES_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
@@ -63,6 +66,9 @@ interface HeaderProps {
   onOpenMarketingAI?: () => void;
   onOpenWhatsAppAutomation?: () => void;
   onOpenFaq?: () => void;
+  onOpenHowItWorks?: () => void;
+  onOpenPlans?: () => void;
+  onOpenContract?: () => void;
   soundEnabled?: boolean;
   onToggleSound?: () => void;
   currentLanguage?: AppLanguage;
@@ -98,6 +104,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMarketingAI,
   onOpenWhatsAppAutomation,
   onOpenFaq,
+  onOpenHowItWorks,
+  onOpenPlans,
+  onOpenContract,
   soundEnabled = true,
   onToggleSound,
   currentLanguage = "fr",
@@ -247,6 +256,30 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <MessageSquare className="w-3 h-3 text-emerald-300" />
               <span className="hidden md:inline">WhatsApp Auto</span>
+            </button>
+          )}
+
+          {/* How it Works / Comment ça marche trigger */}
+          {onOpenHowItWorks && (
+            <button
+              onClick={onOpenHowItWorks}
+              className="text-[11px] font-extrabold text-amber-200 hover:text-white flex items-center gap-1 cursor-pointer bg-amber-950/60 hover:bg-amber-900/80 px-2 py-0.5 rounded-full border border-amber-400/40 transition-colors"
+              title="Guide : Comment ça marche pour clients, restaurants et livreurs"
+            >
+              <Info className="w-3 h-3 text-amber-300" />
+              <span>Comment ça marche</span>
+            </button>
+          )}
+
+          {/* Formules & Tarifs Restaurant trigger */}
+          {onOpenPlans && (
+            <button
+              onClick={onOpenPlans}
+              className="text-[11px] font-bold text-orange-200 hover:text-white flex items-center gap-1 cursor-pointer bg-orange-950/60 hover:bg-orange-900/80 px-2 py-0.5 rounded-full border border-orange-400/40 transition-colors hidden sm:flex"
+              title="Formules d'adhésion et tarifs restaurants partenaires"
+            >
+              <CreditCard className="w-3 h-3 text-orange-400" />
+              <span>Formules &amp; Tarifs</span>
             </button>
           )}
 
@@ -522,6 +555,50 @@ export const Header: React.FC<HeaderProps> = ({
                     </button>
                   );
                 })}
+
+                <div className="pt-1.5 mt-1.5 border-t border-slate-800 space-y-1">
+                  {onOpenHowItWorks && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenHowItWorks();
+                        setRoleDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs text-amber-300 hover:bg-slate-800/80 transition cursor-pointer font-bold"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                      <span>Comment ça marche</span>
+                    </button>
+                  )}
+
+                  {onOpenPlans && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenPlans();
+                        setRoleDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs text-orange-300 hover:bg-slate-800/80 transition cursor-pointer font-bold"
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>Formules &amp; Tarifs</span>
+                    </button>
+                  )}
+
+                  {onOpenContract && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenContract();
+                        setRoleDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs text-slate-300 hover:bg-slate-800/80 transition cursor-pointer"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Contrat Partenaire</span>
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>

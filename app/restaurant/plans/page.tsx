@@ -3,7 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { getSupabaseClient } from '../../../src/services/supabaseClient';
 
-export default function RestaurantPlansPage() {
+interface RestaurantPlansPageProps {
+  onClose?: () => void;
+  onOpenContract?: () => void;
+  onGoToDashboard?: () => void;
+}
+
+export default function RestaurantPlansPage({
+  onClose,
+  onOpenContract,
+  onGoToDashboard,
+}: RestaurantPlansPageProps = {}) {
   const [selectedOption, setSelectedOption] = useState<'simple' | 'tiers'>('tiers');
   const [selectedPlan, setSelectedPlan] = useState<'standard' | 'premium' | 'vip' | 'simple'>('premium');
   const [restaurantsList, setRestaurantsList] = useState<any[]>([]);
@@ -225,6 +235,14 @@ export default function RestaurantPlansPage() {
   };
 
   const handleGoToDashboard = () => {
+    if (onClose) {
+      onClose();
+      return;
+    }
+    if (onGoToDashboard) {
+      onGoToDashboard();
+      return;
+    }
     if (typeof window !== 'undefined') {
       window.location.href = '/?role=restaurant';
     }
@@ -293,18 +311,39 @@ export default function RestaurantPlansPage() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <a
-              href="/app/restaurant/contract"
-              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5 border border-slate-700"
-            >
-              <span>📜 Lire le Contrat Complet</span>
-            </a>
+            {onOpenContract ? (
+              <button
+                type="button"
+                onClick={onOpenContract}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5 border border-slate-700 cursor-pointer"
+              >
+                <span>📜 Lire le Contrat Complet</span>
+              </button>
+            ) : (
+              <a
+                href="/app/restaurant/contract"
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5 border border-slate-700"
+              >
+                <span>📜 Lire le Contrat Complet</span>
+              </a>
+            )}
             <button
+              type="button"
               onClick={handleGoToDashboard}
               className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 text-xs font-bold transition cursor-pointer"
             >
               Espace Cuisine
             </button>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition border border-slate-700 cursor-pointer"
+                title="Fermer cette page"
+              >
+                ✕ Fermer
+              </button>
+            )}
           </div>
         </header>
 
