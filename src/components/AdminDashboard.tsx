@@ -614,6 +614,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Quick links to Dedicated Admin Pages */}
+          <a
+            href="/app/admin/settings"
+            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition flex items-center gap-1.5"
+            title="Configuration NIF & Entreprise"
+          >
+            ⚙️ <span>Paramètres &amp; NIF</span>
+          </a>
+
+          <a
+            href="/app/admin/drivers"
+            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition flex items-center gap-1.5"
+            title="Gestion flotte livreurs"
+          >
+            🛵 <span>Livreurs</span>
+          </a>
+
+          <a
+            href="/app/admin/orders"
+            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition flex items-center gap-1.5"
+            title="Toutes les commandes"
+          >
+            📦 <span>Commandes</span>
+          </a>
+
           {onOpenTechPack && (
             <button
               onClick={onOpenTechPack}

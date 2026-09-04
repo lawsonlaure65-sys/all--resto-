@@ -704,3 +704,50 @@ values
   ('resto-gourmet-fleuve', 'gourmet@alloresto.ne', 'gourmet2026', 'Le Gourmet du Fleuve', 'Manager', true)
 on conflict (email) do nothing;
 
+-- ========================================================
+-- PARAMÈTRES DE L'APPLICATION & COORDONNÉES FISCALES (NIF)
+-- ========================================================
+create table if not exists public.app_settings (
+  id text primary key default 'main',
+  company_name text not null default 'Allôresto Niger SARL',
+  nif text not null default 'NIF-89210-NE',
+  rccm text default 'RCCM-NI-NIA-2026-B-1142',
+  address text default 'Plateau, Boulevard du 15 Avril, Niamey, Niger',
+  phone text default '+227 80 82 82 82',
+  email text default 'contact@alloresto.ne',
+  website text default 'www.alloresto.ne',
+  logo_url text,
+  default_commission_rate numeric(5,2) default 0,
+  delivery_base_fee numeric(10,2) default 1000,
+  currency text default 'FCFA',
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+alter table public.app_settings enable row level security;
+
+create policy "app_settings: public read"
+on public.app_settings for select to anon, authenticated
+using (true);
+
+create policy "app_settings: admin manage"
+on public.app_settings for all to anon, authenticated
+using (true) with check (true);
+
+-- Insertion des valeurs par défaut Niamey
+insert into public.app_settings (id, company_name, nif, rccm, address, phone, email, website)
+values (
+  'main',
+  'Allôresto Niger SARL',
+  'NIF-89210-NE',
+  'RCCM-NI-NIA-2026-B-1142',
+  'Plateau, Boulevard du 15 Avril, Niamey, Niger',
+  '+227 80 82 82 82',
+  'contact@alloresto.ne',
+  'www.alloresto.ne'
+)
+on conflict (id) do update set
+  company_name = excluded.company_name,
+  nif = excluded.nif,
+  updated_at = now();
+
+

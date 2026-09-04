@@ -326,6 +326,55 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
         </div>
 
+        {/* Direct Pages Quick Links Bar */}
+        <div className="py-6 border-t border-slate-900 grid grid-cols-2 sm:grid-cols-4 gap-4 text-[11px]">
+          <div>
+            <span className="font-bold text-slate-300 block mb-1.5 uppercase text-[10px] tracking-wider">
+              Espace Public
+            </span>
+            <ul className="space-y-1">
+              <li><a href="/app/menu" className="hover:text-orange-400 transition">📋 Carte des Plats</a></li>
+              <li><a href="/app/about" className="hover:text-orange-400 transition">🇳🇪 À propos d'Allôresto</a></li>
+              <li><a href="/app/contact" className="hover:text-orange-400 transition">📞 Contact &amp; Support</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <span className="font-bold text-orange-400 block mb-1.5 uppercase text-[10px] tracking-wider">
+              Espace Restaurant
+            </span>
+            <ul className="space-y-1">
+              <li><a href="/app/restaurant/dashboard" className="hover:text-white transition">🍳 Écran Cuisine Direct</a></li>
+              <li><a href="/app/restaurant/menu" className="hover:text-white transition">🥘 Gestion des Plats</a></li>
+              <li><a href="/app/restaurant/stats" className="hover:text-white transition">📊 Statistiques &amp; Ventes</a></li>
+              <li><a href="/app/restaurant/plans" className="hover:text-white transition">💳 Formules Partenaires</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <span className="font-bold text-cyan-400 block mb-1.5 uppercase text-[10px] tracking-wider">
+              Espace Coursier
+            </span>
+            <ul className="space-y-1">
+              <li><a href="/app/driver/dashboard" className="hover:text-white transition">🛵 Radar des Courses</a></li>
+              <li><a href="/app/driver/history" className="hover:text-white transition">💰 Gains &amp; Retraits</a></li>
+              <li><a href="/app/driver/login" className="hover:text-white transition">🔑 Connexion Coursier</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <span className="font-bold text-purple-400 block mb-1.5 uppercase text-[10px] tracking-wider">
+              Espace Administration
+            </span>
+            <ul className="space-y-1">
+              <li><a href="/app/admin/settings" className="hover:text-white transition">⚙️ Paramètres &amp; NIF</a></li>
+              <li><a href="/app/admin/drivers" className="hover:text-white transition">🛵 Flotte Livreurs</a></li>
+              <li><a href="/app/admin/orders" className="hover:text-white transition">📦 Toutes Commandes</a></li>
+              <li><a href="/app/admin/dashboard" className="hover:text-white transition">📈 Dashboard Admin</a></li>
+            </ul>
+          </div>
+        </div>
+
         {/* Bottom Bar */}
         <div className="pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
           <p>&copy; {new Date().getFullYear()} Allôresto Niger &bull; {ALLORESTO_BRAND_INFO.tagline}</p>

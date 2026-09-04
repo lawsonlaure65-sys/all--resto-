@@ -113,37 +113,55 @@ export default function AdminDashboardPage() {
             <h1 className="text-xl font-bold">Allôresto - Super Admin 🇳🇪</h1>
             <p className="text-blue-100 text-xs">Tableau de bord Niamey (Temps Réel)</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <a
               href="/app/admin/restaurants"
-              className="bg-indigo-500 hover:bg-indigo-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+              className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
             >
               <span>🍽️ Restaurants</span>
             </a>
             <a
-              href="/app/admin/contracts"
-              className="bg-rose-500 hover:bg-rose-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+              href="/app/admin/drivers"
+              className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
             >
-              <span>📜 Contrat Partenaire</span>
+              <span>🛵 Livreurs</span>
+            </a>
+            <a
+              href="/app/admin/orders"
+              className="bg-blue-800 hover:bg-blue-900 text-white px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+            >
+              <span>📦 Commandes</span>
             </a>
             <a
               href="/app/admin/subscriptions"
-              className="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+              className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
             >
               <span>💳 Abonnements</span>
             </a>
             <a
               href="/app/admin/exports"
-              className="bg-emerald-500 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
             >
-              <span>📥 Exports & Historique</span>
+              <span>📥 Exports</span>
             </a>
-            <span className="text-xs bg-blue-700/60 px-2.5 py-1 rounded-full text-blue-100 hidden sm:inline">
+            <a
+              href="/app/admin/settings"
+              className="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+            >
+              <span>⚙️ Paramètres</span>
+            </a>
+            <a
+              href="/app/admin/contracts"
+              className="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+            >
+              <span>📜 Contrat</span>
+            </a>
+            <span className="text-xs bg-blue-700/60 px-2.5 py-1 rounded-full text-blue-100 hidden lg:inline">
               {admin.email}
             </span>
             <button
               onClick={handleLogout}
-              className="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition"
+              className="bg-blue-700 hover:bg-blue-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs font-semibold cursor-pointer transition"
             >
               Déconnexion
             </button>
