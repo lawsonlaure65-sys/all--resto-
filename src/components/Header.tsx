@@ -157,68 +157,68 @@ export const Header: React.FC<HeaderProps> = ({
   const CurrentRoleIcon = currentRoleInfo.icon;
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-slate-100 shadow-xl">
-      {/* Top Banner for Partnership & Service Mode */}
-      <div className="bg-gradient-to-r from-orange-600 via-red-600 to-amber-600 px-4 py-1.5 text-xs text-white flex items-center justify-between">
-        <div className="flex items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
-          <span className="font-extrabold uppercase tracking-wider text-[10px] bg-black/30 px-2 py-0.5 rounded-full">
+    <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-slate-100 shadow-xl w-full max-w-full">
+      {/* 1. Top Banner for Brand Tagline & Language / Sound */}
+      <div className="bg-gradient-to-r from-orange-600 via-red-600 to-amber-600 px-3 sm:px-4 py-1 sm:py-1.5 text-xs text-white flex items-center justify-between w-full max-w-full overflow-hidden">
+        <div className="flex items-center gap-2 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+          <span className="font-extrabold uppercase tracking-wider text-[9px] sm:text-[10px] bg-black/30 px-2 py-0.5 rounded-full shrink-0">
             🔥 {ALLORESTO_BRAND_INFO.tagline}
           </span>
-          <span className="text-[11px] font-medium hidden sm:inline">
+          <span className="text-[11px] font-medium hidden md:inline truncate">
             Point de retrait : <strong>{ALLORESTO_BRAND_INFO.pickupLocation}</strong> &bull; Partenaire : <strong>Billo Express</strong>
           </span>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-            {/* Language Switcher Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/30 hover:bg-black/40 border border-white/25 text-white text-[11px] font-extrabold transition-colors cursor-pointer shadow-sm"
-                title="Changer de langue / Select language (Français, English, Haoussa, Zarma)"
-              >
-                <span>{currentLangObj.flag}</span>
-                <span className="font-bold">{currentLangObj.label}</span>
-                <ChevronDown className="w-3 h-3 opacity-70" />
-              </button>
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {/* Language Switcher Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-black/30 hover:bg-black/40 border border-white/25 text-white text-[10px] sm:text-[11px] font-extrabold transition-colors cursor-pointer shadow-sm"
+              title="Changer de langue / Select language (Français, English, Haoussa, Zarma)"
+            >
+              <span>{currentLangObj.flag}</span>
+              <span className="font-bold hidden sm:inline">{currentLangObj.label}</span>
+              <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-70" />
+            </button>
 
-              {langDropdownOpen && (
-                <div className="absolute right-0 mt-1.5 w-52 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-1">
-                  <div className="px-3 py-1 text-[10px] uppercase font-black tracking-wider text-slate-400 border-b border-slate-800 mb-1">
-                    Langues Disponibles 🇳🇪
-                  </div>
-                  {SUPPORTED_LANGUAGES.map((l) => (
-                    <button
-                      key={l.code}
-                      onClick={() => {
-                        if (onChangeLanguage) onChangeLanguage(l.code);
-                        setLangDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-colors cursor-pointer ${
-                        currentLanguage === l.code
-                          ? "bg-orange-500/20 text-orange-400 font-black border border-orange-500/30"
-                          : "text-slate-300 hover:text-white hover:bg-slate-800"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">{l.flag}</span>
-                        <div>
-                          <p className="font-bold leading-tight">{l.label}</p>
-                          <p className="text-[10px] text-slate-400">{l.native}</p>
-                        </div>
-                      </div>
-                      {currentLanguage === l.code && <Check className="w-3.5 h-3.5 text-orange-400" />}
-                    </button>
-                  ))}
+            {langDropdownOpen && (
+              <div className="absolute right-0 mt-1.5 w-52 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-1">
+                <div className="px-3 py-1 text-[10px] uppercase font-black tracking-wider text-slate-400 border-b border-slate-800 mb-1">
+                  Langues Disponibles 🇳🇪
                 </div>
-              )}
-            </div>
+                {SUPPORTED_LANGUAGES.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => {
+                      if (onChangeLanguage) onChangeLanguage(l.code);
+                      setLangDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-colors cursor-pointer ${
+                      currentLanguage === l.code
+                        ? "bg-orange-500/20 text-orange-400 font-black border border-orange-500/30"
+                        : "text-slate-300 hover:text-white hover:bg-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">{l.flag}</span>
+                      <div>
+                        <p className="font-bold leading-tight">{l.label}</p>
+                        <p className="text-[10px] text-slate-400">{l.native}</p>
+                      </div>
+                    </div>
+                    {currentLanguage === l.code && <Check className="w-3.5 h-3.5 text-orange-400" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-            {/* Sound Notification Toggle */}
+          {/* Sound Notification Toggle */}
           {onToggleSound && (
             <button
               onClick={onToggleSound}
-              className="text-[11px] font-bold text-white hover:text-amber-200 flex items-center gap-1 cursor-pointer bg-black/20 hover:bg-black/30 px-2 py-0.5 rounded-full border border-white/20 transition-colors"
+              className="text-[11px] font-bold text-white hover:text-amber-200 hidden sm:flex items-center gap-1 cursor-pointer bg-black/20 hover:bg-black/30 px-2 py-0.5 rounded-full border border-white/20 transition-colors"
               title={soundEnabled ? "Notifications sonores activées (Cliquer pour couper)" : "Notifications sonores coupées (Cliquer pour activer)"}
             >
               {soundEnabled ? (
@@ -235,79 +235,10 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Marketing AI quick trigger */}
-          {onOpenMarketingAI && (
-            <button
-              onClick={onOpenMarketingAI}
-              className="text-[11px] font-extrabold text-amber-200 hover:text-white flex items-center gap-1 cursor-pointer bg-amber-950/60 hover:bg-amber-900/80 px-2 py-0.5 rounded-full border border-amber-400/40 transition-colors"
-              title="Pilote Automatique Commercial & Campagnes Virales WhatsApp"
-            >
-              <TrendingUp className="w-3 h-3 text-amber-300" />
-              <span>IA Marketing</span>
-            </button>
-          )}
-
-          {/* WhatsApp Automation quick trigger */}
-          {onOpenWhatsAppAutomation && (
-            <button
-              onClick={onOpenWhatsAppAutomation}
-              className="text-[11px] font-extrabold text-emerald-200 hover:text-white flex items-center gap-1 cursor-pointer bg-emerald-950/60 hover:bg-emerald-900/80 px-2 py-0.5 rounded-full border border-emerald-400/40 transition-colors"
-              title="Centre d'Automatisation & Dispatch WhatsApp"
-            >
-              <MessageSquare className="w-3 h-3 text-emerald-300" />
-              <span className="hidden md:inline">WhatsApp Auto</span>
-            </button>
-          )}
-
-          {/* How it Works / Comment ça marche trigger */}
-          {onOpenHowItWorks && (
-            <button
-              onClick={onOpenHowItWorks}
-              className="text-[11px] font-extrabold text-amber-200 hover:text-white flex items-center gap-1 cursor-pointer bg-amber-950/60 hover:bg-amber-900/80 px-2 py-0.5 rounded-full border border-amber-400/40 transition-colors"
-              title="Guide : Comment ça marche pour clients, restaurants et livreurs"
-            >
-              <Info className="w-3 h-3 text-amber-300" />
-              <span>Comment ça marche</span>
-            </button>
-          )}
-
-          {/* Formules & Tarifs Restaurant trigger */}
-          {onOpenPlans && (
-            <button
-              onClick={onOpenPlans}
-              className="text-[11px] font-bold text-orange-200 hover:text-white flex items-center gap-1 cursor-pointer bg-orange-950/60 hover:bg-orange-900/80 px-2 py-0.5 rounded-full border border-orange-400/40 transition-colors hidden sm:flex"
-              title="Formules d'adhésion et tarifs restaurants partenaires"
-            >
-              <CreditCard className="w-3 h-3 text-orange-400" />
-              <span>Formules &amp; Tarifs</span>
-            </button>
-          )}
-
-          {/* Dynamic FAQ trigger */}
-          {onOpenFaq && (
-            <button
-              onClick={onOpenFaq}
-              className="text-[11px] font-bold text-white hover:text-amber-200 flex items-center gap-1 cursor-pointer"
-              title="Foire Aux Questions dynamique & aide"
-            >
-              <HelpCircle className="w-3 h-3 text-amber-300" />
-              <span className="hidden md:inline">FAQ</span>
-            </button>
-          )}
-
-          {onOpenDistrictsDirectory && (
-            <button
-              onClick={onOpenDistrictsDirectory}
-              className="text-[11px] font-bold text-amber-200 hover:text-white flex items-center gap-1 cursor-pointer bg-black/20 hover:bg-black/30 px-2 py-0.5 rounded-full border border-amber-300/30 transition-colors hidden xl:flex"
-            >
-              <Compass className="w-3 h-3 text-amber-300" />
-              <span>Frais Quartiers</span>
-            </button>
-          )}
-
+          {/* Contact Direct */}
           <button
             onClick={onOpenContact}
-            className="text-[11px] font-bold text-white hover:text-orange-100 flex items-center gap-1 cursor-pointer"
+            className="text-[11px] font-bold text-white hover:text-orange-100 hidden sm:flex items-center gap-1 cursor-pointer"
           >
             <Phone className="w-3 h-3 text-emerald-300" />
             <span className="hidden md:inline">+227 96 05 23 10</span>
@@ -316,20 +247,137 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
+      {/* 2. Responsive Spaces Bar (Espace Client, Restaurant, Livreur, Admin & Liens Rapides) */}
+      <div className="bg-slate-900/95 border-b border-slate-800/80 px-2.5 sm:px-6 py-1.5 w-full">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 overflow-x-auto scrollbar-none whitespace-nowrap">
+          {/* Les 4 Espaces de l'Application */}
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            {/* Espace Client */}
+            <button
+              onClick={() => onChangeRole("client")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                currentRole === "client"
+                  ? "bg-orange-500 text-slate-950 shadow-sm"
+                  : "bg-slate-800/70 text-slate-300 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Espace Client</span>
+            </button>
+
+            {/* Espace Restaurant */}
+            <button
+              onClick={() => onChangeRole("restaurant")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                currentRole === "restaurant"
+                  ? "bg-emerald-500 text-slate-950 shadow-sm"
+                  : "bg-slate-800/70 text-slate-300 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Store className="w-3.5 h-3.5" />
+              <span>Espace Restaurant</span>
+            </button>
+
+            {/* Espace Livreur */}
+            <button
+              onClick={() => onChangeRole("courier")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                currentRole === "courier"
+                  ? "bg-cyan-500 text-slate-950 shadow-sm"
+                  : "bg-slate-800/70 text-slate-300 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Bike className="w-3.5 h-3.5" />
+              <span>Espace Livreur</span>
+            </button>
+
+            {/* Espace Admin */}
+            <button
+              onClick={() => onChangeRole("admin")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                currentRole === "admin"
+                  ? "bg-purple-500 text-slate-950 shadow-sm"
+                  : "bg-slate-800/70 text-slate-300 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Espace Admin</span>
+            </button>
+          </div>
+
+          {/* Liens Utiles : Comment ça marche, Formules, FAQ, Contact */}
+          <div className="flex items-center gap-1.5 shrink-0 pl-2 border-l border-slate-800">
+            {onOpenHowItWorks && (
+              <button
+                onClick={onOpenHowItWorks}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-amber-300 hover:text-amber-200 hover:bg-slate-800/60 transition cursor-pointer"
+                title="Guide : Comment ça marche"
+              >
+                <Info className="w-3.5 h-3.5" />
+                <span>Comment ça marche</span>
+              </button>
+            )}
+
+            {onOpenPlans && (
+              <button
+                onClick={onOpenPlans}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-orange-300 hover:text-orange-200 hover:bg-slate-800/60 transition cursor-pointer"
+                title="Formules d'adhésion & tarifs restaurants"
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>Formules &amp; Tarifs</span>
+              </button>
+            )}
+
+            {onOpenFaq && (
+              <button
+                onClick={onOpenFaq}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition cursor-pointer"
+                title="Foire Aux Questions"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>FAQ</span>
+              </button>
+            )}
+
+            {onOpenDistrictsDirectory && (
+              <button
+                onClick={onOpenDistrictsDirectory}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition cursor-pointer"
+                title="Frais des Quartiers de Niamey"
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>Frais Quartiers</span>
+              </button>
+            )}
+
+            <button
+              onClick={onOpenContact}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-emerald-300 hover:text-emerald-200 hover:bg-slate-800/60 transition cursor-pointer"
+              title="Service Client & Support"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span>Contact</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3 w-full max-w-full overflow-hidden">
         {/* Left: Brand Logo & Location */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
           <div
             onClick={onOpenLogoModal}
             className="flex items-center gap-2 group cursor-pointer shrink-0"
             title="Cliquez pour découvrir le concept et la géométrie du logo Allôresto"
           >
-            <BrandLogo variant="full" size="md" showTagline={false} />
+            <BrandLogo variant="full" size="sm" showTagline={false} className="sm:hidden" />
+            <BrandLogo variant="full" size="md" showTagline={false} className="hidden sm:inline-flex" />
           </div>
 
           {/* City / Location Selector */}
-          <div className="relative hidden sm:block">
+          <div className="relative hidden md:block">
             <button
               onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-200 transition-colors cursor-pointer"
@@ -392,18 +440,18 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Center: Explicit Navigation Buttons (Accueil, Menu, Commandes, Boxs, Événements) */}
+        {/* Center: Explicit Navigation Buttons (Accueil, Menu, Commandes, Boxs, Événements) - desktop only */}
         {currentRole === "client" && (
-          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-bold">
+          <div className="hidden lg:flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-bold shrink-0">
             {/* 1. Accueil */}
             <button
               onClick={() => onChangeRole("client")}
-              className="hidden lg:block px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer"
             >
               {t(currentLanguage, "home")}
             </button>
 
-            {/* 2. Menu / Grande Carte 65+ plats - Toujours accessible */}
+            {/* 2. Menu / Grande Carte 65+ plats */}
             {onOpenMenu && (
               <button
                 id="header-menu-catalog-btn"
@@ -420,7 +468,7 @@ export const Header: React.FC<HeaderProps> = ({
             {onOpenOrdersHistory && (
               <button
                 onClick={onOpenOrdersHistory}
-                className="hidden md:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
+                className="hidden xl:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
                 title="Historique des commandes et reçus"
               >
                 <Clock className="w-3.5 h-3.5 text-cyan-400" />
@@ -432,7 +480,7 @@ export const Header: React.FC<HeaderProps> = ({
             {onOpenSauceBoxes && (
               <button
                 onClick={onOpenSauceBoxes}
-                className="hidden xl:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
+                className="hidden 2xl:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
                 title="Boxs repas & sauces sahéliennes"
               >
                 <Package className="w-3.5 h-3.5 text-amber-400" />
@@ -444,7 +492,7 @@ export const Header: React.FC<HeaderProps> = ({
             {onOpenCatering && (
               <button
                 onClick={onOpenCatering}
-                className="hidden xl:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
+                className="hidden 2xl:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
                 title="Traiteur, mariages & réunions ministérielles"
               >
                 <ChefHat className="w-3.5 h-3.5 text-emerald-400" />
@@ -455,7 +503,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* 6. Groupe Bureau */}
             <button
               onClick={onOpenGroupOrder}
-              className="hidden lg:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
+              className="hidden xl:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
             >
               <Users className="w-3.5 h-3.5 text-orange-400" />
               <span>{t(currentLanguage, "group_order")}</span>
@@ -464,10 +512,10 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         {/* Right Actions: AI Chef, Account, Role Switcher, Cart */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* User Account / Sahel Club */}
           {currentRole === "client" && (
-            <div className="flex items-center gap-1.5">
+            <div className="hidden sm:flex items-center gap-1.5">
               {onOpenAuth && (
                 <button
                   onClick={onOpenAuth}
@@ -475,7 +523,7 @@ export const Header: React.FC<HeaderProps> = ({
                   title="Connexion ou Profil"
                 >
                   <User className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">
+                  <span>
                     {currentUser ? currentUser.name.split(" ")[0] : "Compte"}
                   </span>
                 </button>
@@ -492,16 +540,16 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           )}
 
-          {/* Voice Order Trigger */}
+          {/* Voice Order Trigger - hidden on mobile since floating mic exists */}
           {onOpenVoiceOrder && (
             <button
               id="voice-order-nav-btn"
               onClick={onOpenVoiceOrder}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/40 hover:border-red-400 text-red-300 hover:text-white text-xs font-bold shadow-md cursor-pointer transition-all hover:scale-105"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/40 hover:border-red-400 text-red-300 hover:text-white text-xs font-bold shadow-md cursor-pointer transition-all hover:scale-105"
               title="Dicter ma commande vocale"
             >
               <Mic className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-              <span className="hidden sm:inline">{t(currentLanguage, "voice_order")}</span>
+              <span>{t(currentLanguage, "voice_order")}</span>
             </button>
           )}
 
@@ -509,9 +557,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="allochef-nav-btn"
             onClick={onOpenChefAI}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-orange-500/50 hover:border-orange-400 text-orange-400 text-xs font-bold shadow-lg shadow-orange-500/10 cursor-pointer transition-all hover:scale-105"
+            className="flex items-center gap-1 px-2.5 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-orange-500/50 hover:border-orange-400 text-orange-400 text-xs font-bold shadow-lg shadow-orange-500/10 cursor-pointer transition-all active:scale-95"
           >
-            <Sparkles className="w-4 h-4 fill-current text-amber-400 animate-pulse" />
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current text-amber-400 animate-pulse" />
             <span className="hidden sm:inline">{t(currentLanguage, "chef_ai")}</span>
           </button>
 
@@ -519,11 +567,11 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="relative">
             <button
               onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${currentRoleInfo.color}`}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${currentRoleInfo.color}`}
             >
               <CurrentRoleIcon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{currentRoleInfo.label}</span>
-              <ChevronDown className="w-3 h-3 opacity-70" />
+              <span>{currentRoleInfo.label}</span>
+              <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-70" />
             </button>
 
             {roleDropdownOpen && (
@@ -608,14 +656,14 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="cart-nav-btn"
               onClick={onOpenCart}
-              className="relative flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-bold text-xs shadow-lg shadow-orange-500/25 transition-all cursor-pointer active:scale-95"
+              className="relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-bold text-xs shadow-lg shadow-orange-500/25 transition-all cursor-pointer active:scale-95"
             >
               <ShoppingBag className="w-4 h-4" />
               <span className="hidden sm:inline">
                 {cartTotal > 0 ? `${cartTotal.toLocaleString()} F` : "Panier"}
               </span>
               {cartCount > 0 && (
-                <span className="w-5 h-5 rounded-full bg-slate-950 text-orange-400 text-[11px] font-black flex items-center justify-center border border-orange-400/50">
+                <span className="w-5 h-5 rounded-full bg-slate-950 text-orange-400 text-[10px] sm:text-[11px] font-black flex items-center justify-center border border-orange-400/50">
                   {cartCount}
                 </span>
               )}

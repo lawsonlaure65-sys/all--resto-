@@ -707,22 +707,6 @@ export function App() {
                 </button>
 
                 <button
-                  onClick={() => setIsMarketingAIOpen(true)}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-bold whitespace-nowrap cursor-pointer transition"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>IA Marketing &amp; Croissance</span>
-                </button>
-
-                <button
-                  onClick={() => setIsWhatsAppAutomationOpen(true)}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold whitespace-nowrap cursor-pointer transition"
-                >
-                  <Users className="w-4 h-4" />
-                  <span>Automatisation WhatsApp</span>
-                </button>
-
-                <button
                   onClick={() => setIsFaqOpen(true)}
                   className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-bold whitespace-nowrap cursor-pointer transition"
                 >
@@ -947,6 +931,8 @@ export function App() {
           <AdminDashboard
             onOpenTechPack={() => setIsTechPackOpen(true)}
             onUpdateRestaurants={(updated) => setRestaurants(updated)}
+            onOpenMarketingAI={() => setIsMarketingAIOpen(true)}
+            onOpenWhatsAppAutomation={() => setIsWhatsAppAutomationOpen(true)}
           />
         )}
       </main>
@@ -1347,7 +1333,7 @@ export function App() {
       {currentRole === "client" && (
         <button
           onClick={() => setIsVoiceOrderOpen(true)}
-          className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white font-black text-xs shadow-2xl shadow-orange-500/40 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/20 group"
+          className="hidden md:flex fixed md:bottom-6 md:right-6 z-40 items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white font-black text-xs shadow-2xl shadow-orange-500/40 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/20 group"
           title="Commander à la voix (Microphone)"
         >
           <span className="relative flex h-2.5 w-2.5">
@@ -1355,7 +1341,7 @@ export function App() {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
           </span>
           <Mic className="w-4 h-4 text-white group-hover:animate-pulse" />
-          <span className="hidden sm:inline">Commande Vocale</span>
+          <span>Commande Vocale</span>
         </button>
       )}
 

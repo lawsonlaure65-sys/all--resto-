@@ -72,11 +72,15 @@ import {
 interface AdminDashboardProps {
   onOpenTechPack?: () => void;
   onUpdateRestaurants?: (restaurants: Restaurant[]) => void;
+  onOpenMarketingAI?: () => void;
+  onOpenWhatsAppAutomation?: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenTechPack,
   onUpdateRestaurants,
+  onOpenMarketingAI,
+  onOpenWhatsAppAutomation,
 }) => {
   // Admin Authentication State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
@@ -638,6 +642,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             📦 <span>Commandes</span>
           </a>
+
+          {onOpenMarketingAI && (
+            <button
+              onClick={onOpenMarketingAI}
+              className="px-3.5 py-2 rounded-xl bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+              title="Pilote Automatique Commercial & Campagnes Virales WhatsApp"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>IA Marketing &amp; Croissance</span>
+            </button>
+          )}
+
+          {onOpenWhatsAppAutomation && (
+            <button
+              onClick={onOpenWhatsAppAutomation}
+              className="px-3.5 py-2 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+              title="Centre d'Automatisation & Dispatch WhatsApp"
+            >
+              <Users className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Automatisation WhatsApp</span>
+            </button>
+          )}
 
           {onOpenTechPack && (
             <button

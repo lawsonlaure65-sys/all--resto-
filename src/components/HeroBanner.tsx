@@ -78,13 +78,13 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             onClick={onOpenLogoModal}
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 shadow-sm transition ${
+            className={`inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 shadow-sm transition max-w-full text-center ${
               onOpenLogoModal ? "cursor-pointer" : ""
             }`}
             title="Découvrir le nouveau logo Allôresto"
           >
-            <Sparkles className="w-3.5 h-3.5 fill-current text-amber-400" />
-            <span>Niamey, Niger 🇳🇪 &bull; Grande Mosquée Mouhamar Kadhafi &bull; Logo Officiel 2026</span>
+            <Sparkles className="w-3.5 h-3.5 fill-current text-amber-400 shrink-0" />
+            <span>Niamey, Niger 🇳🇪 &bull; Mosquée Kadhafi &bull; Logo Officiel 2026</span>
           </motion.div>
 
           <motion.h1
@@ -235,42 +235,42 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         </div>
 
         {/* Cuisine Filter Pills */}
-        <div className="mt-10 pt-6 border-t border-slate-800/80">
-          <div className="flex items-center justify-between gap-4 mb-3">
+        <div className="mt-8 sm:mt-10 pt-6 border-t border-slate-800/80">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">
               Catégories &amp; Spécialités
             </span>
 
             {/* Quick Filter Toggles */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {onOpenDishesCatalog && (
                 <button
                   onClick={onOpenDishesCatalog}
-                  className="px-3.5 py-1 rounded-full text-xs font-black bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 shadow-md shadow-orange-500/20 hover:from-orange-400 hover:to-amber-400 transition-all cursor-pointer flex items-center gap-1.5"
+                  className="px-3 py-1 rounded-full text-[11px] sm:text-xs font-black bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 shadow-md shadow-orange-500/20 hover:from-orange-400 hover:to-amber-400 transition-all cursor-pointer flex items-center gap-1"
                 >
-                  <span>🍲 Carte des Plats &amp; Filtres</span>
+                  <span>🍲 Carte des Plats</span>
                 </button>
               )}
 
               <button
                 onClick={onTogglePromo}
-                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold border transition-all cursor-pointer ${
                   filterPromoOnly
                     ? "bg-amber-500/20 border-amber-500/60 text-amber-300"
                     : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
                 }`}
               >
-                🔥 Offres &amp; Promos
+                🔥 Offres
               </button>
               <button
                 onClick={onToggleFastDelivery}
-                className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold border transition-all cursor-pointer ${
                   filterFastDelivery
                     ? "bg-cyan-500/20 border-cyan-500/60 text-cyan-300"
                     : "bg-slate-900 border-slate-800 text-slate-400 hover:text-white"
                 }`}
               >
-                ⚡ Livraison Express (&le; 50 min)
+                ⚡ Express (&le; 50 min)
               </button>
             </div>
           </div>
