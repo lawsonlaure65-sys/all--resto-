@@ -157,16 +157,16 @@ export const Header: React.FC<HeaderProps> = ({
   const CurrentRoleIcon = currentRoleInfo.icon;
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-slate-100 shadow-xl w-full max-w-full">
-      {/* 1. Top Banner for Language, Sound, IA Marketing, WhatsApp, FAQ & Contact */}
-      <div className="bg-gradient-to-r from-red-950/90 via-slate-950 to-orange-950/90 border-b border-slate-800/80 px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs text-white flex items-center justify-between w-full max-w-full overflow-x-auto scrollbar-none gap-1.5 sm:gap-2">
-        {/* Left: Language, Sound, IA Marketing, WhatsApp, FAQ */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+    <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-slate-100 shadow-xl w-full max-w-full overflow-hidden">
+      {/* 1. Top Banner for Language, Sound, IA Marketing, WhatsApp, Comment ça marche, FAQ & Contact */}
+      <div className="bg-gradient-to-r from-orange-600 via-orange-500 to-slate-950 border-b border-slate-800/80 px-2 sm:px-4 py-1 text-xs text-white flex items-center justify-between w-full max-w-full overflow-x-auto scrollbar-none gap-1.5 sm:gap-2">
+        {/* Left: Language, Sound, IA Marketing, WhatsApp, Comment ça marche, FAQ */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           {/* Language Switcher Dropdown */}
           <div className="relative shrink-0">
             <button
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-              className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-red-800/80 hover:bg-red-700/80 border border-red-600/60 text-white text-[10px] sm:text-[11px] font-bold transition-colors cursor-pointer shadow-sm"
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-800/90 hover:bg-red-700 border border-red-600/60 text-white text-[10px] sm:text-[11px] font-bold transition-colors cursor-pointer shadow-sm"
               title="Changer de langue (Français, English, Haoussa, Zarma)"
             >
               <span>{currentLangObj.flag}</span>
@@ -210,13 +210,13 @@ export const Header: React.FC<HeaderProps> = ({
           {onToggleSound && (
             <button
               onClick={onToggleSound}
-              className="p-1 sm:px-2 sm:py-1 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white transition-colors cursor-pointer shrink-0"
+              className="p-1 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white transition-colors cursor-pointer shrink-0"
               title={soundEnabled ? "Notifications sonores activées (Cliquer pour couper)" : "Notifications sonores coupées (Cliquer pour activer)"}
             >
               {soundEnabled ? (
-                <Volume2 className="w-3.5 h-3.5 text-amber-300" />
+                <Volume2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-300" />
               ) : (
-                <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+                <VolumeX className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400" />
               )}
             </button>
           )}
@@ -225,7 +225,7 @@ export const Header: React.FC<HeaderProps> = ({
           {onOpenMarketingAI && (
             <button
               onClick={onOpenMarketingAI}
-              className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-amber-950/90 to-red-950/90 hover:from-amber-900 hover:to-red-900 border border-amber-600/50 text-amber-200 text-[10px] sm:text-[11px] font-extrabold transition-colors cursor-pointer shadow-sm shrink-0"
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#26130b] hover:bg-[#341b10] border border-amber-600/60 text-amber-200 text-[10px] sm:text-[11px] font-extrabold transition-colors cursor-pointer shadow-sm shrink-0"
               title="Pilote Automatique Commercial & Campagnes Virales WhatsApp"
             >
               <TrendingUp className="w-3 h-3 text-amber-300 shrink-0" />
@@ -237,10 +237,22 @@ export const Header: React.FC<HeaderProps> = ({
           {onOpenWhatsAppAutomation && (
             <button
               onClick={onOpenWhatsAppAutomation}
-              className="p-1 sm:px-2 sm:py-1 rounded-full bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 transition-colors cursor-pointer shrink-0"
+              className="p-1 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-400 transition-colors cursor-pointer shrink-0"
               title="Centre d'Automatisation & Dispatch WhatsApp"
             >
               <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+            </button>
+          )}
+
+          {/* Comment ça marche */}
+          {onOpenHowItWorks && (
+            <button
+              onClick={onOpenHowItWorks}
+              className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#23170e] hover:bg-[#322115] border border-amber-500/60 text-amber-200 text-[10px] sm:text-[11px] font-bold transition-colors cursor-pointer shadow-sm shrink-0"
+              title="Guide : Comment ça marche"
+            >
+              <Info className="w-3 h-3 text-amber-400 shrink-0" />
+              <span className="whitespace-nowrap">Comment ça marche</span>
             </button>
           )}
 
@@ -248,7 +260,7 @@ export const Header: React.FC<HeaderProps> = ({
           {onOpenFaq && (
             <button
               onClick={onOpenFaq}
-              className="p-1 sm:px-2 sm:py-1 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-amber-300 transition-colors cursor-pointer shrink-0"
+              className="p-1 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-amber-300 transition-colors cursor-pointer shrink-0"
               title="Foire Aux Questions dynamique & aide"
             >
               <HelpCircle className="w-3.5 h-3.5 text-amber-300" />
@@ -257,28 +269,27 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right: Contact Direct */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 pl-1">
           <button
             onClick={onOpenContact}
             className="flex items-center gap-1 text-[11px] font-bold text-white hover:text-orange-200 cursor-pointer transition-colors"
           >
-            <Phone className="w-3 h-3 text-emerald-400" />
+            <Phone className="w-3 h-3 text-emerald-400 shrink-0" />
             <span>Contact</span>
           </button>
         </div>
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-1.5 sm:gap-3 w-full max-w-full">
+      <div className="max-w-7xl mx-auto px-1.5 sm:px-4 lg:px-8 py-2 flex items-center justify-between gap-1 sm:gap-2 md:gap-3 w-full max-w-full">
         {/* Left: Brand Logo + Menu Catalog */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink min-w-0">
           <div
             onClick={onOpenLogoModal}
-            className="flex items-center gap-2 group cursor-pointer shrink-0"
-            title="Cliquez pour découvrir le concept et la géométrie du logo Allôresto"
+            className="flex items-center group cursor-pointer shrink-0"
+            title="Logo Officiel Allôresto Niamey 2026"
           >
-            <BrandLogo variant="full" size="sm" showTagline={false} className="sm:hidden" />
-            <BrandLogo variant="full" size="md" showTagline={false} className="hidden sm:inline-flex" />
+            <BrandLogo variant="full" size="sm" showTagline={false} />
           </div>
 
           {/* Menu (65+ Plats) Catalog Button */}
@@ -286,19 +297,19 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-menu-catalog-btn"
               onClick={onOpenMenu}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-amber-950/50 hover:bg-amber-900/70 border border-amber-500/50 text-amber-300 cursor-pointer shrink-0 transition active:scale-95 shadow-sm"
+              className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl bg-[#25150d] hover:bg-[#341d12] border border-amber-600/70 text-amber-300 cursor-pointer shrink-0 transition active:scale-95 shadow-sm"
               title="Consulter le menu et la carte complète (65+ plats)"
             >
               <UtensilsCrossed className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-400 shrink-0" />
               <div className="text-left leading-tight">
-                <div className="text-[10px] sm:text-[11px] font-black text-amber-300">Menu</div>
-                <div className="text-[8.5px] sm:text-[9.5px] text-amber-400/90 font-bold whitespace-nowrap">(65+ Plats)</div>
+                <div className="text-[9.5px] sm:text-[11px] font-black text-amber-300">Menu</div>
+                <div className="text-[8px] sm:text-[9.5px] text-amber-400/90 font-bold whitespace-nowrap">(65+ Plats)</div>
               </div>
             </button>
           )}
 
           {/* City / Location Selector (hidden on mobile) */}
-          <div className="relative hidden md:block">
+          <div className="relative hidden xl:block">
             <button
               onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-200 transition-colors cursor-pointer"
@@ -419,58 +430,54 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         )}
 
-        {/* Right Actions: Account, Voice, AI Chef, Role Dropdown, Cart */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          {/* User Account Button */}
+        {/* Right Actions: 5 Square Action Buttons matching user screenshots exactly */}
+        <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 shrink-0">
+          {/* Button 1: User Account */}
           <button
+            id="account-nav-btn"
             onClick={currentUser ? onOpenAccount : onOpenAuth}
-            className="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
-            title="Compte Client"
+            className="w-8 h-8 min-[400px]:w-8.5 min-[400px]:h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-[#1c1412] hover:bg-[#28201a] border border-amber-900/40 text-amber-200/90 flex items-center justify-center shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
+            title={currentUser ? `Connecté : ${currentUser.name}` : "Connexion / Profil"}
           >
-            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300" />
-            <span className="hidden xl:inline text-xs font-bold">
-              {currentUser ? currentUser.name.split(" ")[0] : "Compte"}
-            </span>
+            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-200/90" />
           </button>
 
-          {/* Voice Order Button */}
+          {/* Button 2: Voice Order */}
           {onOpenVoiceOrder && (
             <button
               id="voice-order-nav-btn"
               onClick={onOpenVoiceOrder}
-              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-600/50 text-red-400 hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shrink-0"
+              className="w-8 h-8 min-[400px]:w-8.5 min-[400px]:h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-[#231215] hover:bg-[#30161b] border border-rose-900/50 text-rose-400 flex items-center justify-center shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
               title="Dicter ma commande vocale"
             >
-              <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 animate-pulse" />
-              <span className="hidden 2xl:inline text-xs font-bold">{t(currentLanguage, "voice_order")}</span>
+              <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400 animate-pulse" />
             </button>
           )}
 
-          {/* AllôChef AI Assistant */}
+          {/* Button 3: AllôChef AI Assistant */}
           <button
             id="allochef-nav-btn"
             onClick={onOpenChefAI}
-            className="p-2 sm:px-3 sm:py-2 rounded-xl bg-amber-950/60 hover:bg-amber-900/80 border border-amber-500/50 text-amber-400 hover:text-amber-300 transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shrink-0 active:scale-95"
-            title="AllôChef IA"
+            className="w-8 h-8 min-[400px]:w-8.5 min-[400px]:h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-[#271d0e] hover:bg-[#382a14] border border-amber-600/50 text-amber-400 flex items-center justify-center shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
+            title="AllôChef IA — Assistant culinaire intelligent"
           >
             <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 animate-pulse" />
-            <span className="hidden xl:inline text-xs font-bold">{t(currentLanguage, "chef_ai")}</span>
           </button>
 
-          {/* Role Switcher Menu */}
+          {/* Button 4: Role Switcher Menu (Espace Client, Restaurant, Livreur, Admin) */}
           <div className="relative shrink-0">
             <button
+              id="role-switcher-nav-btn"
               onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-              className={`flex items-center gap-1 p-2 sm:px-2.5 sm:py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${currentRoleInfo.color}`}
-              title="Changer d'espace démo"
+              className="w-8 h-8 min-[400px]:w-8.5 min-[400px]:h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-[#1c1412] hover:bg-[#28201a] border border-amber-900/40 text-amber-200/90 flex items-center justify-center gap-0.5 shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
+              title="Changer d'espace démo (Client, Restaurant, Livreur, Admin)"
             >
-              <CurrentRoleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-              <span className="hidden md:inline">{currentRoleInfo.label}</span>
-              <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-70 shrink-0" />
+              <User className="w-3.5 h-3.5 text-amber-200/90" />
+              <ChevronDown className="w-2.5 h-2.5 text-amber-400/80 -ml-0.5" />
             </button>
 
             {roleDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#0e1320] border border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
                 <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-800 mb-1 tracking-wider">
                   CHANGER D&apos;ESPACE D&Eacute;MO
                 </div>
@@ -484,17 +491,17 @@ export const Header: React.FC<HeaderProps> = ({
                         onChangeRole(r);
                         setRoleDropdownOpen(false);
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-colors cursor-pointer ${
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs text-left transition-colors cursor-pointer ${
                         currentRole === r
-                          ? "bg-slate-800 text-white font-bold"
-                          : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                          ? "bg-slate-800/90 text-white font-bold"
+                          : "text-slate-400 hover:text-white hover:bg-slate-800/40"
                       }`}
                     >
                       <span className="flex items-center gap-2">
-                        <Icon className="w-3.5 h-3.5 text-orange-400" />
+                        <Icon className="w-4 h-4 text-orange-400" />
                         {info.label}
                       </span>
-                      {currentRole === r && <Check className="w-3.5 h-3.5 text-orange-400" />}
+                      {currentRole === r && <Check className="w-4 h-4 text-amber-400 font-black" />}
                     </button>
                   );
                 })}
@@ -546,20 +553,17 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Cart Button */}
+          {/* Button 5: Cart Button */}
           {currentRole === "client" && (
             <button
               id="cart-nav-btn"
               onClick={onOpenCart}
-              className="relative flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-bold text-xs shadow-lg shadow-orange-500/25 transition-all cursor-pointer active:scale-95 shrink-0"
-              title="Voir le panier"
+              className="relative w-8 h-8 min-[400px]:w-8.5 min-[400px]:h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-orange-500 via-orange-600 to-red-600 hover:from-orange-400 hover:to-red-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/25 transition active:scale-95 cursor-pointer border border-orange-400/40"
+              title={cartTotal > 0 ? `Panier : ${cartTotal.toLocaleString()} FCFA` : "Voir le panier"}
             >
               <ShoppingBag className="w-4 h-4 text-white" />
-              <span className="hidden sm:inline">
-                {cartTotal > 0 ? `${cartTotal.toLocaleString()} F` : "Panier"}
-              </span>
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 sm:static sm:top-auto sm:right-auto w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-slate-950 text-orange-400 text-[9px] sm:text-[11px] font-black flex items-center justify-center border border-orange-400/50">
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-slate-950 text-orange-400 text-[9px] font-black flex items-center justify-center border border-orange-400/60 shadow-sm">
                   {cartCount}
                 </span>
               )}
@@ -567,6 +571,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
       </div>
+
     </header>
   );
 };

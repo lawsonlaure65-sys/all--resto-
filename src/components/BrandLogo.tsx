@@ -23,16 +23,16 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 }) => {
   // Dimension tokens
   const iconSizes = {
-    sm: "w-8 h-8",
-    md: "w-10 h-10",
+    sm: "w-7 h-7 min-[380px]:w-8 min-[380px]:h-8",
+    md: "w-9 h-9 sm:w-10 sm:h-10",
     lg: "w-12 h-12",
     xl: "w-16 h-16",
     "2xl": "w-24 h-24",
   };
 
   const textSizes = {
-    sm: "text-base sm:text-lg",
-    md: "text-lg sm:text-xl",
+    sm: "text-sm min-[380px]:text-base sm:text-lg",
+    md: "text-base min-[380px]:text-lg sm:text-xl",
     lg: "text-xl sm:text-2xl",
     xl: "text-2xl sm:text-3xl",
     "2xl": "text-4xl sm:text-5xl",
@@ -409,7 +409,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`inline-flex items-center gap-2.5 sm:gap-3 group select-none ${
+      className={`inline-flex items-center gap-1.5 sm:gap-2.5 group select-none ${
         onClick ? "cursor-pointer" : ""
       } ${className}`}
     >
@@ -419,8 +419,8 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       </div>
 
       {/* Typographic Identity */}
-      <div className="flex flex-col">
-        <div className="flex items-center gap-1.5 leading-none">
+      <div className="flex flex-col shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 leading-none">
           <div className={`${textSizes[size]} font-black tracking-tight flex items-center`}>
             {/* "Allô" */}
             <span
@@ -445,7 +445,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
           </div>
 
           {/* Sahel / Niger Badge */}
-          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/30">
+          <span className="hidden min-[360px]:inline-block px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[9px] font-black uppercase tracking-wider bg-orange-500/15 text-orange-400 border border-orange-500/30">
             Niger
           </span>
         </div>
