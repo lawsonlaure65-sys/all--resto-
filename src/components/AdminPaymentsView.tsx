@@ -21,6 +21,7 @@ import {
   fetchAllPayments,
   updatePaymentStatus,
 } from "../services/paymentService";
+import { PaymentAnalyticsCharts } from "./PaymentAnalyticsCharts";
 
 export const AdminPaymentsView: React.FC = () => {
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
@@ -29,6 +30,7 @@ export const AdminPaymentsView: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [providerFilter, setProviderFilter] = useState<string>("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showCharts, setShowCharts] = useState<boolean>(true);
 
   const loadData = async () => {
     setLoading(true);
@@ -103,14 +105,30 @@ export const AdminPaymentsView: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={loadData}
-          disabled={loading}
-          className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-2 border border-slate-700 transition cursor-pointer self-start sm:self-auto"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-          <span>Actualiser</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setShowCharts(!showCharts)}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border transition cursor-pointer ${
+              showCharts
+                ? "bg-orange-500/20 border-orange-500/40 text-orange-300"
+                : "bg-slate-800 border-slate-700 text-slate-400 hover:text-white"
+            }`}
+            title="Afficher ou masquer les graphiques Recharts"
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>{showCharts ? "Masquer Graphiques" : "Afficher Graphiques"}</span>
+          </button>
+
+          <button
+            onClick={loadData}
+            disabled={loading}
+            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-2 border border-slate-700 transition cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <span>Actualiser</span>
+          </button>
+        </div>
       </div>
 
       {/* 3 Metric Cards */}
@@ -166,6 +184,9 @@ export const AdminPaymentsView: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Recharts Data Visualization for Mobile Money Providers */}
+      {showCharts && <PaymentAnalyticsCharts payments={payments} />}
 
       {/* Filter Bar */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-stretch md:items-center gap-3">

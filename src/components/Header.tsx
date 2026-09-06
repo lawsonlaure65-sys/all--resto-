@@ -157,7 +157,7 @@ export const Header: React.FC<HeaderProps> = ({
   const CurrentRoleIcon = currentRoleInfo.icon;
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-slate-100 shadow-xl w-full max-w-full overflow-hidden">
+    <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-slate-100 shadow-xl w-full">
       {/* 1. Top Banner for Language, Sound, IA Marketing, WhatsApp, Comment ça marche, FAQ & Contact */}
       <div className="bg-gradient-to-r from-orange-600 via-orange-500 to-slate-950 border-b border-slate-800/80 px-2 sm:px-4 py-1 text-xs text-white flex items-center justify-between w-full max-w-full overflow-x-auto scrollbar-none gap-1.5 sm:gap-2">
         {/* Left: Language, Sound, IA Marketing, WhatsApp, Comment ça marche, FAQ */}
@@ -175,34 +175,40 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {langDropdownOpen && (
-              <div className="absolute left-0 mt-1.5 w-52 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-1">
-                <div className="px-3 py-1 text-[10px] uppercase font-black tracking-wider text-slate-400 border-b border-slate-800 mb-1">
-                  Langues Disponibles 🇳🇪
-                </div>
-                {SUPPORTED_LANGUAGES.map((l) => (
-                  <button
-                    key={l.code}
-                    onClick={() => {
-                      if (onChangeLanguage) onChangeLanguage(l.code);
-                      setLangDropdownOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-colors cursor-pointer ${
-                      currentLanguage === l.code
-                        ? "bg-orange-500/20 text-orange-400 font-black border border-orange-500/30"
-                        : "text-slate-300 hover:text-white hover:bg-slate-800"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">{l.flag}</span>
-                      <div>
-                        <p className="font-bold leading-tight">{l.label}</p>
-                        <p className="text-[10px] text-slate-400">{l.native}</p>
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setLangDropdownOpen(false)}
+                />
+                <div className="absolute left-0 mt-1.5 w-52 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-1">
+                  <div className="px-3 py-1 text-[10px] uppercase font-black tracking-wider text-slate-400 border-b border-slate-800 mb-1">
+                    Langues Disponibles 🇳🇪
+                  </div>
+                  {SUPPORTED_LANGUAGES.map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => {
+                        if (onChangeLanguage) onChangeLanguage(l.code);
+                        setLangDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-colors cursor-pointer ${
+                        currentLanguage === l.code
+                          ? "bg-orange-500/20 text-orange-400 font-black border border-orange-500/30"
+                          : "text-slate-300 hover:text-white hover:bg-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{l.flag}</span>
+                        <div>
+                          <p className="font-bold leading-tight">{l.label}</p>
+                          <p className="text-[10px] text-slate-400">{l.native}</p>
+                        </div>
                       </div>
-                    </div>
-                    {currentLanguage === l.code && <Check className="w-3.5 h-3.5 text-orange-400" />}
-                  </button>
-                ))}
-              </div>
+                      {currentLanguage === l.code && <Check className="w-3.5 h-3.5 text-orange-400" />}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 
@@ -320,54 +326,60 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {cityDropdownOpen && (
-              <div className="absolute left-0 mt-2 w-72 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="p-2 border-b border-slate-800 mb-1 space-y-1.5">
-                  <button
-                    onClick={handleDetectLocation}
-                    disabled={isLocating}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 text-xs font-bold transition-colors cursor-pointer"
-                  >
-                    <Navigation className={`w-3.5 h-3.5 ${isLocating ? "animate-spin" : ""}`} />
-                    <span>{isLocating ? "Localisation..." : "Me géolocaliser"}</span>
-                  </button>
-
-                  {onOpenDistrictsDirectory && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setCityDropdownOpen(false)}
+                />
+                <div className="absolute left-0 mt-2 w-72 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="p-2 border-b border-slate-800 mb-1 space-y-1.5">
                     <button
-                      onClick={() => {
-                        setCityDropdownOpen(false);
-                        onOpenDistrictsDirectory();
-                      }}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs font-bold transition-all cursor-pointer shadow-sm"
+                      onClick={handleDetectLocation}
+                      disabled={isLocating}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 text-xs font-bold transition-colors cursor-pointer"
                     >
-                      <Compass className="w-3.5 h-3.5" />
-                      <span>Répertoire &amp; Frais des Quartiers</span>
+                      <Navigation className={`w-3.5 h-3.5 ${isLocating ? "animate-spin" : ""}`} />
+                      <span>{isLocating ? "Localisation..." : "Me géolocaliser"}</span>
                     </button>
-                  )}
-                </div>
 
-                <div className="max-h-52 overflow-y-auto space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 px-2 py-1 block uppercase tracking-wider">
-                    Villes &amp; Quartiers Phares :
-                  </span>
-                  {CITIES_DATA.map((city) => (
-                    <button
-                      key={city.name}
-                      onClick={() => {
-                        onSelectCity(city.name);
-                        setCityDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-colors cursor-pointer ${
-                        selectedCity === city.name
-                          ? "bg-orange-500 text-slate-950 font-bold"
-                          : "text-slate-300 hover:bg-slate-800"
-                      }`}
-                    >
-                      <span>{city.name} ({city.country})</span>
-                      {selectedCity === city.name && <Check className="w-3.5 h-3.5" />}
-                    </button>
-                  ))}
+                    {onOpenDistrictsDirectory && (
+                      <button
+                        onClick={() => {
+                          setCityDropdownOpen(false);
+                          onOpenDistrictsDirectory();
+                        }}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs font-bold transition-all cursor-pointer shadow-sm"
+                      >
+                        <Compass className="w-3.5 h-3.5" />
+                        <span>Répertoire &amp; Frais des Quartiers</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-52 overflow-y-auto space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 px-2 py-1 block uppercase tracking-wider">
+                      Villes &amp; Quartiers Phares :
+                    </span>
+                    {CITIES_DATA.map((city) => (
+                      <button
+                        key={city.name}
+                        onClick={() => {
+                          onSelectCity(city.name);
+                          setCityDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-left transition-colors cursor-pointer ${
+                          selectedCity === city.name
+                            ? "bg-orange-500 text-slate-950 font-bold"
+                            : "text-slate-300 hover:bg-slate-800"
+                        }`}
+                      >
+                        <span>{city.name} ({city.country})</span>
+                        {selectedCity === city.name && <Check className="w-3.5 h-3.5" />}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
@@ -468,88 +480,127 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="relative shrink-0">
             <button
               id="role-switcher-nav-btn"
+              type="button"
               onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-              className="w-8 h-8 min-[400px]:w-8.5 min-[400px]:h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-[#1c1412] hover:bg-[#28201a] border border-amber-900/40 text-amber-200/90 flex items-center justify-center gap-0.5 shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
-              title="Changer d'espace démo (Client, Restaurant, Livreur, Admin)"
+              className={`h-8 min-[400px]:h-8.5 sm:h-9 md:h-10 px-2 sm:px-2.5 md:px-3 rounded-xl sm:rounded-2xl border flex items-center justify-center gap-1 sm:gap-1.5 shrink-0 transition active:scale-95 shadow-sm cursor-pointer ${
+                currentRole === "client"
+                  ? "bg-[#20150e] hover:bg-[#2d1e13] border-orange-500/50 text-orange-300"
+                  : currentRole === "restaurant"
+                  ? "bg-[#0f231a] hover:bg-[#153124] border-emerald-500/50 text-emerald-300"
+                  : currentRole === "courier"
+                  ? "bg-[#0d222b] hover:bg-[#13303d] border-cyan-500/50 text-cyan-300"
+                  : "bg-[#1e1329] hover:bg-[#2a1b3a] border-purple-500/50 text-purple-300"
+              }`}
+              title="Changer d'espace : Client, Restaurant, Livreur, Admin"
             >
-              <User className="w-3.5 h-3.5 text-amber-200/90" />
-              <ChevronDown className="w-2.5 h-2.5 text-amber-400/80 -ml-0.5" />
+              <CurrentRoleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span className="hidden sm:inline text-[10px] md:text-xs font-bold tracking-tight whitespace-nowrap">
+                {currentRoleInfo.label.replace("Espace ", "")}
+              </span>
+              <ChevronDown className={`w-3 h-3 text-amber-400/90 transition-transform duration-200 ${roleDropdownOpen ? "rotate-180" : ""}`} />
             </button>
 
             {roleDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#0e1320] border border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
-                <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-800 mb-1 tracking-wider">
-                  CHANGER D&apos;ESPACE D&Eacute;MO
+              <>
+                <div
+                  className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px]"
+                  onClick={() => setRoleDropdownOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-64 sm:w-72 rounded-2xl bg-[#0b101b] border border-slate-700 shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="px-3 py-2 text-[10px] uppercase font-black text-amber-400 border-b border-slate-800 mb-1.5 tracking-wider flex items-center justify-between">
+                    <span>Espaces &amp; Rôles Démo</span>
+                    <span className="text-[9px] text-slate-400 font-bold bg-slate-800 px-1.5 py-0.5 rounded-full">4 Espaces</span>
+                  </div>
+
+                  <div className="space-y-1">
+                    {(["client", "restaurant", "courier", "admin"] as UserRole[]).map((r) => {
+                      const info = getRoleLabel(r);
+                      const Icon = info.icon;
+                      const isActive = currentRole === r;
+                      return (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => {
+                            onChangeRole(r);
+                            setRoleDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs text-left transition-all cursor-pointer ${
+                            isActive
+                              ? "bg-gradient-to-r from-orange-500/20 to-amber-500/20 text-white font-black border border-orange-500/50 shadow-sm"
+                              : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                              r === "client" ? "bg-orange-500/20 text-orange-400" :
+                              r === "restaurant" ? "bg-emerald-500/20 text-emerald-400" :
+                              r === "courier" ? "bg-cyan-500/20 text-cyan-400" :
+                              "bg-purple-500/20 text-purple-400"
+                            }`}>
+                              <Icon className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-bold leading-tight truncate">{info.label}</p>
+                              <p className="text-[10px] text-slate-400 truncate">
+                                {r === "client" && "Commander & plats phares"}
+                                {r === "restaurant" && "Gestion commandes & carte"}
+                                {r === "courier" && "Courses & livraisons GPS"}
+                                {r === "admin" && "Supervision, paiements & analytics"}
+                              </p>
+                            </div>
+                          </div>
+                          {isActive && <Check className="w-4 h-4 text-amber-400 shrink-0 font-black ml-1.5" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-2 mt-2 border-t border-slate-800 space-y-1">
+                    {onOpenHowItWorks && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onOpenHowItWorks();
+                          setRoleDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs text-amber-300 hover:bg-slate-800/80 transition cursor-pointer font-bold"
+                      >
+                        <Info className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Comment ça marche</span>
+                      </button>
+                    )}
+
+                    {onOpenPlans && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onOpenPlans();
+                          setRoleDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs text-orange-300 hover:bg-slate-800/80 transition cursor-pointer font-bold"
+                      >
+                        <CreditCard className="w-3.5 h-3.5 text-orange-400" />
+                        <span>Formules &amp; Tarifs</span>
+                      </button>
+                    )}
+
+                    {onOpenContract && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onOpenContract();
+                          setRoleDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs text-slate-300 hover:bg-slate-800/80 transition cursor-pointer"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Contrat Partenaire</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
-                {(["client", "restaurant", "courier", "admin"] as UserRole[]).map((r) => {
-                  const info = getRoleLabel(r);
-                  const Icon = info.icon;
-                  return (
-                    <button
-                      key={r}
-                      onClick={() => {
-                        onChangeRole(r);
-                        setRoleDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs text-left transition-colors cursor-pointer ${
-                        currentRole === r
-                          ? "bg-slate-800/90 text-white font-bold"
-                          : "text-slate-400 hover:text-white hover:bg-slate-800/40"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <Icon className="w-4 h-4 text-orange-400" />
-                        {info.label}
-                      </span>
-                      {currentRole === r && <Check className="w-4 h-4 text-amber-400 font-black" />}
-                    </button>
-                  );
-                })}
-
-                <div className="pt-1.5 mt-1.5 border-t border-slate-800 space-y-1">
-                  {onOpenHowItWorks && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onOpenHowItWorks();
-                        setRoleDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs text-amber-300 hover:bg-slate-800/80 transition cursor-pointer font-bold"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                      <span>Comment ça marche</span>
-                    </button>
-                  )}
-
-                  {onOpenPlans && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onOpenPlans();
-                        setRoleDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs text-orange-300 hover:bg-slate-800/80 transition cursor-pointer font-bold"
-                    >
-                      <CreditCard className="w-3.5 h-3.5" />
-                      <span>Formules &amp; Tarifs</span>
-                    </button>
-                  )}
-
-                  {onOpenContract && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onOpenContract();
-                        setRoleDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs text-slate-300 hover:bg-slate-800/80 transition cursor-pointer"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      <span>Contrat Partenaire</span>
-                    </button>
-                  )}
-                </div>
-              </div>
+              </>
             )}
           </div>
 
