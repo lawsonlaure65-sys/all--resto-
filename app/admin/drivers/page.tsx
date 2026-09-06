@@ -92,7 +92,12 @@ const SAMPLE_DRIVERS: Driver[] = [
   },
 ];
 
-export default function AdminDriversPage() {
+interface AdminDriversPageProps {
+  isEmbedded?: boolean;
+  onNavigate?: (tab: string) => void;
+}
+
+export default function AdminDriversPage({ isEmbedded = false, onNavigate }: AdminDriversPageProps = {}) {
   const [drivers, setDrivers] = useState<Driver[]>(SAMPLE_DRIVERS);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -182,8 +187,8 @@ export default function AdminDriversPage() {
   const totalDailyEarnings = drivers.reduce((acc, d) => acc + (d.today_earnings || 0), 0);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className={isEmbedded ? "space-y-6" : "min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-6"}>
+      <div className={isEmbedded ? "space-y-6" : "max-w-7xl mx-auto space-y-6"}>
         {/* Navigation Header */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
           <div>
@@ -200,29 +205,42 @@ export default function AdminDriversPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             <button
+              type="button"
               onClick={() => setShowAddModal(true)}
               className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 text-xs font-black transition cursor-pointer flex items-center gap-1.5 shadow-lg shadow-orange-500/20"
             >
               <span>➕ Nouveau Livreur</span>
             </button>
-            <a
-              href="/app/admin/dashboard"
-              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition"
+            <button
+              type="button"
+              onClick={() => (onNavigate ? onNavigate("overview") : (window.location.href = "/app/admin/dashboard"))}
+              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 cursor-pointer"
             >
               <span>📊 Dashboard</span>
-            </a>
-            <a
-              href="/app/admin/orders"
-              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition"
+            </button>
+            <button
+              type="button"
+              onClick={() => (onNavigate ? onNavigate("orders") : (window.location.href = "/app/admin/orders"))}
+              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 cursor-pointer"
             >
               <span>📦 Commandes</span>
-            </a>
-            <a
-              href="/app/admin/settings"
-              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition"
+            </button>
+            <button
+              type="button"
+              onClick={() => (onNavigate ? onNavigate("settings_nif") : (window.location.href = "/app/admin/settings"))}
+              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 cursor-pointer"
             >
               <span>⚙️ Paramètres</span>
-            </a>
+            </button>
+            {onNavigate && (
+              <button
+                type="button"
+                onClick={() => onNavigate("overview")}
+                className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition cursor-pointer shadow-md"
+              >
+                Supervision HQ
+              </button>
+            )}
           </div>
         </header>
 

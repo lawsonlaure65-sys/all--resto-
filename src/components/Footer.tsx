@@ -33,6 +33,7 @@ interface FooterProps {
   onOpenHowItWorks?: () => void;
   onOpenPlans?: () => void;
   onOpenContract?: () => void;
+  onOpenAdminTab?: (tab: string) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -48,6 +49,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenHowItWorks,
   onOpenPlans,
   onOpenContract,
+  onOpenAdminTab,
 }) => {
   return (
     <footer className="bg-slate-950 border-t border-slate-800 text-slate-400 text-xs">
@@ -367,10 +369,70 @@ export const Footer: React.FC<FooterProps> = ({
               Espace Administration
             </span>
             <ul className="space-y-1">
-              <li><a href="/app/admin/settings" className="hover:text-white transition">⚙️ Paramètres &amp; NIF</a></li>
-              <li><a href="/app/admin/drivers" className="hover:text-white transition">🛵 Flotte Livreurs</a></li>
-              <li><a href="/app/admin/orders" className="hover:text-white transition">📦 Toutes Commandes</a></li>
-              <li><a href="/app/admin/dashboard" className="hover:text-white transition">📈 Dashboard Admin</a></li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenAdminTab) {
+                      onOpenAdminTab("settings_nif");
+                    } else if (onChangeRole) {
+                      onChangeRole("admin");
+                    }
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="hover:text-white transition cursor-pointer text-left"
+                >
+                  ⚙️ Paramètres &amp; NIF
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenAdminTab) {
+                      onOpenAdminTab("couriers_delivery");
+                    } else if (onChangeRole) {
+                      onChangeRole("admin");
+                    }
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="hover:text-white transition cursor-pointer text-left"
+                >
+                  🛵 Flotte Livreurs
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenAdminTab) {
+                      onOpenAdminTab("orders");
+                    } else if (onChangeRole) {
+                      onChangeRole("admin");
+                    }
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="hover:text-white transition cursor-pointer text-left"
+                >
+                  📦 Toutes Commandes
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenAdminTab) {
+                      onOpenAdminTab("overview");
+                    } else if (onChangeRole) {
+                      onChangeRole("admin");
+                    }
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="hover:text-white transition cursor-pointer text-left"
+                >
+                  📈 Dashboard Admin
+                </button>
+              </li>
             </ul>
           </div>
         </div>

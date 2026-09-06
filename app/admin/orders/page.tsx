@@ -104,7 +104,12 @@ const SAMPLE_ORDERS: AdminOrder[] = [
   },
 ];
 
-export default function AdminOrdersPage() {
+interface AdminOrdersPageProps {
+  isEmbedded?: boolean;
+  onNavigate?: (tab: string) => void;
+}
+
+export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: AdminOrdersPageProps = {}) {
   const [orders, setOrders] = useState<AdminOrder[]>(SAMPLE_ORDERS);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -165,8 +170,8 @@ export default function AdminOrdersPage() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className={isEmbedded ? "space-y-6" : "min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-6"}>
+      <div className={isEmbedded ? "space-y-6" : "max-w-7xl mx-auto space-y-6"}>
         {/* Navigation Header */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
           <div>
@@ -182,30 +187,43 @@ export default function AdminOrdersPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <a
-              href="/app/admin/dashboard"
-              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition"
+            <button
+              type="button"
+              onClick={() => (onNavigate ? onNavigate("overview") : (window.location.href = "/app/admin/dashboard"))}
+              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 cursor-pointer"
             >
               <span>📊 Dashboard</span>
-            </a>
-            <a
-              href="/app/admin/restaurants"
-              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition"
-            >
-              <span>🍽️ Restaurants</span>
-            </a>
-            <a
-              href="/app/admin/drivers"
-              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition"
+            </button>
+            <button
+              type="button"
+              onClick={() => (onNavigate ? onNavigate("couriers_delivery") : (window.location.href = "/app/admin/drivers"))}
+              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 cursor-pointer"
             >
               <span>🛵 Livreurs</span>
-            </a>
-            <a
-              href="/app/admin/settings"
-              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition"
+            </button>
+            <button
+              type="button"
+              onClick={() => (onNavigate ? onNavigate("mobile_money_payments") : (window.location.href = "/app/admin/payments"))}
+              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>💳 Paiements</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => (onNavigate ? onNavigate("settings_nif") : (window.location.href = "/app/admin/settings"))}
+              className="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5 cursor-pointer"
             >
               <span>⚙️ Paramètres</span>
-            </a>
+            </button>
+            {onNavigate && (
+              <button
+                type="button"
+                onClick={() => onNavigate("overview")}
+                className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition cursor-pointer shadow-md"
+              >
+                Supervision HQ
+              </button>
+            )}
           </div>
         </header>
 

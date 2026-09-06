@@ -114,6 +114,18 @@ export function App() {
     }
     return "client";
   });
+  const [adminInitialTab, setAdminInitialTab] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam === "settings" || tabParam === "settings_nif" || tabParam === "nif" || path.includes("/admin/settings")) return "settings_nif";
+      if (tabParam === "orders" || tabParam === "commandes" || path.includes("/admin/orders")) return "orders";
+      if (tabParam === "drivers" || tabParam === "livreurs" || tabParam === "couriers" || path.includes("/admin/drivers")) return "couriers_delivery";
+      if (tabParam === "payments" || tabParam === "paiements" || path.includes("/admin/payments")) return "mobile_money_payments";
+    }
+    return "overview";
+  });
   const [currentLanguage, setCurrentLanguage] = useState<AppLanguage>("fr");
   const [selectedCity, setSelectedCity] = useState<string>("Niamey (Plateau / Centre-Ville)");
   const [serviceMode, setServiceMode] = useState<ServiceMode>("delivery");
@@ -933,6 +945,7 @@ export function App() {
             onUpdateRestaurants={(updated) => setRestaurants(updated)}
             onOpenMarketingAI={() => setIsMarketingAIOpen(true)}
             onOpenWhatsAppAutomation={() => setIsWhatsAppAutomationOpen(true)}
+            initialTab={adminInitialTab}
           />
         )}
       </main>
@@ -1362,6 +1375,11 @@ export function App() {
         onOpenHowItWorks={() => setIsHowItWorksOpen(true)}
         onOpenPlans={() => setIsPlansOpen(true)}
         onOpenContract={() => setIsContractOpen(true)}
+        onOpenAdminTab={(tab) => {
+          setCurrentRole("admin");
+          setAdminInitialTab(tab);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
       />
 
       {/* Responsive Mobile Bottom Navigation Bar */}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ShieldCheck,
   TrendingUp,
@@ -47,7 +47,11 @@ import {
   Copy,
   FileSignature,
   CreditCard,
+  Settings,
 } from "lucide-react";
+import AdminSettingsPage from "../../app/admin/settings/page";
+import AdminDriversPage from "../../app/admin/drivers/page";
+import AdminOrdersPage from "../../app/admin/orders/page";
 import { AdminPaymentsView } from "./AdminPaymentsView";
 import { RESTAURANTS_DATA, SAUCE_BOXES_DATA, BLOG_POSTS_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { MenuItem, SauceBox, CateringQuoteRequest, Order, DishCategory, Restaurant } from "../types";
@@ -76,13 +80,29 @@ interface AdminDashboardProps {
   onUpdateRestaurants?: (restaurants: Restaurant[]) => void;
   onOpenMarketingAI?: () => void;
   onOpenWhatsAppAutomation?: () => void;
+  initialTab?: string;
 }
+
+export type AdminTabType =
+  | "overview"
+  | "orders"
+  | "couriers_delivery"
+  | "settings_nif"
+  | "mobile_money_payments"
+  | "menu_dishes"
+  | "sauce_boxes"
+  | "customers_loyalty"
+  | "events_catering"
+  | "pages_content"
+  | "deposits_validation"
+  | "partnership_contract";
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenTechPack,
   onUpdateRestaurants,
   onOpenMarketingAI,
   onOpenWhatsAppAutomation,
+  initialTab,
 }) => {
   // Admin Authentication State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
@@ -92,9 +112,60 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [authError, setAuthError] = useState<string | null>(null);
 
   // Active Admin Section Tab
-  const [activeAdminTab, setActiveAdminTab] = useState<
-    "overview" | "mobile_money_payments" | "menu_dishes" | "sauce_boxes" | "customers_loyalty" | "couriers_delivery" | "events_catering" | "pages_content" | "deposits_validation" | "partnership_contract"
-  >("overview");
+  const [activeAdminTab, setActiveAdminTab] = useState<AdminTabType>(() => {
+    if (
+      initialTab &&
+      [
+        "overview",
+        "orders",
+        "couriers_delivery",
+        "settings_nif",
+        "mobile_money_payments",
+        "menu_dishes",
+        "sauce_boxes",
+        "customers_loyalty",
+        "events_catering",
+        "pages_content",
+        "deposits_validation",
+        "partnership_contract",
+      ].includes(initialTab)
+    ) {
+      return initialTab as AdminTabType;
+    }
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam === "settings" || tabParam === "settings_nif" || tabParam === "nif" || path.includes("/admin/settings")) return "settings_nif";
+      if (tabParam === "orders" || tabParam === "commandes" || path.includes("/admin/orders")) return "orders";
+      if (tabParam === "drivers" || tabParam === "livreurs" || tabParam === "couriers" || path.includes("/admin/drivers")) return "couriers_delivery";
+      if (tabParam === "payments" || tabParam === "paiements" || path.includes("/admin/payments")) return "mobile_money_payments";
+    }
+    return "overview";
+  });
+
+  // Keep activeAdminTab in sync with initialTab prop if provided
+  useEffect(() => {
+    if (
+      initialTab &&
+      [
+        "overview",
+        "orders",
+        "couriers_delivery",
+        "settings_nif",
+        "mobile_money_payments",
+        "menu_dishes",
+        "sauce_boxes",
+        "customers_loyalty",
+        "events_catering",
+        "pages_content",
+        "deposits_validation",
+        "partnership_contract",
+      ].includes(initialTab)
+    ) {
+      setActiveAdminTab(initialTab as AdminTabType);
+    }
+  }, [initialTab]);
 
   // State: Partnership Contract Generator
   const [contractData, setContractData] = useState({
@@ -621,29 +692,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Quick links to Dedicated Admin Pages */}
-          <a
-            href="/app/admin/settings"
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition flex items-center gap-1.5"
-            title="Configuration NIF & Entreprise"
+          <button
+            type="button"
+            onClick={() => setActiveAdminTab("settings_nif")}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
+              activeAdminTab === "settings_nif"
+                ? "bg-purple-600 text-white border-purple-500 shadow-md shadow-purple-600/30 ring-2 ring-purple-400/40"
+                : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 hover:text-white"
+            }`}
+            title="Configuration légale & NIF Allôresto Niger"
           >
             ⚙️ <span>Paramètres &amp; NIF</span>
-          </a>
+          </button>
 
-          <a
-            href="/app/admin/drivers"
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition flex items-center gap-1.5"
-            title="Gestion flotte livreurs"
+          <button
+            type="button"
+            onClick={() => setActiveAdminTab("couriers_delivery")}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
+              activeAdminTab === "couriers_delivery"
+                ? "bg-cyan-600 text-white border-cyan-500 shadow-md shadow-cyan-600/30 ring-2 ring-cyan-400/40"
+                : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 hover:text-white"
+            }`}
+            title="Gestion flotte des livreurs Billo Express"
           >
             🛵 <span>Livreurs</span>
-          </a>
+          </button>
 
-          <a
-            href="/app/admin/orders"
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition flex items-center gap-1.5"
-            title="Toutes les commandes"
+          <button
+            type="button"
+            onClick={() => setActiveAdminTab("orders")}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
+              activeAdminTab === "orders"
+                ? "bg-orange-600 text-white border-orange-500 shadow-md shadow-orange-600/30 ring-2 ring-orange-400/40"
+                : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 hover:text-white"
+            }`}
+            title="Supervision de toutes les commandes"
           >
             📦 <span>Commandes</span>
-          </a>
+          </button>
 
           {onOpenMarketingAI && (
             <button
@@ -691,12 +777,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-800">
         {[
           { id: "overview", label: "Vue Générale & GMV", icon: TrendingUp },
+          { id: "orders", label: "📦 Commandes", icon: Package },
+          { id: "couriers_delivery", label: "🛵 Flotte Livreurs", icon: Bike, count: couriersList.length },
+          { id: "settings_nif", label: "⚙️ Paramètres & NIF", icon: Settings },
           { id: "mobile_money_payments", label: "💳 Paiements Mobile Money", icon: CreditCard },
           { id: "deposits_validation", label: "Validation Dépôts & Reçus", icon: FileCheck, badge: depositOrders.filter(d => d.status === "pending_verification").length },
           { id: "menu_dishes", label: "Plats & Menus", icon: Utensils, count: dishesList.length },
           { id: "sauce_boxes", label: "Boxs Sauces", icon: Flame, count: sauceBoxes.length },
           { id: "customers_loyalty", label: "Clients & Parrainage", icon: Users, count: clientsList.length },
-          { id: "couriers_delivery", label: "Livreurs & Logistique", icon: Bike, count: couriersList.length },
           { id: "events_catering", label: "Événements & Traiteur", icon: Calendar, badge: cateringQuotes.filter(c => c.status === "pending").length },
           { id: "partnership_contract", label: "Contrat Partenaires 📄", icon: FileSignature },
           { id: "pages_content", label: "Pages & Bannières", icon: Layers },
@@ -1475,53 +1563,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
 
       {/* ======================================================== */}
-      {/* TAB 6: COURIERS & LOGISTICS (BILLO EXPRESS) */}
+      {/* TAB: ORDERS SUPERVISION */}
+      {/* ======================================================== */}
+      {activeAdminTab === "orders" && (
+        <AdminOrdersPage isEmbedded={true} onNavigate={(tab) => setActiveAdminTab(tab as any)} />
+      )}
+
+      {/* ======================================================== */}
+      {/* TAB: COURIERS & LOGISTICS (BILLO EXPRESS) */}
       {/* ======================================================== */}
       {activeAdminTab === "couriers_delivery" && (
-        <div className="space-y-4">
-          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-base font-black text-white flex items-center gap-2">
-                <Bike className="w-5 h-5 text-cyan-400" />
-                <span>Flotte de Livraison Billo Express</span>
-              </h3>
-              <p className="text-xs text-slate-400">
-                Suivi des coursiers moto à Niamey, attributions de courses et temps de trajet.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-3 py-1 rounded-xl font-bold">
-                Partenaire Officiel : +227 92 08 08 22
-              </span>
-            </div>
-          </div>
+        <AdminDriversPage isEmbedded={true} onNavigate={(tab) => setActiveAdminTab(tab as any)} />
+      )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {couriersList.map((courier) => (
-              <div key={courier.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-black text-white">{courier.name}</h4>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                      courier.status === "available"
-                        ? "bg-emerald-950 text-emerald-400 border border-emerald-500/40"
-                        : courier.status === "busy"
-                        ? "bg-orange-950 text-orange-400 border border-orange-500/40"
-                        : "bg-slate-800 text-slate-400"
-                    }`}
-                  >
-                    {courier.status === "available" ? "Disponible" : courier.status === "busy" ? "En course" : "Hors ligne"}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 font-mono">{courier.phone}</p>
-                <div className="pt-2 border-t border-slate-800 flex justify-between text-[11px] text-slate-300">
-                  <span>🏍️ {courier.bikeModel}</span>
-                  <span className="font-bold text-amber-400">⭐ {courier.rating} ({courier.completedDeliveries} courses)</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* ======================================================== */}
+      {/* TAB: SETTINGS & NIF */}
+      {/* ======================================================== */}
+      {activeAdminTab === "settings_nif" && (
+        <AdminSettingsPage isEmbedded={true} onNavigate={(tab) => setActiveAdminTab(tab as any)} />
       )}
 
       {/* ======================================================== */}
