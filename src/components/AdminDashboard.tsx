@@ -46,7 +46,9 @@ import {
   Printer,
   Copy,
   FileSignature,
+  CreditCard,
 } from "lucide-react";
+import { AdminPaymentsView } from "./AdminPaymentsView";
 import { RESTAURANTS_DATA, SAUCE_BOXES_DATA, BLOG_POSTS_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { MenuItem, SauceBox, CateringQuoteRequest, Order, DishCategory, Restaurant } from "../types";
 import { DishManagementModal, CATEGORIES_CONFIG } from "./DishManagementModal";
@@ -91,7 +93,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Active Admin Section Tab
   const [activeAdminTab, setActiveAdminTab] = useState<
-    "overview" | "menu_dishes" | "sauce_boxes" | "customers_loyalty" | "couriers_delivery" | "events_catering" | "pages_content" | "deposits_validation" | "partnership_contract"
+    "overview" | "mobile_money_payments" | "menu_dishes" | "sauce_boxes" | "customers_loyalty" | "couriers_delivery" | "events_catering" | "pages_content" | "deposits_validation" | "partnership_contract"
   >("overview");
 
   // State: Partnership Contract Generator
@@ -689,6 +691,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-800">
         {[
           { id: "overview", label: "Vue Générale & GMV", icon: TrendingUp },
+          { id: "mobile_money_payments", label: "💳 Paiements Mobile Money", icon: CreditCard },
           { id: "deposits_validation", label: "Validation Dépôts & Reçus", icon: FileCheck, badge: depositOrders.filter(d => d.status === "pending_verification").length },
           { id: "menu_dishes", label: "Plats & Menus", icon: Utensils, count: dishesList.length },
           { id: "sauce_boxes", label: "Boxs Sauces", icon: Flame, count: sauceBoxes.length },
@@ -981,6 +984,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             ))}
           </div>
         </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* TAB 2: MOBILE MONEY PAYMENTS TRACKING */}
+      {/* ======================================================== */}
+      {activeAdminTab === "mobile_money_payments" && (
+        <AdminPaymentsView />
       )}
 
       {/* ======================================================== */}

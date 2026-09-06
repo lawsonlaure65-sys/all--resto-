@@ -86,6 +86,53 @@ CREATE POLICY "Gestion des restaurants" ON public.restaurants FOR ALL USING (tru
 
 DROP POLICY IF EXISTS "Gestion des plats" ON public.dishes;
 CREATE POLICY "Gestion des plats" ON public.dishes FOR ALL USING (true) WITH CHECK (true);
+
+-- 4. Table des Paiements Mobile Money (Airtel, Moov, Orange, Flooz, MyNita, Amanata, All-Iza, Zeyna)
+CREATE TABLE IF NOT EXISTS public.payments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id TEXT NOT NULL,
+  amount_xof INTEGER NOT NULL,
+  payment_method TEXT NOT NULL,
+  payment_status TEXT DEFAULT 'pending',
+  transaction_id TEXT,
+  phone_number TEXT,
+  provider_response JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS payments_order_id_idx ON public.payments(order_id);
+CREATE INDEX IF NOT EXISTS payments_status_idx ON public.payments(payment_status);
+
+-- 5. Table des Opérateurs Mobile Money
+CREATE TABLE IF NOT EXISTS public.payment_providers (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  api_url TEXT,
+  api_key TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO public.payment_providers (id, name, is_active) VALUES
+  ('airtel_money', 'Airtel Money Niger', true),
+  ('moov_money', 'Moov Money Niger', true),
+  ('orange_zamany', 'Orange Zamany Money', true),
+  ('flooz', 'Flooz (Togo/Niger)', true),
+  ('mynita', 'MyNita', true),
+  ('amanata', 'Amanata', true),
+  ('all_iza', 'All-Iza Business', true),
+  ('zeyna', 'Zeyna', true)
+ON CONFLICT (id) DO NOTHING;
+
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payment_providers ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Lecture des paiements" ON public.payments;
+CREATE POLICY "Lecture des paiements" ON public.payments FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Lecture des providers" ON public.payment_providers;
+CREATE POLICY "Lecture des providers" ON public.payment_providers FOR SELECT USING (true);
 `;
 
 // Helper: Convert MenuItem to Supabase row format

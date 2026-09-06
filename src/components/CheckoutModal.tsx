@@ -37,6 +37,8 @@ import {
 } from "../data/niameyDistrictsData";
 import { getJumuahStatus } from "../utils/jumuahSchedule";
 import { generateWhatsAppOrderConfirmation } from "../utils/whatsappNotifications";
+import { CheckoutPaymentModal } from "./CheckoutPaymentModal";
+import { PaymentRecord } from "../services/paymentService";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -98,6 +100,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [mobileMoneyNumber, setMobileMoneyNumber] = useState("🇳🇪 +227 96 00 11 22");
   const [notifyWhatsApp, setNotifyWhatsApp] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showMobilePaymentFlow, setShowMobilePaymentFlow] = useState(false);
+  const [onlinePaymentRecord, setOnlinePaymentRecord] = useState<PaymentRecord | null>(null);
 
   // Sync initial district if passed
   useEffect(() => {
@@ -699,6 +703,58 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               })}
             </div>
 
+            {/* Direct Mobile Money Online Payment Banner (Airtel, Moov, Orange, Flooz, MyNita, Amanata, All-Iza, Zeyna) */}
+            {onlinePaymentRecord ? (
+              <div className="p-4 rounded-2xl bg-emerald-950/80 border-2 border-emerald-500 flex items-center justify-between gap-3 text-emerald-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+                    ✓
+                  </div>
+                  <div>
+                    <span className="text-xs font-black text-white block">
+                      Paiement Mobile Money Validé ({onlinePaymentRecord.amount_xof.toLocaleString()} FCFA)
+                    </span>
+                    <span className="text-[11px] font-mono text-emerald-300">
+                      Réf: {onlinePaymentRecord.transaction_id} &bull; {onlinePaymentRecord.payment_method}
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-500 text-slate-950 font-black text-[10px] uppercase tracking-wider">
+                  Payé
+                </span>
+              </div>
+            ) : (
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-orange-950/60 via-slate-900 to-amber-950/60 border border-orange-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center text-lg shrink-0">
+                    💳
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-white">
+                        Paiement Mobile Money Instantané (8 Opérateurs)
+                      </span>
+                      <span className="px-2 py-0.2 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[9px] font-bold">
+                        Direct Niger
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-300">
+                      Airtel Money, Moov, Flooz, Orange Zamany, MyNita, Amanata, All-Iza, Zeyna
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowMobilePaymentFlow(true)}
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs transition cursor-pointer shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-1.5 shrink-0"
+                >
+                  <span>Régler {grandTotal.toLocaleString()} FCFA</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
             {/* Validation Notice for Mobile Agency Deposits */}
             {["mynita", "amanata", "al_izza_business", "zeyna", "mobile_money"].includes(paymentMethod) && (
               <div className="p-4 rounded-2xl bg-amber-950/90 border-2 border-amber-500 flex items-start gap-3.5 text-xs text-amber-200 shadow-xl shadow-amber-950/40">
@@ -1128,6 +1184,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             )}
           </button>
         </form>
+
+        {/* Modal Mobile Money Direct Flow */}
+        <CheckoutPaymentModal
+          isOpen={showMobilePaymentFlow}
+          onClose={() => setShowMobilePaymentFlow(false)}
+          orderId={`CMD-${Date.now().toString().slice(-6)}`}
+          amount={grandTotal}
+          customerPhone={customerPhone}
+          onPaymentSuccess={(payment) => {
+            setOnlinePaymentRecord(payment);
+            setPaymentReference(payment.transaction_id);
+            setPaymentMethod(payment.payment_method as any);
+            setReceiptProofAttached(true);
+            setShowMobilePaymentFlow(false);
+          }}
+        />
       </motion.div>
     </div>
   );

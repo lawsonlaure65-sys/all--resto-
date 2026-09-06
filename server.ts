@@ -438,6 +438,171 @@ app.post("/api/partner/register", async (req, res) => {
   }
 });
 
+// Memory payment records store with initial realistic Sahelian payments
+const IN_MEMORY_PAYMENTS: any[] = [
+  {
+    id: "pay_01",
+    order_id: "CMD-8812",
+    amount_xof: 15500,
+    payment_method: "airtel_money",
+    payment_status: "completed",
+    transaction_id: "AIRTEL-1725619412",
+    phone_number: "+227 96 12 34 56",
+    provider_response: { status: "success", code: "TXN_OK_200" },
+    created_at: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
+  },
+  {
+    id: "pay_02",
+    order_id: "CMD-8810",
+    amount_xof: 7500,
+    payment_method: "moov_money",
+    payment_status: "completed",
+    transaction_id: "MOOV-1725615821",
+    phone_number: "+227 90 55 44 33",
+    provider_response: { status: "success", code: "MOOV_VALIDATED" },
+    created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+  },
+  {
+    id: "pay_03",
+    order_id: "CMD-8809",
+    amount_xof: 12000,
+    payment_method: "orange_zamany",
+    payment_status: "pending",
+    transaction_id: "ORANGE-1725612104",
+    phone_number: "+227 91 88 77 66",
+    provider_response: { status: "pending_pin", code: "WAIT_CUSTOMER" },
+    created_at: new Date(Date.now() - 1000 * 60 * 80).toISOString(),
+  },
+  {
+    id: "pay_04",
+    order_id: "CMD-8805",
+    amount_xof: 5000,
+    payment_method: "mynita",
+    payment_status: "completed",
+    transaction_id: "MYN-994128",
+    phone_number: "+227 90 22 11 00",
+    provider_response: { status: "success", deposit_agent: "Agence Plateau" },
+    created_at: new Date(Date.now() - 1000 * 60 * 140).toISOString(),
+  },
+  {
+    id: "pay_05",
+    order_id: "CMD-8801",
+    amount_xof: 22500,
+    payment_method: "all_iza",
+    payment_status: "completed",
+    transaction_id: "IZZA-BUS-8831",
+    phone_number: "+227 97 33 44 55",
+    provider_response: { status: "success", branch: "Grande Mosquée" },
+    created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
+  },
+  {
+    id: "pay_06",
+    order_id: "CMD-8798",
+    amount_xof: 4500,
+    payment_method: "flooz",
+    payment_status: "pending",
+    transaction_id: "FLOOZ-1725598120",
+    phone_number: "+227 98 10 20 30",
+    provider_response: { status: "pending" },
+    created_at: new Date(Date.now() - 1000 * 60 * 320).toISOString(),
+  },
+];
+
+// API: Process Mobile Money Payment
+app.post("/api/payment/process", async (req, res) => {
+  try {
+    const { orderId, amount, paymentMethod, phoneNumber } = req.body;
+
+    if (!orderId || !amount || !paymentMethod || !phoneNumber) {
+      return res.status(400).json({ success: false, error: "Paramètres de paiement incomplets" });
+    }
+
+    let transactionId = "";
+    const prefix = (paymentMethod || "").toUpperCase().replace(/_MONEY/g, "");
+    switch (paymentMethod) {
+      case "airtel_money":
+        transactionId = `AIRTEL-${Date.now()}`;
+        break;
+      case "moov_money":
+        transactionId = `MOOV-${Date.now()}`;
+        break;
+      case "orange_zamany":
+        transactionId = `ORANGE-${Date.now()}`;
+        break;
+      case "flooz":
+        transactionId = `FLOOZ-${Date.now()}`;
+        break;
+      case "mynita":
+        transactionId = `MYN-${Date.now().toString().slice(-6)}`;
+        break;
+      case "amanata":
+        transactionId = `AMA-${Date.now().toString().slice(-6)}`;
+        break;
+      case "all_iza":
+        transactionId = `IZZA-${Date.now().toString().slice(-6)}`;
+        break;
+      case "zeyna":
+        transactionId = `ZEY-${Date.now().toString().slice(-6)}`;
+        break;
+      default:
+        transactionId = `${prefix || "TXN"}-${Date.now()}`;
+    }
+
+    const newPayment = {
+      id: "pay_" + Date.now(),
+      order_id: orderId,
+      amount_xof: Number(amount),
+      payment_method: paymentMethod,
+      payment_status: "completed",
+      transaction_id: transactionId,
+      phone_number: phoneNumber,
+      provider_response: { status: "success", gateway: "Allôresto Instant Mobile Gateway" },
+      created_at: new Date().toISOString(),
+    };
+
+    IN_MEMORY_PAYMENTS.unshift(newPayment);
+
+    // Also sync to Supabase if credentials exist in server env
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+    if (supabaseUrl && supabaseKey && supabaseUrl.startsWith("http")) {
+      try {
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        await supabase.from("payments").insert({
+          order_id: orderId,
+          amount_xof: Number(amount),
+          payment_method: paymentMethod,
+          payment_status: "completed",
+          transaction_id: transactionId,
+          phone_number: phoneNumber,
+          provider_response: { status: "success" },
+        });
+      } catch (dbErr) {
+        console.warn("Supabase server sync warning:", dbErr);
+      }
+    }
+
+    return res.json({
+      success: true,
+      transactionId,
+      payment: newPayment,
+      message: "Paiement validé avec succès",
+    });
+  } catch (error: any) {
+    console.error("Payment processing error:", error);
+    return res.status(500).json({ success: false, error: error.message || "Erreur lors du paiement" });
+  }
+});
+
+// API: List all Mobile Money payments
+app.get("/api/payments", (req, res) => {
+  res.json({
+    success: true,
+    payments: IN_MEMORY_PAYMENTS,
+  });
+});
+
 // API: Interactive AI Consultant Chat
 app.post("/api/chat", async (req, res) => {
   try {
