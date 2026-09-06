@@ -158,32 +158,24 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-800 text-slate-100 shadow-xl w-full max-w-full">
-      {/* 1. Top Banner for Brand Tagline & Language / Sound */}
-      <div className="bg-gradient-to-r from-orange-600 via-red-600 to-amber-600 px-3 sm:px-4 py-1 sm:py-1.5 text-xs text-white flex items-center justify-between w-full max-w-full overflow-hidden">
-        <div className="flex items-center gap-2 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-          <span className="font-extrabold uppercase tracking-wider text-[9px] sm:text-[10px] bg-black/30 px-2 py-0.5 rounded-full shrink-0">
-            🔥 {ALLORESTO_BRAND_INFO.tagline}
-          </span>
-          <span className="text-[11px] font-medium hidden md:inline truncate">
-            Point de retrait : <strong>{ALLORESTO_BRAND_INFO.pickupLocation}</strong> &bull; Partenaire : <strong>Billo Express</strong>
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+      {/* 1. Top Banner for Language, Sound, IA Marketing, WhatsApp, FAQ & Contact */}
+      <div className="bg-gradient-to-r from-red-950/90 via-slate-950 to-orange-950/90 border-b border-slate-800/80 px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs text-white flex items-center justify-between w-full max-w-full overflow-x-auto scrollbar-none gap-1.5 sm:gap-2">
+        {/* Left: Language, Sound, IA Marketing, WhatsApp, FAQ */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Language Switcher Dropdown */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-              className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-black/30 hover:bg-black/40 border border-white/25 text-white text-[10px] sm:text-[11px] font-extrabold transition-colors cursor-pointer shadow-sm"
-              title="Changer de langue / Select language (Français, English, Haoussa, Zarma)"
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-red-800/80 hover:bg-red-700/80 border border-red-600/60 text-white text-[10px] sm:text-[11px] font-bold transition-colors cursor-pointer shadow-sm"
+              title="Changer de langue (Français, English, Haoussa, Zarma)"
             >
               <span>{currentLangObj.flag}</span>
-              <span className="font-bold hidden sm:inline">{currentLangObj.label}</span>
-              <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-70" />
+              <span className="font-bold">{currentLangObj.label}</span>
+              <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-80" />
             </button>
 
             {langDropdownOpen && (
-              <div className="absolute right-0 mt-1.5 w-52 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-1">
+              <div className="absolute left-0 mt-1.5 w-52 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-1">
                 <div className="px-3 py-1 text-[10px] uppercase font-black tracking-wider text-slate-400 border-b border-slate-800 mb-1">
                   Langues Disponibles 🇳🇪
                 </div>
@@ -218,155 +210,68 @@ export const Header: React.FC<HeaderProps> = ({
           {onToggleSound && (
             <button
               onClick={onToggleSound}
-              className="text-[11px] font-bold text-white hover:text-amber-200 hidden sm:flex items-center gap-1 cursor-pointer bg-black/20 hover:bg-black/30 px-2 py-0.5 rounded-full border border-white/20 transition-colors"
+              className="p-1 sm:px-2 sm:py-1 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-white transition-colors cursor-pointer shrink-0"
               title={soundEnabled ? "Notifications sonores activées (Cliquer pour couper)" : "Notifications sonores coupées (Cliquer pour activer)"}
             >
               {soundEnabled ? (
-                <>
-                  <Volume2 className="w-3 h-3 text-amber-300" />
-                  <span className="hidden sm:inline">Sons ON</span>
-                </>
+                <Volume2 className="w-3.5 h-3.5 text-amber-300" />
               ) : (
-                <>
-                  <VolumeX className="w-3 h-3 text-slate-400" />
-                  <span className="hidden sm:inline">Sons OFF</span>
-                </>
+                <VolumeX className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
           )}
 
-          {/* Contact Direct */}
+          {/* IA Marketing trigger */}
+          {onOpenMarketingAI && (
+            <button
+              onClick={onOpenMarketingAI}
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-amber-950/90 to-red-950/90 hover:from-amber-900 hover:to-red-900 border border-amber-600/50 text-amber-200 text-[10px] sm:text-[11px] font-extrabold transition-colors cursor-pointer shadow-sm shrink-0"
+              title="Pilote Automatique Commercial & Campagnes Virales WhatsApp"
+            >
+              <TrendingUp className="w-3 h-3 text-amber-300 shrink-0" />
+              <span className="whitespace-nowrap">IA Marketing</span>
+            </button>
+          )}
+
+          {/* WhatsApp Automation trigger */}
+          {onOpenWhatsAppAutomation && (
+            <button
+              onClick={onOpenWhatsAppAutomation}
+              className="p-1 sm:px-2 sm:py-1 rounded-full bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 transition-colors cursor-pointer shrink-0"
+              title="Centre d'Automatisation & Dispatch WhatsApp"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+            </button>
+          )}
+
+          {/* Dynamic FAQ trigger */}
+          {onOpenFaq && (
+            <button
+              onClick={onOpenFaq}
+              className="p-1 sm:px-2 sm:py-1 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 text-amber-300 transition-colors cursor-pointer shrink-0"
+              title="Foire Aux Questions dynamique & aide"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-amber-300" />
+            </button>
+          )}
+        </div>
+
+        {/* Right: Contact Direct */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={onOpenContact}
-            className="text-[11px] font-bold text-white hover:text-orange-100 hidden sm:flex items-center gap-1 cursor-pointer"
+            className="flex items-center gap-1 text-[11px] font-bold text-white hover:text-orange-200 cursor-pointer transition-colors"
           >
-            <Phone className="w-3 h-3 text-emerald-300" />
-            <span className="hidden md:inline">+227 96 05 23 10</span>
-            <span className="md:hidden">Contact</span>
+            <Phone className="w-3 h-3 text-emerald-400" />
+            <span>Contact</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Responsive Spaces Bar (Espace Client, Restaurant, Livreur, Admin & Liens Rapides) */}
-      <div className="bg-slate-900/95 border-b border-slate-800/80 px-2.5 sm:px-6 py-1.5 w-full">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 overflow-x-auto scrollbar-none whitespace-nowrap">
-          {/* Les 4 Espaces de l'Application */}
-          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-            {/* Espace Client */}
-            <button
-              onClick={() => onChangeRole("client")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                currentRole === "client"
-                  ? "bg-orange-500 text-slate-950 shadow-sm"
-                  : "bg-slate-800/70 text-slate-300 hover:text-white hover:bg-slate-800"
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>Espace Client</span>
-            </button>
-
-            {/* Espace Restaurant */}
-            <button
-              onClick={() => onChangeRole("restaurant")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                currentRole === "restaurant"
-                  ? "bg-emerald-500 text-slate-950 shadow-sm"
-                  : "bg-slate-800/70 text-slate-300 hover:text-white hover:bg-slate-800"
-              }`}
-            >
-              <Store className="w-3.5 h-3.5" />
-              <span>Espace Restaurant</span>
-            </button>
-
-            {/* Espace Livreur */}
-            <button
-              onClick={() => onChangeRole("courier")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                currentRole === "courier"
-                  ? "bg-cyan-500 text-slate-950 shadow-sm"
-                  : "bg-slate-800/70 text-slate-300 hover:text-white hover:bg-slate-800"
-              }`}
-            >
-              <Bike className="w-3.5 h-3.5" />
-              <span>Espace Livreur</span>
-            </button>
-
-            {/* Espace Admin */}
-            <button
-              onClick={() => onChangeRole("admin")}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                currentRole === "admin"
-                  ? "bg-purple-500 text-slate-950 shadow-sm"
-                  : "bg-slate-800/70 text-slate-300 hover:text-white hover:bg-slate-800"
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Espace Admin</span>
-            </button>
-          </div>
-
-          {/* Liens Utiles : Comment ça marche, Formules, FAQ, Contact */}
-          <div className="flex items-center gap-1.5 shrink-0 pl-2 border-l border-slate-800">
-            {onOpenHowItWorks && (
-              <button
-                onClick={onOpenHowItWorks}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-amber-300 hover:text-amber-200 hover:bg-slate-800/60 transition cursor-pointer"
-                title="Guide : Comment ça marche"
-              >
-                <Info className="w-3.5 h-3.5" />
-                <span>Comment ça marche</span>
-              </button>
-            )}
-
-            {onOpenPlans && (
-              <button
-                onClick={onOpenPlans}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-orange-300 hover:text-orange-200 hover:bg-slate-800/60 transition cursor-pointer"
-                title="Formules d'adhésion & tarifs restaurants"
-              >
-                <CreditCard className="w-3.5 h-3.5" />
-                <span>Formules &amp; Tarifs</span>
-              </button>
-            )}
-
-            {onOpenFaq && (
-              <button
-                onClick={onOpenFaq}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition cursor-pointer"
-                title="Foire Aux Questions"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-                <span>FAQ</span>
-              </button>
-            )}
-
-            {onOpenDistrictsDirectory && (
-              <button
-                onClick={onOpenDistrictsDirectory}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition cursor-pointer"
-                title="Frais des Quartiers de Niamey"
-              >
-                <Compass className="w-3.5 h-3.5" />
-                <span>Frais Quartiers</span>
-              </button>
-            )}
-
-            <button
-              onClick={onOpenContact}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-emerald-300 hover:text-emerald-200 hover:bg-slate-800/60 transition cursor-pointer"
-              title="Service Client & Support"
-            >
-              <Phone className="w-3.5 h-3.5" />
-              <span>Contact</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3 w-full max-w-full overflow-hidden">
-        {/* Left: Brand Logo & Location */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-1.5 sm:gap-3 w-full max-w-full">
+        {/* Left: Brand Logo + Menu Catalog */}
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
           <div
             onClick={onOpenLogoModal}
             className="flex items-center gap-2 group cursor-pointer shrink-0"
@@ -376,7 +281,23 @@ export const Header: React.FC<HeaderProps> = ({
             <BrandLogo variant="full" size="md" showTagline={false} className="hidden sm:inline-flex" />
           </div>
 
-          {/* City / Location Selector */}
+          {/* Menu (65+ Plats) Catalog Button */}
+          {onOpenMenu && (
+            <button
+              id="header-menu-catalog-btn"
+              onClick={onOpenMenu}
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-amber-950/50 hover:bg-amber-900/70 border border-amber-500/50 text-amber-300 cursor-pointer shrink-0 transition active:scale-95 shadow-sm"
+              title="Consulter le menu et la carte complète (65+ plats)"
+            >
+              <UtensilsCrossed className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-400 shrink-0" />
+              <div className="text-left leading-tight">
+                <div className="text-[10px] sm:text-[11px] font-black text-amber-300">Menu</div>
+                <div className="text-[8.5px] sm:text-[9.5px] text-amber-400/90 font-bold whitespace-nowrap">(65+ Plats)</div>
+              </div>
+            </button>
+          )}
+
+          {/* City / Location Selector (hidden on mobile) */}
           <div className="relative hidden md:block">
             <button
               onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
@@ -440,7 +361,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Center: Explicit Navigation Buttons (Accueil, Menu, Commandes, Boxs, Événements) - desktop only */}
+        {/* Center: Explicit Navigation Buttons (desktop only) */}
         {currentRole === "client" && (
           <div className="hidden lg:flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900 border border-slate-800 text-xs font-bold shrink-0">
             {/* 1. Accueil */}
@@ -451,20 +372,7 @@ export const Header: React.FC<HeaderProps> = ({
               {t(currentLanguage, "home")}
             </button>
 
-            {/* 2. Menu / Grande Carte 65+ plats */}
-            {onOpenMenu && (
-              <button
-                id="header-menu-catalog-btn"
-                onClick={onOpenMenu}
-                className="px-3 py-1.5 rounded-xl bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/40 transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
-                title="Consulter le menu et la carte complète de plus de 65 plats"
-              >
-                <UtensilsCrossed className="w-3.5 h-3.5" />
-                <span className="font-extrabold">{t(currentLanguage, "menu_catalog")}</span>
-              </button>
-            )}
-
-            {/* 3. Commandes / Historique */}
+            {/* 2. Commandes / Historique */}
             {onOpenOrdersHistory && (
               <button
                 onClick={onOpenOrdersHistory}
@@ -476,7 +384,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* 4. Boxs Repas & Sauces */}
+            {/* 3. Boxs Repas & Sauces */}
             {onOpenSauceBoxes && (
               <button
                 onClick={onOpenSauceBoxes}
@@ -488,7 +396,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* 5. Événements / Traiteur */}
+            {/* 4. Événements / Traiteur */}
             {onOpenCatering && (
               <button
                 onClick={onOpenCatering}
@@ -500,7 +408,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* 6. Groupe Bureau */}
+            {/* 5. Groupe Bureau */}
             <button
               onClick={onOpenGroupOrder}
               className="hidden xl:flex px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition items-center gap-1 cursor-pointer"
@@ -511,45 +419,30 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         )}
 
-        {/* Right Actions: AI Chef, Account, Role Switcher, Cart */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* User Account / Sahel Club */}
-          {currentRole === "client" && (
-            <div className="hidden sm:flex items-center gap-1.5">
-              {onOpenAuth && (
-                <button
-                  onClick={onOpenAuth}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-bold transition cursor-pointer"
-                  title="Connexion ou Profil"
-                >
-                  <User className="w-3.5 h-3.5" />
-                  <span>
-                    {currentUser ? currentUser.name.split(" ")[0] : "Compte"}
-                  </span>
-                </button>
-              )}
+        {/* Right Actions: Account, Voice, AI Chef, Role Dropdown, Cart */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* User Account Button */}
+          <button
+            onClick={currentUser ? onOpenAccount : onOpenAuth}
+            className="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+            title="Compte Client"
+          >
+            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300" />
+            <span className="hidden xl:inline text-xs font-bold">
+              {currentUser ? currentUser.name.split(" ")[0] : "Compte"}
+            </span>
+          </button>
 
-              <button
-                onClick={onOpenAccount}
-                className="hidden xl:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-xs font-bold transition cursor-pointer"
-                title="Club Sahel & Points de fidélité"
-              >
-                <Award className="w-3.5 h-3.5 text-amber-400" />
-                <span>Fidélité</span>
-              </button>
-            </div>
-          )}
-
-          {/* Voice Order Trigger - hidden on mobile since floating mic exists */}
+          {/* Voice Order Button */}
           {onOpenVoiceOrder && (
             <button
               id="voice-order-nav-btn"
               onClick={onOpenVoiceOrder}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/40 hover:border-red-400 text-red-300 hover:text-white text-xs font-bold shadow-md cursor-pointer transition-all hover:scale-105"
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-600/50 text-red-400 hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shrink-0"
               title="Dicter ma commande vocale"
             >
-              <Mic className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-              <span>{t(currentLanguage, "voice_order")}</span>
+              <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 animate-pulse" />
+              <span className="hidden 2xl:inline text-xs font-bold">{t(currentLanguage, "voice_order")}</span>
             </button>
           )}
 
@@ -557,27 +450,29 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="allochef-nav-btn"
             onClick={onOpenChefAI}
-            className="flex items-center gap-1 px-2.5 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-orange-500/50 hover:border-orange-400 text-orange-400 text-xs font-bold shadow-lg shadow-orange-500/10 cursor-pointer transition-all active:scale-95"
+            className="p-2 sm:px-3 sm:py-2 rounded-xl bg-amber-950/60 hover:bg-amber-900/80 border border-amber-500/50 text-amber-400 hover:text-amber-300 transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shrink-0 active:scale-95"
+            title="AllôChef IA"
           >
-            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current text-amber-400 animate-pulse" />
-            <span className="hidden sm:inline">{t(currentLanguage, "chef_ai")}</span>
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 animate-pulse" />
+            <span className="hidden xl:inline text-xs font-bold">{t(currentLanguage, "chef_ai")}</span>
           </button>
 
           {/* Role Switcher Menu */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${currentRoleInfo.color}`}
+              className={`flex items-center gap-1 p-2 sm:px-2.5 sm:py-2 rounded-xl border text-xs font-bold transition cursor-pointer ${currentRoleInfo.color}`}
+              title="Changer d'espace démo"
             >
-              <CurrentRoleIcon className="w-3.5 h-3.5" />
-              <span>{currentRoleInfo.label}</span>
-              <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-70" />
+              <CurrentRoleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span className="hidden md:inline">{currentRoleInfo.label}</span>
+              <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 opacity-70 shrink-0" />
             </button>
 
             {roleDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-1.5 z-50">
-                <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-800 mb-1">
-                  Changer d&apos;Espace Démo
+              <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-800 mb-1 tracking-wider">
+                  CHANGER D&apos;ESPACE D&Eacute;MO
                 </div>
                 {(["client", "restaurant", "courier", "admin"] as UserRole[]).map((r) => {
                   const info = getRoleLabel(r);
@@ -651,19 +546,20 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Cart Button (Panier Dynamique) */}
+          {/* Cart Button */}
           {currentRole === "client" && (
             <button
               id="cart-nav-btn"
               onClick={onOpenCart}
-              className="relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-bold text-xs shadow-lg shadow-orange-500/25 transition-all cursor-pointer active:scale-95"
+              className="relative flex items-center gap-1.5 sm:gap-2 p-2 sm:px-3 sm:py-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-bold text-xs shadow-lg shadow-orange-500/25 transition-all cursor-pointer active:scale-95 shrink-0"
+              title="Voir le panier"
             >
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingBag className="w-4 h-4 text-white" />
               <span className="hidden sm:inline">
                 {cartTotal > 0 ? `${cartTotal.toLocaleString()} F` : "Panier"}
               </span>
               {cartCount > 0 && (
-                <span className="w-5 h-5 rounded-full bg-slate-950 text-orange-400 text-[10px] sm:text-[11px] font-black flex items-center justify-center border border-orange-400/50">
+                <span className="absolute -top-1 -right-1 sm:static sm:top-auto sm:right-auto w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-slate-950 text-orange-400 text-[9px] sm:text-[11px] font-black flex items-center justify-center border border-orange-400/50">
                   {cartCount}
                 </span>
               )}
