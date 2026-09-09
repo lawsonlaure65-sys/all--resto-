@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Order, UserProfile, Restaurant, MenuItem } from "../types";
 import { DEFAULT_USER_PROFILE, RESTAURANTS_DATA } from "../data/allorestoData";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface UserAccountModalProps {
   isOpen: boolean;
@@ -144,6 +145,18 @@ export const UserAccountModal: React.FC<UserAccountModalProps> = ({
           >
             <MapPin className="w-3.5 h-3.5" />
             <span>Adresses de livraison ({userProfile.savedAddresses.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("preferences")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-2 ${
+              activeTab === "preferences"
+                ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
+                : "bg-slate-800/80 text-slate-400 hover:text-white"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Préférences &amp; Thème</span>
           </button>
         </div>
 
@@ -332,6 +345,29 @@ export const UserAccountModal: React.FC<UserAccountModalProps> = ({
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 4: Preferences & Theme */}
+        {activeTab === "preferences" && (
+          <div className="space-y-5">
+            <div>
+              <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">
+                Paramètres d&apos;affichage &amp; Thème
+              </h4>
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+                <ThemeToggle variant="segmented" />
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+              <h5 className="text-xs font-bold text-slate-300">
+                Détection automatique du système d&apos;exploitation
+              </h5>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Lorsque l&apos;option <strong>Système</strong> est activée, l&apos;interface d&apos;Allôresto s&apos;ajuste automatiquement dès que votre smartphone, tablette ou ordinateur passe en mode nuit ou jour.
+              </p>
             </div>
           </div>
         )}

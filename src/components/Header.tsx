@@ -36,6 +36,7 @@ import { UserRole, ServiceMode, CityOption, UserProfile, AppLanguage } from "../
 import { CITIES_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { BrandLogo } from "./BrandLogo";
 import { SUPPORTED_LANGUAGES, t } from "../utils/translations";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface HeaderProps {
   currentRole: UserRole;
@@ -226,6 +227,9 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </button>
           )}
+
+          {/* Theme Mode Toggle (System Auto / Light / Dark) */}
+          <ThemeToggle variant="header-bar" />
 
           {/* IA Marketing trigger */}
           {onOpenMarketingAI && (
@@ -475,6 +479,9 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 animate-pulse" />
           </button>
+
+          {/* Button 3.5: Theme Toggle (System Auto / Light / Dark) */}
+          <ThemeToggle variant="header-nav" />
 
           {/* Button 4: Role Switcher Menu (Espace Client, Restaurant, Livreur, Admin) */}
           <div className="relative shrink-0">

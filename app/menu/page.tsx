@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, ShoppingBag, Clock, Check, Sparkles, UtensilsCrossed } from 'lucide-react';
+import { Search, ShoppingBag, Clock, Check, Sparkles, UtensilsCrossed, Share2, MessageCircle } from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { DishShareModal, DishToShare } from '../../src/components/DishShareModal';
 
 interface CatalogDish {
   id: string;
@@ -128,13 +130,57 @@ export default function MenuPublicPage() {
   const [search, setSearch] = useState<string>('');
   const [cartCount, setCartCount] = useState<number>(0);
   const [addedToast, setAddedToast] = useState<string | null>(null);
+  const [recentlyAddedId, setRecentlyAddedId] = useState<string | null>(null);
+  const [cartBouncing, setCartBouncing] = useState<boolean>(false);
+  const [dishToShare, setDishToShare] = useState<DishToShare | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
 
   const categories = ['Tous', 'Grillades', 'Plats Traditionnels', 'Poissons', 'Fast Food', 'Boissons'];
 
   const handleAddToCart = (dish: CatalogDish) => {
     setCartCount((prev) => prev + 1);
+    setRecentlyAddedId(dish.id);
+    setCartBouncing(true);
     setAddedToast(dish.name);
-    setTimeout(() => setAddedToast(null), 3000);
+
+    // Effet confetti festif
+    try {
+      confetti({
+        particleCount: 35,
+        spread: 60,
+        origin: { y: 0.8 },
+        colors: ['#f97316', '#fbbf24', '#10b981', '#38bdf8', '#ffffff'],
+      });
+    } catch {
+      // Ignorer si bloqué
+    }
+
+    setTimeout(() => {
+      setRecentlyAddedId(null);
+    }, 1600);
+
+    setTimeout(() => {
+      setCartBouncing(false);
+    }, 600);
+
+    setTimeout(() => {
+      setAddedToast(null);
+    }, 3200);
+  };
+
+  const handleOpenShare = (dish: CatalogDish) => {
+    setDishToShare({
+      id: dish.id,
+      name: dish.name,
+      restaurantName: dish.restaurant_name,
+      price: dish.price,
+      description: dish.description,
+      imageUrl: dish.image_url,
+      district: dish.district,
+      category: dish.category,
+      preparationTime: dish.preparation_time_min,
+    });
+    setIsShareModalOpen(true);
   };
 
   const filtered = ALL_DISHES.filter((d) => {
@@ -165,9 +211,15 @@ export default function MenuPublicPage() {
             <motion.a
               id="menu-cart-link"
               href="/"
+              animate={cartBouncing ? { scale: [1, 1.18, 0.94, 1.1, 1], rotate: [0, -3, 3, -2, 0] } : {}}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 text-xs font-black transition cursor-pointer flex items-center gap-2 shadow-lg shadow-orange-500/20"
+              className={`px-4 py-2 rounded-xl text-slate-950 text-xs font-black transition cursor-pointer flex items-center gap-2 shadow-lg ${
+                cartBouncing
+                  ? "bg-amber-400 shadow-amber-400/40 ring-2 ring-amber-300"
+                  : "bg-orange-500 hover:bg-orange-400 shadow-orange-500/20"
+              }`}
             >
               <ShoppingBag className="w-4 h-4" />
               <span>Panier</span>
@@ -175,11 +227,11 @@ export default function MenuPublicPage() {
                 {cartCount > 0 && (
                   <motion.span
                     key={cartCount}
-                    initial={{ scale: 0.4, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
+                    initial={{ scale: 0.4, opacity: 0, y: -6 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.4, opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 450, damping: 18 }}
-                    className="w-5 h-5 rounded-full bg-slate-950 text-white text-[10px] font-black flex items-center justify-center"
+                    transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+                    className="w-5 h-5 rounded-full bg-slate-950 text-white text-[10px] font-black flex items-center justify-center shadow-inner"
                   >
                     {cartCount}
                   </motion.span>
@@ -300,14 +352,34 @@ export default function MenuPublicPage() {
                   <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold text-slate-200 border border-slate-700 shadow-sm">
                     {dish.restaurant_name} ({dish.district})
                   </div>
-                  <motion.div
-                    initial={{ scale: 0.85, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.15 + index * 0.04 }}
-                    className="absolute top-3 right-3 bg-orange-500 text-slate-950 px-3 py-1 rounded-full text-xs font-black shadow-lg"
-                  >
-                    {dish.price.toLocaleString()} FCFA
-                  </motion.div>
+                  
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                    {/* Quick Share Button on Image */}
+                    <motion.button
+                      id={`quick-share-${dish.id}`}
+                      type="button"
+                      whileHover={{ scale: 1.12 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenShare(dish);
+                      }}
+                      className="w-7 h-7 rounded-full bg-slate-950/85 hover:bg-emerald-600 text-slate-300 hover:text-white backdrop-blur-md flex items-center justify-center transition border border-slate-700/80 shadow-md cursor-pointer"
+                      title="Partager ce plat sur WhatsApp ou les réseaux sociaux"
+                      aria-label="Partager"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                    </motion.button>
+
+                    <motion.div
+                      initial={{ scale: 0.85, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.15 + index * 0.04 }}
+                      className="bg-orange-500 text-slate-950 px-3 py-1 rounded-full text-xs font-black shadow-lg"
+                    >
+                      {dish.price.toLocaleString()} FCFA
+                    </motion.div>
+                  </div>
                 </div>
 
                 <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
@@ -331,16 +403,80 @@ export default function MenuPublicPage() {
                     </span>
                   </div>
 
-                  <motion.button
-                    id={`add-to-cart-${dish.id}`}
-                    whileTap={{ scale: 0.96 }}
-                    whileHover={{ scale: 1.01 }}
-                    onClick={() => handleAddToCart(dish)}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs font-black transition cursor-pointer shadow-md shadow-orange-500/20 flex items-center justify-center gap-1.5"
-                  >
-                    <ShoppingBag className="w-3.5 h-3.5" />
-                    <span>Ajouter au Panier</span>
-                  </motion.button>
+                  {/* Action Buttons: Animated Add to Cart + Share */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <motion.button
+                      id={`add-to-cart-${dish.id}`}
+                      whileTap={{ scale: 0.94 }}
+                      whileHover={{ scale: 1.01 }}
+                      onClick={() => handleAddToCart(dish)}
+                      className={`flex-1 py-2.5 px-3 rounded-xl font-black text-xs transition cursor-pointer shadow-md flex items-center justify-center gap-1.5 relative overflow-hidden ${
+                        recentlyAddedId === dish.id
+                          ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-emerald-500/30 scale-[1.02]"
+                          : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 shadow-orange-500/20"
+                      }`}
+                    >
+                      <AnimatePresence mode="wait">
+                        {recentlyAddedId === dish.id ? (
+                          <motion.div
+                            key="added-state"
+                            initial={{ scale: 0.6, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.6, opacity: 0 }}
+                            transition={{ type: "spring", stiffness: 450, damping: 18 }}
+                            className="flex items-center gap-1.5 text-white font-black"
+                          >
+                            <Check className="w-4 h-4" />
+                            <span>Ajouté !</span>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="default-state"
+                            initial={{ scale: 0.6, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.6, opacity: 0 }}
+                            className="flex items-center gap-1.5"
+                          >
+                            <ShoppingBag className="w-3.5 h-3.5" />
+                            <span>Ajouter</span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Floating +1 particle bubble */}
+                      <AnimatePresence>
+                        {recentlyAddedId === dish.id && (
+                          <motion.span
+                            initial={{ opacity: 1, y: 0, scale: 0.8 }}
+                            animate={{ opacity: 0, y: -26, scale: 1.25 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.75, ease: "easeOut" }}
+                            className="absolute -top-1 right-2 text-emerald-200 font-black text-xs pointer-events-none drop-shadow"
+                          >
+                            +1 🍲
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </motion.button>
+
+                    {/* Partager button */}
+                    <motion.button
+                      id={`share-dish-${dish.id}`}
+                      type="button"
+                      whileTap={{ scale: 0.92 }}
+                      whileHover={{ scale: 1.04 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenShare(dish);
+                      }}
+                      className="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-emerald-600/20 text-slate-300 hover:text-emerald-400 border border-slate-700 hover:border-emerald-500/40 transition cursor-pointer flex items-center justify-center gap-1 text-xs font-bold shrink-0 shadow-sm group/btn"
+                      title="Partager ce plat sur WhatsApp ou les réseaux sociaux"
+                      aria-label="Partager ce plat"
+                    >
+                      <Share2 className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" />
+                      <span className="hidden sm:inline">Partager</span>
+                    </motion.button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -377,6 +513,13 @@ export default function MenuPublicPage() {
           )}
         </motion.div>
       </div>
+
+      {/* Dish Share Modal */}
+      <DishShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        dish={dishToShare}
+      />
     </div>
   );
 }

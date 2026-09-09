@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { UserRole, AppLanguage } from "../types";
 import { t } from "../utils/translations";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface MobileBottomNavProps {
   currentRole: UserRole;
@@ -144,6 +145,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                   </button>
                 );
               })}
+            </div>
+
+            {/* Mobile Theme Switcher */}
+            <div className="pt-3 border-t border-slate-800">
+              <ThemeToggle variant="segmented" />
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { TranslationProvider } from './context/TranslationContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { applyOfficialBrandFavicon } from './utils/faviconManager';
 import './index.css';
 
@@ -35,9 +36,12 @@ applyOfficialBrandFavicon();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <TranslationProvider>
-      <App />
-    </TranslationProvider>
+    <ThemeProvider>
+      <TranslationProvider>
+        <App />
+      </TranslationProvider>
+    </ThemeProvider>
   </StrictMode>,
 );
+
 

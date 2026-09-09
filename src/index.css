@@ -23,6 +23,165 @@ body {
   box-sizing: border-box;
 }
 
+/* ========================================================================== */
+/* ADAPTATION AUTOMATIQUE DU THÈME (LIGHT / DARK SYSTEM & MANUAL)             */
+/* ========================================================================== */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+/* 1. Conteneurs principaux & toiles de fond en mode clair */
+html.light,
+html.light body,
+html.light #root,
+html.light .bg-slate-950 {
+  background-color: #f8fafc;
+}
+
+/* 2. Cartes, fenêtres modales et panneaux de contenu */
+html.light .bg-slate-900 {
+  background-color: #ffffff;
+}
+
+/* 3. Surfaces secondaires, sous-cartes, champs et pilules */
+html.light .bg-slate-850,
+html.light .bg-slate-800 {
+  background-color: #f1f5f9;
+}
+
+/* 4. En-tête supérieur et barres de navigation translucides */
+html.light header.bg-slate-950\/95,
+html.light .bg-slate-950\/95,
+html.light .bg-slate-950\/90,
+html.light .bg-slate-950\/80 {
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+/* 5. Préserver l'opacité sombre des toiles de fond modales pour un contraste optimal */
+html.light .fixed.inset-0.bg-slate-950\/85,
+html.light .fixed.inset-0.bg-slate-950\/80,
+html.light .fixed.inset-0.bg-slate-950\/90,
+html.light .fixed.inset-0.bg-black\/80,
+html.light .fixed.inset-0.bg-black\/70 {
+  background-color: rgba(15, 23, 42, 0.65) !important;
+}
+
+/* 6. Bordures adaptées au thème clair */
+html.light .border-slate-800,
+html.light .border-slate-850 {
+  border-color: #e2e8f0;
+}
+
+html.light .border-slate-700 {
+  border-color: #cbd5e1;
+}
+
+html.light .border-slate-900,
+html.light .border-slate-950 {
+  border-color: #f1f5f9;
+}
+
+/* 7. Typographie et lisibilité en mode clair */
+html.light {
+  color: #0f172a;
+}
+
+html.light .text-slate-100 {
+  color: #0f172a;
+}
+
+html.light .text-slate-200 {
+  color: #1e293b;
+}
+
+html.light .text-slate-300 {
+  color: #334155;
+}
+
+html.light .text-slate-400 {
+  color: #64748b;
+}
+
+html.light .text-slate-500 {
+  color: #64748b;
+}
+
+/* Titres H1-H6 en mode clair */
+html.light h1,
+html.light h2,
+html.light h3,
+html.light h4,
+html.light h5,
+html.light h6 {
+  color: #0f172a;
+}
+
+/* Titres et textes avec text-white qui ne sont pas sur fond coloré */
+html.light .text-white:not([class*="bg-orange"]):not([class*="bg-emerald"]):not([class*="bg-green"]):not([class*="bg-red"]):not([class*="bg-indigo"]):not([class*="bg-purple"]):not([class*="bg-blue"]):not([class*="bg-amber"]):not([class*="bg-gradient"]):not([class*="from-"]):not([class*="badge"]) {
+  color: #0f172a;
+}
+
+/* 8. Champs de saisie en mode clair */
+html.light input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([class*="bg-orange"]):not([class*="bg-emerald"]):not([class*="bg-transparent"]),
+html.light textarea:not([class*="bg-transparent"]),
+html.light select:not([class*="bg-transparent"]) {
+  background-color: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* 9. États de survol en mode clair */
+html.light .hover\:bg-slate-800:hover {
+  background-color: #e2e8f0;
+}
+
+html.light .hover\:bg-slate-700:hover {
+  background-color: #cbd5e1;
+}
+
+html.light .hover\:bg-slate-900:hover {
+  background-color: #f1f5f9;
+}
+
+html.light .hover\:text-white:hover {
+  color: #0f172a;
+}
+
+/* 10. Ombres naturelles et douces en mode clair */
+html.light .shadow-2xl {
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+html.light .shadow-xl {
+  box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.07), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
+}
+
+html.light .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.05), 0 4px 6px -4px rgba(15, 23, 42, 0.02);
+}
+
+/* Transitions de couleurs fluides */
+body,
+header,
+main,
+section,
+aside,
+nav {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 @media print {
   body * {
     visibility: hidden !important;
@@ -43,3 +202,4 @@ body {
     color: #000000 !important;
   }
 }
+

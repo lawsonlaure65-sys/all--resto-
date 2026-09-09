@@ -1,12 +1,27 @@
 <!doctype html>
-<html lang="fr" class="dark">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
-    <title>Allôresto Niger — Livraison de Repas & Restaurants à Niamey</title>
-    <meta name="description" content="Allôresto : Commandez vos plats préférés, spécialités nigériennes, africaines et internationales avec livraison express à Niamey (Plateau, Koira Kano, Yantala, Harobanda...)." />
+    <title>Allôresto — Livraison de Repas & Restaurants à Niamey</title>
+    <meta name="description" content="Plateforme de commande et livraison de repas à Niamey au Niger (particuliers, fonctionnaires, bureaux). Restaurant situé à la Grande Mosquée Mouhamar Khadafi, avec paiement Airtel Money, Moov Money, espèces et carte." />
     <meta name="keywords" content="Allôresto, livraison repas Niamey, restaurant Niger, Billo Express, Airtel Money, Moov Money, plat du jour, AllôChef" />
     <meta name="author" content="Allôresto Niger" />
+
+    <!-- Anti-FOUC Theme Detection Script (Detects system preference & saved user override) -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('alloresto_theme_mode');
+          var isDark = saved === 'dark' || (saved !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var resolved = isDark ? 'dark' : 'light';
+          document.documentElement.classList.remove('dark', 'light');
+          document.documentElement.classList.add(resolved);
+          document.documentElement.setAttribute('data-theme', resolved);
+          document.documentElement.setAttribute('data-theme-mode', saved || 'system');
+        } catch (e) {}
+      })();
+    </script>
     
     <!-- Standard & Multi-Size Favicons for All Desktop & Mobile Browsers (Prioritizing Vector SVG + Fallbacks) -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
@@ -37,9 +52,9 @@
     <meta name="format-detection" content="telephone=no" />
 
     <!-- OpenGraph & Social Cards (WhatsApp, Facebook, LinkedIn) -->
-    <meta property="og:site_name" content="Allôresto Niger" />
-    <meta property="og:title" content="Allôresto Niger — Livraison de Repas & Restaurants à Niamey" />
-    <meta property="og:description" content="Vos restaurants et spécialités du Sahel livrés chez vous et au bureau à Niamey avec suivi en direct." />
+    <meta property="og:site_name" content="Allôresto" />
+    <meta property="og:title" content="Allôresto — Livraison de Repas & Restaurants à Niamey" />
+    <meta property="og:description" content="Plateforme de commande et livraison de repas à Niamey au Niger (particuliers, fonctionnaires, bureaux). Restaurant situé à la Grande Mosquée Mouhamar Khadafi, avec paiement Airtel Money, Moov Money, espèces et carte." />
     <meta property="og:image" content="/icon-512.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="512" />
@@ -50,8 +65,8 @@
     
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Allôresto Niger — Livraison Rapide à Niamey" />
-    <meta name="twitter:description" content="Commandez vos repas en ligne et faites-vous livrer par Billo Express à Niamey." />
+    <meta name="twitter:title" content="Allôresto — Livraison de Repas & Restaurants à Niamey" />
+    <meta name="twitter:description" content="Plateforme de commande et livraison de repas à Niamey au Niger (particuliers, fonctionnaires, bureaux). Restaurant situé à la Grande Mosquée Mouhamar Khadafi, avec paiement Airtel Money, Moov Money, espèces et carte." />
     <meta name="twitter:image" content="/icon-512.png" />
 
     <!-- Typography -->
