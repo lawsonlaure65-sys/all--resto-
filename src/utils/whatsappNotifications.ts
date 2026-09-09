@@ -457,6 +457,161 @@ export function sendOrderStatusNotificationWhatsApp(order: Order, status: OrderS
   openWhatsAppDirect(order.customerPhone || ALLORESTO_BRAND_INFO.whatsappOrders, message);
 }
 
+export interface DeliveryDelayNotificationParams {
+  orderId: string;
+  customerName: string;
+  customerPhone: string;
+  restaurantName: string;
+  courierName?: string;
+  courierPhone?: string;
+  deliveryAddress?: string;
+  delayMinutes?: number;
+  reason?: string;
+  compensation?: string;
+  lang?: AppLanguage | string;
+}
+
+export interface DelayAutomationConfig {
+  autoAlertEnabled: boolean;
+  thresholdMinutes: number;
+  defaultAdditionalMinutes: number;
+  defaultReason: string;
+  defaultLanguage: AppLanguage;
+  includeCompensation: boolean;
+  compensationText: string;
+  notifySound: boolean;
+}
+
+export const DEFAULT_DELAY_AUTOMATION_CONFIG: DelayAutomationConfig = {
+  autoAlertEnabled: true,
+  thresholdMinutes: 30,
+  defaultAdditionalMinutes: 15,
+  defaultReason: "Forte affluence en cuisine & préparation soignée au feu doux",
+  defaultLanguage: "fr",
+  includeCompensation: true,
+  compensationText: "Bénéficiez de -500 FCFA avec le code promo RETARD500 sur votre prochaine commande !",
+  notifySound: true,
+};
+
+export function loadDelayAutomationConfig(): DelayAutomationConfig {
+  if (typeof window === "undefined") return DEFAULT_DELAY_AUTOMATION_CONFIG;
+  try {
+    const stored = localStorage.getItem("alloresto_delay_automation_config");
+    if (stored) {
+      return { ...DEFAULT_DELAY_AUTOMATION_CONFIG, ...JSON.parse(stored) };
+    }
+  } catch (e) {
+    console.warn("Could not load delay automation config", e);
+  }
+  return DEFAULT_DELAY_AUTOMATION_CONFIG;
+}
+
+export function saveDelayAutomationConfig(config: DelayAutomationConfig): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem("alloresto_delay_automation_config", JSON.stringify(config));
+  } catch (e) {
+    console.warn("Could not save delay automation config", e);
+  }
+}
+
+/**
+ * Génère le message WhatsApp officiel d'information de retard de livraison (FR / EN / HA / ZM)
+ */
+export function generateDeliveryDelayMessage(
+  params: DeliveryDelayNotificationParams
+): string {
+  const {
+    orderId,
+    customerName,
+    restaurantName,
+    courierName = "Billo Express Niamey",
+    courierPhone = "+227 92 08 08 22",
+    deliveryAddress = "Niamey",
+    delayMinutes = 15,
+    reason = "Forte affluence en cuisine & préparation soignée au feu doux",
+    compensation = "Bénéficiez de -500 FCFA avec le code promo RETARD500 sur votre prochaine commande !",
+    lang = "fr",
+  } = params;
+
+  const safeLang = (lang === "en" || lang === "ha" || lang === "zm") ? lang : "fr";
+
+  if (safeLang === "en") {
+    return (
+      `⏰ *DELIVERY DELAY NOTICE & APOLOGY — ALLÔRESTO NIAMEY* 🛵🇳🇪\n\n` +
+      `Hello *${customerName || "Customer"}*,\n\n` +
+      `We want to keep you informed with full transparency: your order *#${orderId}* from *${restaurantName}* is experiencing a slight unexpected delay.\n\n` +
+      `⏱️ *Estimated additional time:* +${delayMinutes} minutes\n` +
+      `📍 *Reason:* ${reason}\n` +
+      `🏍️ *Billo Express Courier:* ${courierName} (${courierPhone})\n` +
+      `📦 *Destination:* ${deliveryAddress}\n\n` +
+      `Your meal is being kept in our professional thermal insulated boxes to preserve heat and taste.\n\n` +
+      `${compensation ? `🎁 *Commercial gesture:* ${compensation}\n\n` : ""}` +
+      `👉 *Live Tracking:* https://alloresto-niamey.com\n` +
+      `📞 *Customer Care:* +227 96 05 23 10 | WhatsApp: +227 70 03 25 52\n` +
+      `_Allôresto Niger sincerely apologizes for this inconvenience._ 🌟`
+    );
+  }
+
+  if (safeLang === "ha") {
+    return (
+      `⏰ *SANARWAR JINKIRIN KAI ABINCI & HAKURI — ALLÔRESTO YAMAI* 🛵🇳🇪\n\n` +
+      `Barka *${customerName || "Mai Saye"}*,\n\n` +
+      `Muna son sanar da ku cikin gaskiya cewa odar ku mai lamba *#${orderId}* daga *${restaurantName}* ta sami ɗan jinkiri maras tsammani.\n\n` +
+      `⏱️ *Kimanin karin lokaci:* minti +${delayMinutes}\n` +
+      `📍 *Dalili:* ${reason}\n` +
+      `🏍️ *Mai babur Billo Express:* ${courierName} (${courierPhone})\n` +
+      `📦 *Wurin kaiwa:* ${deliveryAddress}\n\n` +
+      `Ana ajiye abincin ku a cikin akwatin zafi na musamman don ya kasance da dumi da daɗi.\n\n` +
+      `${compensation ? `🎁 *Rangwamen hakuri:* ${compensation}\n\n` : ""}` +
+      `👉 *Bibiyar odar ka:* https://alloresto-niamey.com\n` +
+      `📞 *Sabis na Taimako:* +227 96 05 23 10 | WhatsApp: +227 70 03 25 52\n` +
+      `_Dukkan tawagar Allôresto Niger na neman afuwar ku game da wannan jinkiri._ 🌟`
+    );
+  }
+
+  if (safeLang === "zm") {
+    return (
+      `⏰ *ŊWAARI KANDIYAN JIIBIYAŊ ALHABAR & YAAFEYAN — ALLÔRESTO NIAMEY* 🛵🇳🇪\n\n` +
+      `Kubanni *${customerName || "Daykow"}*,\n\n` +
+      `Iri ga ba ka ci war se cimi ra kaŋ ni ŋwaaro *#${orderId}* kaŋ fun *${restaurantName}* do jiibi cire.\n\n` +
+      `⏱️ *Alwakti tonton:* Miniti +${delayMinutes}\n` +
+      `📍 *Sabbabu:* ${reason}\n` +
+      `🏍️ *Billo Express Kandekow:* ${courierName} (${courierPhone})\n` +
+      `📦 *Kandiyan nango:* ${deliveryAddress}\n\n` +
+      `Ni ŋwaaro go g'a gaabu kunkuni korante ra zama a ma si yey.\n\n` +
+      `${compensation ? `🎁 *Nooru nooyaŋ yaafeyan se:* ${compensation}\n\n` : ""}` +
+      `👉 *Guna fondo ra:* https://alloresto-niamey.com\n` +
+      `📞 *Faaba Talifono:* +227 96 05 23 10 | WhatsApp: +227 70 03 25 52\n` +
+      `_Allôresto Niger kulu ga yaafeyan ŋwaari di jiibiyan se._ 🌟`
+    );
+  }
+
+  // Défaut : Français
+  return (
+    `⏰ *INFORMATION LIVRAISON & EXCUSES RETARD — ALLÔRESTO NIAMEY* 🛵🇳🇪\n\n` +
+    `Bonjour *${customerName || "Client"}*,\n\n` +
+    `Par souci de transparence, nous tenons à vous informer que votre commande *#${orderId}* chez *${restaurantName}* accuse un léger retard imprévu.\n\n` +
+    `⏱️ *Délai additionnel estimé :* +${delayMinutes} minutes\n` +
+    `📍 *Motif du ralentissement :* ${reason}\n` +
+    `🏍️ *Coursier Billo Express :* ${courierName} (${courierPhone})\n` +
+    `📦 *Lieu de livraison :* ${deliveryAddress}\n\n` +
+    `Votre repas est soigneusement conservé dans notre caisson isotherme thermique pour garantir une dégustation bien chaude et savoureuse.\n\n` +
+    `${compensation ? `🎁 *Geste commercial :* ${compensation}\n\n` : ""}` +
+    `👉 *Suivez l'avancement en direct :* https://alloresto-niamey.com\n` +
+    `📞 *Service Client Allôresto :* +227 96 05 23 10 | WhatsApp : +227 70 03 25 52\n` +
+    `_Toute l'équipe Allôresto Niger vous présente ses excuses les plus sincères pour cette attente._ 🌟`
+  );
+}
+
+/**
+ * Ouvre directement WhatsApp pour envoyer la notification de retard
+ */
+export function sendDeliveryDelayWhatsApp(params: DeliveryDelayNotificationParams): void {
+  const message = generateDeliveryDelayMessage(params);
+  openWhatsAppDirect(params.customerPhone || ALLORESTO_BRAND_INFO.whatsappOrders, message);
+}
+
 /**
  * Partage un restaurant complet sur WhatsApp (vers n'importe quel contact ou groupe)
  */

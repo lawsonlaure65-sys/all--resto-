@@ -2,6 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { getSupabaseClient } from '../../../src/services/supabaseClient';
+import { Clock, MessageSquare, AlertTriangle, Gift, Globe, Check, Sparkles } from 'lucide-react';
+import {
+  DelayAutomationConfig,
+  DEFAULT_DELAY_AUTOMATION_CONFIG,
+  loadDelayAutomationConfig,
+  saveDelayAutomationConfig,
+  sendDeliveryDelayWhatsApp,
+} from '../../../src/utils/whatsappNotifications';
+import { AppLanguage } from '../../../src/types';
 
 interface AppSettings {
   id?: string;
@@ -40,6 +49,8 @@ interface AdminSettingsPageProps {
 
 export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: AdminSettingsPageProps = {}) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [delayConfig, setDelayConfig] = useState<DelayAutomationConfig>(DEFAULT_DELAY_AUTOMATION_CONFIG);
+  const [testSent, setTestSent] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -61,6 +72,9 @@ export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: Ad
         console.warn('Erreur lecture localStorage settings:', e);
       }
     }
+
+    // Charger la configuration des alertes de retard
+    setDelayConfig(loadDelayAutomationConfig());
 
     // 2. Tenter de charger depuis Supabase
     try {
@@ -103,6 +117,9 @@ export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: Ad
       if (typeof window !== 'undefined') {
         localStorage.setItem('alloresto_app_settings', JSON.stringify(payload));
       }
+
+      // Sauvegarder la configuration des alertes WhatsApp de retard
+      saveDelayAutomationConfig(delayConfig);
 
       // Tenter la mise à jour Supabase si configuré
       const supabase = getSupabaseClient();
@@ -396,6 +413,166 @@ export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: Ad
                   className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
                 />
                 <span className="text-[11px] text-emerald-400 mt-1 block">0% dans la formule abonnement unique 75 000 FCFA</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Automatisation Notifications WhatsApp & Retard de Livraison */}
+          <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 md:p-7 shadow-xl space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-xl bg-amber-500/20 text-amber-400 text-lg">📲</span>
+                <div>
+                  <h2 className="text-base font-bold text-white">Notifications WhatsApp &amp; Alertes Retard</h2>
+                  <p className="text-xs text-slate-400">Automatisation des messages d&apos;excuses et gestes commerciaux envoyés aux clients</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${
+                  delayConfig.autoAlertEnabled
+                    ? 'bg-emerald-950 text-emerald-300 border-emerald-500/40'
+                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${delayConfig.autoAlertEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                  {delayConfig.autoAlertEnabled ? 'Détection Activée' : 'Désactivé'}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Toggle Switch */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-bold text-white block">
+                    Activer la surveillance automatique des retards
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    Alerte le tableau de bord et prépare les messages WhatsApp dès qu&apos;une commande dépasse le seuil défini.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDelayConfig({ ...delayConfig, autoAlertEnabled: !delayConfig.autoAlertEnabled })}
+                  className={`w-12 h-7 rounded-full transition-colors relative cursor-pointer shrink-0 ${
+                    delayConfig.autoAlertEnabled ? "bg-emerald-500" : "bg-slate-800"
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full bg-white transition-transform transform absolute top-1 ${
+                      delayConfig.autoAlertEnabled ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Seuil de déclenchement */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
+                    <span>⏱️ Seuil de retard (minutes après la commande)</span>
+                    <span className="text-amber-400 font-mono font-bold">{delayConfig.thresholdMinutes} min</span>
+                  </label>
+                  <select
+                    value={delayConfig.thresholdMinutes}
+                    onChange={(e) => setDelayConfig({ ...delayConfig, thresholdMinutes: Number(e.target.value) })}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 transition"
+                  >
+                    <option value={20}>20 minutes (Très strict)</option>
+                    <option value={25}>25 minutes (Rapide)</option>
+                    <option value={30}>30 minutes (Recommandé Niamey)</option>
+                    <option value={35}>35 minutes (Heures de pointe)</option>
+                    <option value={40}>40 minutes (Tolérance haute)</option>
+                  </select>
+                </div>
+
+                {/* Retard additionnel annoncé */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
+                    <span>⏳ Retard additionnel annoncé au client</span>
+                    <span className="text-emerald-400 font-mono font-bold">+{delayConfig.defaultAdditionalMinutes} min</span>
+                  </label>
+                  <select
+                    value={delayConfig.defaultAdditionalMinutes}
+                    onChange={(e) => setDelayConfig({ ...delayConfig, defaultAdditionalMinutes: Number(e.target.value) })}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 transition"
+                  >
+                    <option value={10}>+10 minutes</option>
+                    <option value={15}>+15 minutes (Standard)</option>
+                    <option value={20}>+20 minutes</option>
+                    <option value={30}>+30 minutes</option>
+                  </select>
+                </div>
+
+                {/* Motif par défaut */}
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    🍳 Motif de retard par défaut
+                  </label>
+                  <input
+                    type="text"
+                    value={delayConfig.defaultReason}
+                    onChange={(e) => setDelayConfig({ ...delayConfig, defaultReason: e.target.value })}
+                    placeholder="Ex: Forte affluence en cuisine & préparation soignée au feu doux"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
+                  />
+                </div>
+
+                {/* Compensation / Code Promo */}
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    🎁 Geste commercial offert au client
+                  </label>
+                  <input
+                    type="text"
+                    value={delayConfig.compensationText}
+                    onChange={(e) => setDelayConfig({ ...delayConfig, compensationText: e.target.value })}
+                    placeholder="Ex: Bénéficiez de -500 FCFA avec le code promo RETARD500 sur votre prochaine commande !"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
+                  />
+                </div>
+
+                {/* Langue par défaut */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    🌐 Langue par défaut du message
+                  </label>
+                  <select
+                    value={delayConfig.defaultLanguage}
+                    onChange={(e) => setDelayConfig({ ...delayConfig, defaultLanguage: e.target.value as AppLanguage })}
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 transition"
+                  >
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="ha">🇳🇪 Hausa</option>
+                    <option value="zm">🇳🇪 Zarma</option>
+                    <option value="en">🇬🇧 English</option>
+                  </select>
+                </div>
+
+                {/* Test WhatsApp Button */}
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sendDeliveryDelayWhatsApp({
+                        orderId: "TEST-227",
+                        customerName: "Client Test Niamey",
+                        customerPhone: "+227 96 05 23 10",
+                        restaurantName: "Cuisine du Sahel",
+                        courierName: "Billo Express",
+                        delayMinutes: delayConfig.defaultAdditionalMinutes,
+                        reason: delayConfig.defaultReason,
+                        compensation: delayConfig.compensationText,
+                        lang: delayConfig.defaultLanguage,
+                      });
+                      setTestSent(true);
+                      setTimeout(() => setTestSent(false), 3000);
+                    }}
+                    className="w-full px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    {testSent ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    <span>{testSent ? "Test Ouvert sur WhatsApp !" : "Tester le message WhatsApp"}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

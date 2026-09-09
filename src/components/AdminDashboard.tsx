@@ -53,6 +53,7 @@ import AdminSettingsPage from "../../app/admin/settings/page";
 import AdminDriversPage from "../../app/admin/drivers/page";
 import AdminOrdersPage from "../../app/admin/orders/page";
 import { AdminPaymentsView } from "./AdminPaymentsView";
+import { AdminDailyMenuScheduler } from "./AdminDailyMenuScheduler";
 import { RESTAURANTS_DATA, SAUCE_BOXES_DATA, BLOG_POSTS_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { MenuItem, SauceBox, CateringQuoteRequest, Order, DishCategory, Restaurant } from "../types";
 import { DishManagementModal, CATEGORIES_CONFIG } from "./DishManagementModal";
@@ -85,6 +86,7 @@ interface AdminDashboardProps {
 
 export type AdminTabType =
   | "overview"
+  | "daily_special_scheduler"
   | "orders"
   | "couriers_delivery"
   | "settings_nif"
@@ -117,6 +119,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       initialTab &&
       [
         "overview",
+        "daily_special_scheduler",
         "orders",
         "couriers_delivery",
         "settings_nif",
@@ -140,6 +143,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       if (tabParam === "orders" || tabParam === "commandes" || path.includes("/admin/orders")) return "orders";
       if (tabParam === "drivers" || tabParam === "livreurs" || tabParam === "couriers" || path.includes("/admin/drivers")) return "couriers_delivery";
       if (tabParam === "payments" || tabParam === "paiements" || path.includes("/admin/payments")) return "mobile_money_payments";
+      if (tabParam === "daily_special" || tabParam === "menu_du_jour" || tabParam === "special" || tabParam === "affiche") return "daily_special_scheduler";
     }
     return "overview";
   });
@@ -726,9 +730,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 ? "bg-orange-600 text-white border-orange-500 shadow-md shadow-orange-600/30 ring-2 ring-orange-400/40"
                 : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 hover:text-white"
             }`}
-            title="Supervision de toutes les commandes"
+            title="Supervision des commandes & alertes retards WhatsApp"
           >
             📦 <span>Commandes</span>
+            <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-black">
+              Retards WhatsApp
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveAdminTab("daily_special_scheduler")}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
+              activeAdminTab === "daily_special_scheduler"
+                ? "bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/30 ring-2 ring-amber-400/40 font-black"
+                : "bg-amber-950/60 hover:bg-amber-900 text-amber-200 border-amber-500/50"
+            }`}
+            title="Programmer le Menu du Jour de demain la veille, générer l'affiche et partager sur les réseaux dès 20h"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>⭐ Menu du Jour &amp; Affiche (Veille 20h)</span>
           </button>
 
           {onOpenMarketingAI && (
@@ -777,6 +798,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-800">
         {[
           { id: "overview", label: "Vue Générale & GMV", icon: TrendingUp },
+          { id: "daily_special_scheduler", label: "⭐ Menu du Jour & Affiche (Veille 20h)", icon: Sparkles },
           { id: "orders", label: "📦 Commandes", icon: Package },
           { id: "couriers_delivery", label: "🛵 Flotte Livreurs", icon: Bike, count: couriersList.length },
           { id: "settings_nif", label: "⚙️ Paramètres & NIF", icon: Settings },
@@ -1082,10 +1104,92 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
 
       {/* ======================================================== */}
+      {/* TAB: PROGRAMMATION DU MENU DU JOUR & AFFICHE VEILLE 20H */}
+      {/* ======================================================== */}
+      {activeAdminTab === "daily_special_scheduler" && (
+        <AdminDailyMenuScheduler
+          restaurants={loadStoredRestaurants()}
+          onSaveDailySpecial={(plan) => {
+            // Activer ou ajouter dans la liste locale des plats
+            try {
+              const freshRestaurants = loadStoredRestaurants();
+              const targetRest = freshRestaurants.find((r) => r.id === plan.restaurantId);
+              if (targetRest) {
+                const existingDish = targetRest.menu.find(
+                  (m) => m.name.toLowerCase() === plan.dishName.toLowerCase() || m.isMenuDuJour
+                );
+                if (existingDish) {
+                  existingDish.name = plan.dishName;
+                  existingDish.description = plan.description;
+                  existingDish.price = plan.priceFcfa;
+                  existingDish.image = plan.imageUrl;
+                  existingDish.isDailySpecial = true;
+                  existingDish.isMenuDuJour = true;
+                  existingDish.menuDuJourIncludes = `${plan.starter} + ${plan.mainCourse} + ${plan.drinkOrDessert}`;
+                  addOrUpdateDishInStorage(existingDish, targetRest.id);
+                } else {
+                  const newDish: MenuItem = {
+                    id: `dish-daily-${Date.now()}`,
+                    name: plan.dishName,
+                    description: plan.description,
+                    price: plan.priceFcfa,
+                    category: "Plat du Jour",
+                    dishCategory: "menu_du_jour",
+                    image: plan.imageUrl,
+                    isDailySpecial: true,
+                    isMenuDuJour: true,
+                    menuDuJourIncludes: `${plan.starter} + ${plan.mainCourse} + ${plan.drinkOrDessert}`,
+                    mealMoments: ["dejeuner", "menu_du_jour"],
+                    isAvailable: true,
+                    preparationTime: 25,
+                  };
+                  addOrUpdateDishInStorage(newDish, targetRest.id);
+                }
+                const updatedList = loadStoredRestaurants();
+                setDishesList(updatedList.flatMap((r) => r.menu));
+                if (onUpdateRestaurants) onUpdateRestaurants(updatedList);
+              }
+            } catch (err) {
+              console.error("Error saving daily special:", err);
+            }
+          }}
+        />
+      )}
+
+      {/* ======================================================== */}
       {/* TAB 3: DISHES & MENU MANAGEMENT */}
       {/* ======================================================== */}
       {activeAdminTab === "menu_dishes" && (
         <div className="space-y-5">
+          {/* Quick link banner to Daily Special Scheduler */}
+          <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-950/60 via-slate-900 to-slate-950 border border-amber-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-white">
+                    Programmation Menu du Jour (Veille 20h) &amp; Affiche Réseaux
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
+                    Précommande 21h
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  Programmez le menu de demain, générez l&apos;affiche HD à partager et diffusez le message WhatsApp/Facebook dès 20h00.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveAdminTab("daily_special_scheduler")}
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-amber-500/20 whitespace-nowrap shrink-0"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Ouvrir le Studio Veille 20h</span>
+            </button>
+          </div>
           {/* Persistence & Backup Status Banner */}
           <div className="p-4 rounded-3xl bg-slate-950 border border-emerald-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-lg">
             <div className="flex items-center gap-3">

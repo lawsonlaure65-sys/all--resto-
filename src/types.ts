@@ -101,6 +101,7 @@ export type PaymentMethod =
   | "al_izza_transfer"
   | "zeyna"
   | "mobile_money"
+  | "moov_money"
   | "cash"
   | "card"
   | "apple_pay";

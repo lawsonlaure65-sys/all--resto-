@@ -1100,6 +1100,15 @@ export const LOCAL_PAYMENT_METHODS: LocalPaymentOption[] = [
     instructions: `Effectuez votre transfert ou dépôt Airtel Money Niger vers le numéro ${APP_CONFIG.payments.airtelMoneyNumber}.`,
     badge: `6. Dépôt : ${APP_CONFIG.payments.airtelMoneyNumber}`,
   },
+  {
+    id: "moov_money",
+    name: "Moov Flooz Niger",
+    category: "telco",
+    depositNumber: APP_CONFIG.payments.moovMoneyNumber,
+    depositName: "Allôresto Moov Flooz",
+    instructions: `Effectuez votre transfert ou dépôt Moov Flooz Niger vers le numéro ${APP_CONFIG.payments.moovMoneyNumber}.`,
+    badge: `7. Dépôt : ${APP_CONFIG.payments.moovMoneyNumber}`,
+  },
 ];
 
 export const DELIVERY_ZONES_CONFIG = {

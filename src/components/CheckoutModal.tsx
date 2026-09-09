@@ -26,6 +26,7 @@ import {
   AlertTriangle,
   Compass,
   Search,
+  QrCode,
 } from "lucide-react";
 import { CartItem, PaymentMethod, ServiceMode, Order, AppLanguage } from "../types";
 import { LOCAL_PAYMENT_METHODS } from "../data/allorestoData";
@@ -38,6 +39,7 @@ import {
 import { getJumuahStatus } from "../utils/jumuahSchedule";
 import { generateWhatsAppOrderConfirmation } from "../utils/whatsappNotifications";
 import { CheckoutPaymentModal } from "./CheckoutPaymentModal";
+import { PaymentQRCode } from "./PaymentQRCode";
 import { PaymentRecord } from "../services/paymentService";
 
 interface CheckoutModalProps {
@@ -93,6 +95,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   );
   const [cashChangeAmount, setCashChangeAmount] = useState<number | undefined>(undefined);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
+  const [paymentSectionTab, setPaymentSectionTab] = useState<"methods" | "qrcode">("methods");
   const [paymentReference, setPaymentReference] = useState<string>("");
   const [receiptProofAttached, setReceiptProofAttached] = useState<boolean>(false);
   const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
@@ -662,46 +665,120 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <Lock className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Mode de Règlement Sécurisé au Niger</span>
               </h4>
-              <span className="text-[10px] text-amber-400 font-bold bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-500/20">
-                6 Modes Disponibles
-              </span>
+              <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setPaymentSectionTab("methods")}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer ${
+                    paymentSectionTab === "methods"
+                      ? "bg-slate-800 text-white shadow-sm"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <CreditCard className="w-3 h-3" />
+                  <span>Opérateurs ({LOCAL_PAYMENT_METHODS.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentSectionTab("qrcode")}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition flex items-center gap-1 cursor-pointer ${
+                    paymentSectionTab === "qrcode"
+                      ? "bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-sm"
+                      : "text-orange-400 hover:text-orange-300"
+                  }`}
+                >
+                  <QrCode className="w-3 h-3" />
+                  <span>Scanner QR Code</span>
+                </button>
+              </div>
             </div>
 
-            {/* 6 Payment Cards in Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {LOCAL_PAYMENT_METHODS.map((method, idx) => {
-                const isSelected = paymentMethod === method.id;
-                return (
-                  <button
-                    key={method.id}
-                    type="button"
-                    onClick={() => setPaymentMethod(method.id)}
-                    className={`p-3 rounded-2xl border text-left flex flex-col justify-between gap-1.5 transition-all cursor-pointer ${
-                      isSelected
-                        ? "bg-gradient-to-br from-orange-500/20 to-amber-500/10 border-orange-500 text-white shadow-lg shadow-orange-500/15 ring-1 ring-orange-500/50"
-                        : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-xs font-black text-white">{method.name}</span>
-                      {isSelected ? (
-                        <CheckCircle2 className="w-4 h-4 text-orange-400 shrink-0" />
-                      ) : (
-                        <div className="w-3 h-3 rounded-full bg-slate-800" />
-                      )}
-                    </div>
-                    {method.depositNumber && (
-                      <span className="text-[11px] text-orange-400/90 font-mono font-bold truncate">
-                        {method.depositNumber}
-                      </span>
-                    )}
-                    <span className="text-[10px] text-slate-400 line-clamp-1">
-                      {method.badge}
+            {paymentSectionTab === "qrcode" ? (
+              <div className="space-y-3.5">
+                <PaymentQRCode
+                  restaurantId={restaurantId}
+                  restaurantName={restaurantName}
+                  restaurantPhone={restaurantPhone}
+                  amount={grandTotal}
+                  initialProvider={
+                    paymentMethod === "moov_money"
+                      ? "moov_money"
+                      : paymentMethod === "al_izza_business"
+                      ? "al_izza_business"
+                      : paymentMethod === "mynita"
+                      ? "mynita"
+                      : paymentMethod === "amanata"
+                      ? "amanata"
+                      : paymentMethod === "zeyna"
+                      ? "zeyna"
+                      : "airtel_money"
+                  }
+                  orderReference={`CMD-${restaurantName.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, "RES")}-${Date.now().toString().slice(-4)}`}
+                  customerPhone={customerPhone}
+                  onProviderChange={(prov) => {
+                    if (prov === "airtel_money") setPaymentMethod("mobile_money");
+                    else if (prov === "moov_money") setPaymentMethod("moov_money");
+                    else setPaymentMethod(prov as any);
+                  }}
+                />
+
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                  <div>
+                    <span className="text-[11px] font-bold text-white block">
+                      Référence SMS ou Numéro d'envoi :
                     </span>
-                  </button>
-                );
-              })}
-            </div>
+                    <span className="text-[10px] text-slate-400">
+                      Renseignez la référence reçue par SMS pour confirmation par la cuisine.
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: AIR-9281 ou +227 96..."
+                    className="w-full sm:w-52 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* 7 Payment Cards in Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {LOCAL_PAYMENT_METHODS.map((method, idx) => {
+                    const isSelected = paymentMethod === method.id;
+                    return (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => setPaymentMethod(method.id)}
+                        className={`p-3 rounded-2xl border text-left flex flex-col justify-between gap-1.5 transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-gradient-to-br from-orange-500/20 to-amber-500/10 border-orange-500 text-white shadow-lg shadow-orange-500/15 ring-1 ring-orange-500/50"
+                            : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-xs font-black text-white">{method.name}</span>
+                          {isSelected ? (
+                            <CheckCircle2 className="w-4 h-4 text-orange-400 shrink-0" />
+                          ) : (
+                            <div className="w-3 h-3 rounded-full bg-slate-800" />
+                          )}
+                        </div>
+                        {method.depositNumber && (
+                          <span className="text-[11px] text-orange-400/90 font-mono font-bold truncate">
+                            {method.depositNumber}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-slate-400 line-clamp-1">
+                          {method.badge}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
 
             {/* Direct Mobile Money Online Payment Banner (Airtel, Moov, Orange, Flooz, MyNita, Amanata, All-Iza, Zeyna) */}
             {onlinePaymentRecord ? (
@@ -1058,42 +1135,28 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
             {/* Detail Box: 6. Airtel Money Niger */}
             {paymentMethod === "mobile_money" && (
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-red-950/20 border border-red-500/40 space-y-3 animate-in fade-in">
-                <div>
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-red-950/20 border border-red-500/40 space-y-3.5 animate-in fade-in">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-black">
                       Airtel Money Niger
                     </span>
-                    <span className="text-xs font-bold text-white">Allôresto Compte Airtel Money</span>
+                    <span className="text-xs font-bold text-white">Allôresto Compte Marchand Airtel</span>
                   </div>
-                  <p className="text-xs text-slate-300 mt-1">
-                    Effectuez votre transfert ou dépôt Airtel Money Niger : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
-                  </p>
+                  <span className="text-xs font-mono font-bold text-orange-400">
+                    {grandTotal.toLocaleString()} FCFA
+                  </span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-medium">Numéro officiel Airtel Money Niger :</span>
-                    <span className="text-sm font-black text-red-400 font-mono">+227 96 05 23 10</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyNumber("+227 96 05 23 10")}
-                    className="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-bold border border-red-500/30 flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    {copiedNumber === "+227 96 05 23 10" ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-400">Copié !</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copier</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                <PaymentQRCode
+                  restaurantId={restaurantId}
+                  restaurantName={restaurantName}
+                  restaurantPhone={restaurantPhone}
+                  amount={grandTotal}
+                  initialProvider="airtel_money"
+                  orderReference={`CMD-${restaurantName.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, "RES")}-${Date.now().toString().slice(-4)}`}
+                  customerPhone={customerPhone}
+                />
 
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-300 mb-1">
@@ -1110,8 +1173,48 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
             )}
 
+            {/* Detail Box: 7. Moov Flooz Niger */}
+            {paymentMethod === "moov_money" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-blue-950/20 border border-blue-500/40 space-y-3.5 animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-black">
+                      Moov Flooz Niger
+                    </span>
+                    <span className="text-xs font-bold text-white">Allôresto Compte Marchand Flooz</span>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-orange-400">
+                    {grandTotal.toLocaleString()} FCFA
+                  </span>
+                </div>
+
+                <PaymentQRCode
+                  restaurantId={restaurantId}
+                  restaurantName={restaurantName}
+                  restaurantPhone={restaurantPhone}
+                  amount={grandTotal}
+                  initialProvider="moov_money"
+                  orderReference={`CMD-${restaurantName.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, "RES")}-${Date.now().toString().slice(-4)}`}
+                  customerPhone={customerPhone}
+                />
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Référence SMS de transaction ou votre numéro Moov :
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: FLZ-99410 ou +227 90 ..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Simulated Receipt Capture Attachment Option */}
-            {["mynita", "amanata", "al_izza_business", "zeyna", "mobile_money"].includes(paymentMethod) && (
+            {["mynita", "amanata", "al_izza_business", "zeyna", "mobile_money", "moov_money"].includes(paymentMethod) && (
               <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="text-base">📸</span>
@@ -1192,6 +1295,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           orderId={`CMD-${Date.now().toString().slice(-6)}`}
           amount={grandTotal}
           customerPhone={customerPhone}
+          restaurantId={restaurantId}
+          restaurantName={restaurantName}
+          restaurantPhone={restaurantPhone}
           onPaymentSuccess={(payment) => {
             setOnlinePaymentRecord(payment);
             setPaymentReference(payment.transaction_id);

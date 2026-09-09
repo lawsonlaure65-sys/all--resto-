@@ -17,6 +17,8 @@ import {
   ChefHat,
   Flame,
   Globe,
+  Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { AppLanguage, Order } from "../types";
@@ -36,7 +38,7 @@ export const WhatsAppAutomationModal: React.FC<WhatsAppAutomationModalProps> = (
 }) => {
   const [selectedLanguage, setSelectedLanguage] = useState<AppLanguage>(defaultLang);
   const [selectedTemplate, setSelectedTemplate] = useState<
-    "order_client" | "kitchen_progress" | "client_request" | "billo_dispatch" | "cart_recovery" | "group_invite" | "status_update"
+    "order_client" | "kitchen_progress" | "client_request" | "billo_dispatch" | "cart_recovery" | "group_invite" | "status_update" | "delivery_delay"
   >("order_client");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -107,6 +109,12 @@ export const WhatsAppAutomationModal: React.FC<WhatsAppAutomationModalProps> = (
             phone: "+227 70 03 25 52",
             text: `🏍️ *YOUR COURIER IS ON THE WAY!*\n\nYour hot meal just left the kitchen! Courier *Ibrahim Oumarou (Billo Express)* will arrive at your address in *10 to 15 minutes*.\n\n📞 Courier Direct Line: *+227 92 08 08 22*\n👉 Have your cash or payment ready. Enjoy your meal with Allôresto!`,
           },
+          delivery_delay: {
+            title: "⏰ Delivery Delay Alert & Apology (+15 min)",
+            target: "Automatically sent when kitchen or traffic causes unexpected delays",
+            phone: "+227 70 03 25 52",
+            text: `⏰ *DELIVERY DELAY NOTICE & APOLOGY — ALLÔRESTO NIAMEY* 🛵🇳🇪\n\nHello Sir/Madam,\nWe want to keep you informed with full transparency: your order *#CMD-2026-8801* from *Khady's Food* is experiencing a slight unexpected delay.\n\n⏱️ *Estimated additional time:* +15 minutes\n📍 *Reason:* High kitchen volume & careful simmer cooking\n🏍️ *Billo Express Courier:* Ibrahim Oumarou (+227 92 08 08 22)\n📦 *Destination:* Plateau, Niamey\n\nYour meal is safely preserved in our thermal hot box to ensure top freshness.\n🎁 *Apology voucher:* Enjoy -500 FCFA with promo code \`RETARD500\` on your next order!\n\n👉 *Live tracking:* https://alloresto-niamey.com\n📞 Support: +227 96 05 23 10 | WhatsApp: +227 70 03 25 52`,
+          },
         };
 
       case "ha":
@@ -152,6 +160,12 @@ export const WhatsAppAutomationModal: React.FC<WhatsAppAutomationModalProps> = (
             target: "Aika wa mai oda lokacin da mai babur ya tashi",
             phone: "+227 70 03 25 52",
             text: `🏍️ *MAI BABUR YANA KAN HANYA!*\n\nAbincin ka mai zafi ya bar kicin yanzu! Mai kai kaya *Ibrahim Oumarou (Billo Express)* zai iso wurinka cikin *minti 10 zuwa 15*.\n\n📞 Lambar mai babur: *+227 92 08 08 22*\n👉 Shirya kudin ka ko ka tabbatar da Mynita. Barka da cin abinci tare da Allôresto!`,
+          },
+          delivery_delay: {
+            title: "⏰ Sanarwar Jinkirin Kai Abinci & Hakuri (Hausa)",
+            target: "Aika kai tsaye idan aka samu jinkiri a kicin ko hanya",
+            phone: "+227 70 03 25 52",
+            text: `⏰ *SANARWAR JINKIRIN KAI ABINCI & HAKURI — ALLÔRESTO YAMAI* 🛵🇳🇪\n\nBarka Malam/Malama,\nMuna son sanar da ku cikin gaskiya cewa odar ku mai lamba *#CMD-2026-8801* daga *Khady's Food* ta sami ɗan jinkiri maras tsammani.\n\n⏱️ *Kimanin karin lokaci:* minti +15\n📍 *Dalili:* Yawan aiki a kicin & dafa abinci a hankali don yayi dadi\n🏍️ *Mai babur Billo Express:* Ibrahim Oumarou (+227 92 08 08 22)\n📦 *Inda za a kai:* Plateau, Yamai\n\nAna ajiye abincin ku a cikin akwatin zafi don ya kasance da dumi da daɗi.\n🎁 *Rangwamen hakuri:* Samu -500 FCFA da code \`RETARD500\` a oda ta gaba!\n\n👉 *Bibiyar odar ka:* https://alloresto-niamey.com\n📞 Taimako: +227 96 05 23 10 | WhatsApp: +227 70 03 25 52`,
           },
         };
 
@@ -199,6 +213,12 @@ export const WhatsAppAutomationModal: React.FC<WhatsAppAutomationModalProps> = (
             phone: "+227 70 03 25 52",
             text: `🏍️ *WAR DIRANDIKAW GO FONDO RA!*\n\nWar ŋwaari korante fun goban do sohõ! Dirandikaw *Ibrahim Oumarou (Billo Express)* ga to war do *miniti 10 hala 15* ra.\n\n📞 Dirandikaw Talifono: *+227 92 08 08 22*\n👉 War nooru soola wala Mynita tabbatandi. Ŋwaari kaano nda Allôresto!`,
           },
+          delivery_delay: {
+            title: "⏰ Ŋwaari Kandiyan Jiibiyaŋ Alhabar (Zarma)",
+            target: "San sanma no da kicin wala fondo ra jiibiyan te",
+            phone: "+227 70 03 25 52",
+            text: `⏰ *ŊWAARI KANDIYAN JIIBIYAŊ ALHABAR & YAAFEYAN — ALLÔRESTO NIAMEY* 🛵🇳🇪\n\nKubanni Daykow,\nIri ga ba ka ci war se cimi ra kaŋ ni ŋwaaro *#CMD-2026-8801* kaŋ fun *Khady's Food* do jiibi cire.\n\n⏱️ *Alwakti tonton:* Miniti +15\n📍 *Sabbabu:* Kicin ra goy boobo & hinayan hanante\n🏍️ *Billo Express Kandekow:* Ibrahim Oumarou (+227 92 08 08 22)\n📦 *Kandiyan nango:* Plateau, Niamey\n\nNi ŋwaaro go kunkuni korante ra zama a ma si yey.\n🎁 *Yaafeyan nooru:* Du *-500 FCFA* nda code \`RETARD500\` ni koyo taaga ra!\n\n👉 *Guna fondo ra:* https://alloresto-niamey.com\n📞 Faaba: +227 96 05 23 10 | WhatsApp: +227 70 03 25 52`,
+          },
         };
 
       case "fr":
@@ -245,6 +265,12 @@ export const WhatsAppAutomationModal: React.FC<WhatsAppAutomationModalProps> = (
             target: "Notification quand le livreur quitte le restaurant",
             phone: "+227 70 03 25 52",
             text: `🏍️ *VOTRE LIVREUR EST EN ROUTE !*\n\nVotre repas chaud vient de quitter les cuisines ! Le livreur *Ibrahim Oumarou (Billo Express)* arrive à votre adresse dans environ *10 à 15 minutes*.\n\n📞 Numéro direct du livreur : *+227 92 08 08 22*\n👉 Préparez votre règlement ou confirmez votre paiement Mynita. Bon appétit avec Allôresto !`,
+          },
+          delivery_delay: {
+            title: "⏰ Alerte Retard de Livraison & Excuses Client (+15 min)",
+            target: "Envoyé automatiquement en cas de retard en cuisine ou circulation",
+            phone: "+227 70 03 25 52",
+            text: `⏰ *INFORMATION LIVRAISON & EXCUSES RETARD — ALLÔRESTO NIAMEY* 🛵🇳🇪\n\nBonjour M./Mme,\nPar souci de transparence, nous tenons à vous informer que votre commande *#CMD-2026-8801* chez *Khady's Food* accuse un léger retard imprévu.\n\n⏱️ *Délai additionnel estimé :* +15 minutes\n📍 *Motif du ralentissement :* Forte affluence en cuisine & préparation soignée au feu doux\n🏍️ *Coursier Billo Express :* Ibrahim Oumarou (+227 92 08 08 22)\n📦 *Lieu de livraison :* Plateau, Niamey\n\nVotre repas est soigneusement conservé dans notre caisson isotherme thermique pour garantir une dégustation bien chaude et savoureuse.\n🎁 *Geste commercial :* Bénéficiez de -500 FCFA avec le code promo \`RETARD500\` sur votre prochaine commande !\n\n👉 *Suivez l'avancement en direct :* https://alloresto-niamey.com\n📞 *Service Client Allôresto :* +227 96 05 23 10 | WhatsApp : +227 70 03 25 52\n_Toute l'équipe Allôresto Niger vous présente ses excuses les plus sincères pour cette attente._ 🌟`,
           },
         };
     }
@@ -323,6 +349,7 @@ export const WhatsAppAutomationModal: React.FC<WhatsAppAutomationModalProps> = (
               { key: "cart_recovery", label: "Relance Panier", icon: Sparkles },
               { key: "group_invite", label: "Partage Groupe Bureau", icon: Users },
               { key: "status_update", label: "Livreur en Route", icon: CheckCircle2 },
+              { key: "delivery_delay", label: "⏰ Alerte Retard (+15m)", icon: Clock },
             ] as const
           ).map((item) => {
             const Icon = item.icon;
