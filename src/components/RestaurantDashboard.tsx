@@ -38,6 +38,8 @@ import {
   BellRing,
   Send,
   Receipt,
+  AlertTriangle,
+  Minus,
 } from "lucide-react";
 import { Order, Restaurant, MenuItem, OrderStatus } from "../types";
 import { RESTAURANTS_DATA } from "../data/allorestoData";
@@ -56,7 +58,11 @@ import {
   DEMO_RESTAURANT_ACCOUNTS,
   RestaurantUserSession,
 } from "../services/supabaseRestaurantService";
-import { loadStoredRestaurants, addOrUpdateDishInStorage } from "../services/dishStorageService";
+import {
+  loadStoredRestaurants,
+  addOrUpdateDishInStorage,
+  updateDishStockCount,
+} from "../services/dishStorageService";
 
 interface RestaurantDashboardProps {
   orders: Order[];
@@ -315,11 +321,55 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
     }
   };
 
+  // Low stock dishes alert notification: items with fewer than 5 remaining
+  const lowStockDishes = useMemo(() => {
+    return menuItems.filter(
+      (item) => typeof item.stock_count === "number" && item.stock_count < 5
+    );
+  }, [menuItems]);
+
+  const [isStockAlertDismissed, setIsStockAlertDismissed] = useState(false);
+  const [stockFilter, setStockFilter] = useState<"all" | "low_stock">("all");
+
+  // Adjust stock count directly
+  const handleUpdateStockCount = (itemId: string, newCount: number) => {
+    const item = menuItems.find((m) => m.id === itemId);
+    if (!item) return;
+    const safeCount = Math.max(0, newCount);
+    const updated: MenuItem = {
+      ...item,
+      stock_count: safeCount,
+      isAvailable: safeCount > 0,
+    };
+    addOrUpdateDishInStorage(updated);
+    setMenuItems((prev) => prev.map((m) => (m.id === itemId ? updated : m)));
+  };
+
+  // Quick Restock helper (e.g. +10 or +15 portions)
+  const handleQuickRestock = (itemId: string, amount: number = 10) => {
+    const item = menuItems.find((m) => m.id === itemId);
+    if (!item) return;
+    const current = typeof item.stock_count === "number" ? item.stock_count : 0;
+    handleUpdateStockCount(itemId, current + amount);
+  };
+
   // Toggle Dish Availability
   const toggleItemStock = (itemId: string) => {
     const item = menuItems.find((m) => m.id === itemId);
     if (!item) return;
-    const updated = { ...item, isAvailable: !item.isAvailable };
+    const nextAvailable = !item.isAvailable;
+    const nextStock =
+      nextAvailable && (item.stock_count === 0 || item.stock_count === undefined)
+        ? 10
+        : !nextAvailable
+        ? 0
+        : item.stock_count;
+
+    const updated = {
+      ...item,
+      isAvailable: nextAvailable,
+      stock_count: nextStock,
+    };
     addOrUpdateDishInStorage(updated);
     setMenuItems((prev) => prev.map((m) => (m.id === itemId ? updated : m)));
   };
@@ -337,6 +387,16 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
   };
 
   const totalRevenue = filteredOrders.reduce((sum, o) => sum + o.subtotal, 0);
+
+  // Filtered menu items based on stock filter
+  const displayedMenuItems = useMemo(() => {
+    if (stockFilter === "low_stock") {
+      return menuItems.filter(
+        (m) => typeof m.stock_count === "number" && m.stock_count < 5
+      );
+    }
+    return menuItems;
+  }, [menuItems, stockFilter]);
 
   // =========================================================================
   // VIEW 1: AUTHENTICATION / LOGIN SCREEN (If not logged in)
@@ -588,6 +648,22 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
             <span>{isRestaurantOpen ? "Mettre en pause" : "Ouvrir les commandes"}</span>
           </button>
 
+          {lowStockDishes.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsStockAlertDismissed(false);
+                setActiveTab("menu");
+                setStockFilter("low_stock");
+              }}
+              title={`${lowStockDishes.length} plat(s) avec moins de 5 portions restantes en cuisine`}
+              className="px-3 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+              <span>Alerte Stock ({lowStockDishes.length})</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleLogout}
@@ -598,6 +674,122 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Low Stock Warning Notification (< 5 items remaining in kitchen) */}
+      <AnimatePresence>
+        {lowStockDishes.length > 0 && !isStockAlertDismissed && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            className="p-5 rounded-3xl bg-amber-950/40 border-2 border-amber-500/60 shadow-2xl space-y-4 text-slate-100"
+          >
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400 shrink-0 shadow-lg shadow-amber-500/20">
+                  <AlertTriangle className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm sm:text-base font-black text-white tracking-wide">
+                      ⚠️ ALERTE STOCK CUISINE &bull; {lowStockDishes.length} plat{lowStockDishes.length > 1 ? "s" : ""} sous le seuil critique (&lt; 5 portions restantes)
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[10px] font-black uppercase tracking-wider">
+                      Réapprovisionnement requis
+                    </span>
+                  </div>
+                  <p className="text-xs text-amber-200/90 mt-0.5">
+                    Ces plats risquent d'entrer en rupture imminente. Réapprovisionnez les portions ou marquez-les en rupture pour éviter les déceptions clients.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("menu");
+                    setStockFilter("low_stock");
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-md transition"
+                >
+                  <span>Filtrer la Carte ({lowStockDishes.length})</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsStockAlertDismissed(true)}
+                  className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-900 border border-slate-700 text-slate-400 hover:text-white text-xs cursor-pointer transition"
+                  title="Masquer l'alerte temporairement"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Preview of Flagged Dishes */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+              {lowStockDishes.map((dish) => (
+                <div
+                  key={dish.id}
+                  className="p-3 rounded-2xl bg-slate-900/90 border border-amber-500/40 flex items-center justify-between gap-3 hover:border-amber-500/70 transition"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={dish.image}
+                      alt={dish.name}
+                      className="w-11 h-11 rounded-xl object-cover bg-slate-950 shrink-0 border border-slate-800"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-bold text-white truncate">{dish.name}</h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span
+                          className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${
+                            (dish.stock_count || 0) === 0
+                              ? "bg-rose-950 text-rose-300 border-rose-500/50"
+                              : "bg-amber-950 text-amber-300 border-amber-500/50"
+                          }`}
+                        >
+                          {(dish.stock_count || 0) === 0
+                            ? "🔴 0 restant (Rupture)"
+                            : `⚠️ ${dish.stock_count} restant${(dish.stock_count || 0) > 1 ? "s" : ""}`}
+                        </span>
+                        <span className="text-[11px] font-mono text-slate-400">
+                          {dish.price.toLocaleString()} F
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleQuickRestock(dish.id, 10)}
+                      title="Ajouter +10 portions immédiatement"
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold text-xs cursor-pointer transition flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>10</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingDish(dish);
+                        setShowDishModal(true);
+                      }}
+                      title="Modifier le plat"
+                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* New Order Alert Live Notification Banner */}
       <AnimatePresence>
@@ -663,9 +855,16 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
             <ChefHat className="w-4 h-4 text-cyan-400" />
           </div>
           <p className="text-2xl font-black text-white">{menuItems.length}</p>
-          <span className="text-[10px] text-cyan-400 font-bold">
-            {menuItems.filter((m) => m.isAvailable !== false).length} actifs en stock
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] text-cyan-400 font-bold">
+              {menuItems.filter((m) => m.isAvailable !== false && (m.stock_count === undefined || m.stock_count > 0)).length} actifs
+            </span>
+            {lowStockDishes.length > 0 && (
+              <span className="text-[10px] text-amber-400 font-bold flex items-center gap-0.5">
+                &bull; ⚠️ {lowStockDishes.length} &lt; 5 en stock
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -695,6 +894,17 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
         >
           <Store className="w-4 h-4" />
           <span>Carte &amp; Gestion des Stocks</span>
+          {lowStockDishes.length > 0 && (
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-black border transition ${
+                activeTab === "menu"
+                  ? "bg-slate-950 text-amber-400 border-amber-400/50"
+                  : "bg-amber-500/20 text-amber-300 border-amber-500/40 animate-pulse"
+              }`}
+            >
+              ⚠️ {lowStockDishes.length}
+            </span>
+          )}
         </button>
 
         <button
@@ -1002,81 +1212,255 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
       {/* TAB 2: MENU & DISH STOCKS MANAGEMENT                                     */}
       {/* ========================================================================= */}
       {activeTab === "menu" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
-              Articles au Menu ({menuItems.length})
-            </h3>
+        <div className="space-y-5">
+          {/* Header with Title and Add Dish Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <span>Carte &amp; Gestion des Stocks Cuisine</span>
+                <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-xs font-semibold">
+                  {menuItems.length} plats
+                </span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Surveillez les portions restantes en temps réel et réapprovisionnez la cuisine
+              </p>
+            </div>
+
             <button
               type="button"
               onClick={() => {
                 setEditingDish(null);
                 setShowDishModal(true);
               }}
-              className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-md transition"
+              className="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-md transition self-start sm:self-auto"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Ajouter un plat (+ Photo Galerie)</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {menuItems.map((item) => (
-              <div
-                key={item.id}
-                className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-4 hover:border-slate-700 transition"
+          {/* Stock Filter Controls & Quick Stats */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setStockFilter("all")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
+                  stockFilter === "all"
+                    ? "bg-slate-800 text-white border-slate-700 shadow-sm"
+                    : "bg-slate-900/60 text-slate-400 hover:text-white border-slate-800"
+                }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-950 shrink-0">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                    {item.isSpicy && (
-                      <span className="absolute top-1 left-1 bg-red-950/80 text-red-300 text-[8px] font-black px-1 rounded">
-                        🌶️
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white line-clamp-1">{item.name}</h4>
-                    <p className="text-[11px] text-slate-400">{item.category}</p>
-                    <span className="text-xs font-extrabold text-orange-400">
-                      {item.price.toLocaleString()} FCFA
-                    </span>
-                  </div>
-                </div>
+                Tous les plats ({menuItems.length})
+              </button>
 
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => toggleItemStock(item.id)}
-                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-colors cursor-pointer ${
-                      item.isAvailable !== false
-                        ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
-                        : "bg-rose-500/20 border-rose-500/40 text-rose-300"
+              <button
+                type="button"
+                onClick={() => setStockFilter("low_stock")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 border ${
+                  stockFilter === "low_stock"
+                    ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm"
+                    : "bg-slate-900/60 text-slate-400 hover:text-amber-300 border-slate-800"
+                }`}
+              >
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                <span>Stocks Critiques &lt; 5 portions ({lowStockDishes.length})</span>
+                {lowStockDishes.length > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                )}
+              </button>
+            </div>
+
+            {lowStockDishes.length > 0 && (
+              <div className="text-xs text-amber-400/90 font-medium flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <span>{lowStockDishes.length} plat{lowStockDishes.length > 1 ? "s" : ""} requièrent un réapprovisionnement</span>
+              </div>
+            )}
+          </div>
+
+          {/* Dishes Grid */}
+          {displayedMenuItems.length === 0 ? (
+            <div className="p-12 text-center bg-slate-900/40 rounded-3xl border border-slate-800 space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/20">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <h4 className="text-sm font-bold text-white">Aucun plat en stock critique !</h4>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                Tous vos plats disposent actuellement de 5 portions ou plus en réserve.
+              </p>
+              <button
+                type="button"
+                onClick={() => setStockFilter("all")}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer"
+              >
+                Voir toute la carte
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {displayedMenuItems.map((item) => {
+                const isLowStock =
+                  typeof item.stock_count === "number" && item.stock_count < 5;
+                const isOutOfStock = (item.stock_count || 0) === 0;
+
+                return (
+                  <div
+                    key={item.id}
+                    className={`p-4 rounded-2xl bg-slate-900 border transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                      isLowStock
+                        ? "border-amber-500/60 ring-1 ring-amber-500/20 shadow-lg shadow-amber-950/20"
+                        : "border-slate-800 hover:border-slate-700"
                     }`}
                   >
-                    {item.isAvailable !== false ? "En Stock" : "Rupture"}
-                  </button>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-950 shrink-0 border border-slate-800">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                        {item.isSpicy && (
+                          <span className="absolute top-1 left-1 bg-red-950/80 text-red-300 text-[8px] font-black px-1 rounded">
+                            🌶️
+                          </span>
+                        )}
+                      </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingDish(item);
-                      setShowDishModal(true);
-                    }}
-                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer"
-                    title="Modifier le plat"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-xs font-bold text-white line-clamp-1">
+                            {item.name}
+                          </h4>
+                          {isLowStock && (
+                            <span
+                              className={`text-[9px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider ${
+                                isOutOfStock
+                                  ? "bg-rose-950 text-rose-300 border-rose-500/50"
+                                  : "bg-amber-950 text-amber-300 border-amber-500/50 animate-pulse"
+                              }`}
+                            >
+                              {isOutOfStock ? "🔴 0 Portion" : `⚠️ Stock < 5 (${item.stock_count})`}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-[11px] text-slate-400">{item.category}</p>
+
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs font-extrabold text-orange-400">
+                            {item.price.toLocaleString()} FCFA
+                          </span>
+                          <span className="text-[10px] text-slate-600">&bull;</span>
+                          <span
+                            className={`text-[11px] font-mono font-bold ${
+                              isLowStock ? "text-amber-400 font-extrabold" : "text-slate-300"
+                            }`}
+                          >
+                            {item.stock_count !== undefined
+                              ? `${item.stock_count} portion${item.stock_count > 1 ? "s" : ""}`
+                              : "15 portions"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/80">
+                      {/* Interactive Stock Stepper */}
+                      <div
+                        className={`flex items-center gap-1 p-1 rounded-xl border ${
+                          isLowStock
+                            ? "bg-amber-950/30 border-amber-500/40"
+                            : "bg-slate-950 border-slate-800"
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const cur =
+                              typeof item.stock_count === "number"
+                                ? item.stock_count
+                                : 0;
+                            handleUpdateStockCount(item.id, cur - 1);
+                          }}
+                          disabled={(item.stock_count || 0) <= 0}
+                          title="Diminuer de 1 portion"
+                          className="w-7 h-7 rounded-lg bg-slate-900 hover:bg-slate-800 disabled:opacity-30 text-slate-300 flex items-center justify-center cursor-pointer transition disabled:cursor-not-allowed"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+
+                        <span
+                          className={`w-9 text-center text-xs font-mono font-bold ${
+                            isLowStock ? "text-amber-300" : "text-slate-200"
+                          }`}
+                          title="Portions actuellement en stock"
+                        >
+                          {item.stock_count ?? 0}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const cur =
+                              typeof item.stock_count === "number"
+                                ? item.stock_count
+                                : 0;
+                            handleUpdateStockCount(item.id, cur + 1);
+                          }}
+                          title="Ajouter 1 portion"
+                          className="w-7 h-7 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 flex items-center justify-center cursor-pointer transition"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleQuickRestock(item.id, 10)}
+                          title="Réapprovisionner +10 portions immédiatement"
+                          className="px-2 h-7 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-[10px] flex items-center cursor-pointer border border-emerald-500/30 transition ml-0.5"
+                        >
+                          +10
+                        </button>
+                      </div>
+
+                      {/* Availability Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => toggleItemStock(item.id)}
+                        className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-colors cursor-pointer ${
+                          item.isAvailable !== false &&
+                          (item.stock_count === undefined || item.stock_count > 0)
+                            ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
+                            : "bg-rose-500/20 border-rose-500/40 text-rose-300"
+                        }`}
+                      >
+                        {item.isAvailable !== false &&
+                        (item.stock_count === undefined || item.stock_count > 0)
+                          ? "En Stock"
+                          : "Rupture"}
+                      </button>
+
+                      {/* Edit Dish Modal Opener */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingDish(item);
+                          setShowDishModal(true);
+                        }}
+                        className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer transition"
+                        title="Modifier le plat et le stock"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

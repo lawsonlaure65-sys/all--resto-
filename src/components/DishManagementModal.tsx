@@ -206,6 +206,9 @@ export const DishManagementModal: React.FC<DishManagementModalProps> = ({
 
   // Operational Specs
   const [preparationTime, setPreparationTime] = useState<number>(initialDish?.preparationTime || 15);
+  const [stockCount, setStockCount] = useState<number>(
+    initialDish?.stock_count !== undefined ? initialDish.stock_count : 15
+  );
   const [calories, setCalories] = useState<number | undefined>(initialDish?.calories);
 
   // Custom Options
@@ -358,6 +361,7 @@ export const DishManagementModal: React.FC<DishManagementModalProps> = ({
       mealMoments: mealMoments.length > 0 ? mealMoments : undefined,
       mealServiceTime: mealServiceTime.trim() || undefined,
       isAvailable,
+      stock_count: Math.max(0, Number(stockCount)),
       preparationTime: Number(preparationTime) || 15,
       calories: calories ? Number(calories) : undefined,
       options: options.length > 0 ? options : undefined,
@@ -1187,13 +1191,13 @@ export const DishManagementModal: React.FC<DishManagementModalProps> = ({
           </div>
 
           {/* ======================================================== */}
-          {/* SECTION 6: TEMPS DE PRÉPARATION & DISPONIBILITÉ */}
+          {/* SECTION 6: TEMPS DE PRÉPARATION, STOCK & DISPONIBILITÉ */}
           {/* ======================================================== */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
               <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-amber-400" />
-                <span>Temps de préparation moyen (minutes)</span>
+                <span>Temps de prépa (min)</span>
               </label>
               <input
                 type="number"
@@ -1205,25 +1209,69 @@ export const DishManagementModal: React.FC<DishManagementModalProps> = ({
               />
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-orange-400" />
+                  <span>Portions en stock</span>
+                </label>
+                {stockCount < 5 && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    {stockCount === 0 ? "Rupture (0)" : "Stock faible (<5)"}
+                  </span>
+                )}
+              </div>
+              <input
+                type="number"
+                min={0}
+                max={999}
+                value={stockCount}
+                onChange={(e) => {
+                  const val = Math.max(0, Number(e.target.value));
+                  setStockCount(val);
+                  if (val === 0) setIsAvailable(false);
+                  else if (!isAvailable && val > 0) setIsAvailable(true);
+                }}
+                className={`w-full px-3.5 py-2 rounded-xl bg-slate-900 border text-white text-xs font-mono font-bold ${
+                  stockCount < 5
+                    ? "border-amber-500/60 text-amber-300 ring-1 ring-amber-500/30"
+                    : "border-slate-700"
+                }`}
+              />
+              <span className="text-[10px] text-slate-500 block">
+                Alerte auto sur le tableau de bord si &lt; 5 portions
+              </span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between">
               <div>
                 <label className="text-xs font-bold text-white block">
                   Disponibilité en cuisine
                 </label>
                 <span className="text-[11px] text-slate-400">
-                  {isAvailable ? "Actif & commandable" : "En rupture de stock temporaire"}
+                  {isAvailable && stockCount > 0
+                    ? "Actif & commandable"
+                    : "En rupture de stock"}
                 </span>
               </div>
               <button
                 type="button"
-                onClick={() => setIsAvailable(!isAvailable)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer border ${
-                  isAvailable
+                onClick={() => {
+                  const nextAvail = !isAvailable;
+                  setIsAvailable(nextAvail);
+                  if (!nextAvail && stockCount > 0) {
+                    // keep stock or mark unavailable
+                  } else if (nextAvail && stockCount === 0) {
+                    setStockCount(10);
+                  }
+                }}
+                className={`mt-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer border ${
+                  isAvailable && stockCount > 0
                     ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
                     : "bg-rose-500/20 text-rose-300 border-rose-500/40"
                 }`}
               >
-                {isAvailable ? "En Stock" : "Rupture"}
+                {isAvailable && stockCount > 0 ? "En Stock" : "Rupture"}
               </button>
             </div>
           </div>

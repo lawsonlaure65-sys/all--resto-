@@ -53,6 +53,7 @@ export interface MenuItem {
   mealMoments?: Array<"petit_dejeuner" | "dejeuner" | "diner" | "menu_du_jour">;
   mealServiceTime?: string; // e.g. "Servi de 06h30 à 11h00"
   isAvailable?: boolean;
+  stock_count?: number; // Portions restantes en cuisine (Alerte si < 5)
   preparationTime?: number;
   calories?: number;
   allergens?: string[];

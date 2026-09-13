@@ -60,6 +60,40 @@ export async function compressImageBase64(
   });
 }
 
+// Ensure all dishes have a valid stock_count with realistic inventory and low-stock items (< 5)
+export function normalizeDishesStock(restaurants: Restaurant[]): Restaurant[] {
+  return restaurants.map((resto) => ({
+    ...resto,
+    menu: resto.menu.map((dish, index) => {
+      if (typeof dish.stock_count === "number" && !isNaN(dish.stock_count)) {
+        return dish;
+      }
+
+      // Assign realistic inventory if not yet set
+      let defaultStock = 12;
+      if (dish.id === "kf-pd-3" || index === 2) {
+        defaultStock = 3; // Critically low (< 5 items)
+      } else if (dish.id === "kf-plat-jour" || index === 4) {
+        defaultStock = 4; // Critically low (< 5 items)
+      } else if (dish.id === "kf-1" || index === 6) {
+        defaultStock = 2; // Critically low (< 5 items)
+      } else if (dish.id === "kf-3" || index === 8) {
+        defaultStock = 1; // Critically low (< 5 items)
+      } else if (dish.isAvailable === false) {
+        defaultStock = 0; // Out of stock (< 5 items)
+      } else {
+        defaultStock = 8 + ((index * 3) % 18);
+      }
+
+      return {
+        ...dish,
+        stock_count: defaultStock,
+        isAvailable: defaultStock > 0 && dish.isAvailable !== false,
+      };
+    }),
+  }));
+}
+
 // Load restaurants from LocalStorage, emergency backup, or fallback to RESTAURANTS_DATA
 export function loadStoredRestaurants(): Restaurant[] {
   try {
@@ -69,7 +103,8 @@ export function loadStoredRestaurants(): Restaurant[] {
       if (Array.isArray(parsed) && parsed.length > 0) {
         const dishCount = parsed.reduce((sum: number, r: any) => sum + (r.menu?.length || 0), 0);
         if (dishCount > 0) {
-          return parsed;
+          const normalized = normalizeDishesStock(parsed);
+          return normalized;
         }
       }
     }
@@ -81,25 +116,27 @@ export function loadStoredRestaurants(): Restaurant[] {
       if (Array.isArray(parsedEmerg) && parsedEmerg.length > 0) {
         const dishCount = parsedEmerg.reduce((sum: number, r: any) => sum + (r.menu?.length || 0), 0);
         if (dishCount > 0) {
-          saveStoredRestaurants(parsedEmerg);
-          return parsedEmerg;
+          const normalized = normalizeDishesStock(parsedEmerg);
+          saveStoredRestaurants(normalized);
+          return normalized;
         }
       }
     }
 
-    // First time: save default
-    saveStoredRestaurants(RESTAURANTS_DATA);
-    return RESTAURANTS_DATA;
+    // First time: save default normalized
+    const normalizedDefault = normalizeDishesStock(RESTAURANTS_DATA);
+    saveStoredRestaurants(normalizedDefault);
+    return normalizedDefault;
   } catch (err) {
     console.error("Error loading restaurants from localStorage, checking emergency backup:", err);
     try {
       const emergency = localStorage.getItem(STORAGE_KEY_EMERGENCY_BACKUP);
       if (emergency) {
-        return JSON.parse(emergency);
+        return normalizeDishesStock(JSON.parse(emergency));
       }
     } catch {}
   }
-  return RESTAURANTS_DATA;
+  return normalizeDishesStock(RESTAURANTS_DATA);
 }
 
 // Synchronize from Supabase with anti-wipeout safeguard & automatic cloud seed
@@ -345,6 +382,41 @@ export function getStorageStats(restaurants: Restaurant[]) {
     sizeKb,
     lastBackup,
   };
+}
+
+// Update specific dish stock count
+export function updateDishStockCount(
+  dishId: string,
+  stockCount: number,
+  targetRestaurantId?: string
+): Restaurant[] {
+  const restaurants = loadStoredRestaurants();
+  const safeStock = Math.max(0, Math.round(stockCount));
+
+  const updatedRestaurants = restaurants.map((resto) => {
+    const existingIndex = resto.menu.findIndex((d) => d.id === dishId);
+    if (existingIndex >= 0) {
+      const newMenu = [...resto.menu];
+      const currentDish = newMenu[existingIndex];
+      const updatedDish: MenuItem = {
+        ...currentDish,
+        stock_count: safeStock,
+        isAvailable: safeStock > 0 && currentDish.isAvailable !== false,
+      };
+      newMenu[existingIndex] = updatedDish;
+
+      // Also try sync to Supabase non-blocking
+      try {
+        saveDishToSupabase(updatedDish, resto.id).catch(() => {});
+      } catch {}
+
+      return { ...resto, menu: newMenu };
+    }
+    return resto;
+  });
+
+  saveStoredRestaurants(updatedRestaurants);
+  return updatedRestaurants;
 }
 
 // Reset to factory defaults
