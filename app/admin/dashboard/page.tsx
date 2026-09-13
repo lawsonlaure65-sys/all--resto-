@@ -121,6 +121,12 @@ export default function AdminDashboardPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <a
+              href="/app/admin/analytics"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+            >
+              <span>📊 Analytics</span>
+            </a>
+            <a
               href="/app/admin/restaurants"
               className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
             >
