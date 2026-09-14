@@ -47,6 +47,7 @@ create table if not exists public.reviews (
   status text not null default 'published' check (
     status in ('published', 'hidden', 'reported')
   ),
+  reply jsonb,
   created_at timestamptz not null default now(),
   unique(order_id, reviewer_type)
 );

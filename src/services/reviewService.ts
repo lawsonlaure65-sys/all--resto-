@@ -3,6 +3,14 @@ import { getSupabaseClient } from "./supabaseClient";
 export type ReviewerType = "customer" | "restaurant" | "driver";
 export type ReviewStatus = "published" | "hidden" | "reported";
 
+export interface ReviewReply {
+  id?: string;
+  author_name: string;
+  author_role: "admin" | "restaurant";
+  comment: string;
+  created_at: string;
+}
+
 export interface ReviewRecord {
   id: string;
   order_id: string;
@@ -17,6 +25,7 @@ export interface ReviewRecord {
   comment?: string;
   status: ReviewStatus;
   created_at: string;
+  reply?: ReviewReply;
 }
 
 const STORAGE_KEY = "alloresto_reviews";
@@ -33,6 +42,13 @@ export const INITIAL_SAMPLE_REVIEWS: ReviewRecord[] = [
     comment: "Le choukouya de mouton était délicieux et bien chaud ! Livré au Plateau en 35 minutes.",
     status: "published",
     created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+    reply: {
+      id: "rep-001",
+      author_name: "Direction Khady's Food",
+      author_role: "restaurant",
+      comment: "Merci infiniment Fatima ! C'est un plaisir de vous régaler avec nos viandes fraîches du Sahel.",
+      created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    },
   },
   {
     id: "rev-002",
@@ -65,10 +81,48 @@ export const INITIAL_SAMPLE_REVIEWS: ReviewRecord[] = [
     reviewer_type: "customer",
     reviewer_name: "Utilisateur anonyme",
     restaurant_id: "resto-gourmet-fleuve",
+    restaurant_name: "Le Gourmet du Fleuve",
     rating: 1,
     comment: "Contenu signalé pour langage inapproprié envers le coursier.",
     status: "reported",
     created_at: new Date(Date.now() - 3600000 * 48).toISOString(),
+  },
+  {
+    id: "rev-005",
+    order_id: "ORD-9810",
+    reviewer_type: "restaurant",
+    reviewer_name: "Gérant Al-Mina",
+    restaurant_id: "resto-chawarma-mina",
+    restaurant_name: "Al-Mina Fast Food",
+    driver_name: "Ibrahim K.",
+    rating: 5,
+    comment: "Coursier très ponctuel et sac isotherme parfaitement propre. Excellente coordination.",
+    status: "published",
+    created_at: new Date(Date.now() - 3600000 * 72).toISOString(),
+  },
+  {
+    id: "rev-006",
+    order_id: "ORD-9805",
+    reviewer_type: "driver",
+    reviewer_name: "Idrissa S.",
+    restaurant_id: "resto-dambou-dor",
+    restaurant_name: "Le Dambou d’Or Niamey",
+    rating: 4,
+    comment: "Commande prête dès mon arrivée au restaurant, pas d'attente inutile.",
+    status: "published",
+    created_at: new Date(Date.now() - 3600000 * 96).toISOString(),
+  },
+  {
+    id: "rev-007",
+    order_id: "ORD-9799",
+    reviewer_type: "customer",
+    reviewer_name: "Mamadou D.",
+    restaurant_id: "resto-chawarma-mina",
+    restaurant_name: "Al-Mina Fast Food",
+    rating: 5,
+    comment: "Les chawarmas géants étaient parfaits et livrés encore fumants à Yantala !",
+    status: "published",
+    created_at: new Date(Date.now() - 3600000 * 110).toISOString(),
   },
 ];
 
@@ -225,5 +279,119 @@ export async function moderateReview(
   const updated = reviews.map((r) => (r.id === reviewId ? { ...r, status: newStatus } : r));
   saveStoredReviews(updated);
 
+  return { success: true };
+}
+
+/**
+ * Modération en masse de plusieurs avis (Action groupée / Bulk action)
+ */
+export async function moderateReviewsBulk(
+  reviewIds: string[],
+  newStatus: ReviewStatus
+): Promise<{ success: boolean; count: number; error?: string }> {
+  if (!reviewIds || reviewIds.length === 0) {
+    return { success: false, count: 0, error: "Aucun avis sélectionné." };
+  }
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      await supabase.from("reviews").update({ status: newStatus }).in("id", reviewIds);
+    } catch (e) {
+      console.warn("Erreur modération en masse Supabase:", e);
+    }
+  }
+
+  const idSet = new Set(reviewIds);
+  const reviews = getStoredReviews();
+  let updatedCount = 0;
+  const updated = reviews.map((r) => {
+    if (idSet.has(r.id)) {
+      updatedCount++;
+      return { ...r, status: newStatus };
+    }
+    return r;
+  });
+
+  saveStoredReviews(updated);
+  return { success: true, count: updatedCount };
+}
+
+/**
+ * Réponse officielle à un avis (par l'administrateur ou le restaurant)
+ */
+export async function replyToReview(
+  reviewId: string,
+  reply: ReviewReply
+): Promise<{ success: boolean; review?: ReviewRecord; error?: string }> {
+  if (!reply.comment || reply.comment.trim().length === 0) {
+    return { success: false, error: "Le commentaire de réponse ne peut pas être vide." };
+  }
+
+  const formattedReply: ReviewReply = {
+    id: reply.id || `rep-${Date.now()}`,
+    author_name: reply.author_name || "Support Allôresto",
+    author_role: reply.author_role || "admin",
+    comment: reply.comment.trim(),
+    created_at: reply.created_at || new Date().toISOString(),
+  };
+
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      await supabase
+        .from("reviews")
+        .update({
+          reply: formattedReply,
+        })
+        .eq("id", reviewId);
+    } catch (e) {
+      console.warn("Erreur sauvegarde réponse Supabase:", e);
+    }
+  }
+
+  const reviews = getStoredReviews();
+  let targetReview: ReviewRecord | undefined;
+  const updated = reviews.map((r) => {
+    if (r.id === reviewId) {
+      targetReview = { ...r, reply: formattedReply };
+      return targetReview;
+    }
+    return r;
+  });
+
+  saveStoredReviews(updated);
+  return { success: true, review: targetReview };
+}
+
+/**
+ * Suppression de la réponse d'un avis
+ */
+export async function deleteReviewReply(
+  reviewId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    try {
+      await supabase
+        .from("reviews")
+        .update({ reply: null })
+        .eq("id", reviewId);
+    } catch (e) {
+      console.warn("Erreur suppression réponse Supabase:", e);
+    }
+  }
+
+  const reviews = getStoredReviews();
+  const updated = reviews.map((r) => {
+    if (r.id === reviewId) {
+      const copy = { ...r };
+      delete copy.reply;
+      return copy;
+    }
+    return r;
+  });
+
+  saveStoredReviews(updated);
   return { success: true };
 }
