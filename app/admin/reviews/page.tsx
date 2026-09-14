@@ -11,6 +11,13 @@ import {
   replyToReview,
   deleteReviewReply,
 } from '../../../src/services/reviewService';
+import {
+  ReviewReplyTemplate,
+  getSavedReplyTemplates,
+} from '../../../src/services/reviewTemplateService';
+import { SaveTemplateModal } from '../../../src/components/reviews/SaveTemplateModal';
+import { ReviewTemplateModal } from '../../../src/components/reviews/ReviewTemplateModal';
+import { QuickApplyBar } from '../../../src/components/reviews/QuickApplyBar';
 import { logAuditEvent } from '../../../src/services/auditService';
 import {
   Star,
@@ -40,6 +47,10 @@ import {
   ChevronUp,
   RefreshCw,
   X,
+  BookmarkPlus,
+  Bookmark,
+  Zap,
+  BookOpen,
 } from 'lucide-react';
 
 type SortOption =
@@ -73,6 +84,12 @@ export default function AdminReviewsPage() {
   const [replyComment, setReplyComment] = useState<string>('');
   const [replySubmitting, setReplySubmitting] = useState<boolean>(false);
 
+  // État pour les modèles de réponses (Save as Template & Quick Apply)
+  const [templates, setTemplates] = useState<ReviewReplyTemplate[]>([]);
+  const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState<boolean>(false);
+  const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState<boolean>(false);
+  const [appliedTemplateId, setAppliedTemplateId] = useState<string | null>(null);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -83,11 +100,22 @@ export default function AdminReviewsPage() {
       const data = await fetchAllReviews();
       setReviews(data);
       setSelectedIds([]);
+      setTemplates(getSavedReplyTemplates());
     } catch (e) {
       console.warn('Erreur chargement avis:', e);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Action d'application rapide d'un modèle (Quick Apply)
+  const handleQuickApply = (template: ReviewReplyTemplate) => {
+    setReplyComment(template.content);
+    setAppliedTemplateId(template.id);
+    showToast(`Modèle "${template.title}" appliqué (Quick Apply).`);
+    setTimeout(() => {
+      setAppliedTemplateId(null);
+    }, 1800);
   };
 
   // Notification temporaire
@@ -231,13 +259,6 @@ export default function AdminReviewsPage() {
       console.error('Erreur suppression réponse:', e);
     }
   };
-
-  // Modèles de réponses prédéfinis
-  const replyTemplates = [
-    'Merci beaucoup pour votre retour bienveillant ! Nous transmettons vos encouragements au chef et au coursier.',
-    'Nous vous prions d’accepter nos excuses pour ce délai de livraison imprévu. Des mesures ont été prises.',
-    'Merci pour votre fidélité sur Allôresto Niger. Votre satisfaction reste notre priorité au quotidien.',
-  ];
 
   // Calcul des statistiques pour Reporting Insights
   const insights = useMemo(() => {
@@ -401,6 +422,14 @@ export default function AdminReviewsPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsTemplateManagerOpen(true)}
+              className="px-3.5 py-2 bg-white hover:bg-amber-50/50 border border-gray-200 text-gray-700 hover:text-amber-800 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              title="Gérer les modèles de réponses types (Templates)"
+            >
+              <Bookmark className="w-3.5 h-3.5 text-amber-500" />
+              <span>Modèles de réponses ({templates.length})</span>
+            </button>
             <a
               href="/app/admin/dashboard"
               className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition flex items-center gap-1.5"
@@ -1075,24 +1104,13 @@ export default function AdminReviewsPage() {
                         </div>
                       </div>
 
-                      {/* Suggestions rapides */}
-                      <div>
-                        <span className="text-[11px] font-semibold text-gray-500 block mb-1.5">
-                          Modèles de réponse rapide :
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {replyTemplates.map((tmpl, idx) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => setReplyComment(tmpl)}
-                              className="px-2.5 py-1 rounded-lg bg-white hover:bg-blue-100/50 border border-gray-200 text-gray-700 text-[11px] transition text-left cursor-pointer"
-                            >
-                              "{tmpl.slice(0, 45)}..."
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                      {/* APPLICATION RAPIDE DE MODÈLE (QUICK APPLY) */}
+                      <QuickApplyBar
+                        templates={templates}
+                        onQuickApply={handleQuickApply}
+                        onOpenTemplateManager={() => setIsTemplateManagerOpen(true)}
+                        appliedTemplateId={appliedTemplateId}
+                      />
 
                       {/* Zone de texte */}
                       <div>
@@ -1101,28 +1119,41 @@ export default function AdminReviewsPage() {
                           value={replyComment}
                           onChange={(e) => setReplyComment(e.target.value)}
                           placeholder="Rédigez ici votre réponse officielle visible par le client..."
-                          className="w-full p-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 bg-white focus:outline-none focus:border-blue-500"
+                          className="w-full p-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 bg-white focus:outline-none focus:border-blue-500 font-sans leading-relaxed"
                         />
                       </div>
 
-                      {/* Boutons validation */}
-                      <div className="flex items-center justify-end gap-2">
+                      {/* Boutons validation & Sauvegarder en modèle */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                         <button
                           type="button"
-                          onClick={handleCancelReply}
-                          className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition cursor-pointer"
+                          disabled={!replyComment.trim()}
+                          onClick={() => setIsSaveTemplateModalOpen(true)}
+                          className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-40 disabled:cursor-not-allowed"
+                          title="Enregistrer cette réponse comme modèle réutilisable"
                         >
-                          Annuler
+                          <BookmarkPlus className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Enregistrer comme modèle (Save as Template)</span>
                         </button>
-                        <button
-                          type="button"
-                          disabled={replySubmitting || !replyComment.trim()}
-                          onClick={() => handleSubmitReply(rev.id)}
-                          className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
-                        >
-                          <Send className="w-3.5 h-3.5" />
-                          <span>{replySubmitting ? 'Envoi...' : 'Publier la réponse'}</span>
-                        </button>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleCancelReply}
+                            className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition cursor-pointer"
+                          >
+                            Annuler
+                          </button>
+                          <button
+                            type="button"
+                            disabled={replySubmitting || !replyComment.trim()}
+                            onClick={() => handleSubmitReply(rev.id)}
+                            className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                            <span>{replySubmitting ? 'Envoi...' : 'Publier la réponse'}</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1139,6 +1170,31 @@ export default function AdminReviewsPage() {
             })
           )}
         </div>
+
+        {/* MODALE D'ENREGISTREMENT DE NOUVEAU MODÈLE (SAVE AS TEMPLATE) */}
+        <SaveTemplateModal
+          isOpen={isSaveTemplateModalOpen}
+          initialContent={replyComment}
+          onClose={() => setIsSaveTemplateModalOpen(false)}
+          onSaved={(newTmpl) => {
+            setTemplates((prev) => [newTmpl, ...prev]);
+            showToast(`Modèle "${newTmpl.title}" enregistré avec succès (Save as Template).`);
+          }}
+        />
+
+        {/* MODALE COMPLÈTE DE GESTION DES MODÈLES AVEC QUICK APPLY */}
+        <ReviewTemplateModal
+          isOpen={isTemplateManagerOpen}
+          templates={templates}
+          onClose={() => setIsTemplateManagerOpen(false)}
+          onApplyTemplate={(tmpl) => {
+            handleQuickApply(tmpl);
+          }}
+          onTemplatesUpdated={(updated) => {
+            setTemplates(updated);
+          }}
+          isReplyingActive={Boolean(replyingReviewId)}
+        />
 
       </div>
     </div>

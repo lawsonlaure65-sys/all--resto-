@@ -30,6 +30,7 @@ import { DeliveryFeeCalculatorModal } from "./components/DeliveryFeeCalculatorMo
 import { DeliveryDistrictsWidget } from "./components/DeliveryDistrictsWidget";
 import { LogoPresentationModal } from "./components/LogoPresentationModal";
 import { DishesCatalogModal } from "./components/DishesCatalogModal";
+import { RestaurantsDirectoryModal } from "./components/RestaurantsDirectoryModal";
 import { OrderHistoryModal } from "./components/OrderHistoryModal";
 import { MarketingAIModal } from "./components/MarketingAIModal";
 import { WhatsAppAutomationModal } from "./components/WhatsAppAutomationModal";
@@ -84,6 +85,7 @@ import {
 } from "./data/allorestoData";
 import {
   Store,
+  MapPin,
   Bike,
   Sparkles,
   Flame,
@@ -217,6 +219,8 @@ export function App() {
   const [isDistrictsModalOpen, setIsDistrictsModalOpen] = useState<boolean>(false);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState<boolean>(false);
   const [isDishesCatalogOpen, setIsDishesCatalogOpen] = useState<boolean>(false);
+  const [isRestaurantsDirectoryOpen, setIsRestaurantsDirectoryOpen] = useState<boolean>(false);
+  const [homeNeighborhoodFilter, setHomeNeighborhoodFilter] = useState<string>("all");
   const [catalogMealMoment, setCatalogMealMoment] = useState<"all" | MealMoment>("all");
   const [selectedDistrictName, setSelectedDistrictName] = useState<string>("Plateau (Ministères & Ambassades)");
 
@@ -531,6 +535,13 @@ export function App() {
 
   // Filter Restaurants
   const filteredRestaurants = restaurants.filter((resto) => {
+    // Neighborhood filter
+    if (homeNeighborhoodFilter !== "all") {
+      const addr = (resto.address + " " + resto.city).toLowerCase();
+      if (!addr.includes(homeNeighborhoodFilter.toLowerCase())) {
+        return false;
+      }
+    }
     // Cuisine filter
     if (selectedCuisine !== "all" && resto.cuisineCategory !== selectedCuisine) {
       return false;
@@ -587,6 +598,7 @@ export function App() {
         onOpenContact={() => setIsContactOpen(true)}
         onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
         onOpenLogoModal={() => setIsLogoModalOpen(true)}
+        onOpenRestaurants={() => setIsRestaurantsDirectoryOpen(true)}
         onOpenMenu={() => {
           setCatalogMealMoment("all");
           setIsDishesCatalogOpen(true);
@@ -658,6 +670,7 @@ export function App() {
               onToggleFastDelivery={() => setFilterFastDelivery(!filterFastDelivery)}
               onOpenChefAI={() => setIsChefAIOpen(true)}
               onOpenLogoModal={() => setIsLogoModalOpen(true)}
+              onOpenRestaurants={() => setIsRestaurantsDirectoryOpen(true)}
               onOpenDishesCatalog={() => {
                 setCatalogMealMoment("all");
                 setIsDishesCatalogOpen(true);
@@ -698,7 +711,16 @@ export function App() {
 
             {/* Quick Action Navigation Bar */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
-              <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2 scrollbar-none">
+              <div className="flex items-center justify-start gap-2 overflow-x-auto pb-2 scrollbar-none">
+                <button
+                  id="quick-nav-restaurants-btn"
+                  onClick={() => setIsRestaurantsDirectoryOpen(true)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-300 text-xs font-bold whitespace-nowrap cursor-pointer transition shadow-sm"
+                >
+                  <Store className="w-4 h-4 text-blue-400" />
+                  <span>🏪 Restaurants (8 Partenaires)</span>
+                </button>
+
                 <button
                   onClick={() => {
                     setCatalogMealMoment("all");
@@ -774,31 +796,83 @@ export function App() {
             </section>
 
             {/* Main Restaurants Directory Section */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+            <section id="restaurants-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
                 <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-[11px] font-black uppercase tracking-wider border border-blue-500/30">
+                      Espace Restaurants
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {restaurants.length} partenaires certifiés
+                    </span>
+                  </div>
                   <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
-                    <span>Restaurants disponibles à</span>
+                    <Store className="w-6 h-6 text-blue-400" />
+                    <span>Restaurants partenaires à</span>
                     <span className="text-orange-500">{selectedCity}</span>
                   </h2>
                   <p className="text-xs text-slate-300 mt-0.5">
-                    {filteredRestaurants.length} établissement(s) ouvert(s) avec livraison rapide
+                    Sélectionnez un restaurant pour afficher sa carte et commander, ou utilisez le filtre par quartier :
                   </p>
                 </div>
 
-                {/* Service Mode Indicator Badge */}
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-300 font-semibold">
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Open Detailed Directory Modal Button */}
+                  <button
+                    id="open-restaurants-directory-btn"
+                    onClick={() => setIsRestaurantsDirectoryOpen(true)}
+                    className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 border border-blue-400/40 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer"
+                  >
+                    <Store className="w-4 h-4" />
+                    <span>Annuaire Détaillé (8)</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+
+                  {/* Service Mode Indicator Badge */}
+                  <span className="hidden sm:inline-flex px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 font-semibold text-xs">
                     Mode :{" "}
-                    <strong className="text-orange-400 uppercase">
+                    <strong className="text-orange-400 uppercase ml-1">
                       {serviceMode === "delivery"
-                        ? "Livraison Express"
+                        ? "Livraison"
                         : serviceMode === "takeaway"
                         ? "À Emporter"
-                        : "Réservation Table"}
+                        : "Réservation"}
                     </strong>
                   </span>
                 </div>
+              </div>
+
+              {/* Neighborhood Quick Filter Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                <span className="text-xs text-slate-400 font-bold flex items-center gap-1 mr-1 shrink-0">
+                  <MapPin className="w-3.5 h-3.5 text-orange-400" />
+                  <span>Quartier :</span>
+                </span>
+                {[
+                  { id: "all", label: "Tous (8)" },
+                  { id: "Plateau", label: "Plateau" },
+                  { id: "Yantala", label: "Yantala" },
+                  { id: "Koubia", label: "Koubia" },
+                  { id: "Harobanda", label: "Harobanda" },
+                  { id: "Goudel", label: "Goudel" },
+                  { id: "Recasement", label: "Recasement" },
+                ].map((quarter) => {
+                  const isActive = homeNeighborhoodFilter === quarter.id;
+                  return (
+                    <button
+                      key={quarter.id}
+                      onClick={() => setHomeNeighborhoodFilter(quarter.id)}
+                      className={`px-3 py-1 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap shrink-0 ${
+                        isActive
+                          ? "bg-orange-500 text-slate-950 shadow-md shadow-orange-500/20"
+                          : "bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800"
+                      }`}
+                    >
+                      {quarter.label}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Restaurants Grid */}
@@ -1193,6 +1267,22 @@ export function App() {
         }}
       />
 
+      {/* 17b. Annuaire et Liste Complète des Restaurants Partenaires de Niamey */}
+      <RestaurantsDirectoryModal
+        isOpen={isRestaurantsDirectoryOpen}
+        onClose={() => setIsRestaurantsDirectoryOpen(false)}
+        restaurants={restaurants}
+        serviceMode={serviceMode}
+        onSelectRestaurant={(resto) => {
+          setIsRestaurantsDirectoryOpen(false);
+          setSelectedRestaurantForMenu(resto);
+        }}
+        onBookTable={(resto) => {
+          setIsRestaurantsDirectoryOpen(false);
+          setSelectedRestaurantForBooking(resto);
+        }}
+      />
+
       {/* 18. Historique Complet des Commandes */}
       <OrderHistoryModal
         isOpen={isOrderHistoryOpen}
@@ -1395,6 +1485,7 @@ export function App() {
         onOpenGroupOrder={() => setIsGroupOrderOpen(true)}
         onOpenAccount={() => setIsAccountOpen(true)}
         onOpenTechPack={() => setIsTechPackOpen(true)}
+        onOpenRestaurants={() => setIsRestaurantsDirectoryOpen(true)}
         onOpenMenu={() => {
           setCatalogMealMoment("all");
           setIsDishesCatalogOpen(true);

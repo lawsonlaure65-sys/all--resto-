@@ -33,6 +33,7 @@ interface MobileBottomNavProps {
   onOpenGroupOrder: () => void;
   onOpenAccount: () => void;
   onOpenTechPack: () => void;
+  onOpenRestaurants?: () => void;
   onOpenMenu?: () => void;
   onOpenOrdersHistory?: () => void;
   onOpenSauceBoxes?: () => void;
@@ -52,6 +53,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onOpenGroupOrder,
   onOpenAccount,
   onOpenTechPack,
+  onOpenRestaurants,
   onOpenMenu,
   onOpenOrdersHistory,
   onOpenSauceBoxes,
@@ -170,6 +172,18 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             <UtensilsCrossed className="w-4 h-4 mb-0.5" />
             <span className="text-[8.5px] truncate max-w-full leading-none">{t(currentLanguage, "home")}</span>
           </button>
+
+          {/* Tab 1.5: Restaurants */}
+          {currentRole === "client" && onOpenRestaurants && (
+            <button
+              onClick={onOpenRestaurants}
+              className="flex flex-col items-center justify-center py-1 px-0.5 rounded-xl text-blue-400 hover:text-blue-300 transition-all cursor-pointer flex-1 min-w-0"
+              title="Liste de tous les restaurants partenaires à Niamey"
+            >
+              <Store className="w-4 h-4 mb-0.5 text-blue-400" />
+              <span className="text-[8.5px] font-bold truncate max-w-full leading-none">Restos (8)</span>
+            </button>
+          )}
 
           {/* Tab 2: Menu (65+ Plats) */}
           {currentRole === "client" && onOpenMenu && (

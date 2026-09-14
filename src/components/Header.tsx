@@ -61,6 +61,7 @@ interface HeaderProps {
   onOpenContact?: () => void;
   onOpenDistrictsDirectory?: () => void;
   onOpenLogoModal?: () => void;
+  onOpenRestaurants?: () => void;
   onOpenMenu?: () => void;
   onOpenOrdersHistory?: () => void;
   onOpenSauceBoxes?: () => void;
@@ -99,6 +100,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenContact,
   onOpenDistrictsDirectory,
   onOpenLogoModal,
+  onOpenRestaurants,
   onOpenMenu,
   onOpenOrdersHistory,
   onOpenSauceBoxes,
@@ -302,6 +304,22 @@ export const Header: React.FC<HeaderProps> = ({
             <BrandLogo variant="full" size="sm" showTagline={false} />
           </div>
 
+          {/* Restaurants Button */}
+          {onOpenRestaurants && (
+            <button
+              id="header-restaurants-btn"
+              onClick={onOpenRestaurants}
+              className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl bg-[#132338] hover:bg-[#1a314f] border border-blue-500/60 text-blue-300 cursor-pointer shrink-0 transition active:scale-95 shadow-sm"
+              title="Consulter la liste de tous les restaurants partenaires à Niamey"
+            >
+              <Store className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-400 shrink-0" />
+              <div className="text-left leading-tight">
+                <div className="text-[9.5px] sm:text-[11px] font-black text-blue-200">Restaurants</div>
+                <div className="text-[8px] sm:text-[9.5px] text-blue-400/90 font-bold whitespace-nowrap">(8 Partenaires)</div>
+              </div>
+            </button>
+          )}
+
           {/* Menu (65+ Plats) Catalog Button */}
           {onOpenMenu && (
             <button
@@ -398,6 +416,18 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {t(currentLanguage, "home")}
             </button>
+
+            {/* 1.5. Restaurants */}
+            {onOpenRestaurants && (
+              <button
+                onClick={onOpenRestaurants}
+                className="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center gap-1.5 cursor-pointer"
+                title="Consulter tous les restaurants partenaires"
+              >
+                <Store className="w-3.5 h-3.5 text-blue-400" />
+                <span>Restaurants</span>
+              </button>
+            )}
 
             {/* 2. Commandes / Historique */}
             {onOpenOrdersHistory && (

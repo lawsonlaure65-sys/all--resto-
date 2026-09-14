@@ -14,6 +14,7 @@ import {
   IceCream,
   Percent,
   CheckCircle2,
+  Store,
 } from "lucide-react";
 import { CuisineFilter, MealMoment } from "../types";
 import { CUISINES_DATA } from "../data/allorestoData";
@@ -29,6 +30,7 @@ interface HeroBannerProps {
   onToggleFastDelivery: () => void;
   onOpenChefAI: () => void;
   onOpenLogoModal?: () => void;
+  onOpenRestaurants?: () => void;
   onOpenDishesCatalog?: () => void;
   onOpenDishesCatalogWithMoment?: (moment: "all" | MealMoment) => void;
 }
@@ -44,6 +46,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   onToggleFastDelivery,
   onOpenChefAI,
   onOpenLogoModal,
+  onOpenRestaurants,
   onOpenDishesCatalog,
   onOpenDishesCatalogWithMoment,
 }) => {
@@ -143,6 +146,31 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               </button>
             </div>
           </motion.div>
+
+          {/* Quick Direct Actions: Restaurants & Carte Complète */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
+            {onOpenRestaurants && (
+              <button
+                id="hero-restaurants-cta-btn"
+                onClick={onOpenRestaurants}
+                className="px-4 py-2 rounded-2xl bg-blue-600 hover:bg-blue-500 border border-blue-400/40 text-white text-xs sm:text-sm font-black shadow-lg shadow-blue-600/30 transition-all cursor-pointer flex items-center gap-2 active:scale-95"
+              >
+                <Store className="w-4 h-4 text-blue-200" />
+                <span>🏪 Restaurants Partenaires (8)</span>
+              </button>
+            )}
+
+            {onOpenDishesCatalog && (
+              <button
+                id="hero-menu-cta-btn"
+                onClick={onOpenDishesCatalog}
+                className="px-4 py-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-orange-500/20 transition-all cursor-pointer flex items-center gap-2 active:scale-95"
+              >
+                <Utensils className="w-4 h-4" />
+                <span>🍽️ Grande Carte (65+ Plats)</span>
+              </button>
+            )}
+          </div>
 
           {/* Moments de la Journée Quick Pills */}
           <div className="pt-2 max-w-3xl mx-auto">
