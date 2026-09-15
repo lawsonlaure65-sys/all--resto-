@@ -103,7 +103,24 @@ export function loadStoredRestaurants(): Restaurant[] {
       if (Array.isArray(parsed) && parsed.length > 0) {
         const dishCount = parsed.reduce((sum: number, r: any) => sum + (r.menu?.length || 0), 0);
         if (dishCount > 0) {
-          const normalized = normalizeDishesStock(parsed);
+          // Merge partner updates (websiteUrl, onlineCatalogUrl, certified badge, updated names)
+          const merged = parsed.map((resto: Restaurant) => {
+            const defaultMatch = RESTAURANTS_DATA.find((d) => d.id === resto.id);
+            if (defaultMatch) {
+              return {
+                ...resto,
+                name: defaultMatch.id === "resto-khadys-food" ? defaultMatch.name : resto.name,
+                tagline: defaultMatch.id === "resto-khadys-food" ? defaultMatch.tagline : resto.tagline,
+                cuisine: defaultMatch.id === "resto-khadys-food" ? defaultMatch.cuisine : resto.cuisine,
+                websiteUrl: resto.websiteUrl || defaultMatch.websiteUrl,
+                onlineCatalogUrl: resto.onlineCatalogUrl || defaultMatch.onlineCatalogUrl,
+                isPartnerCertified: resto.isPartnerCertified ?? defaultMatch.isPartnerCertified,
+                partnerStatusBadge: resto.partnerStatusBadge || defaultMatch.partnerStatusBadge,
+              };
+            }
+            return resto;
+          });
+          const normalized = normalizeDishesStock(merged);
           return normalized;
         }
       }

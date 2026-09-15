@@ -32,7 +32,7 @@ export const CUISINES_DATA: CuisineFilter[] = [
   { id: "diner", name: "🌙 Dîner (18h30 - 23h30)", icon: "Moon", count: 30 },
   { id: "menu_du_jour", name: "⭐ Menu & Plat du Jour", icon: "Sparkles", count: 16 },
   { id: "bureaux", name: "💼 Formules Midi Bureaux & Fonctionnaires", icon: "Clock", count: 15 },
-  { id: "khadys", name: "👑 Khady's Food & Braisés d'Exception", icon: "Crown", count: 15 },
+  { id: "khadys", name: "👑 Khady's Food & Event", icon: "Crown", count: 15 },
   { id: "braises", name: "🔥 Choukouya & Grillades du Sahel", icon: "Flame", count: 18 },
   { id: "africaine", name: "🍲 Dambou, Riz au Gras & Terroir", icon: "Fish", count: 14 },
   { id: "burgers", name: "🍔 Burgers & Fast-Food Niamey", icon: "Sandwich", count: 12 },
@@ -41,12 +41,12 @@ export const CUISINES_DATA: CuisineFilter[] = [
 ];
 
 export const RESTAURANTS_DATA: Restaurant[] = [
-  // 1. KHADY'S FOOD — LA RÉFÉRENCE SAHÉLIENNE
+  // 1. KHADY'S FOOD & EVENT — RESTAURANT PARTENAIRE OFFICIEL CERTIFIÉ
   {
     id: "resto-khadys-food",
-    name: "Khady's Food — La Référence Sahélienne & Braisés",
-    tagline: "Le restaurant vitrine de Niamey : Petit déjeuner matinal, Choukouya au Kan-Kan, Dambou royal, Menu du Jour et dîners",
-    cuisine: "Gastronomie Sahélienne, Braisés & Plats du Terroir",
+    name: "Khady's Food & Event",
+    tagline: "Restaurant & Traiteur Événementiel de Référence à Niamey : Petits déjeuners, Choukouya au Kan-Kan, Dambou royal, Menus du Jour & Cocktails d'exception",
+    cuisine: "Gastronomie Sahélienne, Braisés, Traiteur & Événements",
     cuisineCategory: "khadys",
     rating: 4.98,
     reviewCount: 940,
@@ -59,10 +59,14 @@ export const RESTAURANTS_DATA: Restaurant[] = [
     image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=700&auto=format&fit=crop&q=80",
     bannerImage: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80",
     isPromoted: true,
-    promoBadge: "👑 Vitrine d'Excellence Khady's Food",
+    promoBadge: "👑 Partenaire Officiel Certifié",
     isOpen: true,
     openingHours: "06:30 - 23:30 (Service continu Petit-déj, Déjeuner & Dîner)",
     services: ["delivery", "takeaway", "booking"],
+    websiteUrl: "https://khadysfood.vercel.app",
+    onlineCatalogUrl: "https://walahy.me/c/74441621",
+    isPartnerCertified: true,
+    partnerStatusBadge: "Partenaire Officiel Certifié Allôresto",
     menu: [
       {
         id: "kf-pd-1",
@@ -887,7 +891,7 @@ export const SAMPLE_GROUP_SESSIONS: GroupOrderSession[] = [
     title: "Déjeuner Direction Financière & Trésor (Plateau)",
     creatorName: "Amadou Seyni",
     restaurantId: "resto-khadys-food",
-    restaurantName: "Khady's Food — La Référence Sahélienne",
+    restaurantName: "Khady's Food & Event",
     cutoffTime: "11:45",
     deliveryAddress: "Ministère des Finances, 3ème étage, Bureau 304, Niamey",
     scheduledTime: "12:30",
@@ -910,7 +914,7 @@ export const INITIAL_ORDERS: Order[] = [
     city: "Niamey - Plateau (Ministères)",
     serviceType: "delivery",
     restaurantId: "resto-khadys-food",
-    restaurantName: "Khady's Food — La Référence Sahélienne",
+    restaurantName: "Khady's Food & Event",
     restaurantPhone: "+227 96 05 23 10",
     items: [
       {
@@ -1132,7 +1136,7 @@ export const DAILY_SPECIALS_DATA: DailySpecial[] = [
   {
     id: "spec-1",
     title: "Plat du Jour : Riz au Gras Impérial & Pintade Fumée du Fleuve",
-    restaurantName: "Khady's Food — Niamey",
+    restaurantName: "Khady's Food & Event",
     restaurantId: "resto-khadys-food",
     description: "Riz parfumé mijoté au jus d'épices du Sahel, servi avec une demi-pintade dorée au feu de bois, oignons caramélisés et piment doux grillé.",
     price: 3000,
@@ -1146,7 +1150,7 @@ export const DAILY_SPECIALS_DATA: DailySpecial[] = [
   {
     id: "spec-2",
     title: "Choukouya d'Agneau Tendre au Kan-Kan Spécial & Dambou Kopto",
-    restaurantName: "Khady's Food — Niamey",
+    restaurantName: "Khady's Food & Event",
     restaurantId: "resto-khadys-food",
     description: "Morceaux tendres d'agneau cuits à l'étouffée, parsemés de Kan-Kan artisanal, accompagnés de dambou de moringa fondant et bananes alloco.",
     price: 3800,

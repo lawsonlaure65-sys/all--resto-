@@ -304,34 +304,32 @@ export const Header: React.FC<HeaderProps> = ({
             <BrandLogo variant="full" size="sm" showTagline={false} />
           </div>
 
-          {/* Restaurants Button */}
+          {/* Bouton Voir les restaurants (Accessible Mobile & Desktop) */}
           {onOpenRestaurants && (
             <button
               id="header-restaurants-btn"
               onClick={onOpenRestaurants}
-              className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl bg-[#132338] hover:bg-[#1a314f] border border-blue-500/60 text-blue-300 cursor-pointer shrink-0 transition active:scale-95 shadow-sm"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs sm:text-sm cursor-pointer shrink-0 transition active:scale-95 shadow-md shadow-orange-500/25"
               title="Consulter la liste de tous les restaurants partenaires à Niamey"
             >
-              <Store className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-400 shrink-0" />
-              <div className="text-left leading-tight">
-                <div className="text-[9.5px] sm:text-[11px] font-black text-blue-200">Restaurants</div>
-                <div className="text-[8px] sm:text-[9.5px] text-blue-400/90 font-bold whitespace-nowrap">(8 Partenaires)</div>
-              </div>
+              <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white shrink-0" />
+              <span className="hidden xs:inline sm:inline">Voir les restaurants</span>
+              <span className="inline xs:hidden sm:hidden">Restaurants</span>
             </button>
           )}
 
-          {/* Menu (65+ Plats) Catalog Button */}
+          {/* Menu (65+ Plats) Catalog Button (Desktop) */}
           {onOpenMenu && (
             <button
               id="header-menu-catalog-btn"
               onClick={onOpenMenu}
-              className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl bg-[#25150d] hover:bg-[#341d12] border border-amber-600/70 text-amber-300 cursor-pointer shrink-0 transition active:scale-95 shadow-sm"
+              className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl sm:rounded-2xl bg-[#25150d] hover:bg-[#341d12] border border-amber-600/70 text-amber-300 cursor-pointer shrink-0 transition active:scale-95 shadow-sm"
               title="Consulter le menu et la carte complète (65+ plats)"
             >
-              <UtensilsCrossed className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-400 shrink-0" />
+              <UtensilsCrossed className="w-3.5 h-3.5 text-orange-400 shrink-0" />
               <div className="text-left leading-tight">
-                <div className="text-[9.5px] sm:text-[11px] font-black text-amber-300">Menu</div>
-                <div className="text-[8px] sm:text-[9.5px] text-amber-400/90 font-bold whitespace-nowrap">(65+ Plats)</div>
+                <div className="text-xs font-black text-amber-300">Menu</div>
+                <div className="text-[9.5px] text-amber-400/90 font-bold whitespace-nowrap">(65+ Plats)</div>
               </div>
             </button>
           )}
@@ -476,42 +474,44 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         )}
 
-        {/* Right Actions: 5 Square Action Buttons matching user screenshots exactly */}
-        <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 shrink-0">
-          {/* Button 1: User Account */}
+        {/* Right Actions: Decanted and fully responsive */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Button 1: User Account - visible on tablets/desktop, on mobile accessible via bottom nav */}
           <button
             id="account-nav-btn"
             onClick={currentUser ? onOpenAccount : onOpenAuth}
-            className="w-8 h-8 min-[400px]:w-8.5 min-[400px]:h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-[#1c1412] hover:bg-[#28201a] border border-amber-900/40 text-amber-200/90 flex items-center justify-center shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
+            className="hidden sm:flex w-8.5 h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-[#1c1412] hover:bg-[#28201a] border border-amber-900/40 text-amber-200/90 items-center justify-center shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
             title={currentUser ? `Connecté : ${currentUser.name}` : "Connexion / Profil"}
           >
-            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-200/90" />
+            <User className="w-4 h-4 text-amber-200/90" />
           </button>
 
-          {/* Button 2: Voice Order */}
+          {/* Button 2: Voice Order - desktop / large mobile */}
           {onOpenVoiceOrder && (
             <button
               id="voice-order-nav-btn"
               onClick={onOpenVoiceOrder}
-              className="w-8 h-8 min-[400px]:w-8.5 min-[400px]:h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-[#231215] hover:bg-[#30161b] border border-rose-900/50 text-rose-400 flex items-center justify-center shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
+              className="hidden min-[480px]:flex w-8.5 h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-[#231215] hover:bg-[#30161b] border border-rose-900/50 text-rose-400 items-center justify-center shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
               title="Dicter ma commande vocale"
             >
-              <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-400 animate-pulse" />
+              <Mic className="w-4 h-4 text-rose-400 animate-pulse" />
             </button>
           )}
 
-          {/* Button 3: AllôChef AI Assistant */}
+          {/* Button 3: AllôChef AI Assistant - desktop / large mobile (already on mobile bottom nav) */}
           <button
             id="allochef-nav-btn"
             onClick={onOpenChefAI}
-            className="w-8 h-8 min-[400px]:w-8.5 min-[400px]:h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-[#271d0e] hover:bg-[#382a14] border border-amber-600/50 text-amber-400 flex items-center justify-center shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
+            className="hidden min-[480px]:flex w-8.5 h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-[#271d0e] hover:bg-[#382a14] border border-amber-600/50 text-amber-400 items-center justify-center shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
             title="AllôChef IA — Assistant culinaire intelligent"
           >
-            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 animate-pulse" />
+            <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
           </button>
 
-          {/* Button 3.5: Theme Toggle (System Auto / Light / Dark) */}
-          <ThemeToggle variant="header-nav" />
+          {/* Button 3.5: Theme Toggle (desktop only, already in top bar) */}
+          <div className="hidden lg:block">
+            <ThemeToggle variant="header-nav" />
+          </div>
 
           {/* Button 4: Role Switcher Menu (Espace Client, Restaurant, Livreur, Admin) */}
           <div className="relative shrink-0">
@@ -519,7 +519,7 @@ export const Header: React.FC<HeaderProps> = ({
               id="role-switcher-nav-btn"
               type="button"
               onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-              className={`h-8 min-[400px]:h-8.5 sm:h-9 md:h-10 px-2 sm:px-2.5 md:px-3 rounded-xl sm:rounded-2xl border flex items-center justify-center gap-1 sm:gap-1.5 shrink-0 transition active:scale-95 shadow-sm cursor-pointer ${
+              className={`h-8 sm:h-9 md:h-10 px-2 sm:px-2.5 md:px-3 rounded-xl sm:rounded-2xl border flex items-center justify-center gap-1 sm:gap-1.5 shrink-0 transition active:scale-95 shadow-sm cursor-pointer ${
                 currentRole === "client"
                   ? "bg-[#20150e] hover:bg-[#2d1e13] border-orange-500/50 text-orange-300"
                   : currentRole === "restaurant"
@@ -659,6 +659,33 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
       </div>
+
+      {/* Mobile Sub-Bar: Clean, spacious, zero overlap, 100% readable */}
+      {(onOpenRestaurants || onOpenMenu) && (
+        <div className="md:hidden px-3 py-2 bg-[#0d1522] border-t border-slate-800/80 flex items-center gap-2.5 w-full shadow-inner">
+          {onOpenRestaurants && (
+            <button
+              id="mobile-header-restaurants-btn"
+              onClick={onOpenRestaurants}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-md shadow-orange-500/20 active:scale-95 transition cursor-pointer"
+            >
+              <Store className="w-4 h-4 text-white shrink-0" />
+              <span className="truncate">Voir les restaurants</span>
+            </button>
+          )}
+
+          {onOpenMenu && (
+            <button
+              id="mobile-header-menu-btn"
+              onClick={onOpenMenu}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-amber-600/50 text-amber-300 font-bold text-xs active:scale-95 transition cursor-pointer"
+            >
+              <UtensilsCrossed className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+              <span className="truncate">Menu (65+ Plats)</span>
+            </button>
+          )}
+        </div>
+      )}
 
     </header>
   );

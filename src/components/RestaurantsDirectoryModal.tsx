@@ -19,6 +19,10 @@ import {
   CheckCircle2,
   Share2,
   Calendar,
+  ShieldCheck,
+  Globe,
+  BookOpen,
+  ExternalLink,
 } from 'lucide-react';
 import { Restaurant, ServiceMode } from '../types';
 import { shareRestaurantOnWhatsApp } from '../utils/whatsappNotifications';
@@ -44,6 +48,22 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
   const [selectedNeighborhood, setSelectedNeighborhood] = useState('all');
   const [selectedCuisine, setSelectedCuisine] = useState('all');
 
+  // Synchroniser l'URL avec /restaurants
+  React.useEffect(() => {
+    if (isOpen && typeof window !== 'undefined') {
+      if (!window.location.pathname.startsWith('/restaurants')) {
+        window.history.pushState({ modal: 'restaurants' }, '', '/restaurants');
+      }
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/restaurants')) {
+      window.history.pushState({}, '', '/');
+    }
+    onClose();
+  };
+
   const neighborhoods = [
     { id: 'all', label: 'Tous les Quartiers' },
     { id: 'Plateau', label: 'Plateau (Ministères)' },
@@ -56,7 +76,7 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
 
   const cuisines = [
     { id: 'all', label: 'Toutes les Spécialités' },
-    { id: 'khadys', label: '👑 Khady’s Food' },
+    { id: 'khadys', label: '👑 Khady’s Food & Event' },
     { id: 'nigerienne', label: '🇳🇪 Cuisine Nigérienne' },
     { id: 'grillades', label: '🔥 Grillades & Choukouya' },
     { id: 'poisson', label: '🐟 Poissons du Fleuve' },
@@ -122,7 +142,7 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
           </div>
 
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
             title="Fermer"
           >
@@ -238,13 +258,19 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
 
                       {/* Top Badges */}
                       <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
+                        {resto.isPartnerCertified && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-slate-950 shadow-md flex items-center gap-1 border border-amber-300/40">
+                            <ShieldCheck className="w-3 h-3 fill-slate-950 text-amber-200" />
+                            <span>Partenaire Certifié</span>
+                          </span>
+                        )}
                         {resto.promoBadge && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-red-600 to-orange-500 text-white shadow-md flex items-center gap-1">
                             <Flame className="w-3 h-3 fill-current" />
                             <span>{resto.promoBadge}</span>
                           </span>
                         )}
-                        {resto.isPromoted && (
+                        {resto.isPromoted && !resto.isPartnerCertified && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-950/80 backdrop-blur-md text-amber-300 border border-amber-500/30 flex items-center gap-1">
                             <Sparkles className="w-3 h-3 text-amber-400" />
                             <span>Sélection Allôresto</span>
@@ -306,6 +332,40 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
                         <span>&bull;</span>
                         <span className="text-emerald-400 font-semibold">{resto.menu.length} plats au menu</span>
                       </div>
+
+                      {/* Liens Partenaire Directs */}
+                      {(resto.websiteUrl || resto.onlineCatalogUrl) && (
+                        <div className="mt-2.5 pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5">
+                          {resto.websiteUrl && (
+                            <a
+                              href={resto.websiteUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/30 border border-orange-500/40 text-orange-300 hover:text-white text-[10px] font-bold transition active:scale-95 shadow-sm"
+                              title={`Site officiel & App de ${resto.name}`}
+                            >
+                              <Globe className="w-3 h-3 text-orange-400 shrink-0" />
+                              <span>Site Officiel &amp; App</span>
+                              <ExternalLink className="w-2.5 h-2.5 text-orange-400/80 shrink-0" />
+                            </a>
+                          )}
+                          {resto.onlineCatalogUrl && (
+                            <a
+                              href={resto.onlineCatalogUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-white text-[10px] font-bold transition active:scale-95 shadow-sm"
+                              title={`Catalogue en ligne de ${resto.name}`}
+                            >
+                              <BookOpen className="w-3 h-3 text-emerald-400 shrink-0" />
+                              <span>Catalogue Walahy</span>
+                              <ExternalLink className="w-2.5 h-2.5 text-emerald-400/80 shrink-0" />
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 

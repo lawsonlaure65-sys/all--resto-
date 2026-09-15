@@ -73,6 +73,7 @@ export interface Restaurant {
   deliveryFee: number;
   address: string;
   city: string;
+  quartier?: string;
   image: string;
   bannerImage: string;
   isPromoted?: boolean;
@@ -82,6 +83,10 @@ export interface Restaurant {
   phone: string;
   services: ServiceMode[];
   menu: MenuItem[];
+  websiteUrl?: string; // Lien direct site officiel & PWA (ex: https://khadysfood.vercel.app)
+  onlineCatalogUrl?: string; // Lien direct catalogue en ligne (ex: https://walahy.me/c/74441621)
+  isPartnerCertified?: boolean; // Établissement Partenaire Officiel Certifié
+  partnerStatusBadge?: string; // Badge partenaire officiel (ex: "Partenaire Officiel Certifié")
 }
 
 export interface CartItem {

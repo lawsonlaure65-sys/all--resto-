@@ -38,6 +38,7 @@ import { DynamicFaqModal } from "./components/DynamicFaqModal";
 import { HowItWorksModal } from "./components/HowItWorksModal";
 import RestaurantPlansPage from "../app/restaurant/plans/page";
 import RestaurantContractPage from "../app/restaurant/contract/page";
+import RestaurantsPage from "../app/restaurants/page";
 import { VisualNotificationToast, ToastNotification } from "./components/VisualNotificationToast";
 import { Footer } from "./components/Footer";
 import { ReceiptTicketModal } from "./components/ReceiptTicketModal";
@@ -219,7 +220,49 @@ export function App() {
   const [isDistrictsModalOpen, setIsDistrictsModalOpen] = useState<boolean>(false);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState<boolean>(false);
   const [isDishesCatalogOpen, setIsDishesCatalogOpen] = useState<boolean>(false);
-  const [isRestaurantsDirectoryOpen, setIsRestaurantsDirectoryOpen] = useState<boolean>(false);
+  const [currentPath, setCurrentPath] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return window.location.pathname.toLowerCase();
+    }
+    return "/";
+  });
+  const [isRestaurantsDirectoryOpen, setIsRestaurantsDirectoryOpen] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase();
+      return path.startsWith("/restaurants") || path.startsWith("/restaurant-directory");
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window !== "undefined") {
+        const path = window.location.pathname.toLowerCase();
+        setCurrentPath(path);
+        if (path.startsWith("/restaurants") || path.startsWith("/restaurant-directory")) {
+          setIsRestaurantsDirectoryOpen(true);
+        } else {
+          setIsRestaurantsDirectoryOpen(false);
+        }
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const navigateTo = (path: string) => {
+    if (typeof window !== "undefined") {
+      window.history.pushState({}, "", path);
+    }
+    const lower = path.toLowerCase();
+    setCurrentPath(lower);
+    if (lower.startsWith("/restaurants") || lower.startsWith("/restaurant-directory")) {
+      setIsRestaurantsDirectoryOpen(true);
+    } else {
+      setIsRestaurantsDirectoryOpen(false);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const [homeNeighborhoodFilter, setHomeNeighborhoodFilter] = useState<string>("all");
   const [catalogMealMoment, setCatalogMealMoment] = useState<"all" | MealMoment>("all");
   const [selectedDistrictName, setSelectedDistrictName] = useState<string>("Plateau (Ministères & Ambassades)");
@@ -598,7 +641,7 @@ export function App() {
         onOpenContact={() => setIsContactOpen(true)}
         onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
         onOpenLogoModal={() => setIsLogoModalOpen(true)}
-        onOpenRestaurants={() => setIsRestaurantsDirectoryOpen(true)}
+        onOpenRestaurants={() => navigateTo("/restaurants")}
         onOpenMenu={() => {
           setCatalogMealMoment("all");
           setIsDishesCatalogOpen(true);
@@ -632,6 +675,13 @@ export function App() {
         {/* 1. ESPACE CLIENT                                         */}
         {/* ======================================================== */}
         {currentRole === "client" && (
+          isRestaurantsDirectoryOpen || currentPath.startsWith("/restaurants") ? (
+            <RestaurantsPage
+              onBackHome={() => navigateTo("/")}
+              onOpenMenu={(resto) => setSelectedRestaurantForMenu(resto)}
+              onBookTable={(resto) => setSelectedRestaurantForBooking(resto)}
+            />
+          ) : (
           <div>
             {/* Friday Jumu'ah Prayer Delivery Pause Notice & Status Banner */}
             <JumuahBanner
@@ -821,11 +871,11 @@ export function App() {
                   {/* Open Detailed Directory Modal Button */}
                   <button
                     id="open-restaurants-directory-btn"
-                    onClick={() => setIsRestaurantsDirectoryOpen(true)}
-                    className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 border border-blue-400/40 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer"
+                    onClick={() => navigateTo("/restaurants")}
+                    className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 border border-orange-400/40 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-orange-500/20 cursor-pointer"
                   >
                     <Store className="w-4 h-4" />
-                    <span>Annuaire Détaillé (8)</span>
+                    <span>Voir les restaurants (8)</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
 
@@ -908,6 +958,18 @@ export function App() {
                   ))}
                 </div>
               )}
+
+              {/* Bouton d'accès direct à l'annuaire complet */}
+              <div className="mt-8 text-center">
+                <button
+                  id="home-view-all-restaurants-btn"
+                  onClick={() => navigateTo("/restaurants")}
+                  className="inline-flex items-center gap-2 rounded-lg border border-orange-500 bg-orange-500/10 px-6 py-3 font-semibold text-orange-400 hover:bg-orange-500 hover:text-white transition-all shadow-md cursor-pointer text-sm sm:text-base active:scale-95"
+                >
+                  <Store className="w-5 h-5" />
+                  <span>Voir tous les restaurants</span>
+                </button>
+              </div>
             </section>
 
             {/* Section: Box Sauces Terroir & Bocaux Hermétiques */}
@@ -982,6 +1044,7 @@ export function App() {
               </div>
             </section>
           </div>
+          )
         )}
 
         {/* ======================================================== */}
@@ -1267,21 +1330,23 @@ export function App() {
         }}
       />
 
-      {/* 17b. Annuaire et Liste Complète des Restaurants Partenaires de Niamey */}
-      <RestaurantsDirectoryModal
-        isOpen={isRestaurantsDirectoryOpen}
-        onClose={() => setIsRestaurantsDirectoryOpen(false)}
-        restaurants={restaurants}
-        serviceMode={serviceMode}
-        onSelectRestaurant={(resto) => {
-          setIsRestaurantsDirectoryOpen(false);
-          setSelectedRestaurantForMenu(resto);
-        }}
-        onBookTable={(resto) => {
-          setIsRestaurantsDirectoryOpen(false);
-          setSelectedRestaurantForBooking(resto);
-        }}
-      />
+      {/* 17b. Annuaire et Liste Complète des Restaurants Partenaires de Niamey (Dédié désormais via RestaurantsPage) */}
+      {false && (
+        <RestaurantsDirectoryModal
+          isOpen={isRestaurantsDirectoryOpen}
+          onClose={() => setIsRestaurantsDirectoryOpen(false)}
+          restaurants={restaurants}
+          serviceMode={serviceMode}
+          onSelectRestaurant={(resto) => {
+            setIsRestaurantsDirectoryOpen(false);
+            setSelectedRestaurantForMenu(resto);
+          }}
+          onBookTable={(resto) => {
+            setIsRestaurantsDirectoryOpen(false);
+            setSelectedRestaurantForBooking(resto);
+          }}
+        />
+      )}
 
       {/* 18. Historique Complet des Commandes */}
       <OrderHistoryModal

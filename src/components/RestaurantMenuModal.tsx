@@ -15,6 +15,10 @@ import {
   Calendar,
   Heart,
   MessageCircle,
+  Globe,
+  BookOpen,
+  ExternalLink,
+  ShieldCheck,
 } from "lucide-react";
 import { Restaurant, MenuItem, ServiceMode } from "../types";
 import { useTranslation } from "../context/TranslationContext";
@@ -199,6 +203,61 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
             <div className="bg-emerald-900/90 text-emerald-200 px-4 py-2 text-xs font-bold text-center flex items-center justify-center gap-2 animate-in fade-in duration-200">
               <Check className="w-4 h-4 text-emerald-400" />
               <span>Plat ajouté à votre panier avec succès !</span>
+            </div>
+          )}
+
+          {/* Official Partner Direct Links & App Access Banner */}
+          {(restaurant.isPartnerCertified || restaurant.websiteUrl || restaurant.onlineCatalogUrl) && (
+            <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-[#1e130c] border-b border-amber-600/40 p-3 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-inner">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4 text-amber-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-black text-white text-xs sm:text-sm">
+                      {restaurant.name}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 uppercase tracking-wide">
+                      Partenaire Officiel Allôresto
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300">
+                    Commandez ici pour la livraison rapide Billo Express ou explorez les plateformes directes :
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                {restaurant.websiteUrl && (
+                  <a
+                    href={restaurant.websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-xs transition active:scale-95 shadow-md shadow-orange-500/20"
+                    title={`Accéder au site web et à l'application officielle de ${restaurant.name}`}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>Site Web &amp; App</span>
+                    <ExternalLink className="w-3 h-3 opacity-80" />
+                  </a>
+                )}
+
+                {restaurant.onlineCatalogUrl && (
+                  <a
+                    href={restaurant.onlineCatalogUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition active:scale-95 shadow-md shadow-emerald-600/20 border border-emerald-400/40"
+                    title={`Consulter le catalogue en ligne Walahy de ${restaurant.name}`}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>Catalogue Walahy</span>
+                    <ExternalLink className="w-3 h-3 opacity-80" />
+                  </a>
+                )}
+              </div>
             </div>
           )}
 
