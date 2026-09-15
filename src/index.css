@@ -198,6 +198,115 @@ nav {
   animation: softFadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Défilement continu ticker / marquee */
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-smooth {
+  display: flex !important;
+  width: max-content !important;
+  animation: marqueeScroll 24s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-smooth:hover {
+  animation-play-state: paused;
+}
+
+/* Flottaison douce des badges et plats vedettes */
+@keyframes softFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1.5deg);
+  }
+}
+
+.animate-soft-float {
+  animation: softFloat 4s ease-in-out infinite;
+}
+
+.animate-soft-float-delayed {
+  animation: softFloat 4.5s ease-in-out infinite 1.8s;
+}
+
+/* Pulsation radar douce */
+@keyframes radarGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.35;
+  }
+}
+
+.animate-radar-glow {
+  animation: radarGlow 2.4s ease-in-out infinite;
+}
+
+/* Lignes de route en mouvement pour coursier */
+@keyframes roadStripes {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -48px 0;
+  }
+}
+
+.animate-road-move {
+  background-image: repeating-linear-gradient(90deg, #f97316 0, #f97316 20px, transparent 20px, transparent 48px);
+  background-size: 48px 3px;
+  animation: roadStripes 0.75s linear infinite;
+}
+
+/* Rotation roues moto de livraison */
+@keyframes wheelSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-wheel-spin {
+  animation: wheelSpin 0.7s linear infinite;
+}
+
+/* Vapeur / Arôme fumant */
+@keyframes steamPuff {
+  0% {
+    opacity: 0;
+    transform: translateY(0px) scale(0.8);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-8px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-16px) scale(1.3);
+  }
+}
+
+.animate-steam-1 {
+  animation: steamPuff 2s ease-out infinite;
+}
+
+.animate-steam-2 {
+  animation: steamPuff 2.3s ease-out infinite 0.8s;
+}
+
 /* Élévation douce au survol des cartes restaurants et plats */
 article,
 .restaurant-card-item {

@@ -1,5 +1,7 @@
 import React from "react";
 import { Sparkles, Clock, Flame, ShoppingBag, ArrowRight, ShieldCheck, MapPin, Share2, Calendar, MessageCircle } from "lucide-react";
+import { motion } from "motion/react";
+import confetti from "canvas-confetti";
 import { DailySpecial } from "../types";
 import { useTranslation } from "../context/TranslationContext";
 import { shareDailySpecialOnWhatsApp } from "../utils/whatsappNotifications";
@@ -20,13 +22,33 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
   const { translateDailySpecial, currentLanguage } = useTranslation();
   const special = translateDailySpecial(rawSpecial);
 
-  const handleOrder = () => {
+  const handleOrder = (e: React.MouseEvent) => {
+    try {
+      const rect = (e.target as HTMLElement).getBoundingClientRect();
+      const x = (rect.left + rect.width / 2) / window.innerWidth;
+      const y = (rect.top + rect.height / 2) / window.innerHeight;
+      confetti({
+        particleCount: 30,
+        spread: 60,
+        origin: { x, y },
+        colors: ["#f97316", "#fbbf24", "#10b981", "#ef4444"],
+      });
+    } catch {
+      // Safe fallback
+    }
+
     if (onAddToCart) onAddToCart(rawSpecial);
     else if (onOrderSpecial) onOrderSpecial(rawSpecial);
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-orange-950/40 border-2 border-orange-500/40 p-5 sm:p-7 shadow-2xl transition-all hover:border-orange-500/70">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45 }}
+      whileHover={{ y: -6, transition: { duration: 0.2 } }}
+      className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-orange-950/40 border-2 border-orange-500/40 p-5 sm:p-7 shadow-2xl transition-all hover:border-orange-500/70 hover:shadow-orange-500/10"
+    >
       {/* Glow Effects */}
       <div className="absolute -top-24 -right-24 w-64 h-64 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -164,6 +186,6 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

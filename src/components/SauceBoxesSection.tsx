@@ -1,5 +1,7 @@
 import React from "react";
 import { Package, Flame, Sparkles, Plus, Check, MapPin, ArrowRight, MessageCircle } from "lucide-react";
+import { motion } from "motion/react";
+import confetti from "canvas-confetti";
 import { SauceBox, MenuItem } from "../types";
 import { SAUCE_BOXES_DATA } from "../data/allorestoData";
 import { useTranslation } from "../context/TranslationContext";
@@ -15,6 +17,23 @@ export const SauceBoxesSection: React.FC<SauceBoxesSectionProps> = ({
   onOpenCatering,
 }) => {
   const { translateSauceBox, currentLanguage } = useTranslation();
+
+  const handleAdd = (e: React.MouseEvent, sauce: SauceBox) => {
+    try {
+      const rect = (e.target as HTMLElement).getBoundingClientRect();
+      const x = (rect.left + rect.width / 2) / window.innerWidth;
+      const y = (rect.top + rect.height / 2) / window.innerHeight;
+      confetti({
+        particleCount: 25,
+        spread: 50,
+        origin: { x, y },
+        colors: ["#ea580c", "#f59e0b", "#10b981"],
+      });
+    } catch {
+      // Safe
+    }
+    onAddSauceToCart(sauce);
+  };
 
   return (
     <section className="py-8 space-y-6">
@@ -53,9 +72,13 @@ export const SauceBoxesSection: React.FC<SauceBoxesSectionProps> = ({
         {SAUCE_BOXES_DATA.map((rawSauce) => {
           const sauce = translateSauceBox(rawSauce);
           return (
-            <div
+            <motion.div
               key={sauce.id}
-              className="group relative rounded-3xl bg-slate-900 border border-slate-800 hover:border-orange-500/50 p-4 transition-all duration-300 flex flex-col justify-between shadow-lg"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              whileHover={{ y: -6, transition: { duration: 0.2 } }}
+              className="group relative rounded-3xl bg-slate-900 border border-slate-800 hover:border-orange-500/50 p-4 transition-all duration-300 flex flex-col justify-between shadow-lg hover:shadow-orange-500/10"
             >
               <div className="space-y-3">
                 {/* Image */}
@@ -111,16 +134,18 @@ export const SauceBoxesSection: React.FC<SauceBoxesSectionProps> = ({
                     <MessageCircle className="w-3.5 h-3.5" />
                   </button>
 
-                  <button
-                    onClick={() => onAddSauceToCart(sauce)}
-                    className="px-3 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-slate-950 text-xs font-black shadow-md shadow-orange-500/20 transition flex items-center gap-1 cursor-pointer transform active:scale-95"
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={(e) => handleAdd(e, sauce)}
+                    className="px-3 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-slate-950 text-xs font-black shadow-md shadow-orange-500/20 transition flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 stroke-[3]" />
                     <span>{currentLanguage === "ha" ? "Zaba" : currentLanguage === "zm" ? "Za" : "Ajouter"}</span>
-                  </button>
+                  </motion.button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>

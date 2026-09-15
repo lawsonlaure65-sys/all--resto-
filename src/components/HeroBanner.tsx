@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { CuisineFilter, MealMoment } from "../types";
 import { CUISINES_DATA } from "../data/allorestoData";
+import { LiveOrderMarquee } from "./LiveOrderMarquee";
+import { AnimatedHeroVisual } from "./AnimatedHeroVisual";
 
 interface HeroBannerProps {
   searchQuery: string;
@@ -70,217 +72,223 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   };
 
   return (
-    <section className="relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 pt-8 pb-12 border-b border-slate-800 overflow-hidden">
+    <section className="relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 pt-2 pb-12 border-b border-slate-800 overflow-hidden">
+      {/* Continuous Live Order Ticker Marquee */}
+      <div className="mb-4">
+        <LiveOrderMarquee />
+      </div>
+
       {/* Ambient background glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-80 bg-gradient-to-b from-orange-600/15 via-red-600/10 to-transparent blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Main Hero Content */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45 }}
-            whileHover={{ scale: 1.02 }}
-            onClick={onOpenLogoModal}
-            className={`inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 text-orange-400 shadow-sm transition max-w-full text-center ${
-              onOpenLogoModal ? "cursor-pointer" : ""
-            }`}
-            title="Restaurant Fondateur • Allôresto Niamey"
-          >
-            <Sparkles className="w-3.5 h-3.5 fill-current text-amber-400 shrink-0 animate-pulse" />
-            <span>👑 Restaurant Fondateur • Ouvert jusqu’à 22 h • Khady&apos;s Food &amp; Event</span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.1 }}
-            className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight"
-          >
-            Vos plats préférés,{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-400 to-red-500">
-              livrés à Niamey.
-            </span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed"
-          >
-            Commandez chez <strong>Khady&apos;s Food &amp; Event</strong>, notre restaurant fondateur, et auprès de nos restaurants partenaires à Niamey. Attiéké caviar, sauces Gboma, Doukounou et grillades livrés chez vous ou au bureau !
-          </motion.p>
-
-          {/* Interactive Search Bar */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.25 }}
-            className="pt-2 max-w-2xl mx-auto"
-          >
-            <div className="p-2 rounded-2xl bg-slate-900/90 border border-slate-700 shadow-2xl flex items-center gap-2 focus-within:border-orange-500 transition-all">
-              <div className="pl-3 text-slate-400">
-                <Search className="w-5 h-5 text-orange-400" />
-              </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Rechercher à Niamey (Attiéké caviar, Gboma, Doukounou, Choukouya)..."
-                className="w-full bg-transparent text-white text-xs sm:text-sm placeholder-slate-500 focus:outline-none py-2"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => onSearchChange("")}
-                  className="text-xs text-slate-400 hover:text-white px-2 cursor-pointer"
-                >
-                  Effacer
-                </button>
-              )}
-              <button
-                onClick={onOpenChefAI}
-                className="hidden sm:flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white text-xs font-bold shrink-0 shadow-md cursor-pointer transition-transform hover:scale-105"
-              >
-                <Sparkles className="w-3.5 h-3.5 fill-current" />
-                <span>Conseil IA</span>
-              </button>
-            </div>
-          </motion.div>
-
-          {/* Quick Direct Actions: Voir le menu, WhatsApp, Restaurants */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-wrap items-center justify-center gap-2.5 pt-2"
-          >
-            {onOpenDishesCatalog && (
-              <motion.button
-                id="hero-menu-cta-btn"
-                onClick={onOpenDishesCatalog}
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs sm:text-sm font-bold shadow-lg shadow-orange-500/25 transition-all cursor-pointer flex items-center gap-2"
-              >
-                <Utensils className="w-4 h-4" />
-                <span>Voir le menu</span>
-              </motion.button>
-            )}
-
-            <motion.a
-              href="https://wa.me/22774441621"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.04, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-5 py-2.5 rounded-xl border border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 text-xs sm:text-sm font-bold transition-all shadow-md flex items-center gap-2"
+        {/* Main Hero Content: 2-Column Responsive Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Left Column: Headlines, search, CTA, Moments */}
+          <div className="lg:col-span-7 text-center lg:text-left space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45 }}
+              whileHover={{ scale: 1.02 }}
+              onClick={onOpenLogoModal}
+              className={`inline-flex flex-wrap items-center justify-center lg:justify-start gap-1.5 sm:gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 text-orange-400 shadow-sm transition max-w-full text-center ${
+                onOpenLogoModal ? "cursor-pointer" : ""
+              }`}
+              title="Restaurant Fondateur • Allôresto Niamey"
             >
-              <span>💬 Commander par WhatsApp</span>
-            </motion.a>
+              <Sparkles className="w-3.5 h-3.5 fill-current text-amber-400 shrink-0 animate-pulse" />
+              <span>👑 Restaurant Fondateur • Ouvert jusqu’à 22 h • Khady&apos;s Food &amp; Event</span>
+            </motion.div>
 
-            {onOpenRestaurants && (
-              <motion.button
-                id="hero-restaurants-cta-btn"
-                onClick={onOpenRestaurants}
+            <motion.h1
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.1 }}
+              className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight"
+            >
+              Vos plats préférés,{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-400 to-red-500">
+                livrés à Niamey.
+              </span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+            >
+              Commandez chez <strong>Khady&apos;s Food &amp; Event</strong>, notre restaurant fondateur, et auprès de nos restaurants partenaires à Niamey. Attiéké caviar, sauces Gboma, Doukounou et grillades livrés chez vous ou au bureau !
+            </motion.p>
+
+            {/* Interactive Search Bar */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.25 }}
+              className="pt-2 max-w-2xl mx-auto lg:mx-0"
+            >
+              <div className="p-2 rounded-2xl bg-slate-900/90 border border-slate-700 shadow-2xl flex items-center gap-2 focus-within:border-orange-500 transition-all">
+                <div className="pl-3 text-slate-400">
+                  <Search className="w-5 h-5 text-orange-400" />
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  placeholder="Rechercher à Niamey (Attiéké caviar, Gboma, Doukounou, Choukouya)..."
+                  className="w-full bg-transparent text-white text-xs sm:text-sm placeholder-slate-500 focus:outline-none py-2"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => onSearchChange("")}
+                    className="text-xs text-slate-400 hover:text-white px-2 cursor-pointer"
+                  >
+                    Effacer
+                  </button>
+                )}
+                <button
+                  onClick={onOpenChefAI}
+                  className="hidden sm:flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white text-xs font-bold shrink-0 shadow-md cursor-pointer transition-transform hover:scale-105"
+                >
+                  <Sparkles className="w-3.5 h-3.5 fill-current" />
+                  <span>Conseil IA</span>
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Quick Direct Actions: Voir le menu, WhatsApp, Restaurants */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-2"
+            >
+              {onOpenDishesCatalog && (
+                <motion.button
+                  id="hero-menu-cta-btn"
+                  onClick={onOpenDishesCatalog}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs sm:text-sm font-bold shadow-lg shadow-orange-500/25 transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <Utensils className="w-4 h-4" />
+                  <span>Voir le menu</span>
+                </motion.button>
+              )}
+
+              <motion.a
+                href="https://wa.me/22774441621"
+                target="_blank"
+                rel="noopener noreferrer"
                 whileHover={{ scale: 1.04, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl border border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 text-xs sm:text-sm font-bold transition-all shadow-md flex items-center gap-2"
               >
-                <Store className="w-4 h-4 text-orange-400" />
-                <span>Voir les restaurants</span>
-              </motion.button>
-            )}
-          </motion.div>
+                <span>💬 Commander par WhatsApp</span>
+              </motion.a>
 
-          {/* Moments de la Journée Quick Pills */}
-          <div className="pt-2 max-w-3xl mx-auto">
-            <div className="p-2.5 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-wrap items-center justify-center gap-2">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-1">
-                <Clock className="w-3.5 h-3.5 text-orange-400" />
-                <span>Moments :</span>
+              {onOpenRestaurants && (
+                <motion.button
+                  id="hero-restaurants-cta-btn"
+                  onClick={onOpenRestaurants}
+                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <Store className="w-4 h-4 text-orange-400" />
+                  <span>Voir les restaurants</span>
+                </motion.button>
+              )}
+            </motion.div>
+
+            {/* Moments de la Journée Quick Pills */}
+            <div className="pt-2 max-w-2xl mx-auto lg:mx-0">
+              <div className="p-2.5 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-wrap items-center justify-center lg:justify-start gap-2">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-1">
+                  <Clock className="w-3.5 h-3.5 text-orange-400" />
+                  <span>Moments :</span>
+                </span>
+
+                <button
+                  onClick={() => {
+                    if (onOpenDishesCatalogWithMoment) {
+                      onOpenDishesCatalogWithMoment("petit_dejeuner");
+                    } else if (onOpenDishesCatalog) {
+                      onOpenDishesCatalog();
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-amber-950/50 hover:bg-amber-900/60 border border-amber-500/40 text-amber-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                >
+                  <span>🌅</span>
+                  <span>Petit Déjeuner</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (onOpenDishesCatalogWithMoment) {
+                      onOpenDishesCatalogWithMoment("dejeuner");
+                    } else if (onOpenDishesCatalog) {
+                      onOpenDishesCatalog();
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-orange-950/50 hover:bg-orange-900/60 border border-orange-500/40 text-orange-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                >
+                  <span>☀️</span>
+                  <span>Déjeuner</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (onOpenDishesCatalogWithMoment) {
+                      onOpenDishesCatalogWithMoment("diner");
+                    } else if (onOpenDishesCatalog) {
+                      onOpenDishesCatalog();
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-950/50 hover:bg-indigo-900/60 border border-indigo-500/40 text-indigo-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                >
+                  <span>🌙</span>
+                  <span>Dîner</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (onOpenDishesCatalogWithMoment) {
+                      onOpenDishesCatalogWithMoment("menu_du_jour");
+                    } else if (onOpenDishesCatalog) {
+                      onOpenDishesCatalog();
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                >
+                  <span>⭐</span>
+                  <span>Plat du Jour</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Trust Highlights */}
+            <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 text-xs text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-orange-400" />
+                Livraison en <strong>25 à 45 mn</strong>
               </span>
-
-              {/* Petit Déjeuner */}
-              <button
-                onClick={() => {
-                  if (onOpenDishesCatalogWithMoment) {
-                    onOpenDishesCatalogWithMoment("petit_dejeuner");
-                  } else if (onOpenDishesCatalog) {
-                    onOpenDishesCatalog();
-                  }
-                }}
-                className="px-3 py-1.5 rounded-xl bg-amber-950/50 hover:bg-amber-900/60 border border-amber-500/40 text-amber-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
-              >
-                <span>🌅</span>
-                <span>Petit Déjeuner</span>
-                <span className="text-[10px] text-amber-400 font-mono opacity-80 hidden md:inline">06h30-11h</span>
-              </button>
-
-              {/* Déjeuner */}
-              <button
-                onClick={() => {
-                  if (onOpenDishesCatalogWithMoment) {
-                    onOpenDishesCatalogWithMoment("dejeuner");
-                  } else if (onOpenDishesCatalog) {
-                    onOpenDishesCatalog();
-                  }
-                }}
-                className="px-3 py-1.5 rounded-xl bg-orange-950/50 hover:bg-orange-900/60 border border-orange-500/40 text-orange-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
-              >
-                <span>☀️</span>
-                <span>Déjeuner</span>
-                <span className="text-[10px] text-orange-400 font-mono opacity-80 hidden md:inline">11h30-15h30</span>
-              </button>
-
-              {/* Dîner */}
-              <button
-                onClick={() => {
-                  if (onOpenDishesCatalogWithMoment) {
-                    onOpenDishesCatalogWithMoment("diner");
-                  } else if (onOpenDishesCatalog) {
-                    onOpenDishesCatalog();
-                  }
-                }}
-                className="px-3 py-1.5 rounded-xl bg-indigo-950/50 hover:bg-indigo-900/60 border border-indigo-500/40 text-indigo-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
-              >
-                <span>🌙</span>
-                <span>Dîner</span>
-                <span className="text-[10px] text-indigo-400 font-mono opacity-80 hidden md:inline">18h30-23h30</span>
-              </button>
-
-              {/* Menu du Jour / Plat du Jour */}
-              <button
-                onClick={() => {
-                  if (onOpenDishesCatalogWithMoment) {
-                    onOpenDishesCatalogWithMoment("menu_du_jour");
-                  } else if (onOpenDishesCatalog) {
-                    onOpenDishesCatalog();
-                  }
-                }}
-                className="px-3 py-1.5 rounded-xl bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
-              >
-                <span>⭐</span>
-                <span>Plat / Menu du Jour</span>
-              </button>
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                Airtel, Moov ou <strong>Espèces</strong>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Percent className="w-4 h-4 text-amber-400" />
+                <strong>-10%</strong> code <strong>NIAMEY10</strong>
+              </span>
             </div>
           </div>
 
-          {/* Trust Highlights */}
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-slate-400">
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-orange-400" />
-              Livraison soignée en <strong>45 à 60 mn</strong>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              Airtel Money, Moov Money (Flooz) ou <strong>Espèces</strong>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Percent className="w-4 h-4 text-amber-400" />
-              <strong>-10%</strong> avec le code <strong>NIAMEY10</strong>
-            </span>
+          {/* Right Column: Animated Courier in Motion & Hot Food Showcase */}
+          <div className="lg:col-span-5">
+            <AnimatedHeroVisual onExploreMenu={onOpenDishesCatalog} />
           </div>
         </div>
 
