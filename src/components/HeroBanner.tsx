@@ -80,42 +80,43 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
             onClick={onOpenLogoModal}
-            className={`inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 shadow-sm transition max-w-full text-center ${
+            className={`inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 text-orange-400 shadow-sm transition max-w-full text-center ${
               onOpenLogoModal ? "cursor-pointer" : ""
             }`}
-            title="Découvrir le nouveau logo Allôresto"
+            title="Restaurant Fondateur • Allôresto Niamey"
           >
             <Sparkles className="w-3.5 h-3.5 fill-current text-amber-400 shrink-0" />
-            <span>Niamey, Niger 🇳🇪 &bull; Mosquée Kadhafi &bull; Logo Officiel 2026</span>
+            <span>👑 Restaurant Fondateur • Ouvert jusqu’à 22 h • Khady&apos;s Food &amp; Event</span>
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight"
+            transition={{ duration: 0.55, delay: 0.1 }}
+            className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight"
           >
-            Allôresto Niamey,{" "}
+            Vos plats préférés,{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-400 to-red-500">
-              vos repas livrés en un éclair.
+              livrés à Niamey.
             </span>
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto"
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed"
           >
-            Pour les particuliers, familles de Niamey, fonctionnaires des ministères et équipes de bureaux. Choukouya royal, Capitaine braisé du Fleuve, burgers et formules midi livrés chez vous ou sur votre lieu de travail !
+            Commandez chez <strong>Khady&apos;s Food &amp; Event</strong>, notre restaurant fondateur, et auprès de nos restaurants partenaires à Niamey. Attiéké caviar, sauces Gboma, Doukounou et grillades livrés chez vous ou au bureau !
           </motion.p>
 
           {/* Interactive Search Bar */}
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.25 }}
             className="pt-2 max-w-2xl mx-auto"
           >
             <div className="p-2 rounded-2xl bg-slate-900/90 border border-slate-700 shadow-2xl flex items-center gap-2 focus-within:border-orange-500 transition-all">
@@ -126,7 +127,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Rechercher à Niamey (Choukouya, Capitaine braisé, Kilichi, Burger, Formule Midi Bureau)..."
+                placeholder="Rechercher à Niamey (Attiéké caviar, Gboma, Doukounou, Choukouya)..."
                 className="w-full bg-transparent text-white text-xs sm:text-sm placeholder-slate-500 focus:outline-none py-2"
               />
               {searchQuery && (
@@ -147,30 +148,44 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </div>
           </motion.div>
 
-          {/* Quick Direct Actions: Restaurants & Carte Complète */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
-            {onOpenRestaurants && (
-              <button
-                id="hero-restaurants-cta-btn"
-                onClick={onOpenRestaurants}
-                className="px-4 py-2 rounded-2xl bg-blue-600 hover:bg-blue-500 border border-blue-400/40 text-white text-xs sm:text-sm font-black shadow-lg shadow-blue-600/30 transition-all cursor-pointer flex items-center gap-2 active:scale-95"
-              >
-                <Store className="w-4 h-4 text-blue-200" />
-                <span>🏪 Restaurants Partenaires (8)</span>
-              </button>
-            )}
-
+          {/* Quick Direct Actions: Voir le menu, WhatsApp, Restaurants */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="flex flex-wrap items-center justify-center gap-2.5 pt-2"
+          >
             {onOpenDishesCatalog && (
               <button
                 id="hero-menu-cta-btn"
                 onClick={onOpenDishesCatalog}
-                className="px-4 py-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-orange-500/20 transition-all cursor-pointer flex items-center gap-2 active:scale-95"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs sm:text-sm font-bold shadow-lg shadow-orange-500/20 transition-all cursor-pointer flex items-center gap-2 active:scale-95"
               >
                 <Utensils className="w-4 h-4" />
-                <span>🍽️ Grande Carte (65+ Plats)</span>
+                <span>Voir le menu</span>
               </button>
             )}
-          </div>
+
+            <a
+              href="https://wa.me/22774441621"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-5 py-2.5 rounded-xl border border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 text-xs sm:text-sm font-bold transition-all shadow-md flex items-center gap-2"
+            >
+              <span>💬 Commander par WhatsApp</span>
+            </a>
+
+            {onOpenRestaurants && (
+              <button
+                id="hero-restaurants-cta-btn"
+                onClick={onOpenRestaurants}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-2 active:scale-95"
+              >
+                <Store className="w-4 h-4 text-orange-400" />
+                <span>Voir les restaurants</span>
+              </button>
+            )}
+          </motion.div>
 
           {/* Moments de la Journée Quick Pills */}
           <div className="pt-2 max-w-3xl mx-auto">

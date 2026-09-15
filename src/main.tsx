@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { TranslationProvider } from './context/TranslationContext';
 import { ThemeProvider } from './context/ThemeContext';
+import MotionProvider from './components/MotionProvider';
 import { applyOfficialBrandFavicon } from './utils/faviconManager';
 import './index.css';
 
@@ -38,7 +39,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <TranslationProvider>
-        <App />
+        <MotionProvider>
+          <App />
+        </MotionProvider>
       </TranslationProvider>
     </ThemeProvider>
   </StrictMode>,

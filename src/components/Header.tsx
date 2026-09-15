@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   UtensilsCrossed,
   MapPin,
@@ -650,11 +651,20 @@ export const Header: React.FC<HeaderProps> = ({
               title={cartTotal > 0 ? `Panier : ${cartTotal.toLocaleString()} FCFA` : "Voir le panier"}
             >
               <ShoppingBag className="w-4 h-4 text-white" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-slate-950 text-orange-400 text-[9px] font-black flex items-center justify-center border border-orange-400/60 shadow-sm">
-                  {cartCount}
-                </span>
-              )}
+              <AnimatePresence mode="wait">
+                {cartCount > 0 && (
+                  <motion.span
+                    key={cartCount}
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                    className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-slate-950 text-orange-400 text-[9px] font-black flex items-center justify-center border border-orange-400/60 shadow-sm"
+                  >
+                    {cartCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
           )}
         </div>

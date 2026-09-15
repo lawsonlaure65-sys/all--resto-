@@ -107,15 +107,26 @@ export function loadStoredRestaurants(): Restaurant[] {
           const merged = parsed.map((resto: Restaurant) => {
             const defaultMatch = RESTAURANTS_DATA.find((d) => d.id === resto.id);
             if (defaultMatch) {
+              let updatedMenu = resto.menu || [];
+              if (resto.id === "resto-khadys-food" && defaultMatch.menu) {
+                const existingIds = new Set(updatedMenu.map((m) => m.id));
+                const missingDefaults = defaultMatch.menu.filter((m) => !existingIds.has(m.id));
+                if (missingDefaults.length > 0) {
+                  updatedMenu = [...missingDefaults, ...updatedMenu];
+                }
+              }
               return {
                 ...resto,
                 name: defaultMatch.id === "resto-khadys-food" ? defaultMatch.name : resto.name,
                 tagline: defaultMatch.id === "resto-khadys-food" ? defaultMatch.tagline : resto.tagline,
                 cuisine: defaultMatch.id === "resto-khadys-food" ? defaultMatch.cuisine : resto.cuisine,
+                promoBadge: defaultMatch.id === "resto-khadys-food" ? defaultMatch.promoBadge : resto.promoBadge,
+                openingHours: defaultMatch.id === "resto-khadys-food" ? defaultMatch.openingHours : resto.openingHours,
                 websiteUrl: resto.websiteUrl || defaultMatch.websiteUrl,
                 onlineCatalogUrl: resto.onlineCatalogUrl || defaultMatch.onlineCatalogUrl,
                 isPartnerCertified: resto.isPartnerCertified ?? defaultMatch.isPartnerCertified,
                 partnerStatusBadge: resto.partnerStatusBadge || defaultMatch.partnerStatusBadge,
+                menu: updatedMenu,
               };
             }
             return resto;

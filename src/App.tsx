@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "./components/Header";
 import { HeroBanner } from "./components/HeroBanner";
 import { FlashMidiBanner } from "./components/FlashMidiBanner";
@@ -20,6 +21,7 @@ import { CourierDashboard } from "./components/CourierDashboard";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { AuthModal } from "./components/AuthModal";
 import { DailySpecialCard } from "./components/DailySpecialCard";
+import DishCard from "./components/DishCard";
 import { DailySpecialShareModal } from "./components/DailySpecialShareModal";
 import { SauceBoxesSection } from "./components/SauceBoxesSection";
 import { CateringModal } from "./components/CateringModal";
@@ -152,6 +154,7 @@ export function App() {
 
   // Cart & Order State
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [addedToCartToast, setAddedToCartToast] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
   const [activeTrackingOrder, setActiveTrackingOrder] = useState<Order | null>(null);
   const [activeReceiptOrder, setActiveReceiptOrder] = useState<Order | null>(null);
@@ -295,6 +298,17 @@ export function App() {
   // Flattened all dishes across stored restaurants
   const allDishes = useMemo(() => restaurants.flatMap((r) => r.menu), [restaurants]);
 
+  // Khady's Food & Event Restaurant and Validated Dishes
+  const khadysRestaurant = useMemo(() => {
+    return restaurants.find((r) => r.id === "resto-khadys-food") || RESTAURANTS_DATA.find((r) => r.id === "resto-khadys-food");
+  }, [restaurants]);
+
+  const khadysValidatedDishes = useMemo(() => {
+    if (!khadysRestaurant || !khadysRestaurant.menu) return [];
+    const val = khadysRestaurant.menu.filter((m) => m.category === "Les Plats Validés Khady's");
+    return val.length > 0 ? val : khadysRestaurant.menu.slice(0, 7);
+  }, [khadysRestaurant]);
+
   // Cart Calculations
   const cartTotal = cartItems.reduce((sum, it) => sum + it.totalPrice, 0);
   const cartCount = cartItems.reduce((sum, it) => sum + it.quantity, 0);
@@ -348,6 +362,11 @@ export function App() {
       "success",
       "cart"
     );
+
+    setAddedToCartToast(item.name);
+    setTimeout(() => {
+      setAddedToCartToast((prev) => (prev === item.name ? null : prev));
+    }, 2500);
   };
 
   const handleUpdateQuantity = (id: string, newQty: number) => {
@@ -839,6 +858,78 @@ export function App() {
                     onShareSpecial={(spec) => {
                       setSelectedSpecialForShare(spec);
                       setIsSpecialShareOpen(true);
+                    }}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {/* Section Menu Validé Khady's Food & Event (Restaurant Fondateur) */}
+            <section id="khadys-food" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 text-[10px] font-black uppercase tracking-wider">
+                      👑 Restaurant Fondateur • Ouvert jusqu’à 22 h
+                    </span>
+                    <span className="text-xs text-slate-400 font-medium">Koubia &bull; Service continu &amp; Sur commande</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white mt-1">
+                    Menu Officiel Khady&apos;s Food &amp; Event
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                    Attiéké caviar, sauce Gboma mijotée, spaghetti sautés, sandwich et doukounou caviar préparés à la commande.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <a
+                    href="https://walahy.me/c/74441621"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-bold transition flex items-center gap-1.5"
+                  >
+                    <span>Catalogue Walahy ↗</span>
+                  </a>
+                  <a
+                    href="https://wa.me/22774441621"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition flex items-center gap-1.5"
+                  >
+                    <span>WhatsApp Direct</span>
+                  </a>
+                  {khadysRestaurant && (
+                    <button
+                      onClick={() => setSelectedRestaurantForMenu(khadysRestaurant)}
+                      className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-md"
+                    >
+                      <span>Carte complète (10 plats)</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {khadysValidatedDishes.map((dish) => (
+                  <DishCard
+                    key={dish.id}
+                    name={dish.name}
+                    description={dish.description}
+                    price={dish.price}
+                    imageSrc={dish.image}
+                    badge={dish.mealServiceTime || (dish.isPopular ? "Populaire" : undefined)}
+                    optionsHint={
+                      dish.options && dish.options.length > 0
+                        ? dish.options.map((o) => o.name).join(" • ")
+                        : undefined
+                    }
+                    onAddToCart={() => {
+                      if (dish.options && dish.options.length > 0 && khadysRestaurant) {
+                        setSelectedRestaurantForMenu(khadysRestaurant);
+                      } else {
+                        handleAddToCart(dish, {}, 1);
+                      }
                     }}
                   />
                 ))}
@@ -1536,6 +1627,22 @@ export function App() {
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
       />
+
+      {/* Cart Confirmation Toast (Étape 5) */}
+      <AnimatePresence>
+        {addedToCartToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 18, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            transition={{ duration: 0.22 }}
+            className="fixed bottom-20 md:bottom-6 left-4 right-4 z-[9999] mx-auto max-w-sm rounded-xl bg-emerald-600 px-4 py-3 text-center font-semibold text-white shadow-2xl flex items-center justify-center gap-2 border border-emerald-400/40"
+          >
+            <span className="text-base">✓</span>
+            <span>Plat ajouté au panier : <strong>{addedToCartToast}</strong></span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Responsive Mobile Bottom Navigation Bar */}
       <MobileBottomNav
