@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import {
   UtensilsCrossed,
   MapPin,
@@ -644,10 +644,14 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Button 5: Cart Button */}
           {currentRole === "client" && (
-            <button
+            <motion.button
               id="cart-nav-btn"
               onClick={onOpenCart}
-              className="relative w-8 h-8 min-[400px]:w-8.5 min-[400px]:h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-orange-500 via-orange-600 to-red-600 hover:from-orange-400 hover:to-red-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/25 transition active:scale-95 cursor-pointer border border-orange-400/40"
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.92 }}
+              animate={cartCount > 0 ? { scale: [1, 1.15, 1] } : {}}
+              transition={{ duration: 0.3 }}
+              className="relative w-8 h-8 min-[400px]:w-8.5 min-[400px]:h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-orange-500 via-orange-600 to-red-600 hover:from-orange-400 hover:to-red-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/25 transition cursor-pointer border border-orange-400/40"
               title={cartTotal > 0 ? `Panier : ${cartTotal.toLocaleString()} FCFA` : "Voir le panier"}
             >
               <ShoppingBag className="w-4 h-4 text-white" />
@@ -655,17 +659,17 @@ export const Header: React.FC<HeaderProps> = ({
                 {cartCount > 0 && (
                   <motion.span
                     key={cartCount}
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.5, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                    initial={{ scale: 0.3, opacity: 0, y: -4 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.3, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 20 }}
                     className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-slate-950 text-orange-400 text-[9px] font-black flex items-center justify-center border border-orange-400/60 shadow-sm"
                   >
                     {cartCount}
                   </motion.span>
                 )}
               </AnimatePresence>
-            </button>
+            </motion.button>
           )}
         </div>
       </div>

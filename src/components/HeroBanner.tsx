@@ -81,13 +81,14 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
+            whileHover={{ scale: 1.02 }}
             onClick={onOpenLogoModal}
             className={`inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 text-orange-400 shadow-sm transition max-w-full text-center ${
               onOpenLogoModal ? "cursor-pointer" : ""
             }`}
             title="Restaurant Fondateur • Allôresto Niamey"
           >
-            <Sparkles className="w-3.5 h-3.5 fill-current text-amber-400 shrink-0" />
+            <Sparkles className="w-3.5 h-3.5 fill-current text-amber-400 shrink-0 animate-pulse" />
             <span>👑 Restaurant Fondateur • Ouvert jusqu’à 22 h • Khady&apos;s Food &amp; Event</span>
           </motion.div>
 
@@ -156,34 +157,40 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             className="flex flex-wrap items-center justify-center gap-2.5 pt-2"
           >
             {onOpenDishesCatalog && (
-              <button
+              <motion.button
                 id="hero-menu-cta-btn"
                 onClick={onOpenDishesCatalog}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs sm:text-sm font-bold shadow-lg shadow-orange-500/20 transition-all cursor-pointer flex items-center gap-2 active:scale-95"
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs sm:text-sm font-bold shadow-lg shadow-orange-500/25 transition-all cursor-pointer flex items-center gap-2"
               >
                 <Utensils className="w-4 h-4" />
                 <span>Voir le menu</span>
-              </button>
+              </motion.button>
             )}
 
-            <a
+            <motion.a
               href="https://wa.me/22774441621"
               target="_blank"
               rel="noopener noreferrer"
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.95 }}
               className="px-5 py-2.5 rounded-xl border border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 text-xs sm:text-sm font-bold transition-all shadow-md flex items-center gap-2"
             >
               <span>💬 Commander par WhatsApp</span>
-            </a>
+            </motion.a>
 
             {onOpenRestaurants && (
-              <button
+              <motion.button
                 id="hero-restaurants-cta-btn"
                 onClick={onOpenRestaurants}
-                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-2 active:scale-95"
+                whileHover={{ scale: 1.04, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-2"
               >
                 <Store className="w-4 h-4 text-orange-400" />
                 <span>Voir les restaurants</span>
-              </button>
+              </motion.button>
             )}
           </motion.div>
 

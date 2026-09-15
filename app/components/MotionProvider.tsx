@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { MotionConfig } from 'framer-motion';
+import { MotionConfig } from 'motion/react';
 
 export default function MotionProvider({
   children,
@@ -9,7 +9,7 @@ export default function MotionProvider({
   children: React.ReactNode;
 }) {
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="never">
       {children}
     </MotionConfig>
   );

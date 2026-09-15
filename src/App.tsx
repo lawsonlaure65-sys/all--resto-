@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { Header } from "./components/Header";
 import { HeroBanner } from "./components/HeroBanner";
 import { FlashMidiBanner } from "./components/FlashMidiBanner";

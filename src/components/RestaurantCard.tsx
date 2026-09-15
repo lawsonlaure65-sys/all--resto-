@@ -36,9 +36,11 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   const restaurant = translateRestaurant(rawRestaurant);
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      whileHover={{ y: -6, transition: { duration: 0.2 } }}
+      whileTap={{ scale: 0.98 }}
       className="group rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-orange-500/50 transition-all overflow-hidden flex flex-col justify-between shadow-xl hover:shadow-orange-500/10 cursor-pointer"
       onClick={() => onOpenMenu(restaurant)}
     >
