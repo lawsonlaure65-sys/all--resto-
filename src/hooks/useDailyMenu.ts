@@ -16,6 +16,8 @@ export interface SupabaseDailyMenuRow {
   is_ai_suggested?: boolean;
 }
 
+const RESTAURANT_ID = "a8168cb5-fe46-4368-85fa-be1a64d854b5";
+
 export function useDailyMenu() {
   const [supabaseMenu, setSupabaseMenu] = useState<DailySpecial | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -27,6 +29,7 @@ export function useDailyMenu() {
     async function loadTodayMenu() {
       // If Supabase is not yet configured with valid credentials, gracefully fallback
       if (!isSupabaseConfigured()) {
+        console.log("ℹ️ Supabase non configuré avec des clés réelles, affichage des suggestions locales.");
         if (active) setLoading(false);
         return;
       }
@@ -35,21 +38,23 @@ export function useDailyMenu() {
         // Today in YYYY-MM-DD
         const today = new Date().toISOString().split("T")[0];
 
-        // First attempt: today's published menu
+        // First attempt: today's published menu for this restaurant
         let { data, error: queryError } = await supabase
           .from("daily_menus")
           .select("*")
+          .eq("restaurant_id", RESTAURANT_ID)
           .eq("menu_date", today)
           .eq("status", "published")
           .order("published_at", { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        // Fallback: latest published menu if today hasn't been set yet
+        // Fallback: latest published menu for this restaurant if today hasn't been set yet
         if (!data && !queryError) {
           const latestRes = await supabase
             .from("daily_menus")
             .select("*")
+            .eq("restaurant_id", RESTAURANT_ID)
             .eq("status", "published")
             .order("menu_date", { ascending: false })
             .limit(1)
@@ -59,15 +64,16 @@ export function useDailyMenu() {
         }
 
         if (queryError) {
-          console.warn("Supabase daily_menus query:", queryError.message);
+          console.error("Erreur menu du jour Supabase:", queryError.message);
           if (active) setError(queryError.message);
         } else if (data && active) {
+          console.log("Menu du jour reçu :", data);
           const row = data as SupabaseDailyMenuRow;
           const adaptedSpecial: DailySpecial = {
             id: row.id,
             title: row.title,
-            restaurantName: "Allôresto Kitchen (Khady's Food)",
-            restaurantId: row.restaurant_id || "resto-alloresto-kitchen",
+            restaurantName: "Allôresto Kitchen",
+            restaurantId: row.restaurant_id || RESTAURANT_ID,
             description: row.marketing_message || row.description || "Préparé avec soin ce matin à Niamey.",
             price: row.price_xof,
             originalPrice: Math.round(row.price_xof * 1.25),
@@ -76,10 +82,12 @@ export function useDailyMenu() {
               "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80",
             servingsLeft: 14,
             availableUntil: "15h00",
-            accompaniedBy: row.description || "Thon braisé + Alloco doré + Piment doux",
+            accompaniedBy: row.description || "Poisson braisé + Alloco doré + Piment doux",
             tags: ["🔥 Plat du Jour", "✨ Chef Recommande", "⚡ Service 11h-15h"],
           };
           setSupabaseMenu(adaptedSpecial);
+        } else if (active) {
+          console.log("Menu du jour reçu : aucun plat publié trouvé pour aujourd'hui.");
         }
       } catch (err: any) {
         console.warn("useDailyMenu fetch error:", err?.message || err);
