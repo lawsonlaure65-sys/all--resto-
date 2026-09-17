@@ -281,7 +281,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </div>
           </div>
 
-          {/* Right Column: Animated Courier in Motion & Hot Food Showcase */}
+          {/* Right Column: Vitrine Gastronomique & Plat Vedette */}
           <div className="lg:col-span-5">
             <AnimatedHeroVisual onExploreMenu={onOpenDishesCatalog} />
           </div>
