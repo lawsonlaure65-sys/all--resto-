@@ -86,40 +86,46 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Column: Headlines, search, CTA, Moments */}
           <div className="lg:col-span-7 text-center lg:text-left space-y-4">
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45 }}
-              whileHover={{ scale: 1.02 }}
-              onClick={onOpenLogoModal}
-              className={`inline-flex flex-wrap items-center justify-center lg:justify-start gap-1.5 sm:gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 text-orange-400 shadow-sm transition max-w-full text-center ${
-                onOpenLogoModal ? "cursor-pointer" : ""
-              }`}
-              title="Restaurant Fondateur • Allôresto Niamey"
+              transition={{ duration: 0.35 }}
+              className="text-xs sm:text-sm font-bold uppercase tracking-[0.16em] text-orange-400"
             >
-              <Sparkles className="w-3.5 h-3.5 fill-current text-amber-400 shrink-0 animate-pulse" />
-              <span>👑 Restaurant Fondateur • Ouvert jusqu’à 22 h • Khady&apos;s Food &amp; Event</span>
-            </motion.div>
+              Restaurant &bull; Service Traiteur &bull; Livraison Express Niamey
+            </motion.p>
 
             <motion.h1
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-              className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight"
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight"
+            >
+              Allôresto{" "}
+              <span className="block mt-1 sm:mt-2 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-300 to-amber-500">
+                by Khady&apos;s Food &amp; Event
+              </span>
+            </motion.h1>
+
+            <motion.h2
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
+              className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white"
             >
               Vos plats préférés,{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-400 to-red-500">
                 livrés à Niamey.
               </span>
-            </motion.h1>
+            </motion.h2>
 
             <motion.p
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.08, ease: "easeOut" }}
+              transition={{ duration: 0.45, delay: 0.15, ease: "easeOut" }}
               className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
             >
-              Commandez chez <strong>Khady&apos;s Food &amp; Event</strong>, notre restaurant fondateur, et auprès de nos restaurants partenaires à Niamey. Attiéké caviar, sauces Gboma, Doukounou et grillades livrés chez vous ou au bureau !
+              Commandez chez <strong>Khady&apos;s Food &amp; Event</strong> et profitez de plats savoureux livrés chez vous ou au bureau (Plateau, Koubia, Yantala, Harobanda, Goudel...).
             </motion.p>
 
             {/* Interactive Search Bar */}

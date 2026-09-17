@@ -22,9 +22,15 @@ import {
   RefreshCw,
   QrCode,
   Tag,
+  Camera,
+  Upload,
+  FolderOpen,
+  FileImage,
 } from "lucide-react";
 import { RESTAURANTS_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { Restaurant, MenuItem } from "../types";
+import { compressImageBase64 } from "../services/dishStorageService";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
 
 interface AdminDailyMenuSchedulerProps {
   restaurants?: Restaurant[];
@@ -124,6 +130,40 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [isGeneratingPoster, setIsGeneratingPoster] = useState<boolean>(false);
+
+  // Gestion de la photo directe (Galerie, Google Photos, Appareil Photo)
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const [photoSourceLabel, setPhotoSourceLabel] = useState<string | null>(null);
+  const [isCompressingPhoto, setIsCompressingPhoto] = useState<boolean>(false);
+
+  const handlePhotoFileSelected = async (file: File, sourceName: string) => {
+    if (!file.type.startsWith("image/")) {
+      alert("Veuillez sélectionner un fichier image valide (JPG, PNG, WEBP).");
+      return;
+    }
+
+    setIsCompressingPhoto(true);
+    try {
+      // Compression optimisée (1080px max pour affiches HD et chargement ultra-rapide)
+      const compressedBase64 = await compressImageBase64(file, 1080, 1080, 0.85);
+      setImageUrl(compressedBase64);
+      setPhotoSourceLabel(`${sourceName} : ${file.name}`);
+    } catch (err) {
+      console.error("Erreur lecture photo :", err);
+      // Repli si échec compression
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          setImageUrl(e.target.result as string);
+          setPhotoSourceLabel(`${sourceName} : ${file.name}`);
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsCompressingPhoto(false);
+    }
+  };
 
   // Canvas caché pour export de l'affiche en PNG
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -396,7 +436,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
     return lines;
   };
 
-  const handleSaveAndActivate = () => {
+  const handleSaveAndActivate = async () => {
     const plan: DailySpecialPlan = {
       id: `daily-${Date.now()}`,
       targetDate,
@@ -423,6 +463,27 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
       localStorage.setItem("alloresto_active_daily_special", JSON.stringify(plan));
     } catch (e) {
       console.warn("Storage warning:", e);
+    }
+
+    // Synchronisation en temps réel avec Supabase si configuré
+    if (isSupabaseConfigured()) {
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        await supabase.from("daily_menus").upsert({
+          restaurant_id: selectedRestaurantId,
+          menu_date: today,
+          title: dishName,
+          description: `${mainCourse}. Accompagnement : ${starter}`,
+          price_xof: priceFcfa,
+          image_url: imageUrl,
+          marketing_message: chefNote || `Formule Complète : ${dishName}`,
+          call_to_action: "Précommander pour Demain",
+          status: "published",
+        });
+        console.log("✓ Plat du jour et photo synchronisés avec Supabase !");
+      } catch (sbErr) {
+        console.warn("Synchronisation Supabase daily_menus ignorée :", sbErr);
+      }
     }
 
     if (onSaveDailySpecial) {
@@ -650,40 +711,136 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
             </div>
 
             {/* Photo du Plat */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <ImageIcon className="w-3.5 h-3.5 text-orange-400" />
-                <span>Photo du Plat (Sélection rapide) :</span>
-              </label>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-orange-400" />
+                  <span>Photo du Plat du Jour :</span>
+                </label>
+                {photoSourceLabel && (
+                  <span className="text-[10px] text-emerald-400 font-medium truncate max-w-[200px]">
+                    ✓ {photoSourceLabel}
+                  </span>
+                )}
+              </div>
 
-              <div className="grid grid-cols-5 gap-1.5">
-                {SAMPLE_FOOD_IMAGES.map((img, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setImageUrl(img.url)}
-                    className={`aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer relative ${
-                      imageUrl === img.url
-                        ? "border-orange-500 ring-2 ring-orange-500/50 scale-95"
-                        : "border-slate-800 hover:border-slate-600 opacity-70 hover:opacity-100"
-                    }`}
-                    title={img.label}
-                  >
-                    <img
-                      src={img.url}
-                      alt={img.label}
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  </button>
-                ))}
+              {/* Boutons d'importation directe : Google Photos / Galerie + Appareil Photo */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* 1. Galerie de l'appareil / Google Photos */}
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handlePhotoFileSelected(file, "Galerie / Google Photos");
+                    }
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  disabled={isCompressingPhoto}
+                  className="p-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-850 hover:from-slate-800 hover:to-slate-750 border border-orange-500/40 hover:border-orange-500 text-white flex flex-col items-center justify-center gap-1.5 transition cursor-pointer group shadow-sm text-center"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-orange-500/20 group-hover:bg-orange-500/30 text-orange-400 flex items-center justify-center transition">
+                    <FolderOpen className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-bold text-white group-hover:text-orange-300">
+                    Galerie / Google Photos
+                  </span>
+                  <span className="text-[10px] text-slate-400 leading-tight">
+                    Choisir dans l&apos;appareil
+                  </span>
+                </button>
+
+                {/* 2. Prendre une photo en direct avec la caméra */}
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handlePhotoFileSelected(file, "Photo Caméra");
+                    }
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={isCompressingPhoto}
+                  className="p-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-850 hover:from-slate-800 hover:to-slate-750 border border-amber-500/40 hover:border-amber-500 text-white flex flex-col items-center justify-center gap-1.5 transition cursor-pointer group shadow-sm text-center"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 group-hover:bg-amber-500/30 text-amber-400 flex items-center justify-center transition">
+                    <Camera className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-bold text-white group-hover:text-amber-300">
+                    Prendre en Photo
+                  </span>
+                  <span className="text-[10px] text-slate-400 leading-tight">
+                    Appareil photo direct
+                  </span>
+                </button>
+              </div>
+
+              {isCompressingPhoto && (
+                <div className="p-2.5 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center gap-2 text-xs text-orange-300">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin shrink-0 text-orange-400" />
+                  <span>Optimisation et compression haute résolution en cours...</span>
+                </div>
+              )}
+
+              {/* Aperçu rapide ou Sélection parmi les suggestions du Sahel */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Ou suggestions visuelles rapides :</span>
+                  {imageUrl.startsWith("data:") && (
+                    <span className="text-amber-400 font-medium">Photo personnalisée active</span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-5 gap-1.5">
+                  {SAMPLE_FOOD_IMAGES.map((img, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        setImageUrl(img.url);
+                        setPhotoSourceLabel(img.label);
+                      }}
+                      className={`aspect-square rounded-xl overflow-hidden border-2 transition cursor-pointer relative ${
+                        imageUrl === img.url
+                          ? "border-orange-500 ring-2 ring-orange-500/50 scale-95"
+                          : "border-slate-800 hover:border-slate-600 opacity-70 hover:opacity-100"
+                      }`}
+                      title={img.label}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.label}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <input
                 type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="Ou collez l'URL d'une image..."
+                value={imageUrl.startsWith("data:") ? "" : imageUrl}
+                onChange={(e) => {
+                  setImageUrl(e.target.value);
+                  setPhotoSourceLabel("Lien Web");
+                }}
+                placeholder={imageUrl.startsWith("data:") ? "Photo personnalisée chargée (Base64)" : "Ou collez l'URL d'une image web..."}
                 className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-[11px] font-mono focus:outline-none focus:border-orange-500"
               />
             </div>
