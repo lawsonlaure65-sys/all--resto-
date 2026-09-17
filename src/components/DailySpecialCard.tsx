@@ -1,7 +1,6 @@
 import React from "react";
 import { Sparkles, Clock, Flame, ShoppingBag, ArrowRight, ShieldCheck, MapPin, Share2, Calendar, MessageCircle } from "lucide-react";
-import { motion } from "motion/react";
-import confetti from "canvas-confetti";
+import { motion } from "framer-motion";
 import { DailySpecial } from "../types";
 import { useTranslation } from "../context/TranslationContext";
 import { shareDailySpecialOnWhatsApp } from "../utils/whatsappNotifications";
@@ -23,38 +22,22 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
   const special = translateDailySpecial(rawSpecial);
 
   const handleOrder = (e: React.MouseEvent) => {
-    try {
-      const rect = (e.target as HTMLElement).getBoundingClientRect();
-      const x = (rect.left + rect.width / 2) / window.innerWidth;
-      const y = (rect.top + rect.height / 2) / window.innerHeight;
-      confetti({
-        particleCount: 30,
-        spread: 60,
-        origin: { x, y },
-        colors: ["#f97316", "#fbbf24", "#10b981", "#ef4444"],
-      });
-    } catch {
-      // Safe fallback
-    }
-
+    e.stopPropagation();
     if (onAddToCart) onAddToCart(rawSpecial);
     else if (onOrderSpecial) onOrderSpecial(rawSpecial);
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45 }}
-      whileHover={{ y: -6, transition: { duration: 0.2 } }}
-      className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-orange-950/40 border-2 border-orange-500/40 p-5 sm:p-7 shadow-2xl transition-all hover:border-orange-500/70 hover:shadow-orange-500/10"
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      whileHover={{ y: -3 }}
+      className="relative overflow-hidden rounded-3xl bg-slate-900 border border-orange-500/30 p-5 sm:p-7 shadow-lg transition-colors hover:border-orange-500/60"
     >
-      {/* Glow Effects */}
-      <div className="absolute -top-24 -right-24 w-64 h-64 bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
       {/* Golden Pre-Order Rule Ribbon */}
-      <div className="mb-4 p-2.5 rounded-2xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-between flex-wrap gap-2 text-xs">
+      <div className="mb-4 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between flex-wrap gap-2 text-xs">
         <div className="flex items-center gap-2 text-amber-300 font-bold">
           <Clock className="w-4 h-4 text-orange-400 shrink-0" />
           <span>
@@ -76,16 +59,17 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
         {/* Left: Image & Badge */}
         <div className="lg:col-span-5 relative group">
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-orange-500/30 shadow-xl">
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-orange-500/30 shadow-md">
             <img
               src={special.image}
               alt={special.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
 
             {/* Live Badge */}
-            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500 text-slate-950 text-xs font-black shadow-lg">
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500 text-slate-950 text-xs font-black shadow-md">
               <Flame className="w-3.5 h-3.5 fill-current" />
               <span>{currentLanguage === "ha" ? "ABINCIN YAU" : currentLanguage === "zm" ? "HUNKUNA ŊWAARI" : currentLanguage === "en" ? "TODAY'S SPECIAL" : "PLAT DU JOUR"}</span>
             </div>
@@ -173,15 +157,17 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
                 </button>
               )}
 
-              <button
+              <motion.button
                 type="button"
+                whileTap={{ scale: 0.94 }}
+                transition={{ duration: 0.12 }}
                 onClick={handleOrder}
-                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-orange-500/25 transition-all transform active:scale-95 cursor-pointer flex items-center gap-2"
+                className="px-6 py-3 rounded-2xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs sm:text-sm shadow-md transition cursor-pointer flex items-center gap-2"
               >
                 <ShoppingBag className="w-4 h-4 fill-slate-950" />
-                <span>{currentLanguage === "ha" ? "Yi Odar Abincin Yau" : currentLanguage === "zm" ? "Hunkuna Ŋwaari Za" : currentLanguage === "en" ? "Order Today's Special" : "Commander / Précommander"}</span>
+                <span>{currentLanguage === "ha" ? "Yi Odar Abincin Yau" : currentLanguage === "zm" ? "Hunkuna Ŋwaari Za" : currentLanguage === "en" ? "Order Today's Special" : "Ajouter au panier"}</span>
                 <ArrowRight className="w-4 h-4" />
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>

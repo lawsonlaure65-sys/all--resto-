@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "./components/Header";
 import { HeroBanner } from "./components/HeroBanner";
 import { FlashMidiBanner } from "./components/FlashMidiBanner";
@@ -43,6 +43,7 @@ import RestaurantContractPage from "../app/restaurant/contract/page";
 import RestaurantsPage from "../app/restaurants/page";
 import { VisualNotificationToast, ToastNotification } from "./components/VisualNotificationToast";
 import { Footer } from "./components/Footer";
+import { useDailyMenu } from "./hooks/useDailyMenu";
 import { ReceiptTicketModal } from "./components/ReceiptTicketModal";
 import { JumuahBanner } from "./components/JumuahBanner";
 import { VoiceOrderModal } from "./components/VoiceOrderModal";
@@ -276,6 +277,14 @@ export function App() {
   const [isWhatsAppAutomationOpen, setIsWhatsAppAutomationOpen] = useState<boolean>(false);
   const [isFaqOpen, setIsFaqOpen] = useState<boolean>(false);
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState<boolean>(false);
+  const { supabaseMenu } = useDailyMenu();
+
+  const displayedDailySpecials = useMemo(() => {
+    if (!supabaseMenu) return DAILY_SPECIALS_DATA;
+    // Prepend the Supabase live menu so it appears first with highest priority
+    const others = DAILY_SPECIALS_DATA.filter((s) => s.id !== supabaseMenu.id);
+    return [supabaseMenu, ...others];
+  }, [supabaseMenu]);
   const [isPlansOpen, setIsPlansOpen] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname.toLowerCase();
@@ -850,7 +859,7 @@ export function App() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {DAILY_SPECIALS_DATA.map((special) => (
+                {displayedDailySpecials.map((special) => (
                   <DailySpecialCard
                     key={special.id}
                     special={special}

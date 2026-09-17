@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import {
   Star,
   Clock,
@@ -36,12 +36,13 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   const restaurant = translateRestaurant(rawRestaurant);
   return (
     <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: "easeOut" }}
-      whileHover={{ y: -6, transition: { duration: 0.2 } }}
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      whileHover={{ y: -3 }}
       whileTap={{ scale: 0.98 }}
-      className="group rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-orange-500/50 transition-all overflow-hidden flex flex-col justify-between shadow-xl hover:shadow-orange-500/10 cursor-pointer"
+      className="group rounded-3xl bg-slate-900 border border-slate-800 hover:border-orange-500/50 transition-colors overflow-hidden flex flex-col justify-between shadow-sm cursor-pointer"
       onClick={() => onOpenMenu(restaurant)}
     >
       <div>
@@ -50,7 +51,8 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
           <img
             src={restaurant.image}
             alt={restaurant.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
