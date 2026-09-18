@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { DailySpecial } from "../types";
+import { fetchKhadysProgrammedDailyMenu, KHADYS_FALLBACK_MENU } from "../services/khadysSyncService";
 
 export interface SupabaseDailyMenuRow {
   id: string;
@@ -16,7 +17,7 @@ export interface SupabaseDailyMenuRow {
   is_ai_suggested?: boolean;
 }
 
-const RESTAURANT_ID = "a8168cb5-fe46-4368-85fa-be1a64d854b5";
+const KHADYS_RESTAURANT_ID = "resto-khadys-food";
 
 export function useDailyMenu() {
   const [supabaseMenu, setSupabaseMenu] = useState<DailySpecial | null>(null);
@@ -27,34 +28,87 @@ export function useDailyMenu() {
     let active = true;
 
     async function loadTodayMenu() {
-      // If Supabase is not yet configured with valid credentials, gracefully fallback
+      // 1. D'abord, vérifier s'il existe un menu du jour actif enregistré localement pour Khady's Food
+      try {
+        const localActivePlanStr = localStorage.getItem("alloresto_active_daily_special");
+        if (localActivePlanStr) {
+          const plan = JSON.parse(localActivePlanStr);
+          if (plan && plan.dishName) {
+            const localSpecial: DailySpecial = {
+              id: plan.id || "local-khadys-daily",
+              title: plan.dishName,
+              restaurantName: plan.restaurantName || "Khady's Food & Event",
+              restaurantId: plan.restaurantId || KHADYS_RESTAURANT_ID,
+              description:
+                plan.description ||
+                `${plan.mainCourse}. Accompagné de : ${plan.starter}${plan.drinkOrDessert ? ` • ${plan.drinkOrDessert}` : ""}`,
+              price: plan.priceFcfa || 3000,
+              originalPrice: Math.round((plan.priceFcfa || 3000) * 1.25),
+              image:
+                plan.imageUrl ||
+                "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80",
+              servingsLeft: plan.availablePortions || 25,
+              availableUntil: "15h00",
+              accompaniedBy: `${plan.starter} + ${plan.drinkOrDessert || "Jus de Bissap offert"}`,
+              tags: ["👑 Khady's Food", "🔥 Plat du Jour", "✨ Chef Recommande", "⚡ Service 11h-15h"],
+            };
+            if (active) setSupabaseMenu(localSpecial);
+          }
+        }
+      } catch (err) {
+        console.warn("Lecture du menu du jour local :", err);
+      }
+
+      // 2. Si Supabase est configuré, interroger la table daily_menus pour Khady's Food
       if (!isSupabaseConfigured()) {
-        console.log("ℹ️ Supabase non configuré avec des clés réelles, affichage des suggestions locales.");
+        const localActivePlanStr = localStorage.getItem("alloresto_active_daily_special");
+        if (!localActivePlanStr) {
+          try {
+            const khadysData = await fetchKhadysProgrammedDailyMenu();
+            if (khadysData && khadysData.mainDish && active) {
+              const main = khadysData.mainDish;
+              setSupabaseMenu({
+                id: "khadys-programmed-daily",
+                title: main.dishName,
+                restaurantName: "Khady's Food & Event",
+                restaurantId: KHADYS_RESTAURANT_ID,
+                description: `${main.description}. Accompagnements : ${main.accompaniments}`,
+                price: main.priceFcfa,
+                originalPrice: main.originalPrice,
+                image: main.imageUrl,
+                servingsLeft: main.availablePortions,
+                availableUntil: "15h00",
+                accompaniedBy: main.accompaniments,
+                tags: ["👑 Khady's Food", "🔥 Plat Programmé Khady's", "✨ Trio Gourmand", "⚡ Service 11h-15h"],
+              });
+            }
+          } catch (e) {
+            console.warn("Erreur auto-sync Khady's Food:", e);
+          }
+        }
         if (active) setLoading(false);
         return;
       }
 
       try {
-        // Today in YYYY-MM-DD
+        // Date du jour YYYY-MM-DD
         const today = new Date().toISOString().split("T")[0];
 
-        // First attempt: today's published menu for this restaurant
+        // Tentative 1 : Plat publié du jour pour Khady's Food ou restaurant principal
         let { data, error: queryError } = await supabase
           .from("daily_menus")
           .select("*")
-          .eq("restaurant_id", RESTAURANT_ID)
           .eq("menu_date", today)
           .eq("status", "published")
           .order("published_at", { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        // Fallback: latest published menu for this restaurant if today hasn't been set yet
+        // Tentative 2 : Dernier plat publié disponible
         if (!data && !queryError) {
           const latestRes = await supabase
             .from("daily_menus")
             .select("*")
-            .eq("restaurant_id", RESTAURANT_ID)
             .eq("status", "published")
             .order("menu_date", { ascending: false })
             .limit(1)
@@ -67,27 +121,27 @@ export function useDailyMenu() {
           console.error("Erreur menu du jour Supabase:", queryError.message);
           if (active) setError(queryError.message);
         } else if (data && active) {
-          console.log("Menu du jour reçu :", data);
           const row = data as SupabaseDailyMenuRow;
           const adaptedSpecial: DailySpecial = {
             id: row.id,
             title: row.title,
-            restaurantName: "Allôresto Kitchen",
-            restaurantId: row.restaurant_id || RESTAURANT_ID,
-            description: row.marketing_message || row.description || "Préparé avec soin ce matin à Niamey.",
+            restaurantName: "Khady's Food & Event",
+            restaurantId: row.restaurant_id || KHADYS_RESTAURANT_ID,
+            description:
+              row.marketing_message ||
+              row.description ||
+              "Préparé avec soin ce matin chez Khady's Food & Event à Niamey.",
             price: row.price_xof,
             originalPrice: Math.round(row.price_xof * 1.25),
             image:
               row.image_url ||
               "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80",
-            servingsLeft: 14,
+            servingsLeft: 20,
             availableUntil: "15h00",
-            accompaniedBy: row.description || "Poisson braisé + Alloco doré + Piment doux",
-            tags: ["🔥 Plat du Jour", "✨ Chef Recommande", "⚡ Service 11h-15h"],
+            accompaniedBy: row.description || "Pastels croustillants + Plat chaud + Jus local 33cl",
+            tags: ["👑 Khady's Food", "🔥 Plat du Jour Officiel", "✨ Chef Recommande", "⚡ Service 11h-15h"],
           };
           setSupabaseMenu(adaptedSpecial);
-        } else if (active) {
-          console.log("Menu du jour reçu : aucun plat publié trouvé pour aujourd'hui.");
         }
       } catch (err: any) {
         console.warn("useDailyMenu fetch error:", err?.message || err);
@@ -98,8 +152,39 @@ export function useDailyMenu() {
 
     loadTodayMenu();
 
+    const handleMenuUpdate = (e: any) => {
+      const plan = e?.detail;
+      if (plan && plan.dishName) {
+        setSupabaseMenu({
+          id: plan.id || "local-khadys-daily",
+          title: plan.dishName,
+          restaurantName: plan.restaurantName || "Khady's Food & Event",
+          restaurantId: plan.restaurantId || KHADYS_RESTAURANT_ID,
+          description:
+            plan.description ||
+            `${plan.mainCourse}. Accompagné de : ${plan.starter}${plan.drinkOrDessert ? ` • ${plan.drinkOrDessert}` : ""}`,
+          price: plan.priceFcfa || 3000,
+          originalPrice: Math.round((plan.priceFcfa || 3000) * 1.25),
+          image:
+            plan.imageUrl ||
+            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80",
+          servingsLeft: plan.availablePortions || 25,
+          availableUntil: "15h00",
+          accompaniedBy: `${plan.starter} + ${plan.drinkOrDessert || "Jus de Bissap offert"}`,
+          tags: ["👑 Khady's Food", "🔥 Plat du Jour", "✨ Chef Recommande", "⚡ Service 11h-15h"],
+        });
+      } else {
+        loadTodayMenu();
+      }
+    };
+
+    window.addEventListener("alloresto_daily_special_updated", handleMenuUpdate);
+    window.addEventListener("storage", loadTodayMenu);
+
     return () => {
       active = false;
+      window.removeEventListener("alloresto_daily_special_updated", handleMenuUpdate);
+      window.removeEventListener("storage", loadTodayMenu);
     };
   }, []);
 

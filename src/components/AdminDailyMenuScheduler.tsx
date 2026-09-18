@@ -31,6 +31,7 @@ import { RESTAURANTS_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { Restaurant, MenuItem } from "../types";
 import { compressImageBase64 } from "../services/dishStorageService";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { fetchKhadysProgrammedDailyMenu, KHADYS_FALLBACK_MENU } from "../services/khadysSyncService";
 
 interface AdminDailyMenuSchedulerProps {
   restaurants?: Restaurant[];
@@ -168,6 +169,72 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
 
   // Canvas caché pour export de l'affiche en PNG
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const [isSyncingKhadys, setIsSyncingKhadys] = useState<boolean>(false);
+  const [khadysSyncNotice, setKhadysSyncNotice] = useState<string | null>(null);
+
+  const khadysResto =
+    restaurants.find((r) => r.id === "resto-khadys-food") ||
+    restaurants.find((r) => r.name.toLowerCase().includes("khady")) ||
+    restaurants[0];
+  const khadysDishes = khadysResto?.menu || [];
+
+  const handleImportFromKhadysFood = async () => {
+    setIsSyncingKhadys(true);
+    setKhadysSyncNotice(null);
+    try {
+      const data = await fetchKhadysProgrammedDailyMenu();
+      if (data && data.mainDish) {
+        if (khadysResto) {
+          setSelectedRestaurantId(khadysResto.id);
+        }
+        setDishName(data.mainDish.dishName);
+        setPriceFcfa(data.mainDish.priceFcfa || 4950);
+        if (data.mainDish.imageUrl) {
+          setImageUrl(data.mainDish.imageUrl);
+          setPhotoSourceLabel(`Plat programmé Khady's Food (khadysfood.vercel.app)`);
+        }
+        setMainCourse(data.mainDish.description);
+        setStarter(data.mainDish.accompaniments || "Alloco doré croustillant + Piment vert de la Cheffe");
+        setDrinkOrDessert("Jus de Bissap naturel frais 33cl ou Dêguê onctueux");
+        setChefNote(
+          `Spécialité programmée d'office chez Khady's Food & Event (Trio Gourmand : ${data.trio.map((t) => t.dishName).join(" • ")}).`
+        );
+        setIsSaved(false);
+        setKhadysSyncNotice(
+          `✅ Plat du Jour programmé importé avec succès : "${data.mainDish.dishName}" (${(data.mainDish.priceFcfa).toLocaleString()} FCFA)`
+        );
+      }
+    } catch (err) {
+      console.error("Erreur sync Khady's Food:", err);
+      setKhadysSyncNotice("⚠️ Erreur lors de la synchronisation.");
+    } finally {
+      setIsSyncingKhadys(false);
+    }
+  };
+
+  const handleSelectPresetDish = (dish: MenuItem) => {
+    if (khadysResto) {
+      setSelectedRestaurantId(khadysResto.id);
+    }
+    setDishName(dish.name);
+    setPriceFcfa(dish.price);
+    if (dish.image) {
+      setImageUrl(dish.image);
+      setPhotoSourceLabel(`Menu officiel Khady's Food (${dish.name})`);
+    }
+    setMainCourse(dish.description || dish.name);
+    if (dish.menuDuJourIncludes) {
+      setStarter(dish.menuDuJourIncludes);
+    } else {
+      setStarter("Salade maraîchère fraîche de Niamey ou 3 Pastels chauds au poisson");
+    }
+    setDrinkOrDessert("Jus de Bissap maison frais 33cl ou Dêguê onctueux");
+    setChefNote(
+      `Spécialité authentique préparée ce matin chez Khady's Food & Event. Cuisson soignée aux épices du Sahel.`
+    );
+    setIsSaved(false);
+  };
 
   const currentRestaurant =
     restaurants.find((r) => r.id === selectedRestaurantId) || restaurants[0];
@@ -462,6 +529,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
     // Stockage local
     try {
       localStorage.setItem("alloresto_active_daily_special", JSON.stringify(plan));
+      window.dispatchEvent(new CustomEvent("alloresto_daily_special_updated", { detail: plan }));
     } catch (e) {
       console.warn("Storage warning:", e);
     }
@@ -623,6 +691,128 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* SÉLECTEUR DIRECT KHADY'S FOOD & EVENT */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/15 via-orange-500/10 to-slate-900/90 border border-amber-500/40 space-y-2.5 shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-slate-950 flex items-center justify-center font-black text-sm shadow-md shadow-amber-500/20">
+                    👑
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-black text-amber-300">
+                      Prendre directement un Plat de chez Khady&apos;s Food &amp; Event
+                    </h5>
+                    <p className="text-[10px] text-slate-400">
+                      Restaurant Fondateur • Synchronisation instantanée du plat &amp; photo
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold border border-amber-500/30">
+                  1 Clic
+                </span>
+              </div>
+
+              {/* BOUTON ULTRA-RAPIDE : PRENDRE LE PLAT DU JOUR PROGRAMMÉ DE KHADY'S FOOD */}
+              <button
+                type="button"
+                onClick={handleImportFromKhadysFood}
+                disabled={isSyncingKhadys}
+                className="w-full p-3 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs transition flex items-center justify-between gap-2 shadow-lg shadow-orange-500/20 active:scale-[0.99] cursor-pointer disabled:opacity-50"
+              >
+                <div className="flex items-center gap-2 text-left">
+                  <RefreshCw className={`w-4 h-4 shrink-0 ${isSyncingKhadys ? "animate-spin" : ""}`} />
+                  <div>
+                    <span className="block leading-tight font-extrabold text-[12px]">
+                      ⚡ PRENDRE LE PLAT DU JOUR PROGRAMMÉ DE KHADY&apos;S FOOD
+                    </span>
+                    <span className="block text-[10px] text-slate-900/80 font-medium">
+                      Plat actuel : Tiep Rouge Royal au Capitaine (Trio Gourmand) • 4 950 FCFA
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2 py-1 bg-slate-950 text-amber-300 rounded-lg text-[10px] font-black uppercase tracking-wider shrink-0 border border-amber-400/40">
+                  {isSyncingKhadys ? "Import..." : "Importer"}
+                </span>
+              </button>
+
+              {khadysSyncNotice && (
+                <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-semibold flex items-center gap-2 animate-fade-in">
+                  <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>{khadysSyncNotice}</span>
+                </div>
+              )}
+
+              {/* Menu déroulant de tous les plats Khady's Food */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1">
+                  <span>Choisir dans toute la carte officielle de Khady&apos;s Food :</span>
+                </label>
+                <select
+                  onChange={(e) => {
+                    const dish = khadysDishes.find((m) => m.id === e.target.value);
+                    if (dish) handleSelectPresetDish(dish);
+                  }}
+                  defaultValue=""
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-amber-500/40 text-white text-xs font-semibold focus:outline-none focus:border-amber-400 cursor-pointer"
+                >
+                  <option value="" disabled>
+                    -- 🍽️ Sélectionner un plat ou formule Khady&apos;s Food --
+                  </option>
+                  {khadysDishes.map((dish) => (
+                    <option key={dish.id} value={dish.id}>
+                      {dish.name} • {dish.price.toLocaleString()} FCFA ({dish.category})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Raccourcis rapides des plats phares Khady's Food */}
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[10px] text-slate-400 font-semibold block">
+                  Plats phares &amp; Menus du Jour Khady&apos;s (cliquez pour charger) :
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {khadysDishes
+                    .filter(
+                      (d) =>
+                        d.isDailySpecial ||
+                        d.isMenuDuJour ||
+                        d.dishCategory === "menu_du_jour" ||
+                        d.name.includes("Attiéké") ||
+                        d.name.includes("Choukouya") ||
+                        d.name.includes("Pintade") ||
+                        d.name.includes("Capitaine") ||
+                        d.name.includes("Gboma")
+                    )
+                    .slice(0, 6)
+                    .map((dish) => (
+                      <button
+                        key={dish.id}
+                        type="button"
+                        onClick={() => handleSelectPresetDish(dish)}
+                        className={`p-2 rounded-xl text-left text-[11px] font-bold transition flex items-center gap-2 cursor-pointer border ${
+                          dishName === dish.name
+                            ? "bg-amber-500 text-slate-950 border-amber-400 shadow-md"
+                            : "bg-slate-900/90 hover:bg-slate-800 text-amber-200 border-amber-500/20 hover:border-amber-500/60"
+                        }`}
+                      >
+                        <img
+                          src={dish.image}
+                          alt={dish.name}
+                          className="w-7 h-7 rounded-lg object-cover shrink-0 border border-amber-500/30"
+                        />
+                        <div className="truncate flex-1">
+                          <span className="block truncate">{dish.name}</span>
+                          <span className="text-[9px] opacity-80 block font-normal">
+                            {dish.price.toLocaleString()} FCFA
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              </div>
             </div>
 
             {/* Nom du Plat du Jour */}

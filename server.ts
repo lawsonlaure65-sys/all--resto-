@@ -664,6 +664,134 @@ Réponds de manière concise (2 à 4 paragraphes max), structurée, pragmatique 
   }
 });
 
+// API: Récupérer en direct le Plat du Jour & Trio Gourmand programmé sur https://khadysfood.vercel.app
+app.get("/api/khadys-food/daily-menu", async (req, res) => {
+  try {
+    let dishes = [
+      {
+        id: "dish-plat-du-jour",
+        type: "PLAT_DU_JOUR",
+        dishName: "Tiep Rouge Royal au Capitaine",
+        badgeLabel: "🍲 Plat Cuisiné du Jour",
+        badgeColor: "bg-brand-orange text-white",
+        tagline: "Mijoté du jour avec légumes frais et poisson braisé",
+        description:
+          "Riz rouge sénégalais parfumé, tranche de capitaine braisé, carottes glacées, manioc fondant, chou braisé et sauce pimentée maison.",
+        accompaniments: "Alloco doré croustillant + Piment vert maison",
+        price: 5500,
+        promoPrice: 4950,
+        dishImage: "https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?w=1000",
+        remainingStock: 25,
+      },
+      {
+        id: "dish-doukounou",
+        type: "DOUKOUNOU",
+        dishName: "Le Fameux Doukounou de Khady",
+        badgeLabel: "🌽 Incontournable Doukounou",
+        badgeColor: "bg-amber-600 text-white",
+        tagline: "Spécialité maison au programme chaque jour d'office",
+        description:
+          "Le célèbre gâteau de maïs vapeur traditionnel au Sahel, cuit à point, tendre et moelleux, servi chaud avec sa sauce mijotée de la maison, piment vert doux et poisson frit ou poulet braisé.",
+        accompaniments: "Sauce tomate mijotée + Piment vert de la Cheffe + Poisson frit",
+        price: 3000,
+        promoPrice: 2700,
+        dishImage: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1000",
+        remainingStock: 30,
+      },
+      {
+        id: "dish-attieke",
+        type: "ATTIEKE",
+        dishName: "L'Incontournable Attiéké Royal",
+        badgeLabel: "🐟 Incontournable Attiéké",
+        badgeColor: "bg-emerald-600 text-white",
+        tagline: "Spécialité maison au programme chaque jour d'office",
+        description:
+          "La semoule de manioc attiéké fraîche et aérée de Cheffe Khady, servie avec darne de poisson capitaine braisée ou poulet croustillant, oignons doux marinés, tomates et piment vert maison.",
+        accompaniments: "Poisson capitaine braisé au feu de bois + Alloco doré + Oignons marinés",
+        price: 4500,
+        promoPrice: 4000,
+        dishImage: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=1000",
+        remainingStock: 30,
+      },
+    ];
+
+    try {
+      const htmlRes = await fetch("https://khadysfood.vercel.app", {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; AllorestoNiamey/1.0)" },
+        signal: AbortSignal.timeout(4000),
+      });
+      if (htmlRes.ok) {
+        const html = await htmlRes.text();
+        const scriptMatch = html.match(/\/assets\/index-[^"]+\.js/);
+        if (scriptMatch) {
+          const scriptUrl = "https://khadysfood.vercel.app" + scriptMatch[0];
+          const jsRes = await fetch(scriptUrl, { signal: AbortSignal.timeout(4000) });
+          if (jsRes.ok) {
+            const jsText = await jsRes.text();
+            const keIdx = jsText.indexOf('ke=[{id:"dish-plat-du-jour"');
+            if (keIdx !== -1) {
+              const closeBracket = jsText.indexOf("];", keIdx);
+              if (closeBracket !== -1) {
+                const keSnippet = jsText.substring(keIdx + 3, closeBracket + 1);
+                const extracted: any[] = [];
+                const objRegex =
+                  /\{id:"([^"]+)",type:"([^"]+)",dishName:"([^"]+)",badgeLabel:"([^"]+)",badgeColor:"([^"]+)",tagline:"([^"]+)",description:"([^"]+)",accompaniments:"([^"]+)",price:([0-9.eE+]+),promoPrice:([0-9.eE+]+),dishImage:"([^"]+)",remainingStock:([0-9]+)/g;
+                let m;
+                while ((m = objRegex.exec(keSnippet)) !== null) {
+                  extracted.push({
+                    id: m[1],
+                    type: m[2],
+                    dishName: m[3],
+                    badgeLabel: m[4],
+                    badgeColor: m[5],
+                    tagline: m[6],
+                    description: m[7],
+                    accompaniments: m[8],
+                    price: Number(m[9]),
+                    promoPrice: Number(m[10]),
+                    dishImage: m[11],
+                    remainingStock: Number(m[12]),
+                  });
+                }
+                if (extracted.length > 0) {
+                  dishes = extracted;
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (fetchErr) {
+      console.warn("Connexion temps réel khadysfood.vercel.app (utilisation cache officiel):", fetchErr);
+    }
+
+    const mainDish = dishes[0];
+    return res.json({
+      success: true,
+      source: "https://khadysfood.vercel.app",
+      restaurantName: "Khady's Food & Event",
+      restaurantId: "resto-khadys-food",
+      title: "Menu du Jour — Le Trio Gourmand Khady's",
+      tagline: "Nos 3 délices au programme quotidien chez Khady's Food",
+      mainDish: {
+        dishName: mainDish.dishName,
+        priceFcfa: mainDish.promoPrice || mainDish.price,
+        originalPrice: mainDish.price,
+        imageUrl: mainDish.dishImage,
+        description: mainDish.description,
+        accompaniments: mainDish.accompaniments,
+        availablePortions: mainDish.remainingStock || 25,
+        badgeLabel: mainDish.badgeLabel,
+        type: mainDish.type,
+      },
+      trio: dishes,
+      lastSyncAt: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, error: error?.message || "Erreur serveur" });
+  }
+});
+
 // Vite middleware / Static server setup
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {

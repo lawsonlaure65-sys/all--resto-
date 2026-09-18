@@ -279,12 +279,78 @@ export function App() {
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState<boolean>(false);
   const { supabaseMenu } = useDailyMenu();
 
+  // Khady's Food & Event Restaurant and Validated Dishes
+  const khadysRestaurant = useMemo(() => {
+    return (
+      restaurants.find((r) => r.id === "resto-khadys-food") ||
+      restaurants.find((r) => r.name.toLowerCase().includes("khady")) ||
+      RESTAURANTS_DATA.find((r) => r.id === "resto-khadys-food")
+    );
+  }, [restaurants]);
+
+  const khadysValidatedDishes = useMemo(() => {
+    if (!khadysRestaurant || !khadysRestaurant.menu) return [];
+    const val = khadysRestaurant.menu.filter((m) => m.category === "Les Plats Validés Khady's");
+    return val.length > 0 ? val : khadysRestaurant.menu.slice(0, 7);
+  }, [khadysRestaurant]);
+
+  // Synchronisation dynamique des Plats du Jour de chez Khady's Food & Event
   const displayedDailySpecials = useMemo(() => {
-    if (!supabaseMenu) return DAILY_SPECIALS_DATA;
-    // Prepend the Supabase live menu so it appears first with highest priority
-    const others = DAILY_SPECIALS_DATA.filter((s) => s.id !== supabaseMenu.id);
-    return [supabaseMenu, ...others];
-  }, [supabaseMenu]);
+    const list: DailySpecial[] = [];
+    const seenTitles = new Set<string>();
+
+    // 1. Menu en direct Supabase (ou plat actif Khady's Food)
+    if (supabaseMenu) {
+      list.push(supabaseMenu);
+      seenTitles.add(supabaseMenu.title.toLowerCase().trim());
+    }
+
+    // 2. Plats marqués "Plat du Jour" ou "Menu du Jour" dans la carte de Khady's Food
+    if (khadysRestaurant && khadysRestaurant.menu) {
+      const khadysDailyDishes = khadysRestaurant.menu.filter(
+        (m) =>
+          m.isDailySpecial ||
+          m.isMenuDuJour ||
+          m.dishCategory === "menu_du_jour" ||
+          m.category === "⭐ Menu & Plat du Jour"
+      );
+
+      khadysDailyDishes.forEach((d) => {
+        const normTitle = d.name.toLowerCase().trim();
+        if (!seenTitles.has(normTitle)) {
+          list.push({
+            id: `khadys-daily-${d.id}`,
+            title: d.name,
+            restaurantName: "Khady's Food & Event",
+            restaurantId: "resto-khadys-food",
+            description: d.description,
+            price: d.price,
+            originalPrice: Math.round(d.price * 1.25),
+            image: d.image,
+            servingsLeft: d.stock_count || 16,
+            availableUntil: d.mealServiceTime?.includes("-")
+              ? d.mealServiceTime.split("-")[1].trim()
+              : "15h00",
+            accompaniedBy: d.menuDuJourIncludes || "Entrée + Plat chaud + Boisson fraîche 33cl",
+            tags: ["👑 Khady's Food", "🔥 Plat du Jour", "✨ Chef Recommande"],
+          });
+          seenTitles.add(normTitle);
+        }
+      });
+    }
+
+    // 3. Compléter avec les formules du jour par défaut si non encore présentes
+    DAILY_SPECIALS_DATA.forEach((s) => {
+      const normTitle = s.title.toLowerCase().trim();
+      if (!seenTitles.has(normTitle)) {
+        list.push(s);
+        seenTitles.add(normTitle);
+      }
+    });
+
+    return list;
+  }, [supabaseMenu, khadysRestaurant]);
+
   const [isPlansOpen, setIsPlansOpen] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname.toLowerCase();
@@ -306,17 +372,6 @@ export function App() {
 
   // Flattened all dishes across stored restaurants
   const allDishes = useMemo(() => restaurants.flatMap((r) => r.menu), [restaurants]);
-
-  // Khady's Food & Event Restaurant and Validated Dishes
-  const khadysRestaurant = useMemo(() => {
-    return restaurants.find((r) => r.id === "resto-khadys-food") || RESTAURANTS_DATA.find((r) => r.id === "resto-khadys-food");
-  }, [restaurants]);
-
-  const khadysValidatedDishes = useMemo(() => {
-    if (!khadysRestaurant || !khadysRestaurant.menu) return [];
-    const val = khadysRestaurant.menu.filter((m) => m.category === "Les Plats Validés Khady's");
-    return val.length > 0 ? val : khadysRestaurant.menu.slice(0, 7);
-  }, [khadysRestaurant]);
 
   // Cart Calculations
   const cartTotal = cartItems.reduce((sum, it) => sum + it.totalPrice, 0);
@@ -840,13 +895,14 @@ export function App() {
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-slate-800 pb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px] font-black uppercase tracking-wider">
-                      ⚡ Plats du Jour &bull; 11h - 15h
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                      <Flame className="w-3.5 h-3.5 fill-current" />
+                      <span>👑 Plats du Jour &bull; Khady&apos;s Food &amp; Event</span>
                     </span>
-                    <span className="text-xs text-slate-400 font-medium">Préparés ce matin à Niamey</span>
+                    <span className="text-xs text-slate-400 font-medium">Cuisinés frais ce matin à Niamey</span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
-                    Les Spécialités Fraîches du Sahel
+                    Les Menus &amp; Formules du Jour au Sahel
                   </h2>
                 </div>
                 <button

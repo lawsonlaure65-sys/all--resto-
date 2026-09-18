@@ -91,6 +91,10 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
         <div className="lg:col-span-7 space-y-4">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-black border border-amber-500/40 flex items-center gap-1">
+                <span>👑</span>
+                <span>{special.restaurantName || "Khady's Food & Event"}</span>
+              </span>
               {special.tags.map((tag, idx) => (
                 <span
                   key={idx}
@@ -115,6 +119,19 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
                 <strong>{currentLanguage === "ha" ? "Tare da :" : currentLanguage === "zm" ? "Kande nda :" : "Inclus :"}</strong> {special.accompaniedBy}
               </span>
             </div>
+
+            {/* Trio Gourmand Khady's Food Badge si applicable */}
+            {(special.restaurantName?.toLowerCase().includes("khady") || special.restaurantId === "resto-khadys-food") && (
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300/90 flex items-center justify-between flex-wrap gap-2">
+                <span className="flex items-center gap-1.5 font-semibold">
+                  <span>🍲</span>
+                  <span><strong>Trio Gourmand Khady&apos;s :</strong> Plat du Jour + Le Fameux Doukounou + L&apos;Incontournable Attiéké</span>
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px]">
+                  khadysfood.vercel.app
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Pricing & CTA */}
