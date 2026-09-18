@@ -136,6 +136,7 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const [photoSourceLabel, setPhotoSourceLabel] = useState<string | null>(null);
   const [isCompressingPhoto, setIsCompressingPhoto] = useState<boolean>(false);
+  const [isPhotoDragOver, setIsPhotoDragOver] = useState<boolean>(false);
 
   const handlePhotoFileSelected = async (file: File, sourceName: string) => {
     if (!file.type.startsWith("image/")) {
@@ -469,7 +470,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
     if (isSupabaseConfigured()) {
       try {
         const today = new Date().toISOString().split("T")[0];
-        await supabase.from("daily_menus").upsert({
+        await (supabase.from("daily_menus") as any).upsert({
           restaurant_id: selectedRestaurantId,
           menu_date: today,
           title: dishName,
@@ -735,7 +736,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      handlePhotoFileSelected(file, "Galerie / Google Photos");
+                      handlePhotoFileSelected(file, "Google Photos / Galerie");
                     }
                     e.target.value = "";
                   }}
@@ -744,16 +745,16 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                   type="button"
                   onClick={() => galleryInputRef.current?.click()}
                   disabled={isCompressingPhoto}
-                  className="p-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-850 hover:from-slate-800 hover:to-slate-750 border border-orange-500/40 hover:border-orange-500 text-white flex flex-col items-center justify-center gap-1.5 transition cursor-pointer group shadow-sm text-center"
+                  className="p-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-850 hover:from-slate-800 hover:to-slate-750 border border-orange-500/50 hover:border-orange-400 text-white flex flex-col items-center justify-center gap-1.5 transition cursor-pointer group shadow-sm text-center"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-orange-500/20 group-hover:bg-orange-500/30 text-orange-400 flex items-center justify-center transition">
-                    <FolderOpen className="w-4 h-4" />
+                  <div className="w-9 h-9 rounded-xl bg-orange-500/20 group-hover:bg-orange-500/30 text-orange-400 flex items-center justify-center transition shadow-inner">
+                    <FolderOpen className="w-5 h-5" />
                   </div>
-                  <span className="text-xs font-bold text-white group-hover:text-orange-300">
-                    Galerie / Google Photos
+                  <span className="text-xs font-black text-white group-hover:text-orange-300">
+                    Google Photos / Galerie
                   </span>
                   <span className="text-[10px] text-slate-400 leading-tight">
-                    Choisir dans l&apos;appareil
+                    Choisir photo de l&apos;appareil
                   </span>
                 </button>
 
@@ -767,7 +768,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      handlePhotoFileSelected(file, "Photo Caméra");
+                      handlePhotoFileSelected(file, "Caméra en direct");
                     }
                     e.target.value = "";
                   }}
@@ -776,33 +777,71 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                   type="button"
                   onClick={() => cameraInputRef.current?.click()}
                   disabled={isCompressingPhoto}
-                  className="p-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-850 hover:from-slate-800 hover:to-slate-750 border border-amber-500/40 hover:border-amber-500 text-white flex flex-col items-center justify-center gap-1.5 transition cursor-pointer group shadow-sm text-center"
+                  className="p-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-850 hover:from-slate-800 hover:to-slate-750 border border-amber-500/50 hover:border-amber-400 text-white flex flex-col items-center justify-center gap-1.5 transition cursor-pointer group shadow-sm text-center"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 group-hover:bg-amber-500/30 text-amber-400 flex items-center justify-center transition">
-                    <Camera className="w-4 h-4" />
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 group-hover:bg-amber-500/30 text-amber-400 flex items-center justify-center transition shadow-inner">
+                    <Camera className="w-5 h-5" />
                   </div>
-                  <span className="text-xs font-bold text-white group-hover:text-amber-300">
+                  <span className="text-xs font-black text-white group-hover:text-amber-300">
                     Prendre en Photo
                   </span>
                   <span className="text-[10px] text-slate-400 leading-tight">
-                    Appareil photo direct
+                    Photo en direct de cuisine
                   </span>
                 </button>
               </div>
 
+              {/* Zone Drag & Drop pour glisser directement une photo depuis le PC ou le gestionnaire */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsPhotoDragOver(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  setIsPhotoDragOver(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsPhotoDragOver(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) {
+                    handlePhotoFileSelected(file, "Photo glissée-déposée");
+                  }
+                }}
+                onClick={() => galleryInputRef.current?.click()}
+                className={`p-3 rounded-2xl border-2 border-dashed transition-all text-center cursor-pointer flex flex-col items-center justify-center gap-1 ${
+                  isPhotoDragOver
+                    ? "border-orange-500 bg-orange-500/15 text-orange-300 scale-[0.99]"
+                    : "border-slate-800 hover:border-orange-500/40 bg-slate-900/40 hover:bg-slate-900 text-slate-400"
+                }`}
+              >
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-300">
+                  <Upload className="w-3.5 h-3.5 text-orange-400" />
+                  <span>Ou glissez-déposez l&apos;image du plat ici</span>
+                </div>
+                <span className="text-[10px] text-slate-500">
+                  Google Photos, JPG, PNG, WEBP &bull; Optimisation automatique
+                </span>
+              </div>
+
+              {/* Statut de compression */}
               {isCompressingPhoto && (
                 <div className="p-2.5 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center gap-2 text-xs text-orange-300">
                   <RefreshCw className="w-3.5 h-3.5 animate-spin shrink-0 text-orange-400" />
-                  <span>Optimisation et compression haute résolution en cours...</span>
+                  <span>Traitement et optimisation de la photo en haute résolution...</span>
                 </div>
               )}
 
               {/* Aperçu rapide ou Sélection parmi les suggestions du Sahel */}
               <div className="space-y-1.5 pt-1">
                 <div className="flex items-center justify-between text-[11px] text-slate-400">
-                  <span>Ou suggestions visuelles rapides :</span>
+                  <span>Suggestions visuelles rapides :</span>
                   {imageUrl.startsWith("data:") && (
-                    <span className="text-amber-400 font-medium">Photo personnalisée active</span>
+                    <span className="text-amber-400 font-bold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      Photo personnalisée chargée
+                    </span>
                   )}
                 </div>
 
@@ -840,7 +879,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                   setImageUrl(e.target.value);
                   setPhotoSourceLabel("Lien Web");
                 }}
-                placeholder={imageUrl.startsWith("data:") ? "Photo personnalisée chargée (Base64)" : "Ou collez l'URL d'une image web..."}
+                placeholder={imageUrl.startsWith("data:") ? "Photo personnalisée active (Base64)" : "Ou collez un lien d'image web..."}
                 className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 text-[11px] font-mono focus:outline-none focus:border-orange-500"
               />
             </div>

@@ -55,6 +55,33 @@ export interface Database {
         Insert: Partial<Database["public"]["Tables"]["restaurants"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["restaurants"]["Row"]>;
       };
+      payments: {
+        Row: {
+          id: string;
+          order_id: string;
+          amount_xof: number;
+          payment_method: string;
+          payment_status: "pending" | "completed" | "failed" | "refunded";
+          transaction_id: string;
+          phone_number: string;
+          provider_response?: Record<string, any> | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          amount_xof: number;
+          payment_method: string;
+          payment_status?: "pending" | "completed" | "failed" | "refunded";
+          transaction_id: string;
+          phone_number: string;
+          provider_response?: Record<string, any> | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["payments"]["Insert"]>;
+      };
     };
   };
 }

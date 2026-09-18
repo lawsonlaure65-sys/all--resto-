@@ -348,7 +348,7 @@ export async function processPayment(params: {
   // If Supabase is configured, write directly to database
   if (isSupabaseConfigured()) {
     try {
-      await supabase.from("payments").insert({
+      await (supabase.from("payments") as any).insert({
         order_id: params.orderId,
         amount_xof: params.amount,
         payment_method: params.paymentMethod,
@@ -385,8 +385,7 @@ export function updatePaymentStatus(
 
   if (isSupabaseConfigured()) {
     Promise.resolve(
-      supabase
-        .from("payments")
+      (supabase.from("payments") as any)
         .update({ payment_status: newStatus, updated_at: new Date().toISOString() })
         .eq("id", paymentId)
     ).catch((e: any) => console.warn("Supabase payment status update error:", e));
