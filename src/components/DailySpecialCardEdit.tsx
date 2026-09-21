@@ -352,6 +352,7 @@ export const DailySpecialCardEdit: React.FC<DailySpecialCardEditProps> = ({
           title: updatedSpecial.title,
           description: updatedSpecial.description,
           price_xof: updatedSpecial.price,
+          image_url: updatedSpecial.image,
           photo_url: updatedSpecial.image,
           status: "published",
           updated_at: new Date().toISOString(),

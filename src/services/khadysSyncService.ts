@@ -174,6 +174,7 @@ export async function applyKhadysProgrammedMenuToApp(
         title: main.dishName,
         description: `${main.description}. Accompagnements : ${main.accompaniments}`,
         price_xof: main.priceFcfa,
+        image_url: main.imageUrl,
         photo_url: main.imageUrl,
         marketing_message: plan.marketingMessage,
         status: "published",

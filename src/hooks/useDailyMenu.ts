@@ -118,10 +118,11 @@ export function useDailyMenu() {
         }
 
         if (queryError) {
-          console.error("Erreur menu du jour Supabase:", queryError.message);
-          if (active) setError(queryError.message);
-        } else if (data && active) {
-          const row = data as SupabaseDailyMenuRow;
+          console.warn("Info menu du jour Supabase (repli automatique local):", queryError.message);
+        }
+
+        if (data && active) {
+          const row = data as SupabaseDailyMenuRow & { photo_url?: string | null };
           const adaptedSpecial: DailySpecial = {
             id: row.id,
             title: row.title,
@@ -135,6 +136,7 @@ export function useDailyMenu() {
             originalPrice: Math.round(row.price_xof * 1.25),
             image:
               row.image_url ||
+              row.photo_url ||
               "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80",
             servingsLeft: 20,
             availableUntil: "15h00",
@@ -142,6 +144,33 @@ export function useDailyMenu() {
             tags: ["👑 Khady's Food", "🔥 Plat du Jour Officiel", "✨ Chef Recommande", "⚡ Service 11h-15h"],
           };
           setSupabaseMenu(adaptedSpecial);
+        } else if (!data) {
+          // Repli gracieux : vérifier le stockage local ou le menu programmé Khady's Food
+          const localActivePlanStr = localStorage.getItem("alloresto_active_daily_special");
+          if (!localActivePlanStr) {
+            try {
+              const khadysData = await fetchKhadysProgrammedDailyMenu();
+              if (khadysData && khadysData.mainDish && active) {
+                const main = khadysData.mainDish;
+                setSupabaseMenu({
+                  id: "khadys-programmed-daily",
+                  title: main.dishName,
+                  restaurantName: "Khady's Food & Event",
+                  restaurantId: KHADYS_RESTAURANT_ID,
+                  description: `${main.description}. Accompagnements : ${main.accompaniments}`,
+                  price: main.priceFcfa,
+                  originalPrice: main.originalPrice,
+                  image: main.imageUrl,
+                  servingsLeft: main.availablePortions,
+                  availableUntil: "15h00",
+                  accompaniedBy: main.accompaniments,
+                  tags: ["👑 Khady's Food", "🔥 Plat Programmé Khady's", "✨ Trio Gourmand", "⚡ Service 11h-15h"],
+                });
+              }
+            } catch (e) {
+              console.warn("Erreur repli Khady's Food:", e);
+            }
+          }
         }
       } catch (err: any) {
         console.warn("useDailyMenu fetch error:", err?.message || err);

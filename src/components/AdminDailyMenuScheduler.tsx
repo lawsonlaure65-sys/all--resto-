@@ -572,6 +572,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
           description: `${mainCourse}. Accompagnement : ${starter}`,
           price_xof: priceFcfa,
           image_url: imageUrl,
+          photo_url: imageUrl,
           marketing_message: chefNote || `Formule Complète : ${dishName}`,
           call_to_action: "Précommander pour Demain",
           status: "published",

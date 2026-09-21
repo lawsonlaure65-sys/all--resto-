@@ -6,7 +6,7 @@ const SUPABASE_ANON_KEY = "alloresto_supabase_anon_key";
 
 export function sanitizeSupabaseUrl(rawUrl: string): string {
   if (!rawUrl) return "";
-  let url = rawUrl.trim();
+  let url = rawUrl.trim().replace(/^['"]+|['"]+$/g, "");
 
   // If user pasted the dashboard URL: https://supabase.com/dashboard/project/xyz
   const dashboardMatch = url.match(/supabase\.com\/dashboard\/project\/([a-zA-Z0-9_-]+)/);
@@ -14,11 +14,19 @@ export function sanitizeSupabaseUrl(rawUrl: string): string {
     return `https://${dashboardMatch[1]}.supabase.co`;
   }
 
+  // Extract base project origin if it's a standard *.supabase.co domain
+  const supabaseCoMatch = url.match(/(https?:\/\/[a-zA-Z0-9_-]+\.supabase\.co)/i);
+  if (supabaseCoMatch && supabaseCoMatch[1]) {
+    return supabaseCoMatch[1];
+  }
+
   // Remove trailing slashes and common mistaken subpaths like /rest/v1, /rest/v1/, /auth/v1, etc.
   url = url.replace(/\/+$/, ""); // remove trailing slashes
   url = url.replace(/\/rest\/v1\/?$/i, "");
+  url = url.replace(/\/rest\/?$/i, "");
   url = url.replace(/\/auth\/v1\/?$/i, "");
   url = url.replace(/\/storage\/v1\/?$/i, "");
+  url = url.replace(/\/v1\/?$/i, "");
   url = url.replace(/\/+$/, "");
 
   // Ensure protocol

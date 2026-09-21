@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient, PostgrestError } from "@supabase/supabase-js";
+import { getSupabaseConfig, sanitizeSupabaseUrl } from "../services/supabaseClient";
 
 /**
  * Schéma TypeScript strict pour la base de données Supabase Allôresto
@@ -15,6 +16,7 @@ export interface Database {
           description: string | null;
           price_xof: number;
           image_url: string | null;
+          photo_url?: string | null;
           marketing_message: string | null;
           call_to_action: string | null;
           status: "draft" | "scheduled" | "published" | "archived";
@@ -31,6 +33,7 @@ export interface Database {
           description?: string | null;
           price_xof: number;
           image_url?: string | null;
+          photo_url?: string | null;
           marketing_message?: string | null;
           call_to_action?: string | null;
           status?: "draft" | "scheduled" | "published" | "archived";
@@ -86,40 +89,47 @@ export interface Database {
   };
 }
 
-// Variables d'environnement standardisées pour Vite
-const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || "";
-const supabaseAnonKey =
-  (import.meta as any).env?.VITE_SUPABASE_ANON_KEY ||
-  (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  "";
-
 /**
  * Singleton Supabase sécurisé et typé.
  * RÈGLE D'OR : N'utilise STRICTEMENT que la clé anonyme (anon / publishable).
  * La clé secrète `service_role` ne doit JAMAIS être importée côté client.
+ * Nettoie et valide l'URL de façon stricte pour éviter l'erreur "Invalid path specified in request URL".
  */
 class SupabaseService {
   private static instance: SupabaseClient<Database> | null = null;
+  private static activeUrl: string = "";
+  private static activeKey: string = "";
 
   public static getClient(): SupabaseClient<Database> {
-    if (!SupabaseService.instance) {
-      const isValid = Boolean(
-        supabaseUrl &&
-        supabaseAnonKey &&
-        supabaseUrl.startsWith("http") &&
-        !supabaseUrl.includes("placeholder")
-      );
+    const config = getSupabaseConfig();
+    const cleanUrl = config.isConfigured ? sanitizeSupabaseUrl(config.url) : "";
+    const cleanKey = config.isConfigured ? config.anonKey.trim() : "";
 
-      if (isValid) {
-        SupabaseService.instance = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    const isCurrentlyValid = Boolean(
+      cleanUrl &&
+      cleanKey &&
+      cleanUrl.startsWith("http") &&
+      !cleanUrl.includes("placeholder")
+    );
+
+    // Si la configuration a changé ou que l'instance n'existe pas encore
+    if (
+      !SupabaseService.instance ||
+      SupabaseService.activeUrl !== (isCurrentlyValid ? cleanUrl : "") ||
+      SupabaseService.activeKey !== (isCurrentlyValid ? cleanKey : "")
+    ) {
+      if (isCurrentlyValid) {
+        SupabaseService.instance = createClient<Database>(cleanUrl, cleanKey, {
           auth: {
             persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true,
           },
         });
+        SupabaseService.activeUrl = cleanUrl;
+        SupabaseService.activeKey = cleanKey;
       } else {
-        // Fallback transparent sans crash si les variables ne sont pas encore renseignées dans Vercel
+        // Fallback transparent sans crash si les variables ne sont pas encore renseignées
         SupabaseService.instance = createClient<Database>(
           "https://placeholder.supabase.co",
           "placeholder-anon-key",
@@ -130,13 +140,25 @@ class SupabaseService {
             },
           }
         );
+        SupabaseService.activeUrl = "";
+        SupabaseService.activeKey = "";
       }
     }
     return SupabaseService.instance;
   }
 }
 
-export const supabase = SupabaseService.getClient();
+// Proxy dynamique garantissant que tout appel à supabase utilise la configuration active et nettoyée
+export const supabase = new Proxy({} as SupabaseClient<Database>, {
+  get(_target, prop) {
+    const client = SupabaseService.getClient();
+    const val = (client as any)[prop];
+    if (typeof val === "function") {
+      return val.bind(client);
+    }
+    return val;
+  },
+});
 
 /**
  * Type utilitaire pour les retours de requêtes avec gestion d'erreur normalisée
@@ -147,14 +169,18 @@ export type SupabaseResult<T> = {
 };
 
 /**
- * Helper de vérification de la disponibilité de la connexion Supabase
+ * Helper de vérification de la disponibilité de la connexion Supabase.
+ * Vérifie la présence d'une URL et d'une clé réelles et correctement formatées.
  */
 export function isSupabaseConfigured(): boolean {
+  const config = getSupabaseConfig();
+  if (!config.isConfigured || !config.url || !config.anonKey) return false;
+  const cleanUrl = sanitizeSupabaseUrl(config.url);
   return Boolean(
-    supabaseUrl &&
-    supabaseAnonKey &&
-    supabaseUrl.startsWith("http") &&
-    !supabaseUrl.includes("placeholder")
+    cleanUrl &&
+    cleanUrl.startsWith("http") &&
+    !cleanUrl.includes("placeholder") &&
+    config.anonKey.trim().length > 10
   );
 }
 
