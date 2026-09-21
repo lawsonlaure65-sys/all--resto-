@@ -21,6 +21,7 @@ import { CourierDashboard } from "./components/CourierDashboard";
 import { AdminDashboard } from "./components/AdminDashboard";
 import { AuthModal } from "./components/AuthModal";
 import { DailySpecialCard } from "./components/DailySpecialCard";
+import { DailySpecialCardEdit } from "./components/DailySpecialCardEdit";
 import DishCard from "./components/DishCard";
 import { DailySpecialShareModal } from "./components/DailySpecialShareModal";
 import { SauceBoxesSection } from "./components/SauceBoxesSection";
@@ -369,6 +370,8 @@ export function App() {
   });
   const [isSpecialShareOpen, setIsSpecialShareOpen] = useState<boolean>(false);
   const [selectedSpecialForShare, setSelectedSpecialForShare] = useState<DailySpecial | null>(null);
+  const [isEditSpecialOpen, setIsEditSpecialOpen] = useState<boolean>(false);
+  const [selectedSpecialForEdit, setSelectedSpecialForEdit] = useState<DailySpecial | null>(null);
 
   // Flattened all dishes across stored restaurants
   const allDishes = useMemo(() => restaurants.flatMap((r) => r.menu), [restaurants]);
@@ -920,6 +923,10 @@ export function App() {
                     key={special.id}
                     special={special}
                     onAddToCart={handleAddDailySpecialToCart}
+                    onEditSpecial={(spec) => {
+                      setSelectedSpecialForEdit(spec);
+                      setIsEditSpecialOpen(true);
+                    }}
                     onShareSpecial={(spec) => {
                       setSelectedSpecialForShare(spec);
                       setIsSpecialShareOpen(true);
@@ -1548,6 +1555,20 @@ export function App() {
         isOpen={isSpecialShareOpen}
         onClose={() => setIsSpecialShareOpen(false)}
         special={selectedSpecialForShare || DAILY_SPECIALS_DATA[0]}
+      />
+
+      {/* 20c. Éditeur de Plat du Jour & Sélecteur Photos Natif (Google Photos / Galerie) */}
+      <DailySpecialCardEdit
+        isOpen={isEditSpecialOpen}
+        special={selectedSpecialForEdit || displayedDailySpecials[0] || DAILY_SPECIALS_DATA[0]}
+        onClose={() => {
+          setIsEditSpecialOpen(false);
+          setSelectedSpecialForEdit(null);
+        }}
+        onSave={(updatedSpecial) => {
+          setIsEditSpecialOpen(false);
+          setSelectedSpecialForEdit(null);
+        }}
       />
 
       {/* 21. FAQ Dynamique & Assistance 24/7 */}

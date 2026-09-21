@@ -167,6 +167,33 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     }
   };
 
+  const handleOpenNativeGalleryPicker = async () => {
+    if (typeof window !== "undefined" && "showOpenFilePicker" in window) {
+      try {
+        const [fileHandle] = await (window as any).showOpenFilePicker({
+          types: [
+            {
+              description: "Photos de plats (Google Photos, Galerie)",
+              accept: {
+                "image/*": [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif", ".avif"],
+              },
+            },
+          ],
+          multiple: false,
+        });
+        if (fileHandle) {
+          const file = await fileHandle.getFile();
+          await handlePhotoFileSelected(file, "API Fichiers Native (Google Photos / Galerie)");
+          return;
+        }
+      } catch (err: any) {
+        if (err?.name === "AbortError") return;
+        console.warn("showOpenFilePicker indisponible ou rejeté, repli vers input natif:", err);
+      }
+    }
+    galleryInputRef.current?.click();
+  };
+
   // Canvas caché pour export de l'affiche en PNG
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -933,7 +960,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                 />
                 <button
                   type="button"
-                  onClick={() => galleryInputRef.current?.click()}
+                  onClick={handleOpenNativeGalleryPicker}
                   disabled={isCompressingPhoto}
                   className="p-3 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-850 hover:from-slate-800 hover:to-slate-750 border border-orange-500/50 hover:border-orange-400 text-white flex flex-col items-center justify-center gap-1.5 transition cursor-pointer group shadow-sm text-center"
                 >

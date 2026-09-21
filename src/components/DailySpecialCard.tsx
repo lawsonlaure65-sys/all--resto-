@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, Clock, Flame, ShoppingBag, ArrowRight, ShieldCheck, MapPin, Share2, Calendar, MessageCircle } from "lucide-react";
+import { Sparkles, Clock, Flame, ShoppingBag, ArrowRight, ShieldCheck, MapPin, Share2, Calendar, MessageCircle, Edit3, Camera } from "lucide-react";
 import { motion } from "framer-motion";
 import { DailySpecial } from "../types";
 import { useTranslation } from "../context/TranslationContext";
@@ -10,6 +10,8 @@ interface DailySpecialCardProps {
   onOrderSpecial?: (special: DailySpecial) => void;
   onAddToCart?: (special: DailySpecial) => void;
   onShareSpecial?: (special: DailySpecial) => void;
+  onEditSpecial?: (special: DailySpecial) => void;
+  isAdmin?: boolean;
 }
 
 export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
@@ -17,6 +19,8 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
   onOrderSpecial,
   onAddToCart,
   onShareSpecial,
+  onEditSpecial,
+  isAdmin = false,
 }) => {
   const { translateDailySpecial, currentLanguage } = useTranslation();
   const special = translateDailySpecial(rawSpecial);
@@ -44,16 +48,29 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
             ⏰ <strong>Règle d'or :</strong> Précommandez la veille au soir <strong>avant 21h00</strong> pour garantir votre portion de demain midi !
           </span>
         </div>
-        {onShareSpecial && (
-          <button
-            type="button"
-            onClick={() => onShareSpecial(rawSpecial)}
-            className="px-3 py-1 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-[11px] flex items-center gap-1.5 transition shadow cursor-pointer"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>Affiche &amp; Réseaux IA</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {onEditSpecial && (
+            <button
+              type="button"
+              onClick={() => onEditSpecial(rawSpecial)}
+              className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-black text-[11px] flex items-center gap-1.5 transition shadow cursor-pointer active:scale-95"
+              title="Modifier le plat du jour & choisir une photo (Google Photos / Galerie)"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-orange-400" />
+              <span>Modifier Plat / Photo</span>
+            </button>
+          )}
+          {onShareSpecial && (
+            <button
+              type="button"
+              onClick={() => onShareSpecial(rawSpecial)}
+              className="px-3 py-1 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-[11px] flex items-center gap-1.5 transition shadow cursor-pointer"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>Affiche &amp; Réseaux IA</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
@@ -73,6 +90,22 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
               <Flame className="w-3.5 h-3.5 fill-current" />
               <span>{currentLanguage === "ha" ? "ABINCIN YAU" : currentLanguage === "zm" ? "HUNKUNA ŊWAARI" : currentLanguage === "en" ? "TODAY'S SPECIAL" : "PLAT DU JOUR"}</span>
             </div>
+
+            {/* Quick Photo & Edit button on image */}
+            {onEditSpecial && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditSpecial(rawSpecial);
+                }}
+                className="absolute top-3 right-3 px-2.5 py-1.5 rounded-xl bg-slate-950/85 hover:bg-orange-500 text-amber-300 hover:text-slate-950 backdrop-blur-md border border-amber-500/40 hover:border-orange-400 shadow-lg transition cursor-pointer flex items-center gap-1.5 text-[11px] font-black group/btn active:scale-95"
+                title="Sélectionner une photo depuis Google Photos / Galerie"
+              >
+                <Camera className="w-3.5 h-3.5 text-orange-400 group-hover/btn:text-slate-950" />
+                <span>Photo / Éditer</span>
+              </button>
+            )}
 
             {/* Servings left */}
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800">
