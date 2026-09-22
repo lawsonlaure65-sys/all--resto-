@@ -736,7 +736,7 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <img
-                      src={dish.image}
+                      src={dish.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80"}
                       alt={dish.name}
                       className="w-11 h-11 rounded-xl object-cover bg-slate-950 shrink-0 border border-slate-800"
                       referrerPolicy="no-referrer"
@@ -1317,7 +1317,7 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-950 shrink-0 border border-slate-800">
                         <img
-                          src={item.image}
+                          src={item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80"}
                           alt={item.name}
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"

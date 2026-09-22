@@ -78,7 +78,7 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
         <div className="lg:col-span-5 relative group">
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-orange-500/30 shadow-md">
             <img
-              src={special.image}
+              src={special.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80"}
               alt={special.title}
               loading="lazy"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

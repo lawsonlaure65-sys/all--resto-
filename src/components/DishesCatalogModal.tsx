@@ -642,7 +642,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
                       {/* Dish Image Banner */}
                       <div className="relative h-40 sm:h-44 rounded-xl sm:rounded-2xl overflow-hidden bg-slate-900">
                         <img
-                          src={dish.image}
+                          src={dish.image || "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80"}
                           alt={dish.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           referrerPolicy="no-referrer"

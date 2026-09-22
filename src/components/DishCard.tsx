@@ -49,7 +49,7 @@ export const DishCard: React.FC<DishCardProps> = ({
       <div>
         <div className="relative h-48 sm:h-52 overflow-hidden bg-slate-950">
           <img
-            src={imageSrc}
+            src={imageSrc || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80"}
             alt={name}
             className="dish-photo h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
             loading="lazy"

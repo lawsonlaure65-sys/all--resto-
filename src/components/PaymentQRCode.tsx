@@ -576,12 +576,18 @@ export const PaymentQRCode: React.FC<PaymentQRCodeProps> = ({
             </div>
 
             {/* High Resolution QR Box */}
-            <div className="p-4 bg-white rounded-2xl shadow-inner inline-block mx-auto">
-              <img
-                src={qrDataUrl}
-                alt="QR Code Agrandissement"
-                className="w-64 h-64 sm:w-72 sm:h-72 object-contain"
-              />
+            <div className="p-4 bg-white rounded-2xl shadow-inner inline-block mx-auto min-w-[16rem] min-h-[16rem] flex items-center justify-center">
+              {qrDataUrl ? (
+                <img
+                  src={qrDataUrl}
+                  alt="QR Code Agrandissement"
+                  className="w-64 h-64 sm:w-72 sm:h-72 object-contain"
+                />
+              ) : (
+                <div className="w-64 h-64 sm:w-72 sm:h-72 flex items-center justify-center bg-slate-100 rounded-lg text-slate-400 text-xs font-mono">
+                  Génération...
+                </div>
+              )}
             </div>
 
             <div className="text-xs font-mono font-bold text-amber-400 bg-slate-950 p-2.5 rounded-xl border border-slate-800">

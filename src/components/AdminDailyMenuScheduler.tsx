@@ -827,7 +827,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                         }`}
                       >
                         <img
-                          src={dish.image}
+                          src={dish.image || SAMPLE_FOOD_IMAGES[0]?.url}
                           alt={dish.name}
                           className="w-7 h-7 rounded-lg object-cover shrink-0 border border-amber-500/30"
                         />
@@ -1174,7 +1174,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                 {/* Image Header with Gradient Overlay */}
                 <div className="relative h-44 sm:h-52 w-full overflow-hidden shrink-0">
                   <img
-                    src={imageUrl}
+                    src={imageUrl || SAMPLE_FOOD_IMAGES[0]?.url}
                     alt={dishName}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"

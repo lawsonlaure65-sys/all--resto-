@@ -117,7 +117,7 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
           {/* Header Cover Banner */}
           <div className="relative h-56 sm:h-64 w-full bg-slate-950 shrink-0">
             <img
-              src={restaurant.bannerImage || restaurant.image}
+              src={restaurant.bannerImage || restaurant.image || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=80"}
               alt={restaurant.name}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
@@ -453,7 +453,7 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
 
                   <div className="w-24 h-24 rounded-xl overflow-hidden bg-slate-900 shrink-0">
                     <img
-                      src={item.image}
+                      src={item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80"}
                       alt={item.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                       referrerPolicy="no-referrer"

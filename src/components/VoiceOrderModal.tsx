@@ -859,7 +859,7 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <img
-                        src={item.dish.image}
+                        src={item.dish.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80"}
                         alt={item.dish.name}
                         className="w-12 h-12 rounded-xl object-cover border border-slate-800 shrink-0"
                         referrerPolicy="no-referrer"

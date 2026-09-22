@@ -335,7 +335,7 @@ Rejoignez notre communauté gourmande :
               {/* Photo & Badge */}
               <div className="relative my-3 rounded-xl overflow-hidden aspect-[16/10] border border-orange-500/40 shadow-inner">
                 <img
-                  src={special.image}
+                  src={special.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80"}
                   alt={special.title}
                   className="w-full h-full object-cover"
                 />

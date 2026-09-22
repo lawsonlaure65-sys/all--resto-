@@ -59,7 +59,7 @@ export const CulinaryBlogModal: React.FC<CulinaryBlogModalProps> = ({
 
             <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-slate-800">
               <img
-                src={selectedPost.image}
+                src={selectedPost.image || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=80"}
                 alt={selectedPost.title}
                 className="w-full h-full object-cover"
               />
@@ -113,7 +113,7 @@ export const CulinaryBlogModal: React.FC<CulinaryBlogModalProps> = ({
                 <div className="space-y-2.5">
                   <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-slate-800">
                     <img
-                      src={post.image}
+                      src={post.image || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=80"}
                       alt={post.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />

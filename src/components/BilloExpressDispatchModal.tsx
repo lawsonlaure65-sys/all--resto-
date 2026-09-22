@@ -238,7 +238,7 @@ Merci de confirmer la prise en charge dès réception !`;
                   >
                     <div className="flex items-start gap-3">
                       <img
-                        src={courier.avatar}
+                        src={courier.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"}
                         alt={courier.name}
                         referrerPolicy="no-referrer"
                         className="w-10 h-10 rounded-full object-cover border border-slate-700"

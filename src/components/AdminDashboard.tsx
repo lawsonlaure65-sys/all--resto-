@@ -1445,7 +1445,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       className="relative w-24 h-24 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 cursor-pointer group"
                     >
                       <img
-                        src={dish.image}
+                        src={dish.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80"}
                         alt={dish.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         referrerPolicy="no-referrer"

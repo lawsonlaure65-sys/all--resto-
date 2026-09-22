@@ -72,7 +72,7 @@ export const SauceBoxesSection: React.FC<SauceBoxesSectionProps> = ({
                 {/* Image */}
                 <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-slate-800">
                   <img
-                    src={sauce.image}
+                    src={sauce.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80"}
                     alt={sauce.name}
                     loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

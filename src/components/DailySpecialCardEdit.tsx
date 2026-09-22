@@ -35,6 +35,9 @@ export interface DailySpecialCardEditProps {
   onSave: (updatedSpecial: DailySpecial) => void;
 }
 
+const DEFAULT_DAILY_SPECIAL_IMAGE =
+  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80";
+
 export const DailySpecialCardEdit: React.FC<DailySpecialCardEditProps> = ({
   isOpen,
   special,
@@ -48,7 +51,7 @@ export const DailySpecialCardEdit: React.FC<DailySpecialCardEditProps> = ({
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState<number>(3500);
   const [originalPrice, setOriginalPrice] = useState<number>(4500);
-  const [image, setImage] = useState<string>("");
+  const [image, setImage] = useState<string>(special?.image || DEFAULT_DAILY_SPECIAL_IMAGE);
   const [servingsLeft, setServingsLeft] = useState<number>(20);
   const [availableUntil, setAvailableUntil] = useState<string>("15h00");
   const [accompaniedBy, setAccompaniedBy] = useState<string>("");
@@ -518,7 +521,7 @@ export const DailySpecialCardEdit: React.FC<DailySpecialCardEditProps> = ({
                   <div className="lg:col-span-5 relative">
                     <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-orange-500/30 shadow-md">
                       <img
-                        src={image}
+                        src={image || DEFAULT_DAILY_SPECIAL_IMAGE}
                         alt={title}
                         className="w-full h-full object-cover"
                       />
@@ -624,7 +627,7 @@ export const DailySpecialCardEdit: React.FC<DailySpecialCardEditProps> = ({
                     }`}
                   >
                     <img
-                      src={image}
+                      src={image || DEFAULT_DAILY_SPECIAL_IMAGE}
                       alt={title || "Aperçu plat"}
                       className="w-full h-full object-cover"
                     />

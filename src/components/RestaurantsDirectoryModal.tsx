@@ -249,7 +249,7 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
                     {/* Image & Badges */}
                     <div className="relative h-40 w-full rounded-xl overflow-hidden bg-slate-950">
                       <img
-                        src={resto.image}
+                        src={resto.image || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=80"}
                         alt={resto.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         referrerPolicy="no-referrer"

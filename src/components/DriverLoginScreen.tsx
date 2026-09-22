@@ -121,7 +121,7 @@ export const DriverLoginScreen: React.FC<DriverLoginScreenProps> = ({
                 className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/60 hover:bg-cyan-950/20 text-left transition-all flex items-center gap-3 cursor-pointer group"
               >
                 <img
-                  src={d.avatar}
+                  src={d.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"}
                   alt={d.fullName}
                   referrerPolicy="no-referrer"
                   className="w-10 h-10 rounded-full object-cover border border-slate-700 group-hover:border-cyan-400 transition"

@@ -49,7 +49,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
         {/* Restaurant Image Banner */}
         <div className="relative h-48 w-full overflow-hidden bg-slate-950">
           <img
-            src={restaurant.image}
+            src={restaurant.image || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=80"}
             alt={restaurant.name}
             loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

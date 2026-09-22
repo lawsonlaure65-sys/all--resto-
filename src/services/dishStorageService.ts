@@ -60,13 +60,25 @@ export async function compressImageBase64(
   });
 }
 
-// Ensure all dishes have a valid stock_count with realistic inventory and low-stock items (< 5)
+export const DEFAULT_DISH_FALLBACK_URL =
+  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80";
+export const DEFAULT_RESTAURANT_FALLBACK_URL =
+  "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=80";
+
+// Ensure all dishes have a valid stock_count with realistic inventory and non-empty images
 export function normalizeDishesStock(restaurants: Restaurant[]): Restaurant[] {
   return restaurants.map((resto) => ({
     ...resto,
+    image: resto.image && resto.image.trim() !== "" ? resto.image : DEFAULT_RESTAURANT_FALLBACK_URL,
     menu: resto.menu.map((dish, index) => {
+      const safeImage =
+        dish.image && dish.image.trim() !== "" ? dish.image : DEFAULT_DISH_FALLBACK_URL;
+
       if (typeof dish.stock_count === "number" && !isNaN(dish.stock_count)) {
-        return dish;
+        return {
+          ...dish,
+          image: safeImage,
+        };
       }
 
       // Assign realistic inventory if not yet set
@@ -87,6 +99,7 @@ export function normalizeDishesStock(restaurants: Restaurant[]): Restaurant[] {
 
       return {
         ...dish,
+        image: safeImage,
         stock_count: defaultStock,
         isAvailable: defaultStock > 0 && dish.isAvailable !== false,
       };
@@ -205,39 +218,67 @@ export async function syncFromSupabaseIfAvailable(
   return null;
 }
 
-// Save entire restaurants list to LocalStorage with emergency protection & quota recovery
+// Save entire restaurants list to LocalStorage with quota protection & intelligent recovery
 export function saveStoredRestaurants(restaurants: Restaurant[]): boolean {
   if (!Array.isArray(restaurants) || restaurants.length === 0) {
     return false;
   }
 
-  const totalDishes = restaurants.reduce((sum, r) => sum + (r.menu?.length || 0), 0);
+  // Nettoyer systématiquement la clé de backup redondante pour libérer 50% du quota localStorage (évite QuotaExceededError)
+  try {
+    localStorage.removeItem(STORAGE_KEY_EMERGENCY_BACKUP);
+  } catch {}
 
   try {
     const json = JSON.stringify(restaurants);
     localStorage.setItem(STORAGE_KEY_RESTAURANTS, json);
-    if (totalDishes > 0) {
-      localStorage.setItem(STORAGE_KEY_EMERGENCY_BACKUP, json);
-    }
-    localStorage.setItem(STORAGE_KEY_LAST_BACKUP, new Date().toISOString());
+    try {
+      localStorage.setItem(STORAGE_KEY_LAST_BACKUP, new Date().toISOString());
+    } catch {}
     return true;
   } catch (err) {
-    console.error("Error saving restaurants to localStorage (quota exceeded or storage error):", err);
+    console.warn("Optimisation automatique du stockage local suite à saturation du quota...", err);
     try {
-      // Emergency recovery: strip heavy base64 strings if quota exceeded to guarantee preservation
-      const stripped = restaurants.map((resto) => ({
+      // 1. Alléger les images base64 trop volumineuses sans jamais introduire de chaîne vide ("")
+      const optimized = restaurants.map((resto) => ({
         ...resto,
         menu: resto.menu.map((d) => ({
           ...d,
-          image: d.image?.startsWith("data:") ? "" : d.image,
+          // Conserver les URL web normales, remplacer les base64 trop lourds par le fallback valide
+          image:
+            d.image && !d.image.startsWith("data:")
+              ? d.image
+              : d.image && d.image.length < 30000
+              ? d.image
+              : DEFAULT_DISH_FALLBACK_URL,
         })),
       }));
-      localStorage.setItem(STORAGE_KEY_RESTAURANTS, JSON.stringify(stripped));
-      localStorage.setItem(STORAGE_KEY_LAST_BACKUP, new Date().toISOString());
+
+      localStorage.setItem(STORAGE_KEY_RESTAURANTS, JSON.stringify(optimized));
+      try {
+        localStorage.setItem(STORAGE_KEY_LAST_BACKUP, new Date().toISOString());
+      } catch {}
       return true;
     } catch (fallbackErr) {
-      console.error("Critical storage failure:", fallbackErr);
-      return false;
+      console.warn("Deuxième tentative d'allègement du stockage local...", fallbackErr);
+      try {
+        // 2. Dernier recours : conserver uniquement les URL d'images web, jamais de chaîne vide
+        const minimal = restaurants.map((resto) => ({
+          ...resto,
+          menu: resto.menu.map((d) => ({
+            ...d,
+            image:
+              d.image && !d.image.startsWith("data:")
+                ? d.image
+                : DEFAULT_DISH_FALLBACK_URL,
+          })),
+        }));
+        localStorage.setItem(STORAGE_KEY_RESTAURANTS, JSON.stringify(minimal));
+        return true;
+      } catch (finalErr) {
+        console.warn("Écriture localStorage limitée par le navigateur :", finalErr);
+        return false;
+      }
     }
   }
 }
