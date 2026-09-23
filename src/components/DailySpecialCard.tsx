@@ -48,29 +48,31 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
             ⏰ <strong>Règle d'or :</strong> Précommandez la veille au soir <strong>avant 21h00</strong> pour garantir votre portion de demain midi !
           </span>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {onEditSpecial && (
-            <button
-              type="button"
-              onClick={() => onEditSpecial(rawSpecial)}
-              className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-black text-[11px] flex items-center gap-1.5 transition shadow cursor-pointer active:scale-95"
-              title="Modifier le plat du jour & choisir une photo (Google Photos / Galerie)"
-            >
-              <Edit3 className="w-3.5 h-3.5 text-orange-400" />
-              <span>Modifier Plat / Photo</span>
-            </button>
-          )}
-          {onShareSpecial && (
-            <button
-              type="button"
-              onClick={() => onShareSpecial(rawSpecial)}
-              className="px-3 py-1 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-[11px] flex items-center gap-1.5 transition shadow cursor-pointer"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>Affiche &amp; Réseaux IA</span>
-            </button>
-          )}
-        </div>
+        {(onEditSpecial || onShareSpecial) && (
+          <div className="flex items-center gap-2 flex-wrap">
+            {onEditSpecial && (
+              <button
+                type="button"
+                onClick={() => onEditSpecial(rawSpecial)}
+                className="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 font-black text-[11px] flex items-center gap-1.5 transition shadow cursor-pointer active:scale-95"
+                title="Modifier le plat du jour & choisir une photo (Google Photos / Galerie)"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-orange-400" />
+                <span>Modifier Plat / Photo</span>
+              </button>
+            )}
+            {onShareSpecial && (
+              <button
+                type="button"
+                onClick={() => onShareSpecial(rawSpecial)}
+                className="px-3 py-1 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-[11px] flex items-center gap-1.5 transition shadow cursor-pointer"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Affiche &amp; Réseaux IA</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">

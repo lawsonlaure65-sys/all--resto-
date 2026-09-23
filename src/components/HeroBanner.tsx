@@ -35,6 +35,12 @@ interface HeroBannerProps {
   onOpenRestaurants?: () => void;
   onOpenDishesCatalog?: () => void;
   onOpenDishesCatalogWithMoment?: (moment: "all" | MealMoment) => void;
+  featuredDish?: {
+    name: string;
+    price?: number;
+    image?: string;
+    description?: string;
+  } | null;
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
@@ -51,6 +57,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   onOpenRestaurants,
   onOpenDishesCatalog,
   onOpenDishesCatalogWithMoment,
+  featuredDish,
 }) => {
   const getCuisineIcon = (icon: string) => {
     switch (icon) {
@@ -289,7 +296,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 
           {/* Right Column: Vitrine Gastronomique & Plat Vedette */}
           <div className="lg:col-span-5">
-            <AnimatedHeroVisual onExploreMenu={onOpenDishesCatalog} />
+            <AnimatedHeroVisual featuredDish={featuredDish} onExploreMenu={onOpenDishesCatalog} />
           </div>
         </div>
 

@@ -206,32 +206,87 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     restaurants[0];
   const khadysDishes = khadysResto?.menu || [];
 
+  const PERMANENT_DISH_KEYWORDS = [
+    "attieke caviar",
+    "doukounou caviar",
+  ];
+
+  const normalizeDishName = (name = "") =>
+    name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+  const isPermanentDish = (dish: MenuItem | string) => {
+    const rawName = typeof dish === "string" ? dish : dish?.name || "";
+    const name = normalizeDishName(rawName);
+
+    return PERMANENT_DISH_KEYWORDS.some((keyword) =>
+      name.includes(normalizeDishName(keyword))
+    );
+  };
+
+  const selectableKhadysDishes = khadysDishes.filter(
+    (dish) => !isPermanentDish(dish)
+  );
+
   const handleImportFromKhadysFood = async () => {
     setIsSyncingKhadys(true);
     setKhadysSyncNotice(null);
+
     try {
       const data = await fetchKhadysProgrammedDailyMenu();
-      if (data && data.mainDish) {
-        if (khadysResto) {
-          setSelectedRestaurantId(khadysResto.id);
-        }
-        setDishName(data.mainDish.dishName);
-        setPriceFcfa(data.mainDish.priceFcfa || 4950);
-        if (data.mainDish.imageUrl) {
-          setImageUrl(data.mainDish.imageUrl);
-          setPhotoSourceLabel(`Plat programmé Khady's Food (khadysfood.vercel.app)`);
-        }
-        setMainCourse(data.mainDish.description);
-        setStarter(data.mainDish.accompaniments || "Alloco doré croustillant + Piment vert de la Cheffe");
-        setDrinkOrDessert("Jus de Bissap naturel frais 33cl ou Dêguê onctueux");
-        setChefNote(
-          `Spécialité programmée d'office chez Khady's Food & Event (Trio Gourmand : ${data.trio.map((t) => t.dishName).join(" • ")}).`
+
+      if (!data?.mainDish) {
+        setKhadysSyncNotice("⚠️ Aucun plat du jour programmé.");
+        return;
+      }
+
+      if (isPermanentDish(data.mainDish.dishName)) {
+        setKhadysSyncNotice(
+          "⚠️ Cette spécialité permanente ne peut pas être définie comme plat du jour."
         );
         setIsSaved(false);
-        setKhadysSyncNotice(
-          `✅ Plat du Jour programmé importé avec succès : "${data.mainDish.dishName}" (${(data.mainDish.priceFcfa).toLocaleString()} FCFA)`
+        return;
+      }
+
+      if (khadysResto) {
+        setSelectedRestaurantId(khadysResto.id);
+      }
+
+      setDishName(data.mainDish.dishName);
+      setPriceFcfa(data.mainDish.priceFcfa || 4950);
+
+      if (data.mainDish.imageUrl) {
+        setImageUrl(data.mainDish.imageUrl);
+        setPhotoSourceLabel(
+          "Plat programmé Khady's Food (khadysfood.vercel.app)"
         );
       }
+
+      setMainCourse(data.mainDish.description || "");
+      setStarter(
+        data.mainDish.accompaniments ||
+          "Alloco doré croustillant + Piment vert de la Cheffe"
+      );
+      setDrinkOrDessert(
+        "Jus de Bissap naturel frais 33cl ou Dêguê onctueux"
+      );
+
+      setChefNote(
+        `Spécialité programmée d'office chez Khady's Food & Event (Trio Gourmand : ${
+          data.trio?.map((t) => t.dishName).join(" • ") || ""
+        }).`
+      );
+
+      setIsSaved(false);
+
+      setKhadysSyncNotice(
+        `✅ Plat du jour importé : "${data.mainDish.dishName}" (${Number(
+          data.mainDish.priceFcfa || 4950
+        ).toLocaleString()} FCFA)`
+      );
     } catch (err) {
       console.error("Erreur sync Khady's Food:", err);
       setKhadysSyncNotice("⚠️ Erreur lors de la synchronisation.");
@@ -241,6 +296,12 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
   };
 
   const handleSelectPresetDish = (dish: MenuItem) => {
+    if (isPermanentDish(dish)) {
+      setKhadysSyncNotice(
+        "⚠️ Cette spécialité permanente ne peut pas être définie comme plat du jour."
+      );
+      return;
+    }
     if (khadysResto) {
       setSelectedRestaurantId(khadysResto.id);
     }
@@ -779,8 +840,10 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                 </label>
                 <select
                   onChange={(e) => {
-                    const dish = khadysDishes.find((m) => m.id === e.target.value);
-                    if (dish) handleSelectPresetDish(dish);
+                    const dish = selectableKhadysDishes.find((m) => m.id === e.target.value);
+                    if (dish) {
+                      handleSelectPresetDish(dish);
+                    }
                   }}
                   defaultValue=""
                   className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-amber-500/40 text-white text-xs font-semibold focus:outline-none focus:border-amber-400 cursor-pointer"
@@ -788,7 +851,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                   <option value="" disabled>
                     -- 🍽️ Sélectionner un plat ou formule Khady&apos;s Food --
                   </option>
-                  {khadysDishes.map((dish) => (
+                  {selectableKhadysDishes.map((dish) => (
                     <option key={dish.id} value={dish.id}>
                       {dish.name} • {dish.price.toLocaleString()} FCFA ({dish.category})
                     </option>
@@ -802,13 +865,13 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                   Plats phares &amp; Menus du Jour Khady&apos;s (cliquez pour charger) :
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {khadysDishes
+                  {selectableKhadysDishes
                     .filter(
                       (d) =>
                         d.isDailySpecial ||
                         d.isMenuDuJour ||
                         d.dishCategory === "menu_du_jour" ||
-                        d.name.includes("Attiéké") ||
+                        d.name.includes("Tiep") ||
                         d.name.includes("Choukouya") ||
                         d.name.includes("Pintade") ||
                         d.name.includes("Capitaine") ||

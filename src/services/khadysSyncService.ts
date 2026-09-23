@@ -123,12 +123,31 @@ export async function fetchKhadysProgrammedDailyMenu(): Promise<KhadysDailyMenuR
   return KHADYS_FALLBACK_MENU;
 }
 
+const PERMANENT_DISHES = [
+  "attieke caviar",
+  "attieke",
+  "doukounou caviar",
+];
+
+export const isPermanentDishName = (name?: string) => {
+  const normalized = (name || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+  return PERMANENT_DISHES.some((dish) => normalized.includes(dish));
+};
+
 /**
  * Applique le plat du jour programmé de Khady's Food dans l'application Allôresto Niamey
  */
 export async function applyKhadysProgrammedMenuToApp(
   data: KhadysDailyMenuResponse = KHADYS_FALLBACK_MENU
 ): Promise<{ success: boolean; plan: any }> {
+  if (!data?.mainDish || isPermanentDishName(data.mainDish.dishName)) {
+    console.warn("Plat du jour rejeté : plat permanent ou inexistant.");
+    return { success: false, plan: null };
+  }
   const main = data.mainDish;
   const todayStr = new Intl.DateTimeFormat("fr-FR", {
     weekday: "long",

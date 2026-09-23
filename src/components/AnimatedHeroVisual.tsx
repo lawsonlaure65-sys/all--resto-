@@ -1,10 +1,137 @@
-import React from "react";
-import { Sparkles, Flame, Clock, MapPin, ShieldCheck, Heart, Utensils, Award, ChefHat, ArrowRight } from "lucide-react";
-import { motion } from "motion/react";
+import React, { useEffect, useState } from "react";
+import {
+  Sparkles,
+  Clock,
+  MapPin,
+  ShieldCheck,
+  Utensils,
+  ChefHat,
+  ArrowRight,
+} from "lucide-react";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
 
-export const AnimatedHeroVisual: React.FC<{
+export interface DailyDish {
+  name: string;
+  description?: string | null;
+  price: number;
+  image_url?: string | null;
+}
+
+export interface AnimatedHeroVisualProps {
   onExploreMenu?: () => void;
-}> = ({ onExploreMenu }) => {
+  featuredDish?: {
+    name: string;
+    price?: number;
+    image?: string;
+    description?: string;
+  } | null;
+}
+
+const PERMANENT_KEYWORDS = ["attieke caviar", "doukounou caviar"];
+
+const isPermanentName = (name?: string) => {
+  const norm = (name || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+  return PERMANENT_KEYWORDS.some((kw) => norm.includes(kw));
+};
+
+export const AnimatedHeroVisual: React.FC<AnimatedHeroVisualProps> = ({
+  onExploreMenu,
+  featuredDish,
+}) => {
+  const [dailyDish, setDailyDish] = useState<DailyDish | null>(() => {
+    if (featuredDish && !isPermanentName(featuredDish.name)) {
+      return {
+        name: featuredDish.name,
+        description: featuredDish.description,
+        price: featuredDish.price || 4000,
+        image_url: featuredDish.image,
+      };
+    }
+    return null;
+  });
+  const [isLoadingDailyDish, setIsLoadingDailyDish] = useState<boolean>(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // Si un featuredDish valide et non-permanent est déjà fourni par les props
+    if (featuredDish && !isPermanentName(featuredDish.name)) {
+      setDailyDish({
+        name: featuredDish.name,
+        description: featuredDish.description,
+        price: featuredDish.price || 4000,
+        image_url: featuredDish.image,
+      });
+      setIsLoadingDailyDish(false);
+      return;
+    }
+
+    const loadDailyDish = async () => {
+      setIsLoadingDailyDish(true);
+
+      const hasConfig =
+        typeof isSupabaseConfigured === "function"
+          ? isSupabaseConfigured()
+          : Boolean(isSupabaseConfigured);
+
+      if (!hasConfig) {
+        setIsLoadingDailyDish(false);
+        return;
+      }
+
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+
+        // Récupérer le menu du jour publié pour aujourd'hui
+        const { data, error } = await (supabase
+          .from("daily_menus") as any)
+          .select("*")
+          .eq("menu_date", today)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) {
+          console.warn("Erreur chargement plat du jour Supabase :", error);
+        }
+
+        if (!cancelled) {
+          if (data) {
+            const rawName = data.title || data.dish_name || "";
+            if (!isPermanentName(rawName)) {
+              setDailyDish({
+                name: rawName,
+                description: data.description,
+                price: Number(data.price_xof || data.price_fcfa || data.price || 4000),
+                image_url: data.image_url || data.photo_url,
+              });
+            } else {
+              setDailyDish(null);
+            }
+          } else {
+            setDailyDish(null);
+          }
+          setIsLoadingDailyDish(false);
+        }
+      } catch (err) {
+        console.warn("Exception chargement daily_menus :", err);
+        if (!cancelled) {
+          setIsLoadingDailyDish(false);
+        }
+      }
+    };
+
+    loadDailyDish();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [featuredDish]);
+
   return (
     <div className="relative w-full max-w-lg mx-auto lg:max-w-none pt-4 pb-2">
       {/* Background Warm Glowing Ambience */}
@@ -31,24 +158,28 @@ export const AnimatedHeroVisual: React.FC<{
           </span>
         </div>
 
-        {/* Center: Featured Gastronomic Visual Showcase (Appétissant, Élégant et Pur) */}
+        {/* Center: Featured Gastronomic Visual Showcase */}
         <div className="relative bg-slate-950/80 rounded-2xl p-4 sm:p-5 border border-slate-800/80 mb-4 overflow-hidden">
-          {/* Main Dish Imagery with Warm Gradients & Floating Badges */}
           <div className="relative rounded-2xl overflow-hidden h-52 sm:h-56 w-full group">
             <img
-              src="https://images.unsplash.com/photo-1544025162-d76694265947?w=1000&auto=format&fit=crop&q=85"
-              alt="Attiéké Caviar & Grillades Royales Niamey"
+              src={
+                dailyDish?.image_url ||
+                "https://images.unsplash.com/photo-1544025162-d76694265947?w=1000&auto=format&fit=crop&q=85"
+              }
+              alt={dailyDish?.name || "Plat du jour à Niamey"}
               className="w-full h-full object-cover rounded-2xl transition-transform duration-700 ease-out group-hover:scale-105"
             />
-            {/* Soft Dark Vignette for contrast */}
+
+            {/* Soft Dark Vignette */}
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
 
             {/* Top Quality Badge */}
             <div className="absolute top-3 left-3 flex items-center gap-2">
               <span className="px-2.5 py-1 rounded-full bg-orange-500 text-slate-950 font-black text-xs shadow-lg flex items-center gap-1">
                 <span>👑</span>
-                <span>Plat Vedette du Sahel</span>
+                <span>{dailyDish?.name ? "Plat du jour" : "Saveurs du Sahel"}</span>
               </span>
+
               <span className="px-2 py-0.5 rounded-full bg-slate-950/80 backdrop-blur-md text-amber-300 border border-amber-500/30 text-[11px] font-bold">
                 ⭐ 4.9 (420+ avis)
               </span>
@@ -58,19 +189,31 @@ export const AnimatedHeroVisual: React.FC<{
             <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
               <div>
                 <p className="text-xs text-orange-400 font-bold uppercase tracking-wider">
-                  Recette Signature Fondatrice
+                  Cuisine fraîche du jour
                 </p>
+
                 <h3 className="text-base sm:text-lg font-black text-white leading-tight drop-shadow-md">
-                  Attiéké Caviar &amp; Poulet Braisé Doré
+                  {isLoadingDailyDish
+                    ? "Chargement du plat du jour..."
+                    : dailyDish?.name || "Plat du jour bientôt disponible"}
                 </h3>
+
                 <p className="text-xs text-slate-300 line-clamp-1 mt-0.5">
-                  Poisson thon ou poulet fermier &bull; Alloco fondant &bull; Piment doux maison
+                  {dailyDish?.description ||
+                    "Découvrez les spécialités fraîches et authentiques de Khady's Food."}
                 </p>
               </div>
 
               <div className="text-right shrink-0 bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-xl border border-orange-500/30">
-                <span className="block text-[10px] text-slate-400 font-medium">Portion Royale</span>
-                <span className="text-sm sm:text-base font-black text-amber-400">4 000 FCFA</span>
+                <span className="block text-[10px] text-slate-400 font-medium">
+                  Portion
+                </span>
+
+                <span className="text-sm sm:text-base font-black text-amber-400">
+                  {dailyDish
+                    ? `${dailyDish.price.toLocaleString()} FCFA`
+                    : "Bientôt disponible"}
+                </span>
               </div>
             </div>
           </div>
@@ -109,9 +252,13 @@ export const AnimatedHeroVisual: React.FC<{
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-black text-white">Khady&apos;s Food &amp; Event</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold">Partenaire Officiel</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold">
+                  Partenaire Officiel
+                </span>
               </div>
-              <p className="text-[11px] text-slate-400">Grande Mosquée &bull; Quartier Koubia &bull; Plateau</p>
+              <p className="text-[11px] text-slate-400">
+                Grande Mosquée &bull; Quartier Koubia &bull; Plateau
+              </p>
             </div>
           </div>
 

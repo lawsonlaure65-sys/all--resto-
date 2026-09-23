@@ -295,13 +295,27 @@ export function App() {
     return val.length > 0 ? val : khadysRestaurant.menu.slice(0, 7);
   }, [khadysRestaurant]);
 
+  // Filtre protecteur anti-spécialités permanentes pour le plat du jour
+  const isPermanentDishName = (name?: string) => {
+    const norm = (name || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+    return (
+      norm.includes("attieke caviar") ||
+      norm.includes("attieke") ||
+      norm.includes("doukounou caviar")
+    );
+  };
+
   // Synchronisation dynamique des Plats du Jour de chez Khady's Food & Event
   const displayedDailySpecials = useMemo(() => {
     const list: DailySpecial[] = [];
     const seenTitles = new Set<string>();
 
     // 1. Menu en direct Supabase (ou plat actif Khady's Food)
-    if (supabaseMenu) {
+    if (supabaseMenu && !isPermanentDishName(supabaseMenu.title)) {
       list.push(supabaseMenu);
       seenTitles.add(supabaseMenu.title.toLowerCase().trim());
     }
@@ -310,10 +324,11 @@ export function App() {
     if (khadysRestaurant && khadysRestaurant.menu) {
       const khadysDailyDishes = khadysRestaurant.menu.filter(
         (m) =>
-          m.isDailySpecial ||
-          m.isMenuDuJour ||
-          m.dishCategory === "menu_du_jour" ||
-          m.category === "⭐ Menu & Plat du Jour"
+          !isPermanentDishName(m.name) &&
+          (m.isDailySpecial ||
+            m.isMenuDuJour ||
+            m.dishCategory === "menu_du_jour" ||
+            m.category === "⭐ Menu & Plat du Jour")
       );
 
       khadysDailyDishes.forEach((d) => {
@@ -340,10 +355,10 @@ export function App() {
       });
     }
 
-    // 3. Compléter avec les formules du jour par défaut si non encore présentes
+    // 3. Compléter avec les formules du jour par défaut si non encore présentes (hors permanents)
     DAILY_SPECIALS_DATA.forEach((s) => {
       const normTitle = s.title.toLowerCase().trim();
-      if (!seenTitles.has(normTitle)) {
+      if (!seenTitles.has(normTitle) && !isPermanentDishName(s.title)) {
         list.push(s);
         seenTitles.add(normTitle);
       }
@@ -796,6 +811,23 @@ export function App() {
 
             {/* Hero & Search Banner */}
             <HeroBanner
+              featuredDish={
+                supabaseMenu && !isPermanentDishName(supabaseMenu.title)
+                  ? {
+                      name: supabaseMenu.title,
+                      price: supabaseMenu.price,
+                      image: supabaseMenu.image,
+                      description: supabaseMenu.description,
+                    }
+                  : displayedDailySpecials.length > 0
+                  ? {
+                      name: displayedDailySpecials[0].title,
+                      price: displayedDailySpecials[0].price,
+                      image: displayedDailySpecials[0].image,
+                      description: displayedDailySpecials[0].description,
+                    }
+                  : null
+              }
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               selectedCuisine={selectedCuisine}
@@ -923,14 +955,22 @@ export function App() {
                     key={special.id}
                     special={special}
                     onAddToCart={handleAddDailySpecialToCart}
-                    onEditSpecial={(spec) => {
-                      setSelectedSpecialForEdit(spec);
-                      setIsEditSpecialOpen(true);
-                    }}
-                    onShareSpecial={(spec) => {
-                      setSelectedSpecialForShare(spec);
-                      setIsSpecialShareOpen(true);
-                    }}
+                    onEditSpecial={
+                      currentRole === "admin"
+                        ? (spec) => {
+                            setSelectedSpecialForEdit(spec);
+                            setIsEditSpecialOpen(true);
+                          }
+                        : undefined
+                    }
+                    onShareSpecial={
+                      currentRole === "admin"
+                        ? (spec) => {
+                            setSelectedSpecialForShare(spec);
+                            setIsSpecialShareOpen(true);
+                          }
+                        : undefined
+                    }
                   />
                 ))}
               </div>
