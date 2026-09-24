@@ -300,6 +300,22 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
       };
     });
 
+    // Conserver les restaurants locaux non encore migrés sur Supabase
+    const fetchedIds = new Set(restaurants.map((r) => r.id));
+    const isKhadyFetched = restaurants.some(
+      (r) => r.id === "resto-khadys-food" || r.name.toLowerCase().includes("khady")
+    );
+
+    RESTAURANTS_DATA.forEach((defaultResto) => {
+      const alreadyIncluded =
+        fetchedIds.has(defaultResto.id) ||
+        (defaultResto.id === "resto-khadys-food" && isKhadyFetched);
+
+      if (!alreadyIncluded) {
+        restaurants.push(defaultResto);
+      }
+    });
+
     return { success: true, data: restaurants };
   } catch (err: any) {
     return { success: false, error: err?.message || String(err) };

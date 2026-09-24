@@ -30,6 +30,7 @@ import {
 } from "../services/supabaseDishService";
 import { Restaurant } from "../types";
 import { loadStoredRestaurants, saveStoredRestaurants } from "../services/dishStorageService";
+import { RESTAURANTS_DATA } from "../data/allorestoData";
 
 interface SupabaseSyncModalProps {
   isOpen: boolean;
@@ -101,16 +102,23 @@ export const SupabaseSyncModal: React.FC<SupabaseSyncModalProps> = ({
     setTimeout(() => setCopiedSql(false), 2500);
   };
 
-  const handleSyncLocalToSupabase = async () => {
+  const handleSyncLocalToSupabase = async (onlyKhadys = false) => {
     setIsSyncing(true);
     try {
-      const currentRestos = loadStoredRestaurants();
-      const res = await syncAllLocalDataToSupabase(currentRestos);
+      const allRestos = loadStoredRestaurants();
+      const fullList = allRestos.length > 1 ? allRestos : RESTAURANTS_DATA;
+      const targetRestos = onlyKhadys
+        ? fullList.filter((r) => r.id === "resto-khadys-food" || r.name.toLowerCase().includes("khady"))
+        : fullList;
+
+      const res = await syncAllLocalDataToSupabase(targetRestos);
       if (res.success) {
         setTestResult({
           success: true,
           tableExists: true,
-          message: `Synchronisation réussie ! ${res.count} plats et restaurants ont été envoyés sur Supabase.`,
+          message: onlyKhadys
+            ? `Synchronisation réussie ! Les ${res.count} plats officiels de Khady's Food ont été sauvegardés sur Supabase.`
+            : `Synchronisation réussie ! Les ${res.count} plats de l'ensemble des restaurants ont été sauvegardés sur Supabase.`,
         });
       } else {
         setTestResult({
@@ -135,17 +143,19 @@ export const SupabaseSyncModal: React.FC<SupabaseSyncModalProps> = ({
       if (res.success && res.data && res.data.length > 0) {
         saveStoredRestaurants(res.data);
         onRestaurantsUpdated(res.data);
+        const khadyCount =
+          res.data.find((r) => r.id === "resto-khadys-food" || r.name.toLowerCase().includes("khady"))?.menu.length || 24;
         const total = res.data.reduce((sum, r) => sum + r.menu.length, 0);
         setTestResult({
           success: true,
           tableExists: true,
-          message: `Succès ! ${total} plats importés depuis Supabase. Les données de l'application sont à jour.`,
+          message: `Succès ! ${khadyCount} plats Khady's Food synchronisés depuis Supabase (${total} plats au catalogue complet avec partenaires).`,
         });
       } else if (res.success && (!res.data || res.data.length === 0)) {
         setTestResult({
           success: true,
           tableExists: true,
-          message: "La base Supabase est connectée mais ne contient aucun plat pour l'instant. Cliquez sur 'Envoyer tous les plats vers Supabase'.",
+          message: "La base Supabase est connectée mais ne contient aucun plat pour l'instant. Cliquez sur 'Envoyer les plats vers Supabase'.",
         });
       } else {
         setTestResult({
@@ -371,57 +381,96 @@ export const SupabaseSyncModal: React.FC<SupabaseSyncModalProps> = ({
             )}
 
             {/* Cloud Sync Actions */}
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-950 to-slate-900 border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-950 to-slate-900 border border-slate-800 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <h4 className="text-sm font-black text-white flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-emerald-400" />
                     <span>Synchronisation des Données en 1 Clic</span>
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Transférez vos plats actuels vers Supabase ou rechargez la base existante.
+                    Transférez vos plats vers Supabase ou synchronisez l&apos;application en direct.
                   </p>
                 </div>
-                <span className="text-xs font-bold text-slate-400">
-                  {restaurants.reduce((sum, r) => sum + r.menu.length, 0)} plats locaux prêts
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] px-2.5 py-1 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-300 font-bold">
+                    👑 Khady&apos;s : {restaurants.find((r) => r.id === "resto-khadys-food" || r.name.toLowerCase().includes("khady"))?.menu.length || 24} plats
+                  </span>
+                  <span className="text-[11px] px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-bold">
+                    Total : {restaurants.reduce((sum, r) => sum + r.menu.length, 0)} plats
+                  </span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {/* Clarification Notice on 24 vs 58 dishes */}
+              <div className="p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2.5">
+                <HelpCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold text-white">Pourquoi 24 plats vs 58 plats ?</p>
+                  <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                    • <strong>24 plats :</strong> C&apos;est la carte officielle intégrale de <strong>Khady&apos;s Food &amp; Event</strong> (choukouya, pastels, capitaine braisé, tiep...).<br />
+                    • <strong>58 plats :</strong> C&apos;est la totalité des 5 restaurants partenaires de Niamey réunis (Khady&apos;s Food + Le Khadafi Palace + L&apos;Oasis du Plateau + Le Burger Gourmet + Saveurs du Fleuve).
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                {/* Option 1: Sync only Khady's Food */}
                 <button
                   type="button"
-                  onClick={handleSyncLocalToSupabase}
+                  onClick={() => handleSyncLocalToSupabase(true)}
                   disabled={isSyncing || !supabaseUrl || !supabaseKey}
-                  className="p-3 rounded-xl bg-slate-900 hover:bg-emerald-950/40 border border-slate-700 hover:border-emerald-500/50 text-left transition flex items-center gap-3 cursor-pointer disabled:opacity-50 group"
+                  className="p-3 rounded-xl bg-slate-900 hover:bg-orange-950/40 border border-slate-700 hover:border-orange-500/50 text-left transition flex flex-col gap-2 cursor-pointer disabled:opacity-50 group"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
-                    <UploadCloud className={`w-5 h-5 ${isSyncing ? "animate-bounce" : ""}`} />
+                  <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 group-hover:scale-105 transition-transform shrink-0">
+                    <UploadCloud className={`w-4 h-4 ${isSyncing ? "animate-bounce" : ""}`} />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-white block">
-                      {isSyncing ? "Envoi en cours..." : "1. Envoyer les Plats Locaux vers Supabase"}
+                      1A. Envoyer Khady&apos;s Food
                     </span>
-                    <span className="text-[10px] text-slate-400">
-                      Sauvegarde tous les {restaurants.reduce((sum, r) => sum + r.menu.length, 0)} plats actuels dans votre PostgreSQL
+                    <span className="text-[10px] text-orange-300/80 block mt-0.5 font-medium">
+                      24 plats officiels uniquement
                     </span>
                   </div>
                 </button>
 
+                {/* Option 2: Sync All restaurants */}
+                <button
+                  type="button"
+                  onClick={() => handleSyncLocalToSupabase(false)}
+                  disabled={isSyncing || !supabaseUrl || !supabaseKey}
+                  className="p-3 rounded-xl bg-slate-900 hover:bg-emerald-950/40 border border-slate-700 hover:border-emerald-500/50 text-left transition flex flex-col gap-2 cursor-pointer disabled:opacity-50 group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+                    <UploadCloud className={`w-4 h-4 ${isSyncing ? "animate-bounce" : ""}`} />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white block">
+                      1B. Envoyer Tous les Restos
+                    </span>
+                    <span className="text-[10px] text-emerald-300/80 block mt-0.5 font-medium">
+                      58 plats (5 restaurants Niamey)
+                    </span>
+                  </div>
+                </button>
+
+                {/* Option 3: Reload from Supabase */}
                 <button
                   type="button"
                   onClick={handleFetchFromSupabase}
                   disabled={isFetching || !supabaseUrl || !supabaseKey}
-                  className="p-3 rounded-xl bg-slate-900 hover:bg-cyan-950/40 border border-slate-700 hover:border-cyan-500/50 text-left transition flex items-center gap-3 cursor-pointer disabled:opacity-50 group"
+                  className="p-3 rounded-xl bg-slate-900 hover:bg-cyan-950/40 border border-slate-700 hover:border-cyan-500/50 text-left transition flex flex-col gap-2 cursor-pointer disabled:opacity-50 group"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform shrink-0">
-                    <DownloadCloud className={`w-5 h-5 ${isFetching ? "animate-bounce" : ""}`} />
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform shrink-0">
+                    <DownloadCloud className={`w-4 h-4 ${isFetching ? "animate-bounce" : ""}`} />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-white block">
-                      {isFetching ? "Chargement..." : "2. Recharger depuis Supabase"}
+                      2. Recharger de Supabase
                     </span>
-                    <span className="text-[10px] text-slate-400">
-                      Met à jour l&apos;application avec les données du cloud
+                    <span className="text-[10px] text-cyan-300/80 block mt-0.5 font-medium">
+                      Synchronise l&apos;app avec le cloud
                     </span>
                   </div>
                 </button>
