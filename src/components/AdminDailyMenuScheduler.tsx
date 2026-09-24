@@ -227,9 +227,14 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     );
   };
 
-  const selectableKhadysDishes = khadysDishes.filter(
-    (dish) => !isPermanentDish(dish)
-  );
+  const selectableKhadysDishes = useMemo(() => {
+    const seen = new Set<string>();
+    return khadysDishes.filter((dish) => {
+      if (!dish || !dish.id || seen.has(dish.id)) return false;
+      seen.add(dish.id);
+      return !isPermanentDish(dish);
+    });
+  }, [khadysDishes]);
 
   const handleImportFromKhadysFood = async () => {
     setIsSyncingKhadys(true);

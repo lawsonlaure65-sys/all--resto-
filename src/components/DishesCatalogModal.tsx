@@ -141,7 +141,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
 
   // Filtered dishes memoization
   const filteredDishes = useMemo(() => {
-    return dishes.filter((dish) => {
+    const list = dishes.filter((dish) => {
       // 1. Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -238,6 +238,14 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
         if ((dish.spiceLevel || 0) !== selectedSpiceLevel) return false;
       }
 
+      return true;
+    });
+
+    // Deduplicate by dish.id to prevent any duplicate key errors
+    const seen = new Set<string>();
+    return list.filter((dish) => {
+      if (!dish || !dish.id || seen.has(dish.id)) return false;
+      seen.add(dish.id);
       return true;
     });
   }, [
@@ -627,7 +635,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 pb-4">
-              {filteredDishes.map((dish) => {
+              {filteredDishes.map((dish, index) => {
                 // Find restaurant name if available
                 const matchedResto = restaurants.find((r) =>
                   r.menu.some((m) => m.id === dish.id)
@@ -635,7 +643,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
 
                 return (
                   <div
-                    key={dish.id}
+                    key={`${dish.id}-${matchedResto?.id || index}`}
                     className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-slate-950 border border-slate-800/90 hover:border-orange-500/40 transition-all flex flex-col justify-between group shadow-lg space-y-2.5 sm:space-y-3"
                   >
                     <div className="space-y-2">

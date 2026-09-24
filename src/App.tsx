@@ -292,7 +292,13 @@ export function App() {
   const khadysValidatedDishes = useMemo(() => {
     if (!khadysRestaurant || !khadysRestaurant.menu) return [];
     const val = khadysRestaurant.menu.filter((m) => m.category === "Les Plats Validés Khady's");
-    return val.length > 0 ? val : khadysRestaurant.menu.slice(0, 7);
+    const base = val.length > 0 ? val : khadysRestaurant.menu.slice(0, 7);
+    const seen = new Set<string>();
+    return base.filter((d) => {
+      if (!d || !d.id || seen.has(d.id)) return false;
+      seen.add(d.id);
+      return true;
+    });
   }, [khadysRestaurant]);
 
   // Filtre protecteur anti-spécialités permanentes pour le plat du jour
@@ -388,8 +394,20 @@ export function App() {
   const [isEditSpecialOpen, setIsEditSpecialOpen] = useState<boolean>(false);
   const [selectedSpecialForEdit, setSelectedSpecialForEdit] = useState<DailySpecial | null>(null);
 
-  // Flattened all dishes across stored restaurants
-  const allDishes = useMemo(() => restaurants.flatMap((r) => r.menu), [restaurants]);
+  // Flattened all dishes across stored restaurants (strictly deduplicated by id)
+  const allDishes = useMemo(() => {
+    const seen = new Set<string>();
+    const list: MenuItem[] = [];
+    for (const r of restaurants) {
+      for (const d of r.menu || []) {
+        if (d && d.id && !seen.has(d.id)) {
+          seen.add(d.id);
+          list.push(d);
+        }
+      }
+    }
+    return list;
+  }, [restaurants]);
 
   // Cart Calculations
   const cartTotal = cartItems.reduce((sum, it) => sum + it.totalPrice, 0);
@@ -1023,9 +1041,9 @@ export function App() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                {khadysValidatedDishes.map((dish) => (
+                {khadysValidatedDishes.map((dish, idx) => (
                   <DishCard
-                    key={dish.id}
+                    key={`${dish.id}-${idx}`}
                     name={dish.name}
                     description={dish.description}
                     price={dish.price}

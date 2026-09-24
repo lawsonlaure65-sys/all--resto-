@@ -65,12 +65,71 @@ export const DEFAULT_DISH_FALLBACK_URL =
 export const DEFAULT_RESTAURANT_FALLBACK_URL =
   "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=80";
 
+// Strictly deduplicate dishes in a menu by id
+export function deduplicateMenu(menu: MenuItem[]): MenuItem[] {
+  if (!Array.isArray(menu)) return [];
+  const seenIds = new Set<string>();
+  const result: MenuItem[] = [];
+  for (const dish of menu) {
+    if (!dish || !dish.id) continue;
+    if (!seenIds.has(dish.id)) {
+      seenIds.add(dish.id);
+      result.push(dish);
+    }
+  }
+  return result;
+}
+
+// Strictly deduplicate restaurants and prevent multiple entries for Khady's Food
+export function deduplicateRestaurants(restaurants: Restaurant[]): Restaurant[] {
+  if (!Array.isArray(restaurants)) return [];
+  const seenIds = new Set<string>();
+  let khadyFound = false;
+  const result: Restaurant[] = [];
+
+  for (const resto of restaurants) {
+    if (!resto || !resto.id) continue;
+    const isKhady =
+      resto.id === "resto-khadys-food" ||
+      resto.id === "a8168cb5-fe46-4368-85fa-be1a64d854b5" ||
+      resto.name.toLowerCase().includes("khady");
+
+    if (isKhady) {
+      if (khadyFound) {
+        // Merge dishes into the existing Khady restaurant
+        const existingKhady = result.find(
+          (r) =>
+            r.id === "resto-khadys-food" ||
+            r.id === "a8168cb5-fe46-4368-85fa-be1a64d854b5" ||
+            r.name.toLowerCase().includes("khady")
+        );
+        if (existingKhady) {
+          existingKhady.menu = deduplicateMenu([...existingKhady.menu, ...(resto.menu || [])]);
+        }
+        continue;
+      }
+      khadyFound = true;
+    } else {
+      if (seenIds.has(resto.id)) continue;
+      seenIds.add(resto.id);
+    }
+
+    result.push({
+      ...resto,
+      menu: deduplicateMenu(resto.menu || []),
+    });
+  }
+
+  return result;
+}
+
 // Ensure all dishes have a valid stock_count with realistic inventory and non-empty images
 export function normalizeDishesStock(restaurants: Restaurant[]): Restaurant[] {
-  return restaurants.map((resto) => ({
+  const dedupedRestaurants = deduplicateRestaurants(restaurants);
+  return dedupedRestaurants.map((resto) => ({
     ...resto,
     image: resto.image && resto.image.trim() !== "" ? resto.image : DEFAULT_RESTAURANT_FALLBACK_URL,
-    menu: resto.menu.map((dish, index) => {
+    menu: deduplicateMenu(resto.menu).map((dish, index) => {
       const safeImage =
         dish.image && dish.image.trim() !== "" ? dish.image : DEFAULT_DISH_FALLBACK_URL;
 
@@ -116,33 +175,43 @@ export function loadStoredRestaurants(): Restaurant[] {
       if (Array.isArray(parsed) && parsed.length > 0) {
         const dishCount = parsed.reduce((sum: number, r: any) => sum + (r.menu?.length || 0), 0);
         if (dishCount > 0) {
+          const dedupedParsed = deduplicateRestaurants(parsed);
           // Merge partner updates (websiteUrl, onlineCatalogUrl, certified badge, updated names)
-          const merged = parsed.map((resto: Restaurant) => {
-            const defaultMatch = RESTAURANTS_DATA.find((d) => d.id === resto.id);
+          const merged = dedupedParsed.map((resto: Restaurant) => {
+            const defaultMatch =
+              RESTAURANTS_DATA.find((d) => d.id === resto.id) ||
+              (resto.name.toLowerCase().includes("khady")
+                ? RESTAURANTS_DATA.find((d) => d.id === "resto-khadys-food")
+                : undefined);
+
             if (defaultMatch) {
-              let updatedMenu = resto.menu || [];
-              if (resto.id === "resto-khadys-food" && defaultMatch.menu) {
+              let updatedMenu = deduplicateMenu(resto.menu || []);
+              const isKhady = resto.id === "resto-khadys-food" || resto.name.toLowerCase().includes("khady");
+              if (isKhady && defaultMatch.menu) {
                 const existingIds = new Set(updatedMenu.map((m) => m.id));
                 const missingDefaults = defaultMatch.menu.filter((m) => !existingIds.has(m.id));
                 if (missingDefaults.length > 0) {
-                  updatedMenu = [...missingDefaults, ...updatedMenu];
+                  updatedMenu = [...updatedMenu, ...missingDefaults];
                 }
               }
               return {
                 ...resto,
-                name: defaultMatch.id === "resto-khadys-food" ? defaultMatch.name : resto.name,
-                tagline: defaultMatch.id === "resto-khadys-food" ? defaultMatch.tagline : resto.tagline,
-                cuisine: defaultMatch.id === "resto-khadys-food" ? defaultMatch.cuisine : resto.cuisine,
-                promoBadge: defaultMatch.id === "resto-khadys-food" ? defaultMatch.promoBadge : resto.promoBadge,
-                openingHours: defaultMatch.id === "resto-khadys-food" ? defaultMatch.openingHours : resto.openingHours,
+                name: isKhady ? defaultMatch.name : resto.name,
+                tagline: isKhady ? defaultMatch.tagline : resto.tagline,
+                cuisine: isKhady ? defaultMatch.cuisine : resto.cuisine,
+                promoBadge: isKhady ? defaultMatch.promoBadge : resto.promoBadge,
+                openingHours: isKhady ? defaultMatch.openingHours : resto.openingHours,
                 websiteUrl: resto.websiteUrl || defaultMatch.websiteUrl,
                 onlineCatalogUrl: resto.onlineCatalogUrl || defaultMatch.onlineCatalogUrl,
                 isPartnerCertified: resto.isPartnerCertified ?? defaultMatch.isPartnerCertified,
                 partnerStatusBadge: resto.partnerStatusBadge || defaultMatch.partnerStatusBadge,
-                menu: updatedMenu,
+                menu: deduplicateMenu(updatedMenu),
               };
             }
-            return resto;
+            return {
+              ...resto,
+              menu: deduplicateMenu(resto.menu || []),
+            };
           });
           const normalized = normalizeDishesStock(merged);
           return normalized;
@@ -224,13 +293,15 @@ export function saveStoredRestaurants(restaurants: Restaurant[]): boolean {
     return false;
   }
 
+  const cleanRestaurants = deduplicateRestaurants(restaurants);
+
   // Nettoyer systématiquement la clé de backup redondante pour libérer 50% du quota localStorage (évite QuotaExceededError)
   try {
     localStorage.removeItem(STORAGE_KEY_EMERGENCY_BACKUP);
   } catch {}
 
   try {
-    const json = JSON.stringify(restaurants);
+    const json = JSON.stringify(cleanRestaurants);
     localStorage.setItem(STORAGE_KEY_RESTAURANTS, json);
     try {
       localStorage.setItem(STORAGE_KEY_LAST_BACKUP, new Date().toISOString());

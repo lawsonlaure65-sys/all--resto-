@@ -191,7 +191,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // State: Dishes & Menu (Initialized from LocalStorage persistence)
   const [dishesList, setDishesList] = useState<MenuItem[]>(() => {
     const stored = loadStoredRestaurants();
-    return stored.flatMap((r) => r.menu);
+    const seen = new Set<string>();
+    const list: MenuItem[] = [];
+    for (const r of stored) {
+      for (const d of r.menu || []) {
+        if (d && d.id && !seen.has(d.id)) {
+          seen.add(d.id);
+          list.push(d);
+        }
+      }
+    }
+    return list;
   });
   const [showDishModal, setShowDishModal] = useState<boolean>(false);
   const [showSupabaseModal, setShowSupabaseModal] = useState<boolean>(false);

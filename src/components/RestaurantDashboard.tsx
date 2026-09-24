@@ -162,7 +162,13 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
     const currentResto = session
       ? stored.find((r) => r.id === session.restaurantId) || stored[0]
       : stored[0];
-    return currentResto?.menu || RESTAURANTS_DATA[0].menu;
+    const raw = currentResto?.menu || RESTAURANTS_DATA[0].menu;
+    const seen = new Set<string>();
+    return raw.filter((d) => {
+      if (!d || !d.id || seen.has(d.id)) return false;
+      seen.add(d.id);
+      return true;
+    });
   });
 
   // Modal State
@@ -180,7 +186,13 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
             r.name.toLowerCase().includes(session.restaurantName.toLowerCase())
         ) || stored[0];
       if (match?.menu) {
-        setMenuItems(match.menu);
+        const seen = new Set<string>();
+        const deduped = match.menu.filter((d) => {
+          if (!d || !d.id || seen.has(d.id)) return false;
+          seen.add(d.id);
+          return true;
+        });
+        setMenuItems(deduped);
       }
     }
   }, [session]);

@@ -269,11 +269,26 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
 
     // Map dishes per restaurant
     const restaurants: Restaurant[] = restosData.map((r: any) => {
-      const restoDishes = (dishesData || [])
+      const rawDishes = (dishesData || [])
         .filter((d: any) => d.restaurant_id === r.id)
         .map(mapSupabaseRowToDish);
 
-      const localMatch = RESTAURANTS_DATA.find((lr) => lr.id === r.id);
+      // Deduplicate dishes by id
+      const seenDishIds = new Set<string>();
+      const restoDishes: MenuItem[] = [];
+      for (const d of rawDishes) {
+        if (!d || !d.id) continue;
+        if (!seenDishIds.has(d.id)) {
+          seenDishIds.add(d.id);
+          restoDishes.push(d);
+        }
+      }
+
+      const localMatch =
+        RESTAURANTS_DATA.find((lr) => lr.id === r.id) ||
+        (r.name && r.name.toLowerCase().includes("khady")
+          ? RESTAURANTS_DATA.find((lr) => lr.id === "resto-khadys-food")
+          : undefined);
 
       return {
         id: r.id,
@@ -300,16 +315,22 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
       };
     });
 
-    // Conserver les restaurants locaux non encore migrés sur Supabase
+    // Conserver les restaurants locaux non encore migrés sur Supabase sans doublons
     const fetchedIds = new Set(restaurants.map((r) => r.id));
     const isKhadyFetched = restaurants.some(
-      (r) => r.id === "resto-khadys-food" || r.name.toLowerCase().includes("khady")
+      (r) =>
+        r.id === "resto-khadys-food" ||
+        r.id === "a8168cb5-fe46-4368-85fa-be1a64d854b5" ||
+        r.name.toLowerCase().includes("khady")
     );
 
     RESTAURANTS_DATA.forEach((defaultResto) => {
+      const isDefaultKhady =
+        defaultResto.id === "resto-khadys-food" ||
+        defaultResto.name.toLowerCase().includes("khady");
+
       const alreadyIncluded =
-        fetchedIds.has(defaultResto.id) ||
-        (defaultResto.id === "resto-khadys-food" && isKhadyFetched);
+        fetchedIds.has(defaultResto.id) || (isDefaultKhady && isKhadyFetched);
 
       if (!alreadyIncluded) {
         restaurants.push(defaultResto);
