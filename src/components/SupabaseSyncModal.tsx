@@ -402,7 +402,7 @@ export const SupabaseSyncModal: React.FC<SupabaseSyncModalProps> = ({
                       {isSyncing ? "Envoi en cours..." : "1. Envoyer les Plats Locaux vers Supabase"}
                     </span>
                     <span className="text-[10px] text-slate-400">
-                      Sauvegarde tous les 65+ plats actuels dans votre PostgreSQL
+                      Sauvegarde tous les {restaurants.reduce((sum, r) => sum + r.menu.length, 0)} plats actuels dans votre PostgreSQL
                     </span>
                   </div>
                 </button>

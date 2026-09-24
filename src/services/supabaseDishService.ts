@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
   address TEXT DEFAULT 'Niamey, Niger',
   city TEXT DEFAULT 'Niamey',
   image TEXT,
-  banner_image TEXT,
   is_promoted BOOLEAN DEFAULT false,
   promo_badge TEXT,
   is_open BOOLEAN DEFAULT true,
@@ -205,7 +204,7 @@ export function mapSupabaseRowToDish(row: any): MenuItem {
   };
 }
 
-// Helper: Convert Restaurant to Supabase row format
+// Helper: Convert Restaurant to Supabase row format (sans colonnes superflues ni banner_image)
 export function mapRestaurantToSupabaseRow(resto: Restaurant) {
   return {
     id: resto.id,
@@ -221,7 +220,6 @@ export function mapRestaurantToSupabaseRow(resto: Restaurant) {
     address: resto.address || "Niamey, Niger",
     city: resto.city || "Niamey",
     image: resto.image || "",
-    banner_image: resto.bannerImage || "",
     is_promoted: Boolean(resto.isPromoted),
     promo_badge: resto.promoBadge || null,
     is_open: resto.isOpen !== false,
@@ -244,10 +242,10 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
   }
 
   try {
-    // Fetch restaurants
+    // Récupérer les restaurants avec uniquement les colonnes sûres (aucun banner_image)
     const { data: restosData, error: restosError } = await client
       .from("restaurants")
-      .select("*")
+      .select("id, name")
       .order("name", { ascending: true });
 
     if (restosError) {
@@ -275,27 +273,29 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
         .filter((d: any) => d.restaurant_id === r.id)
         .map(mapSupabaseRowToDish);
 
+      const localMatch = RESTAURANTS_DATA.find((lr) => lr.id === r.id);
+
       return {
         id: r.id,
         name: r.name,
-        tagline: r.tagline || "",
-        cuisine: r.cuisine || "",
-        cuisineCategory: r.cuisine_category || "all",
-        rating: Number(r.rating || 4.8),
-        reviewCount: Number(r.review_count || 100),
-        deliveryTime: r.delivery_time || "25-40 min",
-        minOrder: Number(r.min_order || 1000),
-        deliveryFee: Number(r.delivery_fee || 500),
-        address: r.address || "Niamey, Niger",
-        city: r.city || "Niamey",
-        image: r.image || "",
-        bannerImage: r.banner_image || "",
-        isPromoted: Boolean(r.is_promoted),
-        promoBadge: r.promo_badge || undefined,
-        isOpen: r.is_open !== false,
-        openingHours: r.opening_hours || "07h30 - 23h00",
-        phone: r.phone || "+227 96 00 00 00",
-        services: Array.isArray(r.services) ? r.services : ["delivery", "takeaway", "booking"],
+        tagline: localMatch?.tagline || "",
+        cuisine: localMatch?.cuisine || "Africain",
+        cuisineCategory: localMatch?.cuisineCategory || "africain",
+        rating: Number(localMatch?.rating || 4.8),
+        reviewCount: Number(localMatch?.reviewCount || 100),
+        deliveryTime: localMatch?.deliveryTime || "25-40 min",
+        minOrder: Number(localMatch?.minOrder || 1000),
+        deliveryFee: Number(localMatch?.deliveryFee || 500),
+        address: localMatch?.address || "Niamey, Niger",
+        city: localMatch?.city || "Niamey",
+        image: localMatch?.image || "",
+        bannerImage: localMatch?.bannerImage || "",
+        isPromoted: Boolean(localMatch?.isPromoted),
+        promoBadge: localMatch?.promoBadge || undefined,
+        isOpen: localMatch?.isOpen !== false,
+        openingHours: localMatch?.openingHours || "07h30 - 23h00",
+        phone: localMatch?.phone || "+227 96 00 00 00",
+        services: localMatch?.services || ["delivery", "takeaway", "booking"],
         menu: restoDishes,
       };
     });
@@ -316,35 +316,47 @@ export async function saveDishToSupabase(
     return { success: false, error: "Supabase non configuré" };
   }
 
-    const restoId = targetRestaurantId || "resto-khadys-food";
+  const restoId = targetRestaurantId || "resto-khadys-food";
 
   try {
-    // 1. Ensure restaurant exists in Supabase to respect foreign key constraint
-    const defaultResto = RESTAURANTS_DATA.find((r) => r.id === restoId) || {
-      id: restoId,
-      name: "Cuisine Allôresto Niamey",
-      tagline: "Spécialités Nigériennes & Sahéliennes",
-      cuisine: "Africain & Grillades",
-      cuisineCategory: "africain",
-      rating: 4.9,
-      reviewCount: 120,
-      deliveryTime: "25-40 min",
-      minOrder: 1000,
-      deliveryFee: 500,
-      address: "Niamey, Niger",
-      city: "Niamey",
-      image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
-      isOpen: true,
-      openingHours: "07h30 - 23h00",
-      phone: "+227 96 00 00 00",
-      services: ["delivery", "takeaway", "booking"],
-      menu: [],
-    };
-    await client.from("restaurants").upsert(mapRestaurantToSupabaseRow(defaultResto as Restaurant));
+    // 1. S'assurer que le restaurant existe sans dépendre de banner_image
+    const { data: existingResto } = await client
+      .from("restaurants")
+      .select("id, name")
+      .eq("id", restoId)
+      .maybeSingle();
 
-    // 2. Upsert dish
-    const row = mapDishToSupabaseRow(dish, restoId);
-    const { error } = await client.from("dishes").upsert(row);
+    if (!existingResto) {
+      const defaultResto = RESTAURANTS_DATA.find((r) => r.id === restoId);
+      await client.from("restaurants").upsert({
+        id: restoId,
+        name: defaultResto?.name || "Khady's Food & Event",
+      });
+    }
+
+    // 2. Préparer l'objet plat avec les colonnes existantes
+    const cleanRow: any = {
+      id: dish.id,
+      restaurant_id: restoId,
+      name: dish.name,
+      description: dish.description || null,
+      price: dish.price,
+      image_url: dish.image || null,
+      category: dish.category || null,
+      is_available: dish.isAvailable ?? true,
+      is_daily_special: false,
+      is_menu_du_jour: false,
+    };
+
+    let { error } = await client.from("dishes").upsert(cleanRow);
+
+    // Si image_url n'existe pas dans le schéma, tenter avec la colonne image
+    if (error && (error.message?.includes("image_url") || error.code === "PGRST204")) {
+      delete cleanRow.image_url;
+      cleanRow.image = dish.image || null;
+      const retryRes = await client.from("dishes").upsert(cleanRow);
+      error = retryRes.error;
+    }
 
     if (error) {
       console.error("Supabase upsert dish error:", error);
@@ -378,7 +390,7 @@ export async function deleteDishFromSupabase(
   }
 }
 
-// 4. Synchronize all local restaurants & dishes to Supabase (One-Click Migration)
+// 4. Synchronize all local restaurants & dishes to Supabase (One-Click Migration sans banner_image)
 export async function syncAllLocalDataToSupabase(
   restaurants: Restaurant[]
 ): Promise<{ success: boolean; count: number; error?: string }> {
@@ -388,29 +400,99 @@ export async function syncAllLocalDataToSupabase(
   }
 
   try {
-    // 1. Upsert all restaurants
-    const restoRows = restaurants.map(mapRestaurantToSupabaseRow);
-    const { error: restoErr } = await client.from("restaurants").upsert(restoRows);
+    // 1. Récupérer uniquement les colonnes réellement existantes (id, name)
+    const { data: existingRestos, error: restoErr } = await client
+      .from("restaurants")
+      .select("id, name");
+
     if (restoErr) {
-      return { success: false, count: 0, error: `Erreur restaurants: ${restoErr.message}` };
+      return { success: false, count: 0, error: `Erreur restaurant : ${restoErr.message}` };
     }
 
-    // 2. Collect and upsert all dishes
+    const existingIds = new Set<string>((existingRestos || []).map((r: any) => r.id));
+
+    // Identifier le restaurant Khady's en base s'il a un ID spécifique (ex: UUID)
+    const khadysInDb = (existingRestos || []).find(
+      (r: any) =>
+        r.id === "resto-khadys-food" ||
+        (r.name && r.name.toLowerCase().includes("khady")) ||
+        r.id === "a8168cb5-fe46-4368-85fa-be1a64d854b5"
+    );
+
+    // Insérer uniquement les restaurants manquants avec les colonnes minimales sûres (id, name)
+    const missingRestos = restaurants
+      .filter((r) => !existingIds.has(r.id))
+      .map((r) => ({ id: r.id, name: r.name }));
+
+    if (missingRestos.length > 0) {
+      const { error: insertRestosErr } = await client
+        .from("restaurants")
+        .upsert(missingRestos);
+
+      if (insertRestosErr) {
+        console.warn("Avertissement création restaurants :", insertRestosErr.message);
+      }
+    }
+
+    // 2. Préparer les plats sans colonnes superflues
     let totalDishes = 0;
-    const allDishRows: any[] = [];
+    const localDishes: { dish: MenuItem; targetRestoId: string }[] = [];
 
     restaurants.forEach((resto) => {
+      const targetRestoId =
+        (resto.id === "resto-khadys-food" || resto.name.toLowerCase().includes("khady")) && khadysInDb
+          ? khadysInDb.id
+          : resto.id;
+
       resto.menu.forEach((dish) => {
-        allDishRows.push(mapDishToSupabaseRow(dish, resto.id));
+        localDishes.push({ dish, targetRestoId });
         totalDishes++;
       });
     });
 
-    if (allDishRows.length > 0) {
-      const { error: dishErr } = await client.from("dishes").upsert(allDishRows);
-      if (dishErr) {
-        return { success: false, count: 0, error: `Erreur plats: ${dishErr.message}` };
-      }
+    if (localDishes.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    const createRows = (useImageUrl: boolean) =>
+      localDishes.map(({ dish, targetRestoId }) => {
+        const row: any = {
+          id: dish.id,
+          restaurant_id: targetRestoId,
+          name: dish.name,
+          description: dish.description || null,
+          price: dish.price,
+          category: dish.category || null,
+          is_available: dish.isAvailable ?? true,
+          is_daily_special: false,
+          is_menu_du_jour: false,
+        };
+        if (useImageUrl) {
+          row.image_url = dish.image || null;
+        } else {
+          row.image = dish.image || null;
+        }
+        return row;
+      });
+
+    // Tentative 1 : avec image_url
+    let rows = createRows(true);
+    let { error: dishErr } = await client.from("dishes").upsert(rows);
+
+    // Tentative 2 : si la colonne image_url n'existe pas, réessayer avec image
+    if (
+      dishErr &&
+      (dishErr.message?.includes("image_url") ||
+        dishErr.code === "PGRST204" ||
+        dishErr.message?.includes("schema cache"))
+    ) {
+      rows = createRows(false);
+      const retryRes = await client.from("dishes").upsert(rows);
+      dishErr = retryRes.error;
+    }
+
+    if (dishErr) {
+      return { success: false, count: 0, error: `Erreur plats : ${dishErr.message}` };
     }
 
     return { success: true, count: totalDishes };
