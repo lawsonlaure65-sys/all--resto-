@@ -27,7 +27,7 @@ export interface AnimatedHeroVisualProps {
   } | null;
 }
 
-const PERMANENT_KEYWORDS = ["attieke caviar", "doukounou caviar"];
+const PERMANENT_KEYWORDS = ["attieke", "doukounou"];
 
 const isPermanentName = (name?: string) => {
   const norm = (name || "")

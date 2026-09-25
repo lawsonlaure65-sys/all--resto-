@@ -207,8 +207,8 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
   const khadysDishes = khadysResto?.menu || [];
 
   const PERMANENT_DISH_KEYWORDS = [
-    "attieke caviar",
-    "doukounou caviar",
+    "attieke",
+    "doukounou",
   ];
 
   const normalizeDishName = (name = "") =>

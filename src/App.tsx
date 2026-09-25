@@ -308,11 +308,7 @@ export function App() {
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .trim();
-    return (
-      norm.includes("attieke caviar") ||
-      norm.includes("attieke") ||
-      norm.includes("doukounou caviar")
-    );
+    return norm.includes("attieke") || norm.includes("doukounou");
   };
 
   // Synchronisation dynamique des Plats du Jour de chez Khady's Food & Event

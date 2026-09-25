@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import { setupContractPdfRoute } from "./server/contractPdfRoute";
+import { setupAllorestoApiRoutes } from "./server/allorestoApi";
 
 dotenv.config();
 
@@ -14,6 +15,9 @@ app.use(express.json({ limit: "10mb" }));
 
 // Route téléchargement contrat
 setupContractPdfRoute(app);
+
+// Routes API Allôresto (daily-menus, sync dishes, restaurants menu, maintenance & cron)
+setupAllorestoApiRoutes(app);
 
 // Lazy-initialized Google Gen AI client
 function getGenAIClient(): GoogleGenAI | null {
