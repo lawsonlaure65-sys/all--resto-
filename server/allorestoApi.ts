@@ -14,47 +14,46 @@ export function isPermanentDishName(name?: string): boolean {
   return norm.includes("attieke") || norm.includes("doukounou");
 }
 
-// Helper: Validate and retrieve the server-side Supabase client
+// Helper: Validate and retrieve the server-side Supabase client (supabaseAdmin)
 export function getServerSupabaseClient(req?: Request): SupabaseClient | null {
-  const rawUrl =
-    (req?.headers["x-supabase-url"] as string) ||
-    process.env.SUPABASE_URL ||
-    process.env.VITE_SUPABASE_URL ||
-    "";
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
 
-  if (!rawUrl || !rawUrl.trim()) {
-    console.error("[Backend Supabase] ERREUR: SUPABASE_URL ou VITE_SUPABASE_URL est absent.");
+  if (!supabaseUrl || !supabaseUrl.trim()) {
+    console.error("[Backend Supabase] ERREUR: SUPABASE_URL est absent de l'environnement.");
     return null;
   }
 
-  // Clé d'API côté serveur : priorité à SUPABASE_SERVICE_ROLE_KEY si fournie et valide,
-  // avec fallback automatique sur la clé anon configurée côté backend
-  const headerKey = req?.headers["x-supabase-key"] as string | undefined;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || "";
-  const anonKey = (process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "").trim();
+  // 1. Détection de la clé de service
+  const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  const headerKey = (req?.headers["x-supabase-key"] as string || "").trim();
+  const anonKey = (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "").trim();
 
-  // Test de format rapide d'un token JWT valide (minimum 3 segments)
-  const isJwToken = (token?: string) => Boolean(token && token.length > 50 && token.split(".").length === 3);
+  // Test de validité basique d'un JWT : 3 segments séparés par '.' et pas de faux exemple "..."
+  const isValidJwt = (token: string) => {
+    return token.length > 50 && token.split(".").length === 3 && !token.endsWith("...");
+  };
 
-  let selectedKey = "";
-  if (headerKey && headerKey.trim()) {
-    selectedKey = headerKey.trim();
-  } else if (serviceKey && isJwToken(serviceKey)) {
-    selectedKey = serviceKey;
+  let chosenKey = "";
+  if (headerKey && isValidJwt(headerKey)) {
+    chosenKey = headerKey;
+  } else if (serviceKey && isValidJwt(serviceKey)) {
+    chosenKey = serviceKey;
   } else if (anonKey) {
-    selectedKey = anonKey;
+    // Si la service_role key est absente ou contient un texte d'exemple tronqué "...",
+    // on utilise la clé anon valide pour que les opérations de maintenance puissent lire et auditer la base
+    chosenKey = anonKey;
   } else if (serviceKey) {
-    selectedKey = serviceKey;
+    chosenKey = serviceKey;
   }
 
-  if (!selectedKey) {
-    console.error("[Backend Supabase] ERREUR: Aucune clé Supabase (SUPABASE_SERVICE_ROLE_KEY ou clé anon) configurée.");
+  if (!chosenKey) {
+    console.error("[Backend Supabase] ERREUR: Aucune clé Supabase valide trouvée dans l'environnement.");
     return null;
   }
 
   try {
-    const cleanUrl = rawUrl.trim().replace(/\/+$/, "").replace(/\/rest\/v1\/?$/, "");
-    return createClient(cleanUrl, selectedKey, {
+    const cleanUrl = supabaseUrl.trim().replace(/\/+$/, "").replace(/\/rest\/v1\/?$/, "");
+    return createClient(cleanUrl, chosenKey, {
       auth: { persistSession: false },
     });
   } catch (err: any) {
@@ -165,26 +164,17 @@ export function setupAllorestoApiRoutes(app: express.Express) {
   // Vérification de la configuration Supabase au démarrage (sans jamais afficher la valeur des clés)
   const serverSupabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serverServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const serverAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
   if (!serverSupabaseUrl || !serverSupabaseUrl.trim()) {
-    console.error("[Backend Supabase] ⚠️ ATTENTION: SUPABASE_URL est absent de l'environnement.");
+    console.error("[Backend Supabase] ❌ ERREUR: La variable d'environnement SUPABASE_URL est absente.");
   } else {
     console.log("[Backend Supabase] ✅ SUPABASE_URL détecté.");
   }
 
-  if (serverServiceKey && serverServiceKey.trim().length > 50 && serverServiceKey.split(".").length === 3) {
-    console.log("[Backend Supabase] ✅ SUPABASE_SERVICE_ROLE_KEY détecté et valide.");
-  } else if (serverServiceKey) {
-    console.warn("[Backend Supabase] ⚠️ SUPABASE_SERVICE_ROLE_KEY semble tronqué ou invalide. Le backend utilisera la clé anon pour les requêtes autorisées.");
+  if (!serverServiceKey || !serverServiceKey.trim()) {
+    console.error("[Backend Supabase] ❌ ERREUR: La variable d'environnement SUPABASE_SERVICE_ROLE_KEY est absente.");
   } else {
-    console.warn("[Backend Supabase] ℹ️ SUPABASE_SERVICE_ROLE_KEY absent. Le backend utilisera la clé anon.");
-  }
-
-  if (!serverAnonKey || !serverAnonKey.trim()) {
-    console.error("[Backend Supabase] ⚠️ Clé anon absente.");
-  } else {
-    console.log("[Backend Supabase] ✅ Clé anon détectée pour le backend et le frontend.");
+    console.log("[Backend Supabase] ✅ SUPABASE_SERVICE_ROLE_KEY détecté.");
   }
   /**
    * GET /api/daily-menus?date=YYYY-MM-DD&restaurantId=...
