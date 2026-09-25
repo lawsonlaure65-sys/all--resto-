@@ -464,7 +464,7 @@ export default function RestaurantsPage({
                             title={`Catalogue en ligne de ${restaurant.name}`}
                           >
                             <BookOpen className="w-3 h-3 text-emerald-400 shrink-0" />
-                            <span>Catalogue Walahy</span>
+                            <span>Catalogue WhatsApp</span>
                             <ExternalLink className="w-2.5 h-2.5 opacity-80 shrink-0" />
                           </a>
                         )}

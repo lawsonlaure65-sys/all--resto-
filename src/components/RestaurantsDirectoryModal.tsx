@@ -360,7 +360,7 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
                               title={`Catalogue en ligne de ${resto.name}`}
                             >
                               <BookOpen className="w-3 h-3 text-emerald-400 shrink-0" />
-                              <span>Catalogue Walahy</span>
+                              <span>Catalogue WhatsApp</span>
                               <ExternalLink className="w-2.5 h-2.5 text-emerald-400/80 shrink-0" />
                             </a>
                           )}

@@ -173,12 +173,12 @@ export default function HomePage() {
 
           <div className="flex items-center gap-2">
             <a
-              href="https://walahy.me/c/74441621"
+              href="https://wa.me/c/74441621"
               target="_blank"
               rel="noopener noreferrer"
               className="px-3.5 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold hover:bg-orange-500 hover:text-white transition"
             >
-              Catalogue Walahy ↗
+              Catalogue WhatsApp ↗
             </a>
             <a
               href="https://khadysfood.vercel.app"

@@ -250,10 +250,10 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition active:scale-95 shadow-md shadow-emerald-600/20 border border-emerald-400/40"
-                    title={`Consulter le catalogue en ligne Walahy de ${restaurant.name}`}
+                    title={`Consulter le catalogue en ligne WhatsApp de ${restaurant.name}`}
                   >
                     <BookOpen className="w-3.5 h-3.5" />
-                    <span>Catalogue Walahy</span>
+                    <span>Catalogue WhatsApp</span>
                     <ExternalLink className="w-3 h-3 opacity-80" />
                   </a>
                 )}
