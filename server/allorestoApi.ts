@@ -14,30 +14,51 @@ export function isPermanentDishName(name?: string): boolean {
   return norm.includes("attieke") || norm.includes("doukounou");
 }
 
-// Helper: Get Supabase client server-side (from env or custom headers)
+// Helper: Validate and retrieve the server-side Supabase client
 export function getServerSupabaseClient(req?: Request): SupabaseClient | null {
-  const url =
+  const rawUrl =
     (req?.headers["x-supabase-url"] as string) ||
-    process.env.VITE_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
     "";
 
-  const key =
-    (req?.headers["x-supabase-key"] as string) ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.VITE_SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_ANON_KEY ||
-    "";
+  if (!rawUrl || !rawUrl.trim()) {
+    console.error("[Backend Supabase] ERREUR: SUPABASE_URL ou VITE_SUPABASE_URL est absent.");
+    return null;
+  }
 
-  if (!url || !key) return null;
+  // Clé d'API côté serveur : priorité à SUPABASE_SERVICE_ROLE_KEY si fournie et valide,
+  // avec fallback automatique sur la clé anon configurée côté backend
+  const headerKey = req?.headers["x-supabase-key"] as string | undefined;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || "";
+  const anonKey = (process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "").trim();
+
+  // Test de format rapide d'un token JWT valide (minimum 3 segments)
+  const isJwToken = (token?: string) => Boolean(token && token.length > 50 && token.split(".").length === 3);
+
+  let selectedKey = "";
+  if (headerKey && headerKey.trim()) {
+    selectedKey = headerKey.trim();
+  } else if (serviceKey && isJwToken(serviceKey)) {
+    selectedKey = serviceKey;
+  } else if (anonKey) {
+    selectedKey = anonKey;
+  } else if (serviceKey) {
+    selectedKey = serviceKey;
+  }
+
+  if (!selectedKey) {
+    console.error("[Backend Supabase] ERREUR: Aucune clé Supabase (SUPABASE_SERVICE_ROLE_KEY ou clé anon) configurée.");
+    return null;
+  }
 
   try {
-    const cleanUrl = url.trim().replace(/\/+$/, "").replace(/\/rest\/v1\/?$/, "");
-    return createClient(cleanUrl, key.trim(), {
+    const cleanUrl = rawUrl.trim().replace(/\/+$/, "").replace(/\/rest\/v1\/?$/, "");
+    return createClient(cleanUrl, selectedKey, {
       auth: { persistSession: false },
     });
-  } catch (err) {
-    console.warn("[Backend Supabase] Échec initialisation client:", err);
+  } catch (err: any) {
+    console.warn("[Backend Supabase] Échec initialisation client:", err?.message || err);
     return null;
   }
 }
@@ -141,6 +162,30 @@ export async function executeMaintenanceTasks(): Promise<MaintenanceReport> {
 
 // Setup Allôresto Express API Routes & Nightly Cron
 export function setupAllorestoApiRoutes(app: express.Express) {
+  // Vérification de la configuration Supabase au démarrage (sans jamais afficher la valeur des clés)
+  const serverSupabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const serverServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serverAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+  if (!serverSupabaseUrl || !serverSupabaseUrl.trim()) {
+    console.error("[Backend Supabase] ⚠️ ATTENTION: SUPABASE_URL est absent de l'environnement.");
+  } else {
+    console.log("[Backend Supabase] ✅ SUPABASE_URL détecté.");
+  }
+
+  if (serverServiceKey && serverServiceKey.trim().length > 50 && serverServiceKey.split(".").length === 3) {
+    console.log("[Backend Supabase] ✅ SUPABASE_SERVICE_ROLE_KEY détecté et valide.");
+  } else if (serverServiceKey) {
+    console.warn("[Backend Supabase] ⚠️ SUPABASE_SERVICE_ROLE_KEY semble tronqué ou invalide. Le backend utilisera la clé anon pour les requêtes autorisées.");
+  } else {
+    console.warn("[Backend Supabase] ℹ️ SUPABASE_SERVICE_ROLE_KEY absent. Le backend utilisera la clé anon.");
+  }
+
+  if (!serverAnonKey || !serverAnonKey.trim()) {
+    console.error("[Backend Supabase] ⚠️ Clé anon absente.");
+  } else {
+    console.log("[Backend Supabase] ✅ Clé anon détectée pour le backend et le frontend.");
+  }
   /**
    * GET /api/daily-menus?date=YYYY-MM-DD&restaurantId=...
    * Lit daily_menus et renvoie le plat du jour (ou null)
