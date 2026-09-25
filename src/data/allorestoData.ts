@@ -1,5 +1,6 @@
 import {
   Restaurant,
+  MenuItem,
   CityOption,
   CuisineFilter,
   UserProfile,
@@ -1444,3 +1445,6 @@ export const BLOG_POSTS_DATA: BlogPost[] = [
     image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=600&auto=format&fit=crop&q=80",
   },
 ];
+
+// Plats locaux du restaurant fondateur Khady's Food & Event (24 plats certifiés)
+export const localDishes: MenuItem[] = RESTAURANTS_DATA[0]?.menu || [];

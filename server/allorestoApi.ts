@@ -500,14 +500,20 @@ export function setupAllorestoApiRoutes(app: express.Express) {
     }
   });
 
-  // Tâche planifiée nocturne (Chaque nuit à 02:00)
+  // Tâche planifiée nocturne (Chaque nuit à 02:00, heure de Niamey)
   // Format cron : minute heure jour mois jour-semaine
   try {
-    cron.schedule("0 2 * * *", async () => {
-      console.log("[CRON] Déclenchement automatique de la tâche nocturne de maintenance Allôresto (02h00)");
-      await executeMaintenanceTasks();
-    });
-    console.log("[CRON] Tâche de maintenance nocturne Allôresto programmée avec succès (chaque nuit à 02:00)");
+    cron.schedule(
+      "0 2 * * *",
+      async () => {
+        console.log("[CRON] Déclenchement automatique de la tâche nocturne de maintenance Allôresto (02h00 Africa/Niamey)");
+        await executeMaintenanceTasks();
+      },
+      {
+        timezone: "Africa/Niamey",
+      }
+    );
+    console.log("[CRON] Tâche de maintenance nocturne Allôresto programmée avec succès (chaque nuit à 02:00 Africa/Niamey)");
   } catch (cronErr) {
     console.warn("[CRON] Impossible d'initialiser le planificateur cron:", cronErr);
   }

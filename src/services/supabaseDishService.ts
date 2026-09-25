@@ -1,6 +1,7 @@
 import { MenuItem, Restaurant } from "../types";
 import { getSupabaseClient } from "./supabaseClient";
 import { RESTAURANTS_DATA } from "../data/allorestoData";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
 
 // SQL Schema for Supabase SQL Editor
 export const SUPABASE_SQL_SCHEMA = `-- ============================================================
@@ -536,4 +537,68 @@ export async function syncAllLocalDataToSupabase(
   } catch (err: any) {
     return { success: false, count: 0, error: err?.message || String(err) };
   }
+}
+
+/**
+ * Synchronise les plats locaux vers Supabase sans banner_image et avec upsert anti-doublon
+ */
+export async function syncDishesToSupabase(
+  localDishesList: MenuItem[],
+  targetRestaurantSlug: string = "khadys-food-event"
+) {
+  const isConfigured =
+    typeof isSupabaseConfigured === "function"
+      ? isSupabaseConfigured()
+      : Boolean(isSupabaseConfigured);
+
+  if (!isConfigured) {
+    throw new Error("Supabase non configuré");
+  }
+
+  // 1) Récupérer le restaurant cible (sans banner_image)
+  const { data: restaurants, error: listError } = await (supabase as any)
+    .from("restaurants")
+    .select("id, name, slug");
+
+  if (listError) {
+    throw new Error(`Erreur restaurants : ${listError.message}`);
+  }
+
+  // Chercher par slug cible, ou correspondance Khady, ou premier restaurant existant
+  const restaurant =
+    restaurants?.find((r: any) => r.slug === targetRestaurantSlug) ||
+    restaurants?.find((r: any) => r.slug?.includes("khady") || r.name?.toLowerCase().includes("khady")) ||
+    restaurants?.[0];
+
+  if (!restaurant) {
+    throw new Error("Restaurant cible introuvable.");
+  }
+
+  const targetRestaurantId = restaurant.id;
+
+  // 2) Préparer les lignes pour dishes (colonnes réelles, pas de banner_image)
+  const rows = localDishesList.map((dish) => ({
+    id: dish.id,
+    restaurant_id: targetRestaurantId,
+    name: dish.name,
+    description: dish.description || null,
+    price: dish.price,
+    category: dish.category || "africain",
+    is_available: dish.isAvailable ?? true,
+    is_daily_special: false,
+    is_menu_du_jour: false,
+    image: dish.image || null,
+  }));
+
+  // 3) Upsert pour éviter les doublons
+  const { data, error } = await (supabase as any)
+    .from("dishes")
+    .upsert(rows, { onConflict: "id" })
+    .select();
+
+  if (error) {
+    throw new Error(`Erreur dishes : ${error.message}`);
+  }
+
+  return { rowsSent: rows.length, data };
 }

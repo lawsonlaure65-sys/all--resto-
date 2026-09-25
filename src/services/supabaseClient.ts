@@ -45,9 +45,20 @@ export interface SupabaseConfig {
 }
 
 export function getSupabaseConfig(): SupabaseConfig {
-  const metaEnv = (import.meta as any).env || {};
-  const envUrl = metaEnv.VITE_SUPABASE_URL ? sanitizeSupabaseUrl(metaEnv.VITE_SUPABASE_URL) : "";
-  const envKey = (metaEnv.VITE_SUPABASE_ANON_KEY || metaEnv.VITE_SUPABASE_PUBLIC_ANON_KEY || metaEnv.SUPABASE_ANON_KEY || "") ? (metaEnv.VITE_SUPABASE_ANON_KEY || metaEnv.VITE_SUPABASE_PUBLIC_ANON_KEY || metaEnv.SUPABASE_ANON_KEY).trim() : "";
+  const metaEnv = (typeof import.meta !== "undefined" && (import.meta as any).env) || {};
+  const procEnv = (typeof process !== "undefined" && process.env) || {};
+  const rawUrl = metaEnv.VITE_SUPABASE_URL || procEnv.VITE_SUPABASE_URL || procEnv.SUPABASE_URL || "";
+  const rawKey =
+    metaEnv.VITE_SUPABASE_ANON_KEY ||
+    metaEnv.VITE_SUPABASE_PUBLIC_ANON_KEY ||
+    metaEnv.SUPABASE_ANON_KEY ||
+    procEnv.VITE_SUPABASE_ANON_KEY ||
+    procEnv.VITE_SUPABASE_PUBLIC_ANON_KEY ||
+    procEnv.SUPABASE_ANON_KEY ||
+    "";
+
+  const envUrl = rawUrl ? sanitizeSupabaseUrl(rawUrl) : "";
+  const envKey = rawKey ? rawKey.trim() : "";
 
   // Priority to custom configured keys in localStorage if set, otherwise fallback to env
   try {
