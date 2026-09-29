@@ -368,11 +368,11 @@ export function setupAllorestoApiRoutes(app: express.Express) {
         });
       }
 
-      // VALIDATION CRITIQUE : Bloquer explicitement toute spécialité permanente (attiéké/doukounou)
-      if (isPermanentDishName(effectiveName)) {
+      // VALIDATION CRITIQUE : Bloquer explicitement toute spécialité permanente (attiéké/doukounou) ou obsolète (tiep)
+      if (isPermanentDishName(effectiveName) || effectiveName.toLowerCase().includes("tiep")) {
         return res.status(400).json({
           success: false,
-          error: "Refusé : Les spécialités permanentes (Attiéké, Doukounou) ne peuvent pas être publiées comme Plat du Jour.",
+          error: "Refusé : Les spécialités permanentes (Attiéké, Doukounou) ou obsolètes (Tiep Rouge) ne peuvent pas être publiées comme Plat du Jour.",
         });
       }
 

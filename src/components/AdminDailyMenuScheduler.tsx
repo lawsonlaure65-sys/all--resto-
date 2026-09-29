@@ -26,12 +26,24 @@ import {
   Upload,
   FolderOpen,
   FileImage,
+  Globe,
+  ExternalLink,
+  Trash2,
+  X,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 import { RESTAURANTS_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { Restaurant, MenuItem } from "../types";
 import { compressImageBase64 } from "../services/dishStorageService";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
-import { fetchKhadysProgrammedDailyMenu, KHADYS_FALLBACK_MENU } from "../services/khadysSyncService";
+import {
+  fetchKhadysProgrammedDailyMenu,
+  KHADYS_FALLBACK_MENU,
+  purgeKhadysDailyMenuCache,
+  isObsoleteDishName,
+  KhadysDailyMenuResponse,
+} from "../services/khadysSyncService";
 
 interface AdminDailyMenuSchedulerProps {
   restaurants?: Restaurant[];
@@ -199,6 +211,14 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
 
   const [isSyncingKhadys, setIsSyncingKhadys] = useState<boolean>(false);
   const [khadysSyncNotice, setKhadysSyncNotice] = useState<string | null>(null);
+  const [previewDishData, setPreviewDishData] = useState<KhadysDailyMenuResponse | null>(null);
+
+  const handlePurgeSyncCache = () => {
+    const res = purgeKhadysDailyMenuCache();
+    setKhadysSyncNotice(
+      `🧹 Cache nettoyé (${res.purgedKeys.length > 0 ? res.purgedKeys.join(", ") : "aucun résidu obsolète"}). Panier et préférences client préservés.`
+    );
+  };
 
   const khadysResto =
     restaurants.find((r) => r.id === "resto-khadys-food") ||
@@ -244,60 +264,75 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
       const data = await fetchKhadysProgrammedDailyMenu();
 
       if (!data?.mainDish) {
-        setKhadysSyncNotice("⚠️ Aucun plat du jour programmé.");
+        setKhadysSyncNotice("⚠️ Aucun plat du jour retourné par la source.");
         return;
       }
 
-      if (isPermanentDish(data.mainDish.dishName)) {
-        setKhadysSyncNotice(
-          "⚠️ Cette spécialité permanente ne peut pas être définie comme plat du jour."
-        );
-        setIsSaved(false);
-        return;
-      }
-
-      if (khadysResto) {
-        setSelectedRestaurantId(khadysResto.id);
-      }
-
-      setDishName(data.mainDish.dishName);
-      setPriceFcfa(data.mainDish.priceFcfa || 4950);
-
-      if (data.mainDish.imageUrl) {
-        setImageUrl(data.mainDish.imageUrl);
-        setPhotoSourceLabel(
-          "Plat programmé Khady's Food (khadysfood.vercel.app)"
-        );
-      }
-
-      setMainCourse(data.mainDish.description || "");
-      setStarter(
-        data.mainDish.accompaniments ||
-          "Alloco doré croustillant + Piment vert de la Cheffe"
-      );
-      setDrinkOrDessert(
-        "Jus de Bissap naturel frais 33cl ou Dêguê onctueux"
-      );
-
-      setChefNote(
-        `Spécialité programmée d'office chez Khady's Food & Event (Trio Gourmand : ${
-          data.trio?.map((t) => t.dishName).join(" • ") || ""
-        }).`
-      );
-
-      setIsSaved(false);
-
-      setKhadysSyncNotice(
-        `✅ Plat du jour importé : "${data.mainDish.dishName}" (${Number(
-          data.mainDish.priceFcfa || 4950
-        ).toLocaleString()} FCFA)`
-      );
+      // Ouvre la boîte de dialogue de vérification préalable : aucune sauvegarde avant confirmation explicite !
+      setPreviewDishData(data);
     } catch (err) {
       console.error("Erreur sync Khady's Food:", err);
-      setKhadysSyncNotice("⚠️ Erreur lors de la synchronisation.");
+      setKhadysSyncNotice("⚠️ Erreur lors de la synchronisation avec la source.");
     } finally {
       setIsSyncingKhadys(false);
     }
+  };
+
+  const handleConfirmImport = (data: KhadysDailyMenuResponse) => {
+    const main = data.mainDish;
+    if (!main) return;
+
+    if (isPermanentDish(main.dishName)) {
+      setKhadysSyncNotice(
+        "⚠️ Cette spécialité permanente ne peut pas être définie comme plat du jour."
+      );
+      setPreviewDishData(null);
+      return;
+    }
+
+    if (isObsoleteDishName(main.dishName)) {
+      setKhadysSyncNotice(
+        "⛔ Importation refusée : plat obsolète. Allôresto bascule sur le plat actif officiel."
+      );
+      setPreviewDishData(null);
+      return;
+    }
+
+    if (khadysResto) {
+      setSelectedRestaurantId(khadysResto.id);
+    }
+
+    setDishName(main.dishName);
+    setPriceFcfa(main.priceFcfa || 4000);
+
+    if (main.imageUrl) {
+      setImageUrl(main.imageUrl);
+      setPhotoSourceLabel(
+        "Plat officiel Khady's Food (khadysfood.vercel.app)"
+      );
+    }
+
+    setMainCourse(main.description || "");
+    setStarter(
+      main.accompaniments ||
+        "Alloco doré croustillant, piment vert maison et oignons doux marinés"
+    );
+    setDrinkOrDessert(
+      "Jus de Bissap naturel frais 33cl ou Dêguê onctueux"
+    );
+
+    setChefNote(
+      `Spécialité authentique programmée chez Khady's Food & Event. Préparée au feu de bois ce matin à Niamey.`
+    );
+
+    setIsSaved(false);
+    setPreviewDishData(null);
+
+    setKhadysSyncNotice(
+      `✅ Plat vérifié et injecté : "${main.dishName}" (${Number(
+        main.priceFcfa || 4000
+      ).toLocaleString()} FCFA). Cliquez sur "Enregistrer & Publier" ci-dessous pour confirmer la diffusion.`
+    );
   };
 
   const handleSelectPresetDish = (dish: MenuItem) => {
@@ -808,6 +843,32 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                 </span>
               </div>
 
+              {/* Distinction officielle des sources & Liens */}
+              <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5 text-[10px]">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-300 flex items-center gap-1">
+                    <Globe className="w-3 h-3 text-amber-400" />
+                    Source réelle de synchronisation :
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handlePurgeSyncCache}
+                    className="inline-flex items-center gap-1 text-[9px] text-amber-400/80 hover:text-amber-300 font-semibold px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 hover:border-amber-500/40 transition active:scale-95"
+                    title="Purger le cache local des plats du jour Khady's Food (préserve vos données client et panier)"
+                  >
+                    <Trash2 className="w-2.5 h-2.5" />
+                    <span>Purger le cache</span>
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-400">
+                  <span className="text-amber-300 font-mono">https://khadysfood.vercel.app</span>
+                  <span>•</span>
+                  <span>Catalogue WhatsApp : <a href="https://wa.me/c/22774441621" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">wa.me/c/22774441621 ↗</a></span>
+                  <span>•</span>
+                  <span>Commande directe : <a href="https://wa.me/22774441621" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">wa.me/22774441621 ↗</a></span>
+                </div>
+              </div>
+
               {/* BOUTON ULTRA-RAPIDE : PRENDRE LE PLAT DU JOUR PROGRAMMÉ DE KHADY'S FOOD */}
               <button
                 type="button"
@@ -827,9 +888,131 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                   </div>
                 </div>
                 <span className="px-2 py-1 bg-slate-950 text-amber-300 rounded-lg text-[10px] font-black uppercase tracking-wider shrink-0 border border-amber-400/40">
-                  {isSyncingKhadys ? "Import..." : "Importer"}
+                  {isSyncingKhadys ? "Vérification..." : "Vérifier & Importer"}
                 </span>
               </button>
+
+              {/* MODALE D'APERÇU & CONFIRMATION AVANT ENREGISTREMENT */}
+              {previewDishData && previewDishData.mainDish && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in">
+                  <div className="bg-slate-900 border border-amber-500/50 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl text-slate-100 max-h-[90vh] overflow-y-auto">
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+                      <div>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase tracking-wider border border-amber-500/40">
+                          🔍 Vérification avant Importation
+                        </span>
+                        <h4 className="text-base font-black text-white mt-1">
+                          Plat trouvé sur Khady&apos;s Food
+                        </h4>
+                        <p className="text-[11px] text-slate-400">
+                          Source officielle : <code className="text-amber-400 font-mono">https://khadysfood.vercel.app</code>
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewDishData(null)}
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+                        title="Fermer l'aperçu"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Rappel des 3 canaux distincts */}
+                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[10px] space-y-1 text-slate-400">
+                      <div className="text-slate-300 font-bold">Canaux officiels Khady&apos;s Food :</div>
+                      <div>🌐 <strong>Site officiel :</strong> https://khadysfood.vercel.app</div>
+                      <div>📱 <strong>Catalogue WhatsApp :</strong> https://wa.me/c/22774441621</div>
+                      <div>💬 <strong>Commande directe :</strong> https://wa.me/22774441621</div>
+                    </div>
+
+                    {/* Fiche du plat trouvé */}
+                    <div className="p-3.5 rounded-xl bg-slate-950 border border-amber-500/30 space-y-3">
+                      {previewDishData.mainDish.imageUrl && (
+                        <div className="relative rounded-xl overflow-hidden aspect-video border border-slate-800 bg-slate-900">
+                          <img
+                            src={previewDishData.mainDish.imageUrl}
+                            alt={previewDishData.mainDish.dishName}
+                            className="w-full h-full object-cover"
+                          />
+                          <span className="absolute top-2 left-2 px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-black text-[11px] shadow">
+                            {previewDishData.mainDish.badgeLabel || "Plat Cuisiné du Jour"}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <h5 className="text-sm font-black text-white">
+                            {previewDishData.mainDish.dishName}
+                          </h5>
+                          <div className="text-right shrink-0">
+                            <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 inline-block">
+                              {previewDishData.mainDish.priceFcfa.toLocaleString()} FCFA
+                            </span>
+                            {previewDishData.mainDish.originalPrice && previewDishData.mainDish.originalPrice > previewDishData.mainDish.priceFcfa && (
+                              <span className="block text-[9px] text-slate-500 line-through mt-0.5">
+                                {previewDishData.mainDish.originalPrice.toLocaleString()} FCFA
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {previewDishData.mainDish.description}
+                        </p>
+
+                        {previewDishData.mainDish.accompaniments && (
+                          <div className="text-[11px] text-amber-200/90 font-medium bg-amber-950/40 p-2.5 rounded-lg border border-amber-500/20">
+                            🎁 <strong>Accompagnements inclus :</strong> {previewDishData.mainDish.accompaniments}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800/80">
+                          <span>Portions disponibles : <strong>{previewDishData.mainDish.availablePortions || 25}</strong></span>
+                          <span>Date : <strong>{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</strong></span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Blocage de sécurité si plat obsolète ou permanent */}
+                    {(isObsoleteDishName(previewDishData.mainDish.dishName) || isPermanentDish(previewDishData.mainDish.dishName)) ? (
+                      <div className="p-3 rounded-xl bg-red-950/80 border border-red-500/60 text-red-200 text-xs font-semibold flex items-center gap-2">
+                        <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
+                        <span>
+                          ⛔ Ce plat (&quot;{previewDishData.mainDish.dishName}&quot;) est obsolète ou permanent. Allôresto bloque l&apos;importation de cette ancienne valeur.
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="p-2.5 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-emerald-200 text-xs font-semibold flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>✅ Plat officiel vérifié et conforme au plat du jour actuel de Khady&apos;s Food.</span>
+                      </div>
+                    )}
+
+                    {/* Boutons d'action */}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewDishData(null)}
+                        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isObsoleteDishName(previewDishData.mainDish.dishName) || isPermanentDish(previewDishData.mainDish.dishName)}
+                        onClick={() => handleConfirmImport(previewDishData)}
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95"
+                      >
+                        <Check className="w-4 h-4" />
+                        <span>Importer ce plat</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {khadysSyncNotice && (
                 <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-semibold flex items-center gap-2 animate-fade-in">

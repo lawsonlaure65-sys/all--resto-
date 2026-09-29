@@ -106,27 +106,16 @@ export const KHADYS_FALLBACK_MENU: KhadysDailyMenuResponse = {
   lastSyncAt: new Date().toISOString(),
 };
 
-/**
- * Récupère le plat / trio du jour programmé chez Khady's Food
- */
-export async function fetchKhadysProgrammedDailyMenu(): Promise<KhadysDailyMenuResponse> {
-  try {
-    const res = await fetch("/api/khadys-food/daily-menu");
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    if (data && data.success) {
-      return data;
-    }
-  } catch (err) {
-    console.warn("Échec récupération live Khady's Food, utilisation fallback officiel:", err);
-  }
-  return KHADYS_FALLBACK_MENU;
-}
-
 const PERMANENT_DISHES = [
   "attieke caviar",
   "attieke",
   "doukounou caviar",
+];
+
+const OBSOLETE_DISHES = [
+  "tiep rouge",
+  "tiep",
+  "thieboudienne",
 ];
 
 export const isPermanentDishName = (name?: string) => {
@@ -138,14 +127,78 @@ export const isPermanentDishName = (name?: string) => {
   return PERMANENT_DISHES.some((dish) => normalized.includes(dish));
 };
 
+export const isObsoleteDishName = (name?: string) => {
+  const normalized = (name || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+  return OBSOLETE_DISHES.some((dish) => normalized.includes(dish));
+};
+
+/**
+ * Purge uniquement le cache et les clés de synchronisation du plat du jour Khady's Food.
+ * Préserve intégralement le panier client, les commandes et les préférences.
+ */
+export function purgeKhadysDailyMenuCache(): { purgedKeys: string[]; preservedKeys: string[] } {
+  const keysToPurge = [
+    "alloresto_active_daily_special",
+    "alloresto_khadys_trio",
+    "khadys_daily_menu",
+    "khadys_programmed_menu",
+    "khadys_sync_cache",
+    "alloresto_khadys_cache",
+  ];
+
+  const purgedKeys: string[] = [];
+  try {
+    for (const key of keysToPurge) {
+      if (typeof window !== "undefined" && window.localStorage && localStorage.getItem(key) !== null) {
+        localStorage.removeItem(key);
+        purgedKeys.push(key);
+      }
+    }
+  } catch (e) {
+    console.warn("Erreur purge cache Khady's Food:", e);
+  }
+
+  return {
+    purgedKeys,
+    preservedKeys: ["alloresto_cart", "alloresto_orders", "alloresto_user_lang", "alloresto_theme"],
+  };
+}
+
+/**
+ * Récupère le plat / trio du jour programmé chez Khady's Food
+ */
+export async function fetchKhadysProgrammedDailyMenu(): Promise<KhadysDailyMenuResponse> {
+  try {
+    const res = await fetch("/api/khadys-food/daily-menu");
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && data.mainDish) {
+        // Bloquer tout retour accidentel d'un ancien Tiep ou d'une spécialité permanente
+        if (isPermanentDishName(data.mainDish.dishName) || isObsoleteDishName(data.mainDish.dishName)) {
+          console.warn("Plat reçu obsolète ou permanent, repli sur le plat actif officiel :", data.mainDish.dishName);
+          return KHADYS_FALLBACK_MENU;
+        }
+        return data;
+      }
+    }
+  } catch (err) {
+    console.warn("Échec récupération live Khady's Food, utilisation fallback officiel:", err);
+  }
+  return KHADYS_FALLBACK_MENU;
+}
+
 /**
  * Applique le plat du jour programmé de Khady's Food dans l'application Allôresto Niamey
  */
 export async function applyKhadysProgrammedMenuToApp(
   data: KhadysDailyMenuResponse = KHADYS_FALLBACK_MENU
 ): Promise<{ success: boolean; plan: any }> {
-  if (!data?.mainDish || isPermanentDishName(data.mainDish.dishName)) {
-    console.warn("Plat du jour rejeté : plat permanent ou inexistant.");
+  if (!data?.mainDish || isPermanentDishName(data.mainDish.dishName) || isObsoleteDishName(data.mainDish.dishName)) {
+    console.warn("Plat du jour rejeté : plat permanent, obsolète ou inexistant.");
     return { success: false, plan: null };
   }
   const main = data.mainDish;

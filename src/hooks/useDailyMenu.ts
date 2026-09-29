@@ -34,25 +34,30 @@ export function useDailyMenu() {
         if (localActivePlanStr) {
           const plan = JSON.parse(localActivePlanStr);
           if (plan && plan.dishName) {
-            const localSpecial: DailySpecial = {
-              id: plan.id || "local-khadys-daily",
-              title: plan.dishName,
-              restaurantName: plan.restaurantName || "Khady's Food & Event",
-              restaurantId: plan.restaurantId || KHADYS_RESTAURANT_ID,
-              description:
-                plan.description ||
-                `${plan.mainCourse}. Accompagné de : ${plan.starter}${plan.drinkOrDessert ? ` • ${plan.drinkOrDessert}` : ""}`,
-              price: plan.priceFcfa || 3000,
-              originalPrice: Math.round((plan.priceFcfa || 3000) * 1.25),
-              image:
-                plan.imageUrl ||
-                "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80",
-              servingsLeft: plan.availablePortions || 25,
-              availableUntil: "15h00",
-              accompaniedBy: `${plan.starter} + ${plan.drinkOrDessert || "Jus de Bissap offert"}`,
-              tags: ["👑 Khady's Food", "🔥 Plat du Jour", "✨ Chef Recommande", "⚡ Service 11h-15h"],
-            };
-            if (active) setSupabaseMenu(localSpecial);
+            // Si le cache local contient l'ancien Tiep obsolète, on le purge immédiatement
+            if (plan.dishName.toLowerCase().includes("tiep")) {
+              localStorage.removeItem("alloresto_active_daily_special");
+            } else {
+              const localSpecial: DailySpecial = {
+                id: plan.id || "local-khadys-daily",
+                title: plan.dishName,
+                restaurantName: plan.restaurantName || "Khady's Food & Event",
+                restaurantId: plan.restaurantId || KHADYS_RESTAURANT_ID,
+                description:
+                  plan.description ||
+                  `${plan.mainCourse}. Accompagné de : ${plan.starter}${plan.drinkOrDessert ? ` • ${plan.drinkOrDessert}` : ""}`,
+                price: plan.priceFcfa || 3000,
+                originalPrice: Math.round((plan.priceFcfa || 3000) * 1.25),
+                image:
+                  plan.imageUrl ||
+                  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80",
+                servingsLeft: plan.availablePortions || 25,
+                availableUntil: "15h00",
+                accompaniedBy: `${plan.starter} + ${plan.drinkOrDessert || "Jus de Bissap offert"}`,
+                tags: ["👑 Khady's Food", "🔥 Plat du Jour", "✨ Chef Recommande", "⚡ Service 11h-15h"],
+              };
+              if (active) setSupabaseMenu(localSpecial);
+            }
           }
         }
       } catch (err) {
@@ -117,10 +122,13 @@ export function useDailyMenu() {
           queryError = latestRes.error;
         }
 
-        // Si le plat Supabase est vieux de plus de 2 jours ou absent, on charge directement le plat officiel programmé chez Khady's Food
+        // Si le plat Supabase est vieux de plus de 2 jours, absent ou contient l'ancien Tiep obsolète, on charge directement le plat officiel programmé chez Khady's Food
         const candidateRow = data as (SupabaseDailyMenuRow & { photo_url?: string | null }) | null;
-        const isOlderThanTwoDays = !candidateRow || (candidateRow.menu_date && Math.abs(new Date(today).getTime() - new Date(candidateRow.menu_date).getTime()) > 2 * 86400000);
-        if (isOlderThanTwoDays) {
+        const isObsoleteOrStale =
+          !candidateRow ||
+          (candidateRow.title && candidateRow.title.toLowerCase().includes("tiep")) ||
+          (candidateRow.menu_date && Math.abs(new Date(today).getTime() - new Date(candidateRow.menu_date).getTime()) > 2 * 86400000);
+        if (isObsoleteOrStale) {
           const liveData = await fetchKhadysProgrammedDailyMenu();
           if (liveData?.mainDish && active) {
             const main = liveData.mainDish;
