@@ -171,22 +171,33 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href="https://khadysfood.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs font-black transition shadow-sm"
+              title="Accéder au site officiel et vitrine de Khady's Food & Event"
+            >
+              Site Khady’s Food ↗
+            </a>
             <a
               href="https://wa.me/c/74441621"
               target="_blank"
               rel="noopener noreferrer"
               className="px-3.5 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold hover:bg-orange-500 hover:text-white transition"
+              title="Consulter le catalogue WhatsApp de Khady's Food & Event"
             >
               Catalogue WhatsApp ↗
             </a>
             <a
-              href="https://khadysfood.vercel.app"
+              href="https://wa.me/22774441621"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold hover:bg-slate-700 transition"
+              className="px-3.5 py-1.5 rounded-lg bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold hover:bg-emerald-900/60 transition"
+              title="Commander ou discuter sur WhatsApp avec Khady's Food & Event"
             >
-              Site Officiel ↗
+              Commander sur WhatsApp
             </a>
           </div>
         </div>

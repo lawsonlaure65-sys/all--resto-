@@ -442,31 +442,67 @@ export default function RestaurantsPage({
                     {/* Liens Directs Partenaire (ex: Khady's Food) */}
                     {(restaurant.websiteUrl || restaurant.onlineCatalogUrl) && (
                       <div className="mt-3 pt-2.5 border-t border-slate-800 flex flex-wrap gap-1.5">
-                        {restaurant.websiteUrl && (
-                          <a
-                            href={restaurant.websiteUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/30 border border-orange-500/40 text-orange-300 hover:text-white text-[10px] font-bold transition shadow-sm"
-                            title={`Site officiel & App de ${restaurant.name}`}
-                          >
-                            <Globe className="w-3 h-3 text-orange-400 shrink-0" />
-                            <span>Site Officiel &amp; App</span>
-                            <ExternalLink className="w-2.5 h-2.5 opacity-80 shrink-0" />
-                          </a>
-                        )}
-                        {restaurant.onlineCatalogUrl && (
-                          <a
-                            href={restaurant.onlineCatalogUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-white text-[10px] font-bold transition shadow-sm"
-                            title={`Catalogue en ligne de ${restaurant.name}`}
-                          >
-                            <BookOpen className="w-3 h-3 text-emerald-400 shrink-0" />
-                            <span>Catalogue WhatsApp</span>
-                            <ExternalLink className="w-2.5 h-2.5 opacity-80 shrink-0" />
-                          </a>
+                        {(restaurant.id === "resto-khadys-food" || restaurant.name.toLowerCase().includes("khady")) ? (
+                          <>
+                            <a
+                              href="https://khadysfood.vercel.app"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-orange-500/20 hover:bg-orange-500/35 border border-orange-500/50 text-orange-200 hover:text-white text-[10px] font-black transition shadow-sm"
+                              title="Accéder au site officiel et vitrine de Khady's Food & Event"
+                            >
+                              <Globe className="w-3 h-3 text-orange-400 shrink-0" />
+                              <span>Site Khady’s Food ↗</span>
+                            </a>
+                            <a
+                              href="https://wa.me/c/74441621"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-white text-[10px] font-bold transition shadow-sm"
+                              title="Consulter le catalogue WhatsApp de Khady's Food & Event"
+                            >
+                              <BookOpen className="w-3 h-3 text-emerald-400 shrink-0" />
+                              <span>Catalogue WhatsApp ↗</span>
+                            </a>
+                            <a
+                              href="https://wa.me/22774441621"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/30 text-emerald-300 hover:text-white text-[10px] font-semibold transition shadow-sm"
+                              title="Commander ou discuter sur WhatsApp avec Khady's Food & Event"
+                            >
+                              <span>Commander sur WhatsApp</span>
+                            </a>
+                          </>
+                        ) : (
+                          <>
+                            {restaurant.websiteUrl && (
+                              <a
+                                href={restaurant.websiteUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/30 border border-orange-500/40 text-orange-300 hover:text-white text-[10px] font-bold transition shadow-sm"
+                                title={`Site officiel & App de ${restaurant.name}`}
+                              >
+                                <Globe className="w-3 h-3 text-orange-400 shrink-0" />
+                                <span>Site Officiel &amp; App</span>
+                                <ExternalLink className="w-2.5 h-2.5 opacity-80 shrink-0" />
+                              </a>
+                            )}
+                            {restaurant.onlineCatalogUrl && (
+                              <a
+                                href={restaurant.onlineCatalogUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-white text-[10px] font-bold transition shadow-sm"
+                                title={`Catalogue en ligne de ${restaurant.name}`}
+                              >
+                                <BookOpen className="w-3 h-3 text-emerald-400 shrink-0" />
+                                <span>Catalogue WhatsApp</span>
+                                <ExternalLink className="w-2.5 h-2.5 opacity-80 shrink-0" />
+                              </a>
+                            )}
+                          </>
                         )}
                       </div>
                     )}

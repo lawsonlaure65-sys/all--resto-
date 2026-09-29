@@ -162,9 +162,15 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
                   <span>🍲</span>
                   <span><strong>Trio Gourmand Khady&apos;s :</strong> Plat du Jour + Le Fameux Doukounou + L&apos;Incontournable Attiéké</span>
                 </span>
-                <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px]">
-                  khadysfood.vercel.app
-                </span>
+                <a
+                  href="https://khadysfood.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 hover:text-white font-bold text-[10px] hover:bg-amber-500/30 transition flex items-center gap-1"
+                  title="Accéder au site officiel et vitrine de Khady's Food & Event"
+                >
+                  <span>Site Khady’s Food ↗</span>
+                </a>
               </div>
             )}
           </div>

@@ -230,32 +230,68 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                {restaurant.websiteUrl && (
-                  <a
-                    href={restaurant.websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-xs transition active:scale-95 shadow-md shadow-orange-500/20"
-                    title={`Accéder au site web et à l'application officielle de ${restaurant.name}`}
-                  >
-                    <Globe className="w-3.5 h-3.5" />
-                    <span>Site Web &amp; App</span>
-                    <ExternalLink className="w-3 h-3 opacity-80" />
-                  </a>
-                )}
+                {(restaurant.id === "resto-khadys-food" || restaurant.name.toLowerCase().includes("khady")) ? (
+                  <>
+                    <a
+                      href="https://khadysfood.vercel.app"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-xs transition active:scale-95 shadow-md shadow-orange-500/20"
+                      title="Accéder au site officiel et vitrine de Khady's Food & Event"
+                    >
+                      <Globe className="w-3.5 h-3.5" />
+                      <span>Site Khady’s Food ↗</span>
+                    </a>
+                    <a
+                      href="https://wa.me/c/74441621"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 font-bold text-xs transition active:scale-95 border border-emerald-500/40"
+                      title="Consulter le catalogue WhatsApp de Khady's Food & Event"
+                    >
+                      <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Catalogue WhatsApp ↗</span>
+                    </a>
+                    <a
+                      href="https://wa.me/22774441621"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition active:scale-95 shadow-md shadow-emerald-600/20 border border-emerald-400/40"
+                      title="Commander ou discuter sur WhatsApp avec Khady's Food & Event"
+                    >
+                      <span>Commander sur WhatsApp</span>
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    {restaurant.websiteUrl && (
+                      <a
+                        href={restaurant.websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-xs transition active:scale-95 shadow-md shadow-orange-500/20"
+                        title={`Accéder au site web et à l'application officielle de ${restaurant.name}`}
+                      >
+                        <Globe className="w-3.5 h-3.5" />
+                        <span>Site Web &amp; App</span>
+                        <ExternalLink className="w-3 h-3 opacity-80" />
+                      </a>
+                    )}
 
-                {restaurant.onlineCatalogUrl && (
-                  <a
-                    href={restaurant.onlineCatalogUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition active:scale-95 shadow-md shadow-emerald-600/20 border border-emerald-400/40"
-                    title={`Consulter le catalogue en ligne WhatsApp de ${restaurant.name}`}
-                  >
-                    <BookOpen className="w-3.5 h-3.5" />
-                    <span>Catalogue WhatsApp</span>
-                    <ExternalLink className="w-3 h-3 opacity-80" />
-                  </a>
+                    {restaurant.onlineCatalogUrl && (
+                      <a
+                        href={restaurant.onlineCatalogUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs transition active:scale-95 shadow-md shadow-emerald-600/20 border border-emerald-400/40"
+                        title={`Consulter le catalogue en ligne WhatsApp de ${restaurant.name}`}
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>Catalogue WhatsApp</span>
+                        <ExternalLink className="w-3 h-3 opacity-80" />
+                      </a>
+                    )}
+                  </>
                 )}
               </div>
             </div>

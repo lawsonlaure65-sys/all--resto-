@@ -83,8 +83,10 @@ export interface Restaurant {
   phone: string;
   services: ServiceMode[];
   menu: MenuItem[];
-  websiteUrl?: string; // Lien direct site officiel & PWA (ex: https://khadysfood.vercel.app)
-  onlineCatalogUrl?: string; // Lien direct catalogue en ligne (ex: https://wa.me/c/74441621)
+  websiteUrl?: string; // Lien direct site officiel & vitrine (ex: https://khadysfood.vercel.app)
+  whatsappCatalogUrl?: string; // Lien direct catalogue en ligne WhatsApp (ex: https://wa.me/c/74441621)
+  whatsappOrderUrl?: string; // Lien direct commande WhatsApp (ex: https://wa.me/22774441621)
+  onlineCatalogUrl?: string; // Lien direct catalogue en ligne (rétrocompatibilité ex: https://wa.me/c/74441621)
   isPartnerCertified?: boolean; // Établissement Partenaire Officiel Certifié
   partnerStatusBadge?: string; // Badge partenaire officiel (ex: "Partenaire Officiel Certifié")
 }

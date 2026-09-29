@@ -1010,10 +1010,20 @@ export function App() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <a
+                    href="https://khadysfood.vercel.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-orange-500/20 active:scale-95"
+                    title="Accéder au site officiel et vitrine de Khady's Food & Event"
+                  >
+                    <span>Site Khady’s Food ↗</span>
+                  </a>
+                  <a
                     href="https://wa.me/c/74441621"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-3.5 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-bold transition flex items-center gap-1.5"
+                    className="px-3.5 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
+                    title="Consulter le catalogue WhatsApp de Khady's Food & Event"
                   >
                     <span>Catalogue WhatsApp ↗</span>
                   </a>
@@ -1021,14 +1031,15 @@ export function App() {
                     href="https://wa.me/22774441621"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-3.5 py-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition flex items-center gap-1.5"
+                    className="px-3.5 py-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
+                    title="Commander ou discuter sur WhatsApp"
                   >
-                    <span>WhatsApp Direct</span>
+                    <span>Commander sur WhatsApp</span>
                   </a>
                   {khadysRestaurant && (
                     <button
                       onClick={() => setSelectedRestaurantForMenu(khadysRestaurant)}
-                      className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-md"
+                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-slate-700 shadow-sm"
                     >
                       <span>Carte complète (10 plats)</span>
                     </button>
