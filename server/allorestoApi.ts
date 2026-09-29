@@ -279,7 +279,7 @@ export function setupAllorestoApiRoutes(app: express.Express) {
           dishName: "Brochettes de Filet de Bœuf (Suya)",
           priceFcfa: 4000,
           originalPrice: 4500,
-          imageUrl: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1000&auto=format&fit=crop&q=80",
+          imageUrl: "/images/khadys_suya_brochettes.jpg",
           description:
             "Tendres tranches de filet de bœuf marinées à l'huile d'arachide et aux épices Kankankan (piment rouge, gingembre, arachide torréfiée), grillées au feu de bois.",
           accompaniments: "Alloco doré croustillant, piment vert maison et oignons doux marinés",
@@ -300,7 +300,7 @@ export function setupAllorestoApiRoutes(app: express.Express) {
             accompaniments: "Alloco doré croustillant, piment vert maison et oignons doux marinés",
             price: 4500,
             promoPrice: 4000,
-            dishImage: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1000&auto=format&fit=crop&q=80",
+            dishImage: "/images/khadys_suya_brochettes.jpg",
             remainingStock: 25,
           },
           {

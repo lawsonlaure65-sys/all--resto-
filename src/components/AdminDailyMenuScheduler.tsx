@@ -74,6 +74,10 @@ export interface DailySpecialPlan {
 
 const SAMPLE_FOOD_IMAGES = [
   {
+    label: "Brochettes de Filet de Bœuf (Suya)",
+    url: "/images/khadys_suya_brochettes.jpg",
+  },
+  {
     label: "Riz au Gras & Pintade Fumée",
     url: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=900&auto=format&fit=crop&q=80",
   },

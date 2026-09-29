@@ -78,7 +78,7 @@ export const RESTAURANTS_DATA: Restaurant[] = [
         price: 4000,
         category: "⭐ Menu & Plat du Jour",
         dishCategory: "menu_du_jour",
-        image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1000&auto=format&fit=crop&q=80",
+        image: "/images/khadys_suya_brochettes.jpg",
         isPopular: true,
         isHalal: true,
         isDailySpecial: true,
