@@ -350,7 +350,7 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
                                 <span>Site Khady’s Food ↗</span>
                               </a>
                               <a
-                                href="https://wa.me/c/74441621"
+                                href="https://wa.me/c/22774441621"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}

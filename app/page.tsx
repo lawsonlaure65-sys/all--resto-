@@ -182,7 +182,7 @@ export default function HomePage() {
               Site Khady’s Food ↗
             </a>
             <a
-              href="https://wa.me/c/74441621"
+              href="https://wa.me/c/22774441621"
               target="_blank"
               rel="noopener noreferrer"
               className="px-3.5 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold hover:bg-orange-500 hover:text-white transition"

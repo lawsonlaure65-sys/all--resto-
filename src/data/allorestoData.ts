@@ -65,9 +65,9 @@ export const RESTAURANTS_DATA: Restaurant[] = [
     openingHours: "09:00 - 22:00 (Service continu & Sur commande)",
     services: ["delivery", "takeaway", "booking"],
     websiteUrl: "https://khadysfood.vercel.app",
-    whatsappCatalogUrl: "https://wa.me/c/74441621",
+    whatsappCatalogUrl: "https://wa.me/c/22774441621",
     whatsappOrderUrl: "https://wa.me/22774441621",
-    onlineCatalogUrl: "https://wa.me/c/74441621",
+    onlineCatalogUrl: "https://wa.me/c/22774441621",
     isPartnerCertified: true,
     partnerStatusBadge: "Restaurant Fondateur Allôresto",
     menu: [

@@ -243,7 +243,7 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                       <span>Site Khady’s Food ↗</span>
                     </a>
                     <a
-                      href="https://wa.me/c/74441621"
+                      href="https://wa.me/c/22774441621"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 font-bold text-xs transition active:scale-95 border border-emerald-500/40"

@@ -1019,7 +1019,7 @@ export function App() {
                     <span>Site Khady’s Food ↗</span>
                   </a>
                   <a
-                    href="https://wa.me/c/74441621"
+                    href="https://wa.me/c/22774441621"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-3.5 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-bold transition flex items-center gap-1.5 active:scale-95"

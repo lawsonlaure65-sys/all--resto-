@@ -455,7 +455,7 @@ export default function RestaurantsPage({
                               <span>Site Khady’s Food ↗</span>
                             </a>
                             <a
-                              href="https://wa.me/c/74441621"
+                              href="https://wa.me/c/22774441621"
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-white text-[10px] font-bold transition shadow-sm"
