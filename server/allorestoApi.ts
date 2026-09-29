@@ -262,6 +262,86 @@ export function setupAllorestoApiRoutes(app: express.Express) {
   });
 
   /**
+   * GET /api/khadys-food/daily-menu
+   * Fournit le plat du jour officiel programmé chez Khady's Food & Event
+   * (Brochettes de Filet de Bœuf Suya) avec le Trio Gourmand
+   */
+  app.get("/api/khadys-food/daily-menu", async (_req: Request, res: Response) => {
+    try {
+      return res.json({
+        success: true,
+        source: "https://khadysfood.vercel.app",
+        restaurantName: "Khady's Food & Event",
+        restaurantId: "resto-khadys-food",
+        title: "Menu du Jour — Brochettes de Filet de Bœuf (Suya)",
+        tagline: "Le Plat du Jour officiel programmé chez Khady's Food",
+        mainDish: {
+          dishName: "Brochettes de Filet de Bœuf (Suya)",
+          priceFcfa: 4000,
+          originalPrice: 4500,
+          imageUrl: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1000&auto=format&fit=crop&q=80",
+          description:
+            "Tendres tranches de filet de bœuf marinées à l'huile d'arachide et aux épices Kankankan (piment rouge, gingembre, arachide torréfiée), grillées au feu de bois.",
+          accompaniments: "Alloco doré croustillant, piment vert maison et oignons doux marinés",
+          availablePortions: 25,
+          badgeLabel: "🍢 Plat Cuisiné du Jour",
+          type: "PLAT_DU_JOUR",
+        },
+        trio: [
+          {
+            id: "dish-plat-du-jour",
+            type: "PLAT_DU_JOUR",
+            dishName: "Brochettes de Filet de Bœuf (Suya)",
+            badgeLabel: "🍢 Plat Cuisiné du Jour",
+            badgeColor: "bg-brand-orange text-white",
+            tagline: "Tendres tranches grillées au feu de bois aux épices Kankankan",
+            description:
+              "Tendres tranches de filet de bœuf marinées à l'huile d'arachide et aux épices Kankankan (piment rouge, gingembre, arachide torréfiée), grillées au feu de bois.",
+            accompaniments: "Alloco doré croustillant, piment vert maison et oignons doux marinés",
+            price: 4500,
+            promoPrice: 4000,
+            dishImage: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1000&auto=format&fit=crop&q=80",
+            remainingStock: 25,
+          },
+          {
+            id: "dish-doukounou",
+            type: "DOUKOUNOU",
+            dishName: "Le Fameux Doukounou de Khady",
+            badgeLabel: "🌽 Incontournable Doukounou",
+            badgeColor: "bg-amber-600 text-white",
+            tagline: "Spécialité maison au programme chaque jour d'office",
+            description:
+              "Le célèbre gâteau de maïs vapeur traditionnel au Sahel, cuit à point, tendre et moelleux, servi chaud avec sa sauce mijotée de la maison, piment vert doux et poisson frit ou poulet braisé.",
+            accompaniments: "Sauce tomate mijotée + Piment vert de la Cheffe + Poisson frit",
+            price: 3000,
+            promoPrice: 2700,
+            dishImage: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1000",
+            remainingStock: 30,
+          },
+          {
+            id: "dish-attieke",
+            type: "ATTIEKE",
+            dishName: "L'Incontournable Attiéké Royal",
+            badgeLabel: "🐟 Incontournable Attiéké",
+            badgeColor: "bg-emerald-600 text-white",
+            tagline: "Spécialité maison au programme chaque jour d'office",
+            description:
+              "La semoule de manioc attiéké fraîche et aérée de Cheffe Khady, servie avec darne de poisson capitaine braisée ou poulet croustillant, oignons doux marinés, tomates et piment vert maison.",
+            accompaniments: "Poisson capitaine braisé au feu de bois + Alloco doré + Oignons marinés",
+            price: 4500,
+            promoPrice: 4000,
+            dishImage: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=1000",
+            remainingStock: 30,
+          },
+        ],
+        lastSyncAt: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err?.message || "Erreur interne" });
+    }
+  });
+
+  /**
    * POST /api/daily-menus
    * Crée ou met à jour un plat du jour (avec upsert), en validant que ce n'est pas une spécialité permanente
    */
@@ -305,19 +385,22 @@ export function setupAllorestoApiRoutes(app: express.Express) {
       }
 
       const effectivePrice = Number(price_xof || price || 4000);
+      const finalRestoId = (restaurant_id === "resto-khadys-food" || restaurant_id?.includes("khady"))
+        ? "a8168cb5-fe46-4368-85fa-be1a64d854b5"
+        : restaurant_id;
 
-      // Upsert du menu du jour
+      // Upsert du menu du jour conforme au schéma Supabase
       const payload: any = {
-        restaurant_id,
+        restaurant_id: finalRestoId,
         menu_date,
-        dish_name: effectiveName,
         title: effectiveName,
-        description: description || null,
+        description: description || `Formule du jour ${effectiveName} servie avec ses accompagnements frais.`,
         price_xof: effectivePrice,
-        price: effectivePrice,
         image_url: image_url || null,
-        accompaniments: accompaniments || null,
-        available_portions: Number(available_portions || 25),
+        marketing_message: `Aujourd'hui chez Khady's Food : ${effectiveName} (${effectivePrice.toLocaleString()} FCFA), préparé au feu de bois avec alloco doré et piment vert !`,
+        call_to_action: "Commander le plat du jour",
+        status: "published",
+        published_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 

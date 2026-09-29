@@ -117,6 +117,32 @@ export function useDailyMenu() {
           queryError = latestRes.error;
         }
 
+        // Si le plat Supabase est vieux de plus de 2 jours ou absent, on charge directement le plat officiel programmé chez Khady's Food
+        const candidateRow = data as (SupabaseDailyMenuRow & { photo_url?: string | null }) | null;
+        const isOlderThanTwoDays = !candidateRow || (candidateRow.menu_date && Math.abs(new Date(today).getTime() - new Date(candidateRow.menu_date).getTime()) > 2 * 86400000);
+        if (isOlderThanTwoDays) {
+          const liveData = await fetchKhadysProgrammedDailyMenu();
+          if (liveData?.mainDish && active) {
+            const main = liveData.mainDish;
+            setSupabaseMenu({
+              id: "khadys-live-programmed",
+              title: main.dishName,
+              restaurantName: "Khady's Food & Event",
+              restaurantId: KHADYS_RESTAURANT_ID,
+              description: `${main.description}. Accompagnements : ${main.accompaniments}`,
+              price: main.priceFcfa,
+              originalPrice: main.originalPrice,
+              image: main.imageUrl,
+              servingsLeft: main.availablePortions,
+              availableUntil: "15h00",
+              accompaniedBy: main.accompaniments,
+              tags: ["👑 Khady's Food", "🔥 Plat du Jour Khady's", "✨ Sélection Officielle", "⚡ Service 11h-15h"],
+            });
+            if (active) setLoading(false);
+            return;
+          }
+        }
+
         if (queryError) {
           console.warn("Info menu du jour Supabase (repli automatique local):", queryError.message);
         }

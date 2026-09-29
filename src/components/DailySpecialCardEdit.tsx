@@ -254,6 +254,10 @@ export const DailySpecialCardEdit: React.FC<DailySpecialCardEditProps> = ({
    */
   const PHOTO_PRESETS = [
     {
+      name: "Brochettes de Filet Suya",
+      url: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1000&auto=format&fit=crop&q=80",
+    },
+    {
       name: "Tiep Rouge Royal",
       url: "https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?w=1000&auto=format&fit=crop&q=80",
     },

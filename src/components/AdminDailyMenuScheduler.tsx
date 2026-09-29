@@ -822,7 +822,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                       ⚡ PRENDRE LE PLAT DU JOUR PROGRAMMÉ DE KHADY&apos;S FOOD
                     </span>
                     <span className="block text-[10px] text-slate-900/80 font-medium">
-                      Plat actuel : Tiep Rouge Royal au Capitaine (Trio Gourmand) • 4 950 FCFA
+                      Plat actuel : Brochettes de Filet de Bœuf (Suya) • 4 000 FCFA
                     </span>
                   </div>
                 </div>
@@ -876,6 +876,8 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                         d.isDailySpecial ||
                         d.isMenuDuJour ||
                         d.dishCategory === "menu_du_jour" ||
+                        d.name.includes("Brochette") ||
+                        d.name.includes("Suya") ||
                         d.name.includes("Tiep") ||
                         d.name.includes("Choukouya") ||
                         d.name.includes("Pintade") ||
