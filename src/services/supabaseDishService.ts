@@ -2,6 +2,7 @@ import { MenuItem, Restaurant } from "../types";
 import { getSupabaseClient } from "./supabaseClient";
 import { RESTAURANTS_DATA } from "../data/allorestoData";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
 
 // SQL Schema for Supabase SQL Editor
 export const SUPABASE_SQL_SCHEMA = `-- ============================================================
@@ -145,7 +146,9 @@ export function mapDishToSupabaseRow(dish: MenuItem, restaurantId: string) {
     price: dish.price,
     category: dish.category || "africain",
     dish_category: dish.dishCategory || "africain",
-    image: dish.image || "",
+    image: resolveDishImageUrl(dish) || (dish.name?.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : ""),
+    image_url: resolveDishImageUrl(dish) || (dish.name?.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : ""),
+    photo_url: resolveDishImageUrl(dish) || (dish.name?.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : ""),
     is_popular: Boolean(dish.isPopular),
     is_vegetarian: Boolean(dish.isVegetarian),
     is_vegan: Boolean(dish.isVegan),
@@ -173,6 +176,10 @@ export function mapDishToSupabaseRow(dish: MenuItem, restaurantId: string) {
 
 // Helper: Convert Supabase row format to MenuItem
 export function mapSupabaseRowToDish(row: any): MenuItem {
+  const resolvedImg =
+    resolveDishImageUrl(row) ||
+    (row.name?.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : "");
+
   return {
     id: row.id,
     name: row.name,
@@ -180,7 +187,7 @@ export function mapSupabaseRowToDish(row: any): MenuItem {
     price: Number(row.price),
     category: row.category || "africain",
     dishCategory: row.dish_category || "africain",
-    image: row.image || "",
+    image: resolvedImg,
     isPopular: Boolean(row.is_popular),
     isVegetarian: Boolean(row.is_vegetarian),
     isVegan: Boolean(row.is_vegan),

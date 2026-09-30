@@ -149,6 +149,10 @@ export function purgeKhadysDailyMenuCache(): { purgedKeys: string[]; preservedKe
     "khadys_programmed_menu",
     "khadys_sync_cache",
     "alloresto_khadys_cache",
+    "alloresto_daily_special_cache",
+    "alloresto_cached_dish_images",
+    "alloresto_daily_special_image",
+    "alloresto_daily_menu_image",
   ];
 
   const purgedKeys: string[] = [];

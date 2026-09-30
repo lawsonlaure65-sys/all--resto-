@@ -6,6 +6,7 @@ import {
   fetchRestaurantsFromSupabase,
 } from "./supabaseDishService";
 import { getSupabaseConfig } from "./supabaseClient";
+import { KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
 
 const STORAGE_KEY_RESTAURANTS = "alloresto_restaurants_v2";
 const STORAGE_KEY_CUSTOM_DISHES = "alloresto_custom_dishes_v2";
@@ -341,7 +342,9 @@ export function saveStoredRestaurants(restaurants: Restaurant[]): boolean {
           menu: resto.menu.map((d) => ({
             ...d,
             image:
-              d.image && !d.image.startsWith("data:")
+              d.name?.toLowerCase().includes("brochette")
+                ? KHADYS_OFFICIAL_SUYA_IMAGE
+                : d.image && !d.image.startsWith("data:")
                 ? d.image
                 : DEFAULT_DISH_FALLBACK_URL,
           })),

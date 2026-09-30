@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Plus } from "lucide-react";
+import { Check, Plus, FileImage } from "lucide-react";
+import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
 
 export interface DishCardProps {
   key?: React.Key;
@@ -23,6 +24,11 @@ export const DishCard: React.FC<DishCardProps> = ({
   optionsHint,
 }) => {
   const [justAdded, setJustAdded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  const resolvedImage =
+    resolveDishImageUrl(imageSrc) ||
+    (name.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : "");
 
   const handleClickAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -47,16 +53,25 @@ export const DishCard: React.FC<DishCardProps> = ({
       className="dish-card-item overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 hover:border-orange-500/50 shadow-sm group flex flex-col justify-between transition-colors"
     >
       <div>
-        <div className="relative h-48 sm:h-52 overflow-hidden bg-slate-950">
-          <img
-            src={imageSrc || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80"}
-            alt={name}
-            className="dish-photo h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-            loading="lazy"
-          />
-
-          {/* Gradient shadow for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30 pointer-events-none" />
+        <div className="relative h-48 sm:h-52 overflow-hidden bg-slate-950 flex items-center justify-center">
+          {resolvedImage && !imageError ? (
+            <>
+              <img
+                src={resolvedImage}
+                alt={name}
+                className="dish-photo h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+                loading="lazy"
+                onError={() => setImageError(true)}
+              />
+              {/* Gradient shadow for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30 pointer-events-none" />
+            </>
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-slate-950 text-slate-400 space-y-1 text-center">
+              <FileImage className="w-10 h-10 text-amber-500/50" />
+              <span className="text-xs font-bold text-amber-300">Image du plat indisponible</span>
+            </div>
+          )}
 
           {badge && (
             <span className="absolute left-3 top-3 rounded-full bg-orange-500 px-3 py-1 text-[11px] font-black text-slate-950 shadow-md flex items-center gap-1.5">

@@ -24,6 +24,7 @@ import {
   ChefHat,
   MessageCircle,
   Share2,
+  FileImage,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { MenuItem, DishCategory, MealMoment, Restaurant } from "../types";
@@ -31,6 +32,7 @@ import { CATEGORIES_CONFIG } from "./DishManagementModal";
 import { useTranslation } from "../context/TranslationContext";
 import { shareDishOnWhatsApp } from "../utils/whatsappNotifications";
 import { DishShareModal, DishToShare } from "./DishShareModal";
+import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
 
 export const MEAL_MOMENTS_CONFIG: {
   id: "all" | MealMoment;
@@ -648,19 +650,33 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
                   >
                     <div className="space-y-2">
                       {/* Dish Image Banner */}
-                      <div className="relative h-40 sm:h-44 rounded-xl sm:rounded-2xl overflow-hidden bg-slate-900">
-                        <img
-                          src={dish.image || "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80"}
-                          alt={dish.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          referrerPolicy="no-referrer"
-                          loading="lazy"
-                          onError={(e) => {
-                            // Fallback image if broken
-                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80";
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent" />
+                      <div className="relative h-40 sm:h-44 rounded-xl sm:rounded-2xl overflow-hidden bg-slate-900 flex items-center justify-center">
+                        {(() => {
+                          const resolvedImg =
+                            resolveDishImageUrl(dish) ||
+                            (dish.name.toLowerCase().includes("brochette")
+                              ? KHADYS_OFFICIAL_SUYA_IMAGE
+                              : "");
+
+                          return resolvedImg ? (
+                            <img
+                              src={resolvedImg}
+                              alt={dish.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              referrerPolicy="no-referrer"
+                              loading="lazy"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-slate-950 text-slate-400 space-y-1 text-center">
+                              <FileImage className="w-8 h-8 text-amber-500/50" />
+                              <span className="text-[11px] font-bold text-amber-300">Image du plat indisponible</span>
+                            </div>
+                          );
+                        })()}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
 
                         {/* Top Badges */}
                         <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-1 flex-wrap">

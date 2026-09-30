@@ -7,8 +7,10 @@ import {
   Utensils,
   ChefHat,
   ArrowRight,
+  FileImage,
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
 
 export interface DailyDish {
   name: string;
@@ -48,15 +50,17 @@ export const AnimatedHeroVisual: React.FC<AnimatedHeroVisualProps> = ({
         name: featuredDish.name,
         description: featuredDish.description,
         price: featuredDish.price || 4000,
-        image_url: featuredDish.image,
+        image_url: resolveDishImageUrl(featuredDish) || (featuredDish.name.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : ""),
       };
     }
     return null;
   });
   const [isLoadingDailyDish, setIsLoadingDailyDish] = useState<boolean>(true);
+  const [imageError, setImageError] = useState<boolean>(false);
 
   useEffect(() => {
     let cancelled = false;
+    setImageError(false);
 
     // Si un featuredDish valide et non-permanent est déjà fourni par les props
     if (featuredDish && !isPermanentName(featuredDish.name)) {
@@ -64,7 +68,7 @@ export const AnimatedHeroVisual: React.FC<AnimatedHeroVisualProps> = ({
         name: featuredDish.name,
         description: featuredDish.description,
         price: featuredDish.price || 4000,
-        image_url: featuredDish.image,
+        image_url: resolveDishImageUrl(featuredDish) || (featuredDish.name.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : ""),
       });
       setIsLoadingDailyDish(false);
       return;
@@ -107,7 +111,7 @@ export const AnimatedHeroVisual: React.FC<AnimatedHeroVisualProps> = ({
                 name: rawName,
                 description: data.description,
                 price: Number(data.price_xof || data.price_fcfa || data.price || 4000),
-                image_url: data.image_url || data.photo_url,
+                image_url: resolveDishImageUrl(data) || (rawName.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : ""),
               });
             } else {
               setDailyDish(null);
@@ -160,18 +164,24 @@ export const AnimatedHeroVisual: React.FC<AnimatedHeroVisualProps> = ({
 
         {/* Center: Featured Gastronomic Visual Showcase */}
         <div className="relative bg-slate-950/80 rounded-2xl p-4 sm:p-5 border border-slate-800/80 mb-4 overflow-hidden">
-          <div className="relative rounded-2xl overflow-hidden h-52 sm:h-56 w-full group">
-            <img
-              src={
-                dailyDish?.image_url ||
-                "https://images.unsplash.com/photo-1544025162-d76694265947?w=1000&auto=format&fit=crop&q=85"
-              }
-              alt={dailyDish?.name || "Plat du jour à Niamey"}
-              className="w-full h-full object-cover rounded-2xl transition-transform duration-700 ease-out group-hover:scale-105"
-            />
-
-            {/* Soft Dark Vignette */}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
+          <div className="relative rounded-2xl overflow-hidden h-52 sm:h-56 w-full group bg-slate-950 flex items-center justify-center">
+            {dailyDish?.image_url && !imageError ? (
+              <>
+                <img
+                  src={dailyDish.image_url}
+                  alt={dailyDish.name || "Plat du jour à Niamey"}
+                  onError={() => setImageError(true)}
+                  className="w-full h-full object-cover rounded-2xl transition-transform duration-700 ease-out group-hover:scale-105"
+                />
+                {/* Soft Dark Vignette */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
+              </>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-slate-950 text-slate-400 space-y-2 text-center rounded-2xl">
+                <FileImage className="w-12 h-12 text-amber-500/50" />
+                <span className="text-xs font-bold text-amber-300">Image du plat indisponible</span>
+              </div>
+            )}
 
             {/* Top Quality Badge */}
             <div className="absolute top-3 left-3 flex items-center gap-2">
