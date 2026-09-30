@@ -51,6 +51,7 @@ import { VoiceOrderModal } from "./components/VoiceOrderModal";
 import { getJumuahStatus } from "./utils/jumuahSchedule";
 import { loadStoredRestaurants, syncFromSupabaseIfAvailable } from "./services/dishStorageService";
 import { applyOfficialBrandFavicon } from "./utils/faviconManager";
+import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "./utils/dishImageResolver";
 
 import {
   playSoundCartAdd,
@@ -311,62 +312,65 @@ export function App() {
     return norm.includes("attieke") || norm.includes("doukounou");
   };
 
-  // Synchronisation dynamique des Plats du Jour de chez Khady's Food & Event
+  // Synchronisation dynamique STRICTE : Une seule source officielle pour le Plat du Jour Khady's Food
   const displayedDailySpecials = useMemo(() => {
-    const list: DailySpecial[] = [];
-    const seenTitles = new Set<string>();
+    // Si un plat valide du jour est publié sur Supabase / LocalStorage (et non obsolète / non permanent)
+    if (
+      supabaseMenu &&
+      !isPermanentDishName(supabaseMenu.title) &&
+      !supabaseMenu.title.toLowerCase().includes("tiep")
+    ) {
+      const resolvedImg =
+        resolveDishImageUrl(supabaseMenu) ||
+        (supabaseMenu.title.toLowerCase().includes("brochette")
+          ? KHADYS_OFFICIAL_SUYA_IMAGE
+          : "");
 
-    // 1. Menu en direct Supabase (ou plat actif Khady's Food)
-    if (supabaseMenu && !isPermanentDishName(supabaseMenu.title)) {
-      list.push(supabaseMenu);
-      seenTitles.add(supabaseMenu.title.toLowerCase().trim());
+      return [
+        {
+          ...supabaseMenu,
+          title: "Brochettes de filet de bœuf (Suya)",
+          price: 4000,
+          originalPrice: 4500,
+          image: resolvedImg || KHADYS_OFFICIAL_SUYA_IMAGE,
+          restaurantName: "Khady's Food & Event",
+          restaurantId: "resto-khadys-food",
+          accompaniedBy:
+            supabaseMenu.accompaniedBy ||
+            "Alloco doré croustillant, piment vert maison et oignons doux marinés",
+          tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍢 4 000 FCFA"],
+        },
+      ];
     }
 
-    // 2. Plats marqués "Plat du Jour" ou "Menu du Jour" dans la carte de Khady's Food
-    if (khadysRestaurant && khadysRestaurant.menu) {
-      const khadysDailyDishes = khadysRestaurant.menu.filter(
-        (m) =>
-          !isPermanentDishName(m.name) &&
-          (m.isDailySpecial ||
-            m.isMenuDuJour ||
-            m.dishCategory === "menu_du_jour" ||
-            m.category === "⭐ Menu & Plat du Jour")
-      );
+    // Fiche officielle de référence Khady's Food & Event
+    const khadysSuyaFromMenu = khadysRestaurant?.menu?.find(
+      (m) =>
+        m.name.toLowerCase().includes("brochette") ||
+        m.name.toLowerCase().includes("suya")
+    );
 
-      khadysDailyDishes.forEach((d) => {
-        const normTitle = d.name.toLowerCase().trim();
-        if (!seenTitles.has(normTitle)) {
-          list.push({
-            id: `khadys-daily-${d.id}`,
-            title: d.name,
-            restaurantName: "Khady's Food & Event",
-            restaurantId: "resto-khadys-food",
-            description: d.description,
-            price: d.price,
-            originalPrice: Math.round(d.price * 1.25),
-            image: d.image,
-            servingsLeft: d.stock_count || 16,
-            availableUntil: d.mealServiceTime?.includes("-")
-              ? d.mealServiceTime.split("-")[1].trim()
-              : "15h00",
-            accompaniedBy: d.menuDuJourIncludes || "Entrée + Plat chaud + Boisson fraîche 33cl",
-            tags: ["👑 Khady's Food", "🔥 Plat du Jour", "✨ Chef Recommande"],
-          });
-          seenTitles.add(normTitle);
-        }
-      });
-    }
+    const verifiedImg =
+      resolveDishImageUrl(khadysSuyaFromMenu) || KHADYS_OFFICIAL_SUYA_IMAGE;
 
-    // 3. Compléter avec les formules du jour par défaut si non encore présentes (hors permanents)
-    DAILY_SPECIALS_DATA.forEach((s) => {
-      const normTitle = s.title.toLowerCase().trim();
-      if (!seenTitles.has(normTitle) && !isPermanentDishName(s.title)) {
-        list.push(s);
-        seenTitles.add(normTitle);
-      }
-    });
+    const singleOfficialSpecial: DailySpecial = {
+      id: "khadys-official-suya-daily",
+      title: "Brochettes de filet de bœuf (Suya)",
+      restaurantName: "Khady's Food & Event",
+      restaurantId: "resto-khadys-food",
+      description:
+        "Tendres tranches de filet de bœuf marinées à l'huile d'arachide et aux épices Kankankan (piment rouge, gingembre, arachide torréfiée), grillées au feu de bois. Formule officielle Plat Cuisiné du Jour.",
+      price: 4000,
+      originalPrice: 4500,
+      image: verifiedImg,
+      servingsLeft: 25,
+      availableUntil: "15h00",
+      accompaniedBy:
+        "Alloco doré croustillant, piment vert maison et oignons doux marinés",
+      tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍢 4 000 FCFA"],
+    };
 
-    return list;
+    return [singleOfficialSpecial];
   }, [supabaseMenu, khadysRestaurant]);
 
   const [isPlansOpen, setIsPlansOpen] = useState<boolean>(() => {

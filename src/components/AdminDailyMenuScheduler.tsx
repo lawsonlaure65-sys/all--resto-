@@ -116,28 +116,28 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
   const capitalizedTomorrow =
     formattedTomorrow.charAt(0).toUpperCase() + formattedTomorrow.slice(1);
 
-  // État du formulaire de programmation
+  // État du formulaire de programmation : Source Unique Officielle Khady's Food
   const [targetDate, setTargetDate] = useState<string>(capitalizedTomorrow);
   const [selectedRestaurantId, setSelectedRestaurantId] = useState<string>(
-    restaurants[0]?.id || "rest-1"
+    "resto-khadys-food"
   );
   const [dishName, setDishName] = useState<string>(
-    "Riz au Gras Impérial & Demi-Pintade Fumée du Fleuve"
+    "Brochettes de Filet de Bœuf (Suya)"
   );
   const [starter, setStarter] = useState<string>(
-    "Salade fraîche maraîchère de Niamey ou Pastels croustillants au thon"
+    "Alloco doré croustillant, piment vert maison et oignons doux marinés"
   );
   const [mainCourse, setMainCourse] = useState<string>(
-    "Riz au gras mijoté aux légumes du Sahel, demi-pintade braisée et jus réduit aux herbes"
+    "Tendres tranches de filet de bœuf marinées à l'huile d'arachide et aux épices Kankankan, grillées au feu de bois"
   );
   const [drinkOrDessert, setDrinkOrDessert] = useState<string>(
-    "Jus de Bissap frais 33cl offert ou Dêguê onctueux au lait caillé"
+    "Jus de Bissap naturel frais 33cl ou Dêguê onctueux"
   );
-  const [priceFcfa, setPriceFcfa] = useState<number>(3000);
-  const [availablePortions, setAvailablePortions] = useState<number>(45);
-  const [imageUrl, setImageUrl] = useState<string>(SAMPLE_FOOD_IMAGES[0].url);
+  const [priceFcfa, setPriceFcfa] = useState<number>(4000);
+  const [availablePortions, setAvailablePortions] = useState<number>(25);
+  const [imageUrl, setImageUrl] = useState<string>(KHADYS_OFFICIAL_SUYA_IMAGE);
   const [chefNote, setChefNote] = useState<string>(
-    "Cuisson lente au feu de bois pour une chair fondante, assaisonnement Kan-Kan traditionnel."
+    "Spécialité authentique programmée chez Khady's Food & Event. Préparée au feu de bois ce matin à Niamey."
   );
 
   // Studio Affiche & Réseaux
@@ -258,7 +258,7 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     return khadysDishes.filter((dish) => {
       if (!dish || !dish.id || seen.has(dish.id)) return false;
       seen.add(dish.id);
-      return !isPermanentDish(dish);
+      return !isPermanentDish(dish) && !dish.name.toLowerCase().includes("tiep");
     });
   }, [khadysDishes]);
 
@@ -317,7 +317,7 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     }
 
     setDishName(main.dishName);
-    setPriceFcfa(main.priceFcfa || 4000);
+    setPriceFcfa(4000);
 
     const verifiedImg = finalImageUrl || resolveDishImageUrl(main) || KHADYS_OFFICIAL_SUYA_IMAGE;
     setImageUrl(verifiedImg);
@@ -342,16 +342,14 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     setPreviewDishData(null);
 
     setKhadysSyncNotice(
-      `✅ Plat vérifié et injecté avec son image authentique : "${main.dishName}" (${Number(
-        main.priceFcfa || 4000
-      ).toLocaleString()} FCFA). Cliquez sur "Enregistrer & Publier" ci-dessous pour confirmer la diffusion.`
+      `✅ Plat vérifié et injecté avec son image authentique : "${main.dishName}" (4 000 FCFA). Cliquez sur "Enregistrer & Publier" ci-dessous pour confirmer la diffusion.`
     );
   };
 
   const handleSelectPresetDish = (dish: MenuItem) => {
-    if (isPermanentDish(dish)) {
+    if (isPermanentDish(dish) || isObsoleteDishName(dish.name) || dish.name.toLowerCase().includes("tiep")) {
       setKhadysSyncNotice(
-        "⚠️ Cette spécialité permanente ne peut pas être définie comme plat du jour."
+        "⚠️ Cette spécialité permanente ou réservée à la carte ne peut pas être définie comme plat du jour."
       );
       return;
     }
@@ -359,9 +357,16 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
       setSelectedRestaurantId(khadysResto.id);
     }
     setDishName(dish.name);
-    setPriceFcfa(dish.price);
-    if (dish.image) {
-      setImageUrl(dish.image);
+    setPriceFcfa(
+      dish.name.toLowerCase().includes("brochette") || dish.name.toLowerCase().includes("suya")
+        ? 4000
+        : dish.price
+    );
+    const resolvedPresetImg =
+      resolveDishImageUrl(dish) ||
+      (dish.name.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : dish.image || "");
+    if (resolvedPresetImg) {
+      setImageUrl(resolvedPresetImg);
       setPhotoSourceLabel(`Menu officiel Khady's Food (${dish.name})`);
     }
     setMainCourse(dish.description || dish.name);
@@ -905,6 +910,59 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                 </span>
               </button>
 
+              {/* 👑 FICHE UNIQUE OFFICIELLE KHADY'S FOOD (Affichage clair : Nom, Prix, Image, Date, Portions, Source) */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-amber-500/40 shadow-xl space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs font-black uppercase text-amber-300 tracking-wider">
+                      Fiche Officielle Unique Active
+                    </span>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black border border-emerald-500/40">
+                    Source : Khady&apos;s Food &amp; Event
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-center">
+                  <div className="sm:col-span-4 relative rounded-xl overflow-hidden aspect-[4/3] bg-slate-900 border border-slate-800 flex items-center justify-center">
+                    <img
+                      src={imageUrl || KHADYS_OFFICIAL_SUYA_IMAGE}
+                      alt={dishName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-8 space-y-2 text-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <h5 className="text-sm font-black text-white">{dishName}</h5>
+                      <span className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 shrink-0">
+                        {priceFcfa.toLocaleString()} FCFA
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-300 line-clamp-2">
+                      {mainCourse}
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300 pt-1.5 border-t border-slate-800/80">
+                      <div>
+                        <span className="text-slate-400 block text-[10px]">Date du menu :</span>
+                        <span className="font-semibold text-white">{targetDate}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px]">Portions disponibles :</span>
+                        <span className="font-semibold text-amber-300">{availablePortions} portions</span>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-slate-400 block text-[10px]">Source officielle :</span>
+                        <span className="font-mono text-[10px] text-amber-300/90">khadysfood.vercel.app</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* MODALE D'APERÇU & CONFIRMATION AVANT ENREGISTREMENT */}
               {previewDishData && previewDishData.mainDish && (() => {
                 const previewResolvedImageUrl =
@@ -1114,7 +1172,6 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                         d.dishCategory === "menu_du_jour" ||
                         d.name.includes("Brochette") ||
                         d.name.includes("Suya") ||
-                        d.name.includes("Tiep") ||
                         d.name.includes("Choukouya") ||
                         d.name.includes("Pintade") ||
                         d.name.includes("Capitaine") ||
