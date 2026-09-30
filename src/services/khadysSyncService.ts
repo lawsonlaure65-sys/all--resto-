@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
 
 export interface KhadysDishItem {
   id: string;
@@ -221,7 +222,7 @@ export async function applyKhadysProgrammedMenuToApp(
     drinkOrDessert: "Jus de Bissap frais 33cl 100% naturel offert",
     availablePortions: main.availablePortions,
     chefNote: `Spécialité programmée d'office chez Khady's Food & Event. Préparée au feu doux ce matin à Niamey.`,
-    imageUrl: main.imageUrl,
+    imageUrl: resolveDishImageUrl(main) || KHADYS_OFFICIAL_SUYA_IMAGE,
     marketingMessage: `Le Plat du Jour de chez Khady's Food (${main.dishName}) est prêt à être livré à votre bureau ou à domicile par Billo Express !`,
     syncedFromKhadysFood: true,
     trio: data.trio,

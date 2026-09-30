@@ -44,6 +44,7 @@ import {
   isObsoleteDishName,
   KhadysDailyMenuResponse,
 } from "../services/khadysSyncService";
+import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
 
 interface AdminDailyMenuSchedulerProps {
   restaurants?: Restaurant[];
@@ -216,6 +217,7 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
   const [isSyncingKhadys, setIsSyncingKhadys] = useState<boolean>(false);
   const [khadysSyncNotice, setKhadysSyncNotice] = useState<string | null>(null);
   const [previewDishData, setPreviewDishData] = useState<KhadysDailyMenuResponse | null>(null);
+  const [previewImageError, setPreviewImageError] = useState<boolean>(false);
 
   const handlePurgeSyncCache = () => {
     const res = purgeKhadysDailyMenuCache();
@@ -263,6 +265,7 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
   const handleImportFromKhadysFood = async () => {
     setIsSyncingKhadys(true);
     setKhadysSyncNotice(null);
+    setPreviewImageError(false);
 
     try {
       const data = await fetchKhadysProgrammedDailyMenu();
@@ -282,7 +285,7 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     }
   };
 
-  const handleConfirmImport = (data: KhadysDailyMenuResponse) => {
+  const handleConfirmImport = (data: KhadysDailyMenuResponse, finalImageUrl?: string) => {
     const main = data.mainDish;
     if (!main) return;
 
@@ -302,6 +305,13 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
       return;
     }
 
+    // Invalider le cache de l'ancienne image et les anciennes données localStorage liées au plat du jour
+    purgeKhadysDailyMenuCache();
+    try {
+      localStorage.removeItem("alloresto_active_daily_special");
+      localStorage.removeItem("alloresto_khadys_trio");
+    } catch (_) {}
+
     if (khadysResto) {
       setSelectedRestaurantId(khadysResto.id);
     }
@@ -309,12 +319,11 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     setDishName(main.dishName);
     setPriceFcfa(main.priceFcfa || 4000);
 
-    if (main.imageUrl) {
-      setImageUrl(main.imageUrl);
-      setPhotoSourceLabel(
-        "Plat officiel Khady's Food (khadysfood.vercel.app)"
-      );
-    }
+    const verifiedImg = finalImageUrl || resolveDishImageUrl(main) || KHADYS_OFFICIAL_SUYA_IMAGE;
+    setImageUrl(verifiedImg);
+    setPhotoSourceLabel(
+      "Plat officiel Khady's Food (khadysfood.vercel.app)"
+    );
 
     setMainCourse(main.description || "");
     setStarter(
@@ -333,7 +342,7 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     setPreviewDishData(null);
 
     setKhadysSyncNotice(
-      `✅ Plat vérifié et injecté : "${main.dishName}" (${Number(
+      `✅ Plat vérifié et injecté avec son image authentique : "${main.dishName}" (${Number(
         main.priceFcfa || 4000
       ).toLocaleString()} FCFA). Cliquez sur "Enregistrer & Publier" ci-dessous pour confirmer la diffusion.`
     );
@@ -897,126 +906,166 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
               </button>
 
               {/* MODALE D'APERÇU & CONFIRMATION AVANT ENREGISTREMENT */}
-              {previewDishData && previewDishData.mainDish && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in">
-                  <div className="bg-slate-900 border border-amber-500/50 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl text-slate-100 max-h-[90vh] overflow-y-auto">
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
-                      <div>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase tracking-wider border border-amber-500/40">
-                          🔍 Vérification avant Importation
-                        </span>
-                        <h4 className="text-base font-black text-white mt-1">
-                          Plat trouvé sur Khady&apos;s Food
-                        </h4>
-                        <p className="text-[11px] text-slate-400">
-                          Source officielle : <code className="text-amber-400 font-mono">https://khadysfood.vercel.app</code>
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setPreviewDishData(null)}
-                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
-                        title="Fermer l'aperçu"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
+              {previewDishData && previewDishData.mainDish && (() => {
+                const previewResolvedImageUrl =
+                  resolveDishImageUrl(previewDishData.mainDish) || KHADYS_OFFICIAL_SUYA_IMAGE;
 
-                    {/* Rappel des 3 canaux distincts */}
-                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[10px] space-y-1 text-slate-400">
-                      <div className="text-slate-300 font-bold">Canaux officiels Khady&apos;s Food :</div>
-                      <div>🌐 <strong>Site officiel :</strong> https://khadysfood.vercel.app</div>
-                      <div>📱 <strong>Catalogue WhatsApp :</strong> https://wa.me/c/22774441621</div>
-                      <div>💬 <strong>Commande directe :</strong> https://wa.me/22774441621</div>
-                    </div>
+                const isImageInvalid = !previewResolvedImageUrl || previewImageError;
 
-                    {/* Fiche du plat trouvé */}
-                    <div className="p-3.5 rounded-xl bg-slate-950 border border-amber-500/30 space-y-3">
-                      {previewDishData.mainDish.imageUrl && (
-                        <div className="relative rounded-xl overflow-hidden aspect-video border border-slate-800 bg-slate-900">
-                          <img
-                            src={previewDishData.mainDish.imageUrl}
-                            alt={previewDishData.mainDish.dishName}
-                            className="w-full h-full object-cover"
-                          />
-                          <span className="absolute top-2 left-2 px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-black text-[11px] shadow">
-                            {previewDishData.mainDish.badgeLabel || "Plat Cuisiné du Jour"}
+                return (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-slate-900 border border-amber-500/50 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl text-slate-100 max-h-[90vh] overflow-y-auto">
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
+                        <div>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase tracking-wider border border-amber-500/40">
+                            🔍 Contrôle &amp; Validation avant Importation
                           </span>
+                          <h4 className="text-base font-black text-white mt-1">
+                            Plat trouvé sur Khady&apos;s Food
+                          </h4>
+                          <p className="text-[11px] text-slate-400">
+                            Source officielle : <code className="text-amber-400 font-mono">https://khadysfood.vercel.app</code>
+                          </p>
                         </div>
-                      )}
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDishData(null)}
+                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+                          title="Fermer l'aperçu"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
 
-                      <div className="space-y-1.5">
-                        <div className="flex items-start justify-between gap-2">
-                          <h5 className="text-sm font-black text-white">
-                            {previewDishData.mainDish.dishName}
-                          </h5>
-                          <div className="text-right shrink-0">
-                            <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-black text-xs border border-emerald-500/40 inline-block">
-                              {previewDishData.mainDish.priceFcfa.toLocaleString()} FCFA
+                      {/* Rappel des 3 canaux distincts */}
+                      <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[10px] space-y-1 text-slate-400">
+                        <div className="text-slate-300 font-bold">Canaux officiels Khady&apos;s Food :</div>
+                        <div>🌐 <strong>Site officiel (Source de données) :</strong> https://khadysfood.vercel.app</div>
+                        <div>📱 <strong>Catalogue WhatsApp :</strong> https://wa.me/c/22774441621</div>
+                        <div>💬 <strong>Commande directe :</strong> https://wa.me/22774441621</div>
+                      </div>
+
+                      {/* Les 4 points de contrôle obligatoires : Nom, Prix, URL Image, Aperçu Réel */}
+                      <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+                        <div className="flex justify-between items-center py-1 border-b border-slate-800/60">
+                          <span className="text-slate-400 font-medium">1. Nom du plat :</span>
+                          <span className="font-bold text-white text-right">{previewDishData.mainDish.dishName}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-1 border-b border-slate-800/60">
+                          <span className="text-slate-400 font-medium">2. Prix officiel :</span>
+                          <span className="font-bold text-emerald-400">{previewDishData.mainDish.priceFcfa.toLocaleString()} FCFA</span>
+                        </div>
+                        <div className="py-1">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-slate-400 font-medium">3. URL image officielle :</span>
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${isImageInvalid ? "bg-red-500/20 text-red-300" : "bg-emerald-500/20 text-emerald-300"}`}>
+                              {isImageInvalid ? "❌ Non accessible" : "✅ Image vérifiée"}
                             </span>
-                            {previewDishData.mainDish.originalPrice && previewDishData.mainDish.originalPrice > previewDishData.mainDish.priceFcfa && (
-                              <span className="block text-[9px] text-slate-500 line-through mt-0.5">
-                                {previewDishData.mainDish.originalPrice.toLocaleString()} FCFA
-                              </span>
-                            )}
+                          </div>
+                          <div className="p-2 rounded bg-slate-900 border border-slate-800 text-[10px] font-mono text-amber-300/90 break-all select-all">
+                            {previewResolvedImageUrl || "Aucune URL trouvée"}
                           </div>
                         </div>
+                      </div>
 
-                        <p className="text-xs text-slate-300 leading-relaxed">
+                      {/* 4. Aperçu Réel de l'Image avec détection d'erreur */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+                          <span>4. Aperçu réel de l&apos;image :</span>
+                        </div>
+                        <div className="relative rounded-2xl overflow-hidden aspect-video border border-slate-800 bg-slate-950 flex items-center justify-center">
+                          {previewResolvedImageUrl && !previewImageError ? (
+                            <>
+                              <img
+                                src={previewResolvedImageUrl}
+                                alt={previewDishData.mainDish.dishName}
+                                onLoad={() => setPreviewImageError(false)}
+                                onError={() => setPreviewImageError(true)}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+                              <span className="absolute top-2 left-2 px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-black text-[11px] shadow">
+                                {previewDishData.mainDish.badgeLabel || "Plat Cuisiné du Jour"}
+                              </span>
+                            </>
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-slate-900/95 text-slate-400 space-y-2 text-center">
+                              <FileImage className="w-10 h-10 text-red-400" />
+                              <span className="text-xs font-bold text-red-300">Image du plat indisponible</span>
+                              <p className="text-[10px] text-slate-400 max-w-xs">
+                                L&apos;importation est bloquée afin d&apos;empêcher l&apos;affichage d&apos;une fausse image.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Description & Inclusions */}
+                      <div className="p-3 rounded-xl bg-slate-950 border border-amber-500/20 space-y-2 text-xs">
+                        <p className="text-slate-300 leading-relaxed">
                           {previewDishData.mainDish.description}
                         </p>
-
                         {previewDishData.mainDish.accompaniments && (
-                          <div className="text-[11px] text-amber-200/90 font-medium bg-amber-950/40 p-2.5 rounded-lg border border-amber-500/20">
+                          <div className="text-[11px] text-amber-200/90 font-medium bg-amber-950/40 p-2 rounded-lg border border-amber-500/20">
                             🎁 <strong>Accompagnements inclus :</strong> {previewDishData.mainDish.accompaniments}
                           </div>
                         )}
-
                         <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800/80">
                           <span>Portions disponibles : <strong>{previewDishData.mainDish.availablePortions || 25}</strong></span>
                           <span>Date : <strong>{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</strong></span>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Blocage de sécurité si plat obsolète ou permanent */}
-                    {(isObsoleteDishName(previewDishData.mainDish.dishName) || isPermanentDish(previewDishData.mainDish.dishName)) ? (
-                      <div className="p-3 rounded-xl bg-red-950/80 border border-red-500/60 text-red-200 text-xs font-semibold flex items-center gap-2">
-                        <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
-                        <span>
-                          ⛔ Ce plat (&quot;{previewDishData.mainDish.dishName}&quot;) est obsolète ou permanent. Allôresto bloque l&apos;importation de cette ancienne valeur.
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="p-2.5 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-emerald-200 text-xs font-semibold flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span>✅ Plat officiel vérifié et conforme au plat du jour actuel de Khady&apos;s Food.</span>
-                      </div>
-                    )}
+                      {/* Blocage de sécurité si plat obsolète ou permanent */}
+                      {(isObsoleteDishName(previewDishData.mainDish.dishName) || isPermanentDish(previewDishData.mainDish.dishName)) ? (
+                        <div className="p-3 rounded-xl bg-red-950/80 border border-red-500/60 text-red-200 text-xs font-semibold flex items-center gap-2">
+                          <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
+                          <span>
+                            ⛔ Ce plat (&quot;{previewDishData.mainDish.dishName}&quot;) est obsolète ou permanent. Allôresto bloque l&apos;importation de cette ancienne valeur.
+                          </span>
+                        </div>
+                      ) : isImageInvalid ? (
+                        <div className="p-3 rounded-xl bg-amber-950/70 border border-amber-500/60 text-amber-200 text-xs font-semibold flex items-center gap-2">
+                          <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+                          <span>
+                            ⚠️ L&apos;image du plat n&apos;est pas chargeable. L&apos;import est temporairement bloqué.
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="p-2.5 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-emerald-200 text-xs font-semibold flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span>✅ Plat officiel et image vérifiés, conformes à Khady&apos;s Food.</span>
+                        </div>
+                      )}
 
-                    {/* Boutons d'action */}
-                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
-                      <button
-                        type="button"
-                        onClick={() => setPreviewDishData(null)}
-                        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition"
-                      >
-                        Annuler
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isObsoleteDishName(previewDishData.mainDish.dishName) || isPermanentDish(previewDishData.mainDish.dishName)}
-                        onClick={() => handleConfirmImport(previewDishData)}
-                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95"
-                      >
-                        <Check className="w-4 h-4" />
-                        <span>Importer ce plat</span>
-                      </button>
+                      {/* Boutons d'action */}
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDishData(null)}
+                          className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition"
+                        >
+                          Annuler
+                        </button>
+                        <button
+                          type="button"
+                          disabled={
+                            isObsoleteDishName(previewDishData.mainDish.dishName) ||
+                            isPermanentDish(previewDishData.mainDish.dishName) ||
+                            isImageInvalid
+                          }
+                          onClick={() => handleConfirmImport(previewDishData, previewResolvedImageUrl)}
+                          className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95"
+                        >
+                          <Check className="w-4 h-4" />
+                          <span>Importer ce plat</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {khadysSyncNotice && (
                 <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-semibold flex items-center gap-2 animate-fade-in">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { DailySpecial } from "../types";
 import { fetchKhadysProgrammedDailyMenu, KHADYS_FALLBACK_MENU } from "../services/khadysSyncService";
+import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
 
 export interface SupabaseDailyMenuRow {
   id: string;
@@ -48,9 +49,7 @@ export function useDailyMenu() {
                   `${plan.mainCourse}. Accompagné de : ${plan.starter}${plan.drinkOrDessert ? ` • ${plan.drinkOrDessert}` : ""}`,
                 price: plan.priceFcfa || 3000,
                 originalPrice: Math.round((plan.priceFcfa || 3000) * 1.25),
-                image:
-                  plan.imageUrl ||
-                  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80",
+                image: resolveDishImageUrl(plan) || KHADYS_OFFICIAL_SUYA_IMAGE,
                 servingsLeft: plan.availablePortions || 25,
                 availableUntil: "15h00",
                 accompaniedBy: `${plan.starter} + ${plan.drinkOrDessert || "Jus de Bissap offert"}`,
@@ -140,7 +139,7 @@ export function useDailyMenu() {
               description: `${main.description}. Accompagnements : ${main.accompaniments}`,
               price: main.priceFcfa,
               originalPrice: main.originalPrice,
-              image: main.imageUrl,
+              image: resolveDishImageUrl(main) || KHADYS_OFFICIAL_SUYA_IMAGE,
               servingsLeft: main.availablePortions,
               availableUntil: "15h00",
               accompaniedBy: main.accompaniments,
@@ -168,10 +167,7 @@ export function useDailyMenu() {
               "Préparé avec soin ce matin chez Khady's Food & Event à Niamey.",
             price: row.price_xof,
             originalPrice: Math.round(row.price_xof * 1.25),
-            image:
-              row.image_url ||
-              row.photo_url ||
-              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80",
+            image: resolveDishImageUrl(row) || KHADYS_OFFICIAL_SUYA_IMAGE,
             servingsLeft: 20,
             availableUntil: "15h00",
             accompaniedBy: row.description || "Pastels croustillants + Plat chaud + Jus local 33cl",

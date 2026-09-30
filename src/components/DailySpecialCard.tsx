@@ -1,9 +1,10 @@
-import React from "react";
-import { Sparkles, Clock, Flame, ShoppingBag, ArrowRight, ShieldCheck, MapPin, Share2, Calendar, MessageCircle, Edit3, Camera } from "lucide-react";
+import React, { useState } from "react";
+import { Sparkles, Clock, Flame, ShoppingBag, ArrowRight, ShieldCheck, MapPin, Share2, Calendar, MessageCircle, Edit3, Camera, FileImage } from "lucide-react";
 import { motion } from "framer-motion";
 import { DailySpecial } from "../types";
 import { useTranslation } from "../context/TranslationContext";
 import { shareDailySpecialOnWhatsApp } from "../utils/whatsappNotifications";
+import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
 
 interface DailySpecialCardProps {
   special: DailySpecial;
@@ -24,6 +25,9 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
 }) => {
   const { translateDailySpecial, currentLanguage } = useTranslation();
   const special = translateDailySpecial(rawSpecial);
+  const [imageError, setImageError] = useState(false);
+
+  const effectiveImageUrl = resolveDishImageUrl(special.image) || (special.title?.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : "");
 
   const handleOrder = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -78,14 +82,24 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
         {/* Left: Image & Badge */}
         <div className="lg:col-span-5 relative group">
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-orange-500/30 shadow-md">
-            <img
-              src={special.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80"}
-              alt={special.title}
-              loading="lazy"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-orange-500/30 shadow-md bg-slate-950 flex items-center justify-center">
+            {effectiveImageUrl && !imageError ? (
+              <>
+                <img
+                  src={effectiveImageUrl}
+                  alt={special.title}
+                  loading="lazy"
+                  onError={() => setImageError(true)}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
+              </>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-slate-950 text-slate-400 space-y-2 text-center">
+                <FileImage className="w-12 h-12 text-amber-500/50" />
+                <span className="text-xs font-bold text-amber-300">Image du plat indisponible</span>
+              </div>
+            )}
 
             {/* Live Badge */}
             <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500 text-slate-950 text-xs font-black shadow-md">
