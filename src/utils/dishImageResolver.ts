@@ -8,7 +8,8 @@ export const OBSOLETE_TIEP_IMAGE_SIGNATURES = [
   "preset-tiep-merou",
 ];
 
-export const KHADYS_OFFICIAL_SUYA_IMAGE = "/images/khadys_suya_brochettes.jpg";
+export const KHADYS_OFFICIAL_SUYA_IMAGE =
+  "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1000&auto=format&fit=crop&q=80";
 
 /**
  * Extrait l'URL d'image d'un plat depuis n'importe quelle propriété :
@@ -46,7 +47,12 @@ export function resolveDishImageUrl(source: any): string {
     return "";
   }
 
-  // 2. Préserver les chemins d'assets locaux Allôresto
+  // 2. Réécrire systématiquement tout ancien asset local vers la vraie photo officielle publiée sur Khady's Food
+  if (trimmed.includes("khadys_suya_brochettes") || trimmed.includes("suya_brochettes")) {
+    return KHADYS_OFFICIAL_SUYA_IMAGE;
+  }
+
+  // 3. Préserver les chemins d'assets locaux Allôresto (hors brochettes)
   if (trimmed.startsWith("/images/") || trimmed.startsWith("/assets/") || trimmed.startsWith("data:")) {
     return trimmed;
   }

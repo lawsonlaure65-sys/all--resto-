@@ -39,21 +39,25 @@ export function useDailyMenu() {
             if (plan.dishName.toLowerCase().includes("tiep")) {
               localStorage.removeItem("alloresto_active_daily_special");
             } else {
+              const isSuya =
+                plan.dishName.toLowerCase().includes("brochette") ||
+                plan.dishName.toLowerCase().includes("suya");
+
               const localSpecial: DailySpecial = {
                 id: plan.id || "local-khadys-daily",
-                title: plan.dishName,
+                title: isSuya ? "Brochettes de filet de bœuf (Suya)" : plan.dishName,
                 restaurantName: plan.restaurantName || "Khady's Food & Event",
                 restaurantId: plan.restaurantId || KHADYS_RESTAURANT_ID,
                 description:
                   plan.description ||
                   `${plan.mainCourse}. Accompagné de : ${plan.starter}${plan.drinkOrDessert ? ` • ${plan.drinkOrDessert}` : ""}`,
-                price: plan.priceFcfa || 3000,
-                originalPrice: Math.round((plan.priceFcfa || 3000) * 1.25),
-                image: resolveDishImageUrl(plan) || KHADYS_OFFICIAL_SUYA_IMAGE,
+                price: isSuya ? 4000 : plan.priceFcfa || 4000,
+                originalPrice: isSuya ? 4500 : Math.round((plan.priceFcfa || 4000) * 1.25),
+                image: isSuya ? KHADYS_OFFICIAL_SUYA_IMAGE : resolveDishImageUrl(plan) || KHADYS_OFFICIAL_SUYA_IMAGE,
                 servingsLeft: plan.availablePortions || 25,
                 availableUntil: "15h00",
                 accompaniedBy: `${plan.starter} + ${plan.drinkOrDessert || "Jus de Bissap offert"}`,
-                tags: ["👑 Khady's Food", "🔥 Plat du Jour", "✨ Chef Recommande", "⚡ Service 11h-15h"],
+                tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍢 4 000 FCFA", "⚡ Service 11h-15h"],
               };
               if (active) setSupabaseMenu(localSpecial);
             }
@@ -156,22 +160,26 @@ export function useDailyMenu() {
 
         if (data && active) {
           const row = data as SupabaseDailyMenuRow & { photo_url?: string | null };
+          const isSuya =
+            (row.title || "").toLowerCase().includes("brochette") ||
+            (row.title || "").toLowerCase().includes("suya");
+
           const adaptedSpecial: DailySpecial = {
             id: row.id,
-            title: row.title,
+            title: isSuya ? "Brochettes de filet de bœuf (Suya)" : row.title,
             restaurantName: "Khady's Food & Event",
             restaurantId: row.restaurant_id || KHADYS_RESTAURANT_ID,
             description:
               row.marketing_message ||
               row.description ||
               "Préparé avec soin ce matin chez Khady's Food & Event à Niamey.",
-            price: row.price_xof,
-            originalPrice: Math.round(row.price_xof * 1.25),
-            image: resolveDishImageUrl(row) || KHADYS_OFFICIAL_SUYA_IMAGE,
-            servingsLeft: 20,
+            price: isSuya ? 4000 : row.price_xof,
+            originalPrice: isSuya ? 4500 : Math.round(row.price_xof * 1.25),
+            image: isSuya ? KHADYS_OFFICIAL_SUYA_IMAGE : resolveDishImageUrl(row) || KHADYS_OFFICIAL_SUYA_IMAGE,
+            servingsLeft: 25,
             availableUntil: "15h00",
-            accompaniedBy: row.description || "Pastels croustillants + Plat chaud + Jus local 33cl",
-            tags: ["👑 Khady's Food", "🔥 Plat du Jour Officiel", "✨ Chef Recommande", "⚡ Service 11h-15h"],
+            accompaniedBy: row.description || "Alloco doré croustillant, piment vert maison et oignons doux marinés",
+            tags: ["👑 Khady's Food", "🔥 Plat du Jour Officiel", "🍢 4 000 FCFA", "⚡ Service 11h-15h"],
           };
           setSupabaseMenu(adaptedSpecial);
         } else if (!data) {

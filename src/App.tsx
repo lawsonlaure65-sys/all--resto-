@@ -281,6 +281,58 @@ export function App() {
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState<boolean>(false);
   const { supabaseMenu } = useDailyMenu();
 
+  // Synchronisation automatique et purge des anciens caches locaux désalignés
+  useEffect(() => {
+    try {
+      // 1. Purger tout ancien plat du jour enregistré localement avec l'ancienne image ou ancien prix
+      const localSpecialStr = localStorage.getItem("alloresto_active_daily_special");
+      if (localSpecialStr) {
+        const parsed = JSON.parse(localSpecialStr);
+        if (
+          parsed?.dishName?.toLowerCase().includes("tiep") ||
+          parsed?.priceFcfa !== 4000 ||
+          parsed?.imageUrl?.includes("photo-1627308595229-7830a5c91f9f") ||
+          parsed?.imageUrl?.includes("khadys_suya_brochettes")
+        ) {
+          localStorage.removeItem("alloresto_active_daily_special");
+          localStorage.removeItem("alloresto_khadys_trio");
+        }
+      }
+
+      // 2. Mettre à jour la carte en mémoire si kf-suya-brochettes avait une ancienne image ou prix
+      const storedRestosStr = localStorage.getItem("alloresto_restaurants_v2");
+      if (storedRestosStr) {
+        const storedRestos: Restaurant[] = JSON.parse(storedRestosStr);
+        let updated = false;
+        const cleaned = storedRestos.map((r) => {
+          if (r.id === "resto-khadys-food" || r.name.toLowerCase().includes("khady")) {
+            const newMenu = r.menu.map((d) => {
+              if (d.name.toLowerCase().includes("brochette") || d.name.toLowerCase().includes("suya")) {
+                if (d.price !== 4000 || d.image !== KHADYS_OFFICIAL_SUYA_IMAGE) {
+                  updated = true;
+                  return { ...d, price: 4000, image: KHADYS_OFFICIAL_SUYA_IMAGE };
+                }
+              }
+              if (d.name.toLowerCase().includes("tiep") && d.category === "⭐ Menu & Plat du Jour") {
+                updated = true;
+                return { ...d, category: "Spécialités Africaines", isDailySpecial: false, isMenuDuJour: false };
+              }
+              return d;
+            });
+            return { ...r, menu: newMenu };
+          }
+          return r;
+        });
+        if (updated) {
+          localStorage.setItem("alloresto_restaurants_v2", JSON.stringify(cleaned));
+          setRestaurants(cleaned);
+        }
+      }
+    } catch (e) {
+      console.warn("Auto-nettoyage des fiches locales :", e);
+    }
+  }, []);
+
   // Khady's Food & Event Restaurant and Validated Dishes
   const khadysRestaurant = useMemo(() => {
     return (
@@ -830,14 +882,7 @@ export function App() {
             {/* Hero & Search Banner */}
             <HeroBanner
               featuredDish={
-                supabaseMenu && !isPermanentDishName(supabaseMenu.title)
-                  ? {
-                      name: supabaseMenu.title,
-                      price: supabaseMenu.price,
-                      image: supabaseMenu.image,
-                      description: supabaseMenu.description,
-                    }
-                  : displayedDailySpecials.length > 0
+                displayedDailySpecials.length > 0
                   ? {
                       name: displayedDailySpecials[0].title,
                       price: displayedDailySpecials[0].price,
