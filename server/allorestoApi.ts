@@ -2,6 +2,15 @@ import express, { Request, Response } from "express";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import cron from "node-cron";
 import { RESTAURANTS_DATA } from "../src/data/allorestoData";
+import { KHADYS_OFFICIAL_SPAGHETTI_MERGUEZ_IMAGE } from "../src/data/khadysSpaghettiImage";
+import {
+  KHADYS_OFFICIAL_SAUCE_CRINCRIN_IMAGE,
+  KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+  KHADYS_OFFICIAL_TODAY_DISH_NAME,
+  KHADYS_OFFICIAL_TODAY_PRICE,
+  KHADYS_OFFICIAL_TODAY_DESC,
+  KHADYS_OFFICIAL_TODAY_ACCOMP,
+} from "../src/data/khadysPlatDuJourImage";
 
 // Helper: normalize dish names to detect permanent specialties (attiéké, doukounou)
 export function isPermanentDishName(name?: string): boolean {
@@ -268,43 +277,91 @@ export function setupAllorestoApiRoutes(app: express.Express) {
   /**
    * GET /api/khadys-food/daily-menu
    * Fournit le plat du jour officiel programmé chez Khady's Food & Event
-   * (Brochettes de Filet de Bœuf Suya) avec le Trio Gourmand
+   * (Sauce crin-crin fakou frais/Ademe • Spécialité de Cheffe Khady) avec le Trio Gourmand
    */
   app.get("/api/khadys-food/daily-menu", async (_req: Request, res: Response) => {
     try {
+      let finalPrice = KHADYS_OFFICIAL_TODAY_PRICE;
+      let finalImage = KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE;
+      let finalDishName = KHADYS_OFFICIAL_TODAY_DISH_NAME;
+      let finalDesc = KHADYS_OFFICIAL_TODAY_DESC;
+      let finalAccompaniments = KHADYS_OFFICIAL_TODAY_ACCOMP;
+
+      // Tentative d'interrogation live de la base officielle Khady's Food
+      try {
+        const khadyUrl = "https://veygphkhehdnxefnnlwo.supabase.co";
+        const khadyKey =
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZleWdwaGtoZWhkbnhlZm5ubHdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MTE0MjgsImV4cCI6MjEwMTA4NzQyOH0.FsSg9wjrvVZ1zNHZH_D7qVxPd3EC1h1yM1mDMvxfAqw";
+
+        let items: any[] = [];
+        try {
+          const fetchRes = await fetch(
+            `${khadyUrl}/rest/v1/menu_items?category=eq.Plat%20du%20Jour&select=*`,
+            {
+              headers: { apikey: khadyKey, Authorization: `Bearer ${khadyKey}` },
+            }
+          );
+          if (fetchRes.ok) {
+            items = (await fetchRes.json()) as any[];
+          }
+        } catch (_) {}
+
+        if (!items || items.length === 0) {
+          try {
+            const fetchRes2 = await fetch(
+              `${khadyUrl}/rest/v1/menu_items?id=eq.item-1790412092632&select=*`,
+              {
+                headers: { apikey: khadyKey, Authorization: `Bearer ${khadyKey}` },
+              }
+            );
+            if (fetchRes2.ok) {
+              items = (await fetchRes2.json()) as any[];
+            }
+          } catch (_) {}
+        }
+
+        if (items && items.length > 0 && items[0]) {
+          const item = items[0];
+          finalDishName = item.name ? item.name.trim() : KHADYS_OFFICIAL_TODAY_DISH_NAME;
+          finalPrice = Number(item.price || KHADYS_OFFICIAL_TODAY_PRICE);
+          if (item.description) finalDesc = item.description;
+          if (item.image) finalImage = item.image;
+        }
+      } catch (err) {
+        console.warn("[/api/khadys-food/daily-menu] Fallback image Sauce crin-crin:", err);
+      }
+
       return res.json({
         success: true,
         source: "https://khadysfood.vercel.app",
         restaurantName: "Khady's Food & Event",
         restaurantId: "resto-khadys-food",
-        title: "Menu du Jour — Brochettes de Filet de Bœuf (Suya)",
-        tagline: "Le Plat du Jour officiel programmé chez Khady's Food",
+        title: `Menu du Jour — ${finalDishName}`,
+        tagline: "Le Plat du Jour officiel programmé chez Khady's Food & Event",
         mainDish: {
-          dishName: "Brochettes de Filet de Bœuf (Suya)",
-          priceFcfa: 4000,
-          originalPrice: 4500,
-          imageUrl: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1000&auto=format&fit=crop&q=80",
-          description:
-            "Tendres tranches de filet de bœuf marinées à l'huile d'arachide et aux épices Kankankan (piment rouge, gingembre, arachide torréfiée), grillées au feu de bois.",
-          accompaniments: "Alloco doré croustillant, piment vert maison et oignons doux marinés",
+          dishName: finalDishName,
+          priceFcfa: finalPrice,
+          originalPrice: 4000,
+          imageUrl: finalImage,
+          description: finalDesc,
+          accompaniments: finalAccompaniments,
           availablePortions: 25,
-          badgeLabel: "🍢 Plat Cuisiné du Jour",
+          badgeLabel: "🍲 Plat Cuisiné du Jour",
           type: "PLAT_DU_JOUR",
         },
         trio: [
           {
-            id: "dish-plat-du-jour",
+            id: "dish-sauce-crincrin",
             type: "PLAT_DU_JOUR",
-            dishName: "Brochettes de Filet de Bœuf (Suya)",
-            badgeLabel: "🍢 Plat Cuisiné du Jour",
+            dishName: finalDishName,
+            badgeLabel: "🍲 Plat Cuisiné du Jour",
             badgeColor: "bg-brand-orange text-white",
-            tagline: "Tendres tranches grillées au feu de bois aux épices Kankankan",
-            description:
-              "Tendres tranches de filet de bœuf marinées à l'huile d'arachide et aux épices Kankankan (piment rouge, gingembre, arachide torréfiée), grillées au feu de bois.",
-            accompaniments: "Alloco doré croustillant, piment vert maison et oignons doux marinés",
-            price: 4500,
-            promoPrice: 4000,
-            dishImage: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1000&auto=format&fit=crop&q=80",
+            tagline: "Spécialité maison au programme ce vendredi chez Cheffe Khady",
+            description: finalDesc,
+            accompaniments: finalAccompaniments,
+            price: 4000,
+            promoPrice: finalPrice,
+            dishImage: finalImage,
             remainingStock: 25,
           },
           {

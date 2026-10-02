@@ -378,53 +378,52 @@ export function App() {
       !supabaseMenu.title.toLowerCase().includes("tiep")
     ) {
       const resolvedImg =
-        resolveDishImageUrl(supabaseMenu) ||
-        (supabaseMenu.title.toLowerCase().includes("brochette")
-          ? KHADYS_OFFICIAL_SUYA_IMAGE
-          : "");
+        resolveDishImageUrl(supabaseMenu) || "/images/dishes/khadys_sauce_crincrin.jpg";
 
       return [
         {
           ...supabaseMenu,
-          title: "Brochettes de filet de bœuf (Suya)",
-          price: 4000,
-          originalPrice: 4500,
-          image: resolvedImg || KHADYS_OFFICIAL_SUYA_IMAGE,
+          title: supabaseMenu.title,
+          price: supabaseMenu.price || 3500,
+          originalPrice: supabaseMenu.originalPrice || 4000,
+          image: resolvedImg || "/images/dishes/khadys_sauce_crincrin.jpg",
           restaurantName: "Khady's Food & Event",
           restaurantId: "resto-khadys-food",
           accompaniedBy:
             supabaseMenu.accompaniedBy ||
-            "Alloco doré croustillant, piment vert maison et oignons doux marinés",
-          tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍢 4 000 FCFA"],
+            "Pâte blanche de maïs ou pâte noire d'igname (cossette)",
+          tags: ["👑 Khady's Food", "🔥 Plat du Jour", `🍲 ${(supabaseMenu.price || 3500).toLocaleString()} FCFA`],
         },
       ];
     }
 
-    // Fiche officielle de référence Khady's Food & Event
-    const khadysSuyaFromMenu = khadysRestaurant?.menu?.find(
+    // Fiche officielle de référence Khady's Food & Event (Sauce crin-crin fakou frais/Ademe - Plat du Jour)
+    const khadysPlatDuJourFromMenu = khadysRestaurant?.menu?.find(
       (m) =>
-        m.name.toLowerCase().includes("brochette") ||
-        m.name.toLowerCase().includes("suya")
-    );
+        m.name.toLowerCase().includes("crin") ||
+        m.name.toLowerCase().includes("ademe") ||
+        m.category.toLowerCase().includes("plat du jour")
+    ) || khadysRestaurant?.menu?.[0];
 
     const verifiedImg =
-      resolveDishImageUrl(khadysSuyaFromMenu) || KHADYS_OFFICIAL_SUYA_IMAGE;
+      resolveDishImageUrl(khadysPlatDuJourFromMenu) || "/images/dishes/khadys_sauce_crincrin.jpg";
 
     const singleOfficialSpecial: DailySpecial = {
-      id: "khadys-official-suya-daily",
-      title: "Brochettes de filet de bœuf (Suya)",
+      id: "khadys-official-crincrin-daily",
+      title: khadysPlatDuJourFromMenu?.name || "Sauce crin-crin (fakou frais/Ademe)",
       restaurantName: "Khady's Food & Event",
       restaurantId: "resto-khadys-food",
       description:
-        "Tendres tranches de filet de bœuf marinées à l'huile d'arachide et aux épices Kankankan (piment rouge, gingembre, arachide torréfiée), grillées au feu de bois. Formule officielle Plat Cuisiné du Jour.",
-      price: 4000,
-      originalPrice: 4500,
+        khadysPlatDuJourFromMenu?.description ||
+        "Sauce gluante à base de feuilles de corète, mijotée avec du poisson de mer et/ou viande de bœuf. Accompagnement : pâte blanche de maïs ou pâte noire d'igname (cossette). Plat du jour officiel de Cheffe Khady.",
+      price: khadysPlatDuJourFromMenu?.price || 3500,
+      originalPrice: 4000,
       image: verifiedImg,
       servingsLeft: 25,
       availableUntil: "15h00",
       accompaniedBy:
-        "Alloco doré croustillant, piment vert maison et oignons doux marinés",
-      tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍢 4 000 FCFA"],
+        "Pâte blanche de maïs ou pâte noire d'igname (cossette)",
+      tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍲 3 500 FCFA"],
     };
 
     return [singleOfficialSpecial];

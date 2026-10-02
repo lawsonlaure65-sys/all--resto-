@@ -3,6 +3,22 @@
  * Respecte les exigences strictes d'Allôresto et de Khady's Food
  */
 
+import {
+  KHADYS_OFFICIAL_SPAGHETTI_MERGUEZ_IMAGE,
+  KHADYS_OFFICIAL_SPAGHETTI_SAUTE_IMAGE,
+} from "../data/khadysSpaghettiImage";
+import {
+  KHADYS_OFFICIAL_SAUCE_CRINCRIN_IMAGE,
+  KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+} from "../data/khadysPlatDuJourImage";
+
+export {
+  KHADYS_OFFICIAL_SPAGHETTI_MERGUEZ_IMAGE,
+  KHADYS_OFFICIAL_SPAGHETTI_SAUTE_IMAGE,
+  KHADYS_OFFICIAL_SAUCE_CRINCRIN_IMAGE,
+  KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+};
+
 export const OBSOLETE_TIEP_IMAGE_SIGNATURES = [
   "photo-1627308595229-7830a5c91f9f",
   "preset-tiep-merou",
@@ -22,6 +38,28 @@ export const KHADYS_OFFICIAL_SUYA_IMAGE =
  */
 export function resolveDishImageUrl(source: any): string {
   if (!source) return "";
+
+  // Détection prioritaire par nom du plat : Sauce crin-crin / Fakou / Ademe (Plat officiel du jour Khady's Food)
+  const dishName =
+    typeof source === "object"
+      ? (source.dishName || source.name || source.title || "").toLowerCase()
+      : "";
+
+  if (
+    dishName.includes("crin") ||
+    dishName.includes("fakou") ||
+    dishName.includes("ademe") ||
+    dishName.includes("1790412092632")
+  ) {
+    return KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE;
+  }
+
+  if (dishName.includes("spaghetti") || dishName.includes("merguez")) {
+    if (dishName.includes("sauté") || dishName.includes("saute")) {
+      return KHADYS_OFFICIAL_SPAGHETTI_SAUTE_IMAGE;
+    }
+    return KHADYS_OFFICIAL_SPAGHETTI_MERGUEZ_IMAGE;
+  }
 
   let rawUrl = "";
   if (typeof source === "string") {
@@ -47,13 +85,18 @@ export function resolveDishImageUrl(source: any): string {
     return "";
   }
 
-  // 2. Réécrire systématiquement tout ancien asset local vers la vraie photo officielle publiée sur Khady's Food
+  // 2. Détection par URL de spaghetti / merguez
+  if (trimmed.includes("merguez") || trimmed.includes("spaghetti")) {
+    return KHADYS_OFFICIAL_SPAGHETTI_MERGUEZ_IMAGE;
+  }
+
+  // 3. Réécrire systématiquement tout ancien asset local vers la vraie photo officielle publiée sur Khady's Food
   if (trimmed.includes("khadys_suya_brochettes") || trimmed.includes("suya_brochettes")) {
     return KHADYS_OFFICIAL_SUYA_IMAGE;
   }
 
-  // 3. Préserver les chemins d'assets locaux Allôresto (hors brochettes)
-  if (trimmed.startsWith("/images/") || trimmed.startsWith("/assets/") || trimmed.startsWith("data:")) {
+  // 4. Préserver les images base64 (data:image/...) et assets locaux
+  if (trimmed.startsWith("data:") || trimmed.startsWith("/images/") || trimmed.startsWith("/assets/")) {
     return trimmed;
   }
 

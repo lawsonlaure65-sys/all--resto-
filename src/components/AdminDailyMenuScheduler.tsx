@@ -44,7 +44,19 @@ import {
   isObsoleteDishName,
   KhadysDailyMenuResponse,
 } from "../services/khadysSyncService";
-import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
+import {
+  resolveDishImageUrl,
+  KHADYS_OFFICIAL_SUYA_IMAGE,
+  KHADYS_OFFICIAL_SPAGHETTI_MERGUEZ_IMAGE,
+} from "../utils/dishImageResolver";
+import {
+  KHADYS_OFFICIAL_SAUCE_CRINCRIN_IMAGE,
+  KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+  KHADYS_OFFICIAL_TODAY_DISH_NAME,
+  KHADYS_OFFICIAL_TODAY_PRICE,
+  KHADYS_OFFICIAL_TODAY_DESC,
+  KHADYS_OFFICIAL_TODAY_ACCOMP,
+} from "../data/khadysPlatDuJourImage";
 import {
   findKhadysRestaurantInSupabase,
   isAllorestoKitchen,
@@ -131,22 +143,22 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     "resto-khadys-food"
   );
   const [dishName, setDishName] = useState<string>(
-    "Brochettes de Filet de Bœuf (Suya)"
+    KHADYS_OFFICIAL_TODAY_DISH_NAME
   );
   const [starter, setStarter] = useState<string>(
-    "Alloco doré croustillant, piment vert maison et oignons doux marinés"
+    KHADYS_OFFICIAL_TODAY_ACCOMP
   );
   const [mainCourse, setMainCourse] = useState<string>(
-    "Tendres tranches de filet de bœuf marinées à l'huile d'arachide et aux épices Kankankan, grillées au feu de bois"
+    KHADYS_OFFICIAL_TODAY_DESC
   );
   const [drinkOrDessert, setDrinkOrDessert] = useState<string>(
     "Jus de Bissap naturel frais 33cl ou Dêguê onctueux"
   );
-  const [priceFcfa, setPriceFcfa] = useState<number>(4000);
+  const [priceFcfa, setPriceFcfa] = useState<number>(KHADYS_OFFICIAL_TODAY_PRICE);
   const [availablePortions, setAvailablePortions] = useState<number>(25);
-  const [imageUrl, setImageUrl] = useState<string>(KHADYS_OFFICIAL_SUYA_IMAGE);
+  const [imageUrl, setImageUrl] = useState<string>(KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE);
   const [chefNote, setChefNote] = useState<string>(
-    "Spécialité authentique programmée chez Khady's Food & Event. Préparée au feu de bois ce matin à Niamey."
+    `Spécialité authentique de Cheffe Khady : ${KHADYS_OFFICIAL_TODAY_DISH_NAME} cuisiné frais ce matin à Niamey.`
   );
 
   // Studio Affiche & Réseaux
@@ -354,11 +366,22 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
 
   const selectableKhadysDishes = useMemo(() => {
     const seen = new Set<string>();
-    return khadysDishes.filter((dish) => {
+    const list = khadysDishes.filter((dish) => {
       if (!dish || !dish.id || seen.has(dish.id)) return false;
       seen.add(dish.id);
       return !isPermanentDish(dish) && !dish.name.toLowerCase().includes("tiep");
     });
+    // Toujours placer le plat du jour officiel actif (Sauce crin-crin fakou frais / Ademe) en premier
+    list.sort((a, b) => {
+      const aIsCrin =
+        a.name.toLowerCase().includes("crin") || a.name.toLowerCase().includes("ademe");
+      const bIsCrin =
+        b.name.toLowerCase().includes("crin") || b.name.toLowerCase().includes("ademe");
+      if (aIsCrin && !bIsCrin) return -1;
+      if (!aIsCrin && bIsCrin) return 1;
+      return 0;
+    });
+    return list;
   }, [khadysDishes]);
 
   const handleImportFromKhadysFood = async () => {
@@ -401,32 +424,50 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     }
   };
 
-  const handleConfirmImport = (data: KhadysDailyMenuResponse, finalImageUrl?: string) => {
-    const main = data.mainDish;
-    if (!main) return;
+  const handleConfirmImport = async (data: KhadysDailyMenuResponse, finalImageUrl?: string) => {
+    // 1. Détection stricte du partenaire Khady's Food & Event
+    const targetRestaurant = restaurants.find((restaurant) => {
+      const value = `${restaurant.name} ${restaurant.slug || ""}`
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
 
-    if (!khadysResto) {
-      setKhadysSyncNotice("❌ Erreur : Le restaurant partenaire officiel 'Khady\'s Food & Event' est introuvable.");
-      setPreviewDishData(null);
-      return;
-    }
+      return value.includes("khady") && value.includes("food");
+    }) || khadysResto;
 
-    // Règle 10 : Ne jamais sauvegarder sous Allôresto Kitchen — forcer Khady's Food & Event
-    const safeRestoId =
-      supabaseKhadyLookup?.found && supabaseKhadyLookup.id
-        ? supabaseKhadyLookup.id
-        : khadysResto.id;
-    setSelectedRestaurantId(safeRestoId);
-
-    if (isPermanentDish(main.dishName)) {
+    if (!targetRestaurant) {
       setKhadysSyncNotice(
-        "⚠️ Cette spécialité permanente ne peut pas être définie comme plat du jour."
+        "❌ Khady's Food & Event n'existe pas dans la table restaurants d'Allôresto."
       );
       setPreviewDishData(null);
       return;
     }
 
-    if (isObsoleteDishName(main.dishName)) {
+    const targetRestaurantId = targetRestaurant.id;
+
+    // 2. Le menu à importer (uniquement le plat principal programmé)
+    const importedDailyDish = data?.mainDish;
+
+    const permanentNames = ["attieke", "doukounou"];
+
+    const isPermanent = (name = "") => {
+      const normalized = name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+
+      return permanentNames.some((item) => normalized.includes(item));
+    };
+
+    if (!importedDailyDish || isPermanent(importedDailyDish.dishName)) {
+      setKhadysSyncNotice(
+        "⛔ Le menu source ne contient pas de plat cuisiné du jour importable."
+      );
+      setPreviewDishData(null);
+      return;
+    }
+
+    if (isObsoleteDishName(importedDailyDish.dishName)) {
       setKhadysSyncNotice(
         "⛔ Importation refusée : plat obsolète. Allôresto bascule sur le plat actif officiel."
       );
@@ -441,38 +482,68 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
       localStorage.removeItem("alloresto_khadys_trio");
     } catch (_) {}
 
-    // Verrouiller strictement le restaurant sur Khady's Food & Event
-    setSelectedRestaurantId(khadysResto.id);
+    // Verrouiller strictement le restaurant sur l'identifiant du partenaire officiel
+    setSelectedRestaurantId(targetRestaurantId);
 
-    setDishName(main.dishName);
-    setPriceFcfa(4000);
+    setDishName(importedDailyDish.dishName);
+    setPriceFcfa(importedDailyDish.priceFcfa || 3500);
 
     // Règle 6 & 7 : L'image doit être celle publiée par Khady's Food, jamais l'image locale du restaurant sélectionné par défaut
-    const verifiedImg = finalImageUrl || resolveDishImageUrl(main) || KHADYS_OFFICIAL_SUYA_IMAGE;
+    const verifiedImg =
+      finalImageUrl ||
+      resolveDishImageUrl(importedDailyDish) ||
+      KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE;
     setImageUrl(verifiedImg);
     setPhotoSourceLabel(
       "Plat officiel Khady's Food & Event (khadysfood.vercel.app)"
     );
 
-    setMainCourse(main.description || "");
+    setMainCourse(
+      importedDailyDish.description ||
+        KHADYS_OFFICIAL_TODAY_DESC
+    );
     setStarter(
-      main.accompaniments ||
-        "Alloco doré croustillant, piment vert maison et oignons doux marinés"
+      importedDailyDish.accompaniments ||
+        KHADYS_OFFICIAL_TODAY_ACCOMP
     );
     setDrinkOrDessert(
       "Jus de Bissap naturel frais 33cl ou Dêguê onctueux"
     );
 
     setChefNote(
-      `Spécialité authentique programmée chez Khady's Food & Event. Préparée au feu de bois ce matin à Niamey.`
+      `Spécialité authentique de Cheffe Khady : ${importedDailyDish.dishName} cuisiné frais ce matin à Niamey.`
     );
+
+    // 3. Upsert direct dans Supabase daily_menus
+    if (isSupabaseConfigured()) {
+      try {
+        const todayDate = new Date().toISOString().slice(0, 10);
+        await (supabase.from("daily_menus") as any).upsert(
+          {
+            restaurant_id: targetRestaurantId,
+            menu_date: todayDate,
+            dish_name: importedDailyDish.dishName,
+            title: importedDailyDish.dishName,
+            description: importedDailyDish.description,
+            price_fcfa: importedDailyDish.priceFcfa,
+            price_xof: importedDailyDish.priceFcfa,
+            image_url: verifiedImg,
+          },
+          {
+            onConflict: "restaurant_id,menu_date",
+          }
+        );
+      } catch (err) {
+        console.warn("Upsert Supabase daily_menus lors de l'import:", err);
+      }
+    }
 
     setIsSaved(false);
-    setPreviewDishData(null);
 
     setKhadysSyncNotice(
-      `✅ Plat vérifié et injecté pour Khady's Food & Event : "${main.dishName}" (4 000 FCFA). Cliquez sur "Enregistrer & Publier" ci-dessous pour confirmer la diffusion.`
+      `✅ Plat du jour officiel Khady's Food & Event importé avec succès : ${importedDailyDish.dishName} (${(importedDailyDish.priceFcfa || 3500).toLocaleString()} FCFA). Prêt à être activé !`
     );
+    setPreviewDishData(null);
   };
 
   const handleSelectPresetDish = (dish: MenuItem) => {
@@ -829,18 +900,25 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
     if (isSupabaseConfigured()) {
       try {
         const today = new Date().toISOString().split("T")[0];
-        await (supabase.from("daily_menus") as any).upsert({
-          restaurant_id: selectedRestaurantId,
-          menu_date: today,
-          title: dishName,
-          description: `${mainCourse}. Accompagnement : ${starter}`,
-          price_xof: priceFcfa,
-          image_url: imageUrl,
-          photo_url: imageUrl,
-          marketing_message: chefNote || `Formule Complète : ${dishName}`,
-          call_to_action: "Précommander pour Demain",
-          status: "published",
-        });
+        await (supabase.from("daily_menus") as any).upsert(
+          {
+            restaurant_id: selectedRestaurantId,
+            menu_date: today,
+            dish_name: dishName,
+            title: dishName,
+            description: `${mainCourse}. Accompagnement : ${starter}`,
+            price_xof: priceFcfa,
+            price_fcfa: priceFcfa,
+            image_url: imageUrl,
+            photo_url: imageUrl,
+            marketing_message: chefNote || `Formule Complète : ${dishName}`,
+            call_to_action: "Précommander pour Demain",
+            status: "published",
+          },
+          {
+            onConflict: "restaurant_id,menu_date",
+          }
+        );
         console.log("✓ Plat du jour et photo synchronisés avec Supabase !");
       } catch (sbErr) {
         console.warn("Synchronisation Supabase daily_menus ignorée :", sbErr);
@@ -1079,7 +1157,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                       ⚡ Vérifier et importer le plat du jour de Khady&apos;s Food &amp; Event
                     </span>
                     <span className="block text-[10px] text-slate-900/80 font-medium">
-                      Plat officiel : Brochettes de filet de bœuf (Suya) • 4 000 FCFA
+                      Plat officiel du jour : Sauce crin-crin (fakou frais/Ademe) • 3 500 FCFA (Spécialité Cheffe Khady)
                     </span>
                   </div>
                 </div>
@@ -1144,7 +1222,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
               {/* MODALE D'APERÇU & CONFIRMATION AVANT ENREGISTREMENT */}
               {previewDishData && previewDishData.mainDish && (() => {
                 const previewResolvedImageUrl =
-                  resolveDishImageUrl(previewDishData.mainDish) || KHADYS_OFFICIAL_SUYA_IMAGE;
+                  resolveDishImageUrl(previewDishData.mainDish) || KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE;
 
                 const isImageInvalid = !previewResolvedImageUrl || previewImageError;
 
@@ -1265,15 +1343,8 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                         </div>
                       </div>
 
-                      {/* Blocage de sécurité si plat obsolète ou permanent ou Allôresto Kitchen */}
-                      {isAllorestoKitchen(selectedRestaurantId, currentRestaurant?.name) ? (
-                        <div className="p-3 rounded-xl bg-red-950/90 border border-red-500 text-red-200 text-xs font-semibold flex items-center gap-2">
-                          <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
-                          <span>
-                            ⛔ Restaurant source non autorisé : Allôresto Kitchen. Les plats de Khady&apos;s Food &amp; Event doivent impérativement être importés pour Khady&apos;s Food &amp; Event.
-                          </span>
-                        </div>
-                      ) : (isObsoleteDishName(previewDishData.mainDish.dishName) || isPermanentDish(previewDishData.mainDish.dishName)) ? (
+                      {/* Validation de conformité Khady's Food & Event */}
+                      {(isObsoleteDishName(previewDishData.mainDish.dishName) || isPermanentDish(previewDishData.mainDish.dishName)) ? (
                         <div className="p-3 rounded-xl bg-red-950/80 border border-red-500/60 text-red-200 text-xs font-semibold flex items-center gap-2">
                           <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
                           <span>
@@ -1290,7 +1361,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                       ) : (
                         <div className="p-2.5 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-emerald-200 text-xs font-semibold flex items-center gap-2">
                           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <span>✅ Plat officiel et image vérifiés, conformes à Khady&apos;s Food &amp; Event.</span>
+                          <span>✅ Plat officiel et image vérifiés, conformes à {KHADYS_OFFICIAL_NAME}.</span>
                         </div>
                       )}
 
@@ -1308,14 +1379,13 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                           disabled={
                             isObsoleteDishName(previewDishData.mainDish.dishName) ||
                             isPermanentDish(previewDishData.mainDish.dishName) ||
-                            isImageInvalid ||
-                            isAllorestoKitchen(selectedRestaurantId, currentRestaurant?.name)
+                            isImageInvalid
                           }
                           onClick={() => handleConfirmImport(previewDishData, previewResolvedImageUrl)}
                           className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95"
                         >
                           <Check className="w-4 h-4" />
-                          <span>Importer ce plat</span>
+                          <span>Importer ce plat pour {KHADYS_OFFICIAL_NAME}</span>
                         </button>
                       </div>
                     </div>
@@ -1368,6 +1438,8 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                         d.isDailySpecial ||
                         d.isMenuDuJour ||
                         d.dishCategory === "menu_du_jour" ||
+                        d.name.toLowerCase().includes("spaghetti") ||
+                        d.name.toLowerCase().includes("merguez") ||
                         d.name.includes("Brochette") ||
                         d.name.includes("Suya") ||
                         d.name.includes("Choukouya") ||

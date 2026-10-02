@@ -12,6 +12,8 @@ import {
   LocalPaymentOption,
 } from "../types";
 import { APP_CONFIG } from "../config/appConfig";
+import { KHADYS_OFFICIAL_SPAGHETTI_MERGUEZ_IMAGE } from "./khadysSpaghettiImage";
+import { KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE } from "./khadysPlatDuJourImage";
 
 export const CITIES_DATA: CityOption[] = [
   { name: "Niamey - Plateau (Ministères)", country: "Niger 🇳🇪", popular: true },
@@ -72,6 +74,40 @@ export const RESTAURANTS_DATA: Restaurant[] = [
     isPartnerCertified: true,
     partnerStatusBadge: "Restaurant Fondateur Allôresto",
     menu: [
+      {
+        id: "kf-sauce-crin-crin",
+        name: "Sauce crin-crin (fakou frais/Ademe)",
+        description: "Sauce gluante à base de feuilles de corète, mijotée avec du poisson de mer et/ou viande de bœuf. Accompagnement : pâte blanche de maïs ou pâte noire d'igname (cossette). Plat du jour officiel de Cheffe Khady.",
+        price: 3500,
+        category: "⭐ Menu & Plat du Jour",
+        dishCategory: "menu_du_jour",
+        image: KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+        isPopular: true,
+        isHalal: true,
+        isDailySpecial: true,
+        isMenuDuJour: true,
+        menuDuJourIncludes: "Sauce crin-crin + Pâte blanche de maïs ou pâte noire d'igname + Poisson/Bœuf + Piment vert",
+        mealMoments: ["dejeuner", "menu_du_jour"],
+        mealServiceTime: "11h30 - 15h00",
+        preparationTime: 15,
+      },
+      {
+        id: "kf-spaghetti-merguez",
+        name: "Spaghetti au Merguez",
+        description: "Délicieux spaghetti sautés au merguez épicé, piments doux, oignons frais et herbes aromatiques de Cheffe Khady. Plat du jour officiel Khady's Food.",
+        price: 3500,
+        category: "⭐ Menu & Plat du Jour",
+        dishCategory: "menu_du_jour",
+        image: KHADYS_OFFICIAL_SPAGHETTI_MERGUEZ_IMAGE,
+        isPopular: true,
+        isHalal: true,
+        isDailySpecial: true,
+        isMenuDuJour: true,
+        menuDuJourIncludes: "Spaghetti sautés + Alloco doré croustillant + Piment vert maison + Oignons doux marinés",
+        mealMoments: ["dejeuner", "menu_du_jour"],
+        mealServiceTime: "11h30 - 15h00",
+        preparationTime: 15,
+      },
       {
         id: "kf-suya-brochettes",
         name: "Brochettes de Filet de Bœuf (Suya)",
@@ -1355,18 +1391,18 @@ export const DELIVERY_ZONES_CONFIG = {
 
 export const DAILY_SPECIALS_DATA: DailySpecial[] = [
   {
-    id: "spec-khadys-suya",
-    title: "Brochettes de filet de bœuf (Suya)",
+    id: "spec-khadys-crincrin",
+    title: "Sauce crin-crin (fakou frais/Ademe)",
     restaurantName: "Khady's Food & Event",
     restaurantId: "resto-khadys-food",
-    description: "Tendres tranches de filet de bœuf marinées à l'huile d'arachide et aux épices Kankankan (piment rouge, gingembre, arachide torréfiée), grillées au feu de bois. Formule officielle Plat Cuisiné du Jour.",
-    price: 4000,
-    originalPrice: 4500,
-    image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1000&auto=format&fit=crop&q=80",
+    description: "Sauce gluante à base de feuilles de corète, mijotée avec du poisson de mer et/ou viande de bœuf. Formule officielle Plat Cuisiné du Jour Vendredi 02 Octobre de Cheffe Khady.",
+    price: 3500,
+    originalPrice: 4000,
+    image: KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
     servingsLeft: 25,
     availableUntil: "15h00",
-    accompaniedBy: "Alloco doré croustillant, piment vert maison et oignons doux marinés",
-    tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍢 4 000 FCFA"],
+    accompaniedBy: "Pâte blanche de maïs ou pâte noire d'igname (cossette)",
+    tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍲 3 500 FCFA"],
   },
 ];
 
