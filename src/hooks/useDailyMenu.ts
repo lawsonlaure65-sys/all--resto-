@@ -207,7 +207,7 @@ export function useDailyMenu() {
             tags: ["👑 Khady's Food", "🔥 Plat du Jour Officiel", "🍢 4 000 FCFA", "⚡ Service 11h-15h"],
           };
           setSupabaseMenu(adaptedSpecial);
-        } else if (!data) {
+        } else if (!candidateRow) {
           // Repli gracieux : vérifier le stockage local ou le menu programmé Khady's Food
           const localActivePlanStr = localStorage.getItem("alloresto_active_daily_special");
           if (!localActivePlanStr) {

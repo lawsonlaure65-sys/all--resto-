@@ -98,6 +98,45 @@ export async function findKhadysRestaurantInSupabase(): Promise<SupabaseKhadyLoo
   }
 
   try {
+    // 1. Recherche prioritaire par slug exact ("khadys-food-event" ou "khadys-food")
+    const { data: slugData, error: slugError } = await client
+      .from("restaurants")
+      .select("id, name, slug")
+      .or(`slug.eq.${KHADYS_OFFICIAL_SLUG},slug.eq.${KHADYS_FALLBACK_SLUG}`)
+      .limit(5);
+
+    if (!slugError && slugData && slugData.length > 0) {
+      const match = slugData.find((r: any) => isKhadysFoodRestaurant(r));
+      if (match) {
+        return {
+          found: true,
+          id: match.id,
+          name: match.name || KHADYS_OFFICIAL_NAME,
+          slug: match.slug || KHADYS_OFFICIAL_SLUG,
+        };
+      }
+    }
+
+    // 2. Recherche prioritaire par nom exact ou partiel contenant "Khady"
+    const { data: nameData, error: nameError } = await client
+      .from("restaurants")
+      .select("id, name, slug")
+      .ilike("name", "%khady%")
+      .limit(5);
+
+    if (!nameError && nameData && nameData.length > 0) {
+      const match = nameData.find((r: any) => isKhadysFoodRestaurant(r));
+      if (match) {
+        return {
+          found: true,
+          id: match.id,
+          name: match.name || KHADYS_OFFICIAL_NAME,
+          slug: match.slug || KHADYS_OFFICIAL_SLUG,
+        };
+      }
+    }
+
+    // 3. Recherche générale dans tous les restaurants pour exhaustivité
     const { data, error } = await client
       .from("restaurants")
       .select("id, name, slug")
@@ -117,14 +156,14 @@ export async function findKhadysRestaurantInSupabase(): Promise<SupabaseKhadyLoo
       };
     }
 
-    // Recherche stricte par slug officiel en priorité, puis nom exact
+    // Recherche stricte par fonction de validation
     const match = data.find((r: any) => isKhadysFoodRestaurant(r));
 
     if (match) {
       return {
         found: true,
         id: match.id,
-        name: match.name,
+        name: match.name || KHADYS_OFFICIAL_NAME,
         slug: match.slug || KHADYS_OFFICIAL_SLUG,
       };
     }
