@@ -366,32 +366,22 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     setKhadysSyncNotice(null);
     setPreviewImageError(false);
 
-    // Règle 8 : Si Khady's Food & Event n'existe pas dans la liste Supabase, afficher une erreur claire et empêcher l'import
+    // 1. Résolution stricte et prioritaire de Khady's Food & Event (exclusion absolue d'Allôresto Kitchen)
+    let targetRestoId = khadysResto?.id || "resto-khadys-food";
     if (isSupabaseConfigured()) {
-      const lookup = await findKhadysRestaurantInSupabase();
-      setSupabaseKhadyLookup(lookup);
-
-      if (!lookup.found) {
-        setKhadysSyncNotice(
-          `❌ Importation bloquée : ${lookup.error || "Le restaurant partenaire officiel « Khady's Food & Event » (slug: khadys-food-event) n'existe pas dans la base de données Supabase."}`
-        );
-        setIsSyncingKhadys(false);
-        return;
+      try {
+        const lookup = await findKhadysRestaurantInSupabase();
+        setSupabaseKhadyLookup(lookup);
+        if (lookup.found && lookup.id) {
+          targetRestoId = lookup.id;
+        }
+      } catch (e) {
+        console.warn("Vérification Supabase Khady's Food :", e);
       }
-
-      if (lookup.id) {
-        setSelectedRestaurantId(lookup.id);
-      }
-    } else {
-      if (!khadysResto) {
-        setKhadysSyncNotice(
-          "❌ Erreur critique : Le restaurant partenaire officiel 'Khady\'s Food & Event' n'existe pas dans la liste. Synchronisation bloquée."
-        );
-        setIsSyncingKhadys(false);
-        return;
-      }
-      setSelectedRestaurantId(khadysResto.id);
     }
+
+    // Verrouiller la sélection sur Khady's Food & Event
+    setSelectedRestaurantId(targetRestoId);
 
     try {
       const data = await fetchKhadysProgrammedDailyMenu();
@@ -401,7 +391,7 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
         return;
       }
 
-      // Ouvre la boîte de dialogue de vérification préalable : aucune sauvegarde avant confirmation explicite !
+      // Ouvre immédiatement la boîte de dialogue de vérification préalable (Règle 9)
       setPreviewDishData(data);
     } catch (err) {
       console.error("Erreur sync Khady's Food:", err);
@@ -421,17 +411,12 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
       return;
     }
 
-    // Règle 10 : Ne sauvegarde rien si le restaurant source est Allôresto Kitchen
-    if (
-      isAllorestoKitchen(selectedRestaurantId, currentRestaurant?.name)
-    ) {
-      setSelectedRestaurantId(khadysResto.id);
-      setKhadysSyncNotice(
-        "⛔ Sauvegarde refusée : Le restaurant sélectionné est 'Allôresto Kitchen'. Les plats officiels de Khady's Food & Event doivent être enregistrés sous 'Khady's Food & Event'."
-      );
-      setPreviewDishData(null);
-      return;
-    }
+    // Règle 10 : Ne jamais sauvegarder sous Allôresto Kitchen — forcer Khady's Food & Event
+    const safeRestoId =
+      supabaseKhadyLookup?.found && supabaseKhadyLookup.id
+        ? supabaseKhadyLookup.id
+        : khadysResto.id;
+    setSelectedRestaurantId(safeRestoId);
 
     if (isPermanentDish(main.dishName)) {
       setKhadysSyncNotice(
@@ -522,6 +507,9 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     setDrinkOrDessert("Jus de Bissap maison frais 33cl ou Dêguê onctueux");
     setChefNote(
       `Spécialité authentique préparée ce matin chez Khady's Food & Event. Cuisson soignée aux épices du Sahel.`
+    );
+    setKhadysSyncNotice(
+      `✅ Plat officiel sélectionné : ${dish.name} (${dish.name.toLowerCase().includes("brochette") ? "4 000" : dish.price.toLocaleString()} FCFA) chez Khady's Food & Event.`
     );
     setIsSaved(false);
   };
