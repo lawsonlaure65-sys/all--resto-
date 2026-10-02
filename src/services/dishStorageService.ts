@@ -7,6 +7,13 @@ import {
 } from "./supabaseDishService";
 import { getSupabaseConfig } from "./supabaseClient";
 import { KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
+import {
+  isKhadysFoodRestaurant,
+  isAllorestoKitchen,
+  KHADYS_OFFICIAL_NAME,
+  KHADYS_STABLE_LOCAL_ID,
+  KHADYS_OFFICIAL_SLUG,
+} from "./khadysPartnerResolver";
 
 const STORAGE_KEY_RESTAURANTS = "alloresto_restaurants_v2";
 const STORAGE_KEY_CUSTOM_DISHES = "alloresto_custom_dishes_v2";
@@ -90,20 +97,12 @@ export function deduplicateRestaurants(restaurants: Restaurant[]): Restaurant[] 
 
   for (const resto of restaurants) {
     if (!resto || !resto.id) continue;
-    const isKhady =
-      resto.id === "resto-khadys-food" ||
-      resto.id === "a8168cb5-fe46-4368-85fa-be1a64d854b5" ||
-      resto.name.toLowerCase().includes("khady");
+    const isKhady = isKhadysFoodRestaurant(resto);
 
     if (isKhady) {
       if (khadyFound) {
         // Merge dishes into the existing Khady restaurant
-        const existingKhady = result.find(
-          (r) =>
-            r.id === "resto-khadys-food" ||
-            r.id === "a8168cb5-fe46-4368-85fa-be1a64d854b5" ||
-            r.name.toLowerCase().includes("khady")
-        );
+        const existingKhady = result.find((r) => isKhadysFoodRestaurant(r));
         if (existingKhady) {
           existingKhady.menu = deduplicateMenu([...existingKhady.menu, ...(resto.menu || [])]);
         }
@@ -179,15 +178,13 @@ export function loadStoredRestaurants(): Restaurant[] {
           const dedupedParsed = deduplicateRestaurants(parsed);
           // Merge partner updates (websiteUrl, onlineCatalogUrl, certified badge, updated names)
           const merged = dedupedParsed.map((resto: Restaurant) => {
+            const isKhady = isKhadysFoodRestaurant(resto);
             const defaultMatch =
               RESTAURANTS_DATA.find((d) => d.id === resto.id) ||
-              (resto.name.toLowerCase().includes("khady")
-                ? RESTAURANTS_DATA.find((d) => d.id === "resto-khadys-food")
-                : undefined);
+              (isKhady ? RESTAURANTS_DATA.find((d) => d.id === KHADYS_STABLE_LOCAL_ID) : undefined);
 
             if (defaultMatch) {
               let updatedMenu = deduplicateMenu(resto.menu || []);
-              const isKhady = resto.id === "resto-khadys-food" || resto.name.toLowerCase().includes("khady");
               if (isKhady && defaultMatch.menu) {
                 const existingIds = new Set(updatedMenu.map((m) => m.id));
                 const missingDefaults = defaultMatch.menu.filter((m) => !existingIds.has(m.id));
@@ -197,7 +194,8 @@ export function loadStoredRestaurants(): Restaurant[] {
               }
               return {
                 ...resto,
-                name: isKhady ? defaultMatch.name : resto.name,
+                name: isKhady ? KHADYS_OFFICIAL_NAME : resto.name,
+                slug: isKhady ? KHADYS_OFFICIAL_SLUG : (resto.slug || defaultMatch.slug),
                 tagline: isKhady ? defaultMatch.tagline : resto.tagline,
                 cuisine: isKhady ? defaultMatch.cuisine : resto.cuisine,
                 promoBadge: isKhady ? defaultMatch.promoBadge : resto.promoBadge,
@@ -216,7 +214,21 @@ export function loadStoredRestaurants(): Restaurant[] {
               menu: deduplicateMenu(resto.menu || []),
             };
           });
-          const normalized = normalizeDishesStock(merged);
+
+          let finalRestos = merged;
+          const hasKhady = finalRestos.some((r) => isKhadysFoodRestaurant(r));
+          if (!hasKhady) {
+            finalRestos = [RESTAURANTS_DATA[0], ...finalRestos];
+          } else {
+            // S'assurer que Khady's Food & Event est en premier (index 0)
+            const khadyIdx = finalRestos.findIndex((r) => isKhadysFoodRestaurant(r));
+            if (khadyIdx > 0) {
+              const [khadyResto] = finalRestos.splice(khadyIdx, 1);
+              finalRestos.unshift(khadyResto);
+            }
+          }
+
+          const normalized = normalizeDishesStock(finalRestos);
           return normalized;
         }
       }
@@ -379,7 +391,11 @@ export function addOrUpdateDishInStorage(
     targetId = typeof dishOrTargetId === "string" ? dishOrTargetId : undefined;
   }
 
-  const defaultRestoId = targetId || restaurants[0]?.id || "resto-khadys-food";
+  let defaultRestoId = targetId || restaurants[0]?.id || KHADYS_STABLE_LOCAL_ID;
+  if (isAllorestoKitchen(defaultRestoId)) {
+    const khady = restaurants.find((r) => isKhadysFoodRestaurant(r));
+    defaultRestoId = khady?.id || KHADYS_STABLE_LOCAL_ID;
+  }
 
   // Cloud sync to Supabase (non-blocking)
   try {

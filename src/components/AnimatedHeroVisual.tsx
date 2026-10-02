@@ -11,6 +11,10 @@ import {
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
+import {
+  findKhadysRestaurantInSupabase,
+  isAllorestoKitchen,
+} from "../services/khadysPartnerResolver";
 
 export interface DailyDish {
   name: string;
@@ -90,34 +94,48 @@ export const AnimatedHeroVisual: React.FC<AnimatedHeroVisualProps> = ({
       try {
         const today = new Date().toISOString().slice(0, 10);
 
-        // Récupérer le menu du jour publié pour aujourd'hui
-        const { data, error } = await (supabase
-          .from("daily_menus") as any)
+        // Règle 2, 3, 5 : Chercher d'abord Khady's Food dans Supabase
+        const khadyLookup = await findKhadysRestaurantInSupabase();
+        const khadyId = khadyLookup.found && khadyLookup.id ? khadyLookup.id : null;
+
+        let query = (supabase.from("daily_menus") as any)
           .select("*")
           .eq("menu_date", today)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .order("created_at", { ascending: false });
+
+        if (khadyId) {
+          query = query.eq("restaurant_id", khadyId);
+        }
+
+        const { data, error } = await query.limit(1).maybeSingle();
 
         if (error) {
           console.warn("Erreur chargement plat du jour Supabase :", error);
         }
 
         if (!cancelled) {
-          if (data) {
-            const rawName = data.title || data.dish_name || "";
-            if (!isPermanentName(rawName)) {
-              setDailyDish({
-                name: rawName,
-                description: data.description,
-                price: Number(data.price_xof || data.price_fcfa || data.price || 4000),
-                image_url: resolveDishImageUrl(data) || (rawName.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : ""),
-              });
-            } else {
-              setDailyDish(null);
-            }
+          // Règle 5, 7, 10 : Ne jamais afficher le plat d'Allôresto Kitchen ni l'ancien tiep
+          const isKitchen = data && isAllorestoKitchen(data.restaurant_id);
+          const rawName = data?.title || data?.dish_name || "";
+          const isTiep = rawName.toLowerCase().includes("tiep");
+
+          if (data && !isKitchen && !isPermanentName(rawName) && !isTiep) {
+            setDailyDish({
+              name: rawName,
+              description: data.description,
+              price: Number(data.price_xof || data.price_fcfa || data.price || 4000),
+              image_url:
+                resolveDishImageUrl(data) ||
+                (rawName.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : ""),
+            });
           } else {
-            setDailyDish(null);
+            // Plat officiel programmé Khady's Food
+            setDailyDish({
+              name: "Brochettes de filet de bœuf (Suya)",
+              description: "Tendres tranches grillées au feu de bois aux épices Kankankan",
+              price: 4000,
+              image_url: KHADYS_OFFICIAL_SUYA_IMAGE,
+            });
           }
           setIsLoadingDailyDish(false);
         }

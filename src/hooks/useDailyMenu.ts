@@ -3,6 +3,12 @@ import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { DailySpecial } from "../types";
 import { fetchKhadysProgrammedDailyMenu, KHADYS_FALLBACK_MENU } from "../services/khadysSyncService";
 import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
+import {
+  findKhadysRestaurantInSupabase,
+  isAllorestoKitchen,
+  KHADYS_OFFICIAL_NAME,
+  KHADYS_STABLE_LOCAL_ID,
+} from "../services/khadysPartnerResolver";
 
 export interface SupabaseDailyMenuRow {
   id: string;
@@ -102,35 +108,54 @@ export function useDailyMenu() {
         // Date du jour YYYY-MM-DD
         const today = new Date().toISOString().split("T")[0];
 
-        // Tentative 1 : Plat publié du jour pour Khady's Food ou restaurant principal
-        let { data, error: queryError } = await supabase
-          .from("daily_menus")
-          .select("*")
-          .eq("menu_date", today)
-          .eq("status", "published")
-          .order("published_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        // Règle 2, 3, 4, 5 : Chercher l'identifiant réel de Khady's Food & Event dans Supabase
+        const khadyLookup = await findKhadysRestaurantInSupabase();
+        const targetRestaurantId = khadyLookup.found && khadyLookup.id ? khadyLookup.id : null;
 
-        // Tentative 2 : Dernier plat publié disponible
-        if (!data && !queryError) {
-          const latestRes = await supabase
+        let candidateRow: (SupabaseDailyMenuRow & { photo_url?: string | null }) | null = null;
+        let queryError: any = null;
+
+        // Si Khady's Food a été trouvé dans Supabase, chercher son plat du jour
+        if (targetRestaurantId) {
+          const res = await supabase
             .from("daily_menus")
             .select("*")
+            .eq("restaurant_id", targetRestaurantId)
+            .eq("menu_date", today)
             .eq("status", "published")
-            .order("menu_date", { ascending: false })
+            .order("published_at", { ascending: false })
             .limit(1)
             .maybeSingle();
-          data = latestRes.data;
-          queryError = latestRes.error;
+
+          candidateRow = res.data;
+          queryError = res.error;
+
+          // Si pas de plat aujourd'hui, chercher le dernier plat publié de Khady's Food
+          if (!candidateRow && !queryError) {
+            const latestRes = await supabase
+              .from("daily_menus")
+              .select("*")
+              .eq("restaurant_id", targetRestaurantId)
+              .eq("status", "published")
+              .order("menu_date", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            candidateRow = latestRes.data;
+            queryError = latestRes.error;
+          }
         }
 
-        // Si le plat Supabase est vieux de plus de 2 jours, absent ou contient l'ancien Tiep obsolète, on charge directement le plat officiel programmé chez Khady's Food
-        const candidateRow = data as (SupabaseDailyMenuRow & { photo_url?: string | null }) | null;
+        // Règle 5, 7, 10 : Ne JAMAIS prendre le plat ou l'image d'Allôresto Kitchen
+        const isFromKitchen =
+          candidateRow && isAllorestoKitchen(candidateRow.restaurant_id);
+
         const isObsoleteOrStale =
           !candidateRow ||
+          isFromKitchen ||
           (candidateRow.title && candidateRow.title.toLowerCase().includes("tiep")) ||
-          (candidateRow.menu_date && Math.abs(new Date(today).getTime() - new Date(candidateRow.menu_date).getTime()) > 2 * 86400000);
+          (candidateRow.menu_date &&
+            Math.abs(new Date(today).getTime() - new Date(candidateRow.menu_date).getTime()) > 2 * 86400000);
+
         if (isObsoleteOrStale) {
           const liveData = await fetchKhadysProgrammedDailyMenu();
           if (liveData?.mainDish && active) {
@@ -138,8 +163,8 @@ export function useDailyMenu() {
             setSupabaseMenu({
               id: "khadys-live-programmed",
               title: main.dishName,
-              restaurantName: "Khady's Food & Event",
-              restaurantId: KHADYS_RESTAURANT_ID,
+              restaurantName: KHADYS_OFFICIAL_NAME,
+              restaurantId: targetRestaurantId || KHADYS_STABLE_LOCAL_ID,
               description: `${main.description}. Accompagnements : ${main.accompaniments}`,
               price: main.priceFcfa,
               originalPrice: main.originalPrice,
@@ -158,8 +183,8 @@ export function useDailyMenu() {
           console.warn("Info menu du jour Supabase (repli automatique local):", queryError.message);
         }
 
-        if (data && active) {
-          const row = data as SupabaseDailyMenuRow & { photo_url?: string | null };
+        if (candidateRow && active) {
+          const row = candidateRow;
           const isSuya =
             (row.title || "").toLowerCase().includes("brochette") ||
             (row.title || "").toLowerCase().includes("suya");
@@ -167,8 +192,8 @@ export function useDailyMenu() {
           const adaptedSpecial: DailySpecial = {
             id: row.id,
             title: isSuya ? "Brochettes de filet de bœuf (Suya)" : row.title,
-            restaurantName: "Khady's Food & Event",
-            restaurantId: row.restaurant_id || KHADYS_RESTAURANT_ID,
+            restaurantName: KHADYS_OFFICIAL_NAME,
+            restaurantId: targetRestaurantId || KHADYS_STABLE_LOCAL_ID,
             description:
               row.marketing_message ||
               row.description ||

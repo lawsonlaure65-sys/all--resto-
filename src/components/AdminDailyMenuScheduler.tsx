@@ -45,6 +45,15 @@ import {
   KhadysDailyMenuResponse,
 } from "../services/khadysSyncService";
 import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
+import {
+  findKhadysRestaurantInSupabase,
+  isAllorestoKitchen,
+  isKhadysFoodRestaurant,
+  KHADYS_OFFICIAL_NAME,
+  KHADYS_OFFICIAL_SLUG,
+  KHADYS_STABLE_LOCAL_ID,
+  SupabaseKhadyLookupResult,
+} from "../services/khadysPartnerResolver";
 
 interface AdminDailyMenuSchedulerProps {
   restaurants?: Restaurant[];
@@ -218,6 +227,30 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
   const [khadysSyncNotice, setKhadysSyncNotice] = useState<string | null>(null);
   const [previewDishData, setPreviewDishData] = useState<KhadysDailyMenuResponse | null>(null);
   const [previewImageError, setPreviewImageError] = useState<boolean>(false);
+  const [supabaseKhadyLookup, setSupabaseKhadyLookup] = useState<SupabaseKhadyLookupResult | null>(null);
+
+  // Vérification de la présence de Khady's Food & Event dans Supabase dès le chargement
+  useEffect(() => {
+    let cancelled = false;
+    async function checkSupabaseForKhady() {
+      if (!isSupabaseConfigured()) return;
+      try {
+        const res = await findKhadysRestaurantInSupabase();
+        if (!cancelled) {
+          setSupabaseKhadyLookup(res);
+          if (res.found && res.id) {
+            setSelectedRestaurantId(res.id);
+          }
+        }
+      } catch (err) {
+        console.warn("Vérification Supabase Khady:", err);
+      }
+    }
+    checkSupabaseForKhady();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handlePurgeSyncCache = () => {
     const res = purgeKhadysDailyMenuCache();
@@ -226,11 +259,77 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     );
   };
 
-  const khadysResto =
-    restaurants.find((r) => r.id === "resto-khadys-food") ||
-    restaurants.find((r) => r.name.toLowerCase().includes("khady")) ||
-    restaurants[0];
+  // 1. Recherche stricte et stable du restaurant officiel Khady's Food & Event (par slug, nom exact ou id officiel)
+  const khadysResto = useMemo(() => {
+    // Si Supabase a validé l'existence réelle de Khady's Food
+    if (supabaseKhadyLookup?.found && supabaseKhadyLookup.id) {
+      const match = restaurants.find((r) => r.id === supabaseKhadyLookup.id);
+      if (match) {
+        return {
+          ...match,
+          id: supabaseKhadyLookup.id,
+          name: KHADYS_OFFICIAL_NAME,
+          slug: supabaseKhadyLookup.slug || KHADYS_OFFICIAL_SLUG,
+        };
+      }
+      return {
+        ...RESTAURANTS_DATA[0],
+        id: supabaseKhadyLookup.id,
+        name: KHADYS_OFFICIAL_NAME,
+        slug: supabaseKhadyLookup.slug || KHADYS_OFFICIAL_SLUG,
+      };
+    }
+
+    // Recherche par fonction stricte dans la liste des restaurants
+    const foundInList = restaurants.find((r) => isKhadysFoodRestaurant(r));
+    if (foundInList) {
+      return {
+        ...foundInList,
+        name: KHADYS_OFFICIAL_NAME,
+        slug: foundInList.slug || KHADYS_OFFICIAL_SLUG,
+      };
+    }
+
+    // Données officielles locales certifiées (fallback stable)
+    const defaultLocal =
+      RESTAURANTS_DATA.find((r) => r.id === KHADYS_STABLE_LOCAL_ID) || RESTAURANTS_DATA[0];
+    return {
+      ...defaultLocal,
+      id: KHADYS_STABLE_LOCAL_ID,
+      name: KHADYS_OFFICIAL_NAME,
+      slug: KHADYS_OFFICIAL_SLUG,
+    };
+  }, [restaurants, supabaseKhadyLookup]);
+
+  // 2. Liste complète des restaurants disponibles avec Khady's Food & Event toujours en tête
+  const availableRestaurants = useMemo(() => {
+    const list = [...restaurants];
+    if (khadysResto && !list.some((r) => r.id === khadysResto.id)) {
+      list.unshift(khadysResto);
+    }
+    const kIndex = list.findIndex((r) => isKhadysFoodRestaurant(r));
+    if (kIndex > 0) {
+      const [k] = list.splice(kIndex, 1);
+      list.unshift(k);
+    }
+    return list;
+  }, [restaurants, khadysResto]);
+
+  // 3. Menu officiel lu directement depuis Khady's Food & Event
   const khadysDishes = khadysResto?.menu || [];
+
+  // Règle 1 : Remplacer immédiatement le restaurant par défaut si Allôresto Kitchen est sélectionné
+  useEffect(() => {
+    if (khadysResto) {
+      if (
+        !selectedRestaurantId ||
+        isAllorestoKitchen(selectedRestaurantId) ||
+        !availableRestaurants.some((r) => r.id === selectedRestaurantId)
+      ) {
+        setSelectedRestaurantId(khadysResto.id);
+      }
+    }
+  }, [khadysResto, availableRestaurants, selectedRestaurantId]);
 
   const PERMANENT_DISH_KEYWORDS = [
     "attieke",
@@ -267,11 +366,38 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     setKhadysSyncNotice(null);
     setPreviewImageError(false);
 
+    // Règle 8 : Si Khady's Food & Event n'existe pas dans la liste Supabase, afficher une erreur claire et empêcher l'import
+    if (isSupabaseConfigured()) {
+      const lookup = await findKhadysRestaurantInSupabase();
+      setSupabaseKhadyLookup(lookup);
+
+      if (!lookup.found) {
+        setKhadysSyncNotice(
+          `❌ Importation bloquée : ${lookup.error || "Le restaurant partenaire officiel « Khady's Food & Event » (slug: khadys-food-event) n'existe pas dans la base de données Supabase."}`
+        );
+        setIsSyncingKhadys(false);
+        return;
+      }
+
+      if (lookup.id) {
+        setSelectedRestaurantId(lookup.id);
+      }
+    } else {
+      if (!khadysResto) {
+        setKhadysSyncNotice(
+          "❌ Erreur critique : Le restaurant partenaire officiel 'Khady\'s Food & Event' n'existe pas dans la liste. Synchronisation bloquée."
+        );
+        setIsSyncingKhadys(false);
+        return;
+      }
+      setSelectedRestaurantId(khadysResto.id);
+    }
+
     try {
       const data = await fetchKhadysProgrammedDailyMenu();
 
       if (!data?.mainDish) {
-        setKhadysSyncNotice("⚠️ Aucun plat du jour retourné par la source.");
+        setKhadysSyncNotice("⚠️ Aucun plat du jour retourné par la source officielle.");
         return;
       }
 
@@ -279,7 +405,7 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
       setPreviewDishData(data);
     } catch (err) {
       console.error("Erreur sync Khady's Food:", err);
-      setKhadysSyncNotice("⚠️ Erreur lors de la synchronisation avec la source.");
+      setKhadysSyncNotice("⚠️ Erreur lors de la synchronisation avec la source officielle.");
     } finally {
       setIsSyncingKhadys(false);
     }
@@ -288,6 +414,24 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
   const handleConfirmImport = (data: KhadysDailyMenuResponse, finalImageUrl?: string) => {
     const main = data.mainDish;
     if (!main) return;
+
+    if (!khadysResto) {
+      setKhadysSyncNotice("❌ Erreur : Le restaurant partenaire officiel 'Khady\'s Food & Event' est introuvable.");
+      setPreviewDishData(null);
+      return;
+    }
+
+    // Règle 10 : Ne sauvegarde rien si le restaurant source est Allôresto Kitchen
+    if (
+      isAllorestoKitchen(selectedRestaurantId, currentRestaurant?.name)
+    ) {
+      setSelectedRestaurantId(khadysResto.id);
+      setKhadysSyncNotice(
+        "⛔ Sauvegarde refusée : Le restaurant sélectionné est 'Allôresto Kitchen'. Les plats officiels de Khady's Food & Event doivent être enregistrés sous 'Khady's Food & Event'."
+      );
+      setPreviewDishData(null);
+      return;
+    }
 
     if (isPermanentDish(main.dishName)) {
       setKhadysSyncNotice(
@@ -312,17 +456,17 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
       localStorage.removeItem("alloresto_khadys_trio");
     } catch (_) {}
 
-    if (khadysResto) {
-      setSelectedRestaurantId(khadysResto.id);
-    }
+    // Verrouiller strictement le restaurant sur Khady's Food & Event
+    setSelectedRestaurantId(khadysResto.id);
 
     setDishName(main.dishName);
     setPriceFcfa(4000);
 
+    // Règle 6 & 7 : L'image doit être celle publiée par Khady's Food, jamais l'image locale du restaurant sélectionné par défaut
     const verifiedImg = finalImageUrl || resolveDishImageUrl(main) || KHADYS_OFFICIAL_SUYA_IMAGE;
     setImageUrl(verifiedImg);
     setPhotoSourceLabel(
-      "Plat officiel Khady's Food (khadysfood.vercel.app)"
+      "Plat officiel Khady's Food & Event (khadysfood.vercel.app)"
     );
 
     setMainCourse(main.description || "");
@@ -342,7 +486,7 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     setPreviewDishData(null);
 
     setKhadysSyncNotice(
-      `✅ Plat vérifié et injecté avec son image authentique : "${main.dishName}" (4 000 FCFA). Cliquez sur "Enregistrer & Publier" ci-dessous pour confirmer la diffusion.`
+      `✅ Plat vérifié et injecté pour Khady's Food & Event : "${main.dishName}" (4 000 FCFA). Cliquez sur "Enregistrer & Publier" ci-dessous pour confirmer la diffusion.`
     );
   };
 
@@ -383,7 +527,9 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
   };
 
   const currentRestaurant =
-    restaurants.find((r) => r.id === selectedRestaurantId) || restaurants[0];
+    availableRestaurants.find((r) => r.id === selectedRestaurantId) ||
+    khadysResto ||
+    availableRestaurants[0];
 
   // Génération des textes automatisés selon le réseau
   const getWhatsAppMessage = () => {
@@ -651,6 +797,17 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
   };
 
   const handleSaveAndActivate = async () => {
+    // Règle 10 : Ne sauvegarde rien si le restaurant source est Allôresto Kitchen
+    if (isAllorestoKitchen(selectedRestaurantId, currentRestaurant?.name)) {
+      alert(
+        "⛔ Sauvegarde refusée : Le restaurant sélectionné est 'Allôresto Kitchen'. Les plats officiels de Khady's Food & Event doivent impérativement être enregistrés sous 'Khady's Food & Event'."
+      );
+      setKhadysSyncNotice(
+        "⛔ Sauvegarde refusée : Le restaurant sélectionné est 'Allôresto Kitchen'. Veuillez sélectionner 'Khady\'s Food & Event'."
+      );
+      return;
+    }
+
     const plan: DailySpecialPlan = {
       id: `daily-${Date.now()}`,
       targetDate,
@@ -832,7 +989,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                 onChange={(e) => setSelectedRestaurantId(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-medium focus:outline-none focus:border-orange-500 cursor-pointer"
               >
-                {restaurants.map((rest) => (
+                {availableRestaurants.map((rest) => (
                   <option key={rest.id} value={rest.id}>
                     {rest.name} ({rest.cuisine})
                   </option>
@@ -849,10 +1006,10 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                   </div>
                   <div>
                     <h5 className="text-xs font-black text-amber-300">
-                      Prendre directement un Plat de chez Khady&apos;s Food &amp; Event
+                      Synchronisation Officielle Khady&apos;s Food &amp; Event
                     </h5>
                     <p className="text-[10px] text-slate-400">
-                      Restaurant Fondateur • Synchronisation instantanée du plat &amp; photo
+                      Restaurant Partenaire Certifié • Synchronisation instantanée du plat &amp; photo
                     </p>
                   </div>
                 </div>
@@ -862,32 +1019,65 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
               </div>
 
               {/* Distinction officielle des sources & Liens */}
-              <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5 text-[10px]">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-300 flex items-center gap-1">
-                    <Globe className="w-3 h-3 text-amber-400" />
-                    Source réelle de synchronisation :
-                  </span>
+              <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2 text-xs">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <div className="space-y-0.5">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                      Restaurant source :
+                    </span>
+                    <span className="font-black text-amber-300 text-xs">
+                      {khadysResto ? khadysResto.name : "Khady's Food & Event"}
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={handlePurgeSyncCache}
-                    className="inline-flex items-center gap-1 text-[9px] text-amber-400/80 hover:text-amber-300 font-semibold px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 hover:border-amber-500/40 transition active:scale-95"
+                    className="inline-flex items-center gap-1 text-[9px] text-amber-400/80 hover:text-amber-300 font-semibold px-2 py-1 rounded-md bg-slate-900 border border-slate-700 hover:border-amber-500/40 transition active:scale-95 cursor-pointer"
                     title="Purger le cache local des plats du jour Khady's Food (préserve vos données client et panier)"
                   >
                     <Trash2 className="w-2.5 h-2.5" />
                     <span>Purger le cache</span>
                   </button>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-400">
-                  <span className="text-amber-300 font-mono">https://khadysfood.vercel.app</span>
-                  <span>•</span>
-                  <span>Catalogue WhatsApp : <a href="https://wa.me/c/22774441621" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">wa.me/c/22774441621 ↗</a></span>
-                  <span>•</span>
-                  <span>Commande directe : <a href="https://wa.me/22774441621" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">wa.me/22774441621 ↗</a></span>
+
+                <div className="space-y-1 text-[11px] text-slate-300">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                    <span className="text-slate-400">Site source :</span>
+                    <a
+                      href="https://khadysfood.vercel.app"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-amber-300 font-mono hover:underline"
+                    >
+                      https://khadysfood.vercel.app ↗
+                    </a>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                    <span className="text-slate-400">Catalogue WhatsApp :</span>
+                    <a
+                      href="https://wa.me/c/22774441621"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-400 font-mono hover:underline"
+                    >
+                      https://wa.me/c/22774441621 ↗
+                    </a>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                    <span className="text-slate-400">Commande directe :</span>
+                    <a
+                      href="https://wa.me/22774441621"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-400 font-mono hover:underline"
+                    >
+                      https://wa.me/22774441621 ↗
+                    </a>
+                  </div>
                 </div>
               </div>
 
-              {/* BOUTON ULTRA-RAPIDE : PRENDRE LE PLAT DU JOUR PROGRAMMÉ DE KHADY'S FOOD */}
+              {/* BOUTON ULTRA-RAPIDE : VÉRIFIER ET IMPORTER LE PLAT DU JOUR DE KHADY'S FOOD & EVENT */}
               <button
                 type="button"
                 onClick={handleImportFromKhadysFood}
@@ -898,14 +1088,14 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                   <RefreshCw className={`w-4 h-4 shrink-0 ${isSyncingKhadys ? "animate-spin" : ""}`} />
                   <div>
                     <span className="block leading-tight font-extrabold text-[12px]">
-                      ⚡ PRENDRE LE PLAT DU JOUR PROGRAMMÉ DE KHADY&apos;S FOOD
+                      ⚡ Vérifier et importer le plat du jour de Khady&apos;s Food &amp; Event
                     </span>
                     <span className="block text-[10px] text-slate-900/80 font-medium">
-                      Plat actuel : Brochettes de Filet de Bœuf (Suya) • 4 000 FCFA
+                      Plat officiel : Brochettes de filet de bœuf (Suya) • 4 000 FCFA
                     </span>
                   </div>
                 </div>
-                <span className="px-2 py-1 bg-slate-950 text-amber-300 rounded-lg text-[10px] font-black uppercase tracking-wider shrink-0 border border-amber-400/40">
+                <span className="px-2.5 py-1 bg-slate-950 text-amber-300 rounded-lg text-[10px] font-black uppercase tracking-wider shrink-0 border border-amber-400/40">
                   {isSyncingKhadys ? "Vérification..." : "Vérifier & Importer"}
                 </span>
               </button>
@@ -1004,19 +1194,31 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                         <div>💬 <strong>Commande directe :</strong> https://wa.me/22774441621</div>
                       </div>
 
-                      {/* Les 4 points de contrôle obligatoires : Nom, Prix, URL Image, Aperçu Réel */}
+                      {/* Les 4 points de contrôle obligatoires (Règle 9) : Restaurant source, Plat, Prix, Image */}
                       <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+                        <div className="flex justify-between items-center py-1.5 border-b border-amber-500/30 bg-amber-500/10 px-2.5 rounded-lg">
+                          <span className="text-amber-300 font-bold flex items-center gap-1.5">
+                            <Store className="w-3.5 h-3.5 text-amber-400" />
+                            Restaurant source :
+                          </span>
+                          <div className="text-right">
+                            <span className="font-black text-amber-300 block">{KHADYS_OFFICIAL_NAME}</span>
+                            <span className="text-[10px] text-amber-400/80 font-mono">
+                              ID : {khadysResto.id} • Slug : {khadysResto.slug || KHADYS_OFFICIAL_SLUG}
+                            </span>
+                          </div>
+                        </div>
                         <div className="flex justify-between items-center py-1 border-b border-slate-800/60">
-                          <span className="text-slate-400 font-medium">1. Nom du plat :</span>
+                          <span className="text-slate-400 font-medium">Plat :</span>
                           <span className="font-bold text-white text-right">{previewDishData.mainDish.dishName}</span>
                         </div>
                         <div className="flex justify-between items-center py-1 border-b border-slate-800/60">
-                          <span className="text-slate-400 font-medium">2. Prix officiel :</span>
+                          <span className="text-slate-400 font-medium">Prix :</span>
                           <span className="font-bold text-emerald-400">{previewDishData.mainDish.priceFcfa.toLocaleString()} FCFA</span>
                         </div>
                         <div className="py-1">
                           <div className="flex justify-between items-center mb-1">
-                            <span className="text-slate-400 font-medium">3. URL image officielle :</span>
+                            <span className="text-slate-400 font-medium">Image :</span>
                             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${isImageInvalid ? "bg-red-500/20 text-red-300" : "bg-emerald-500/20 text-emerald-300"}`}>
                               {isImageInvalid ? "❌ Non accessible" : "✅ Image vérifiée"}
                             </span>
@@ -1075,8 +1277,15 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                         </div>
                       </div>
 
-                      {/* Blocage de sécurité si plat obsolète ou permanent */}
-                      {(isObsoleteDishName(previewDishData.mainDish.dishName) || isPermanentDish(previewDishData.mainDish.dishName)) ? (
+                      {/* Blocage de sécurité si plat obsolète ou permanent ou Allôresto Kitchen */}
+                      {isAllorestoKitchen(selectedRestaurantId, currentRestaurant?.name) ? (
+                        <div className="p-3 rounded-xl bg-red-950/90 border border-red-500 text-red-200 text-xs font-semibold flex items-center gap-2">
+                          <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
+                          <span>
+                            ⛔ Restaurant source non autorisé : Allôresto Kitchen. Les plats de Khady&apos;s Food &amp; Event doivent impérativement être importés pour Khady&apos;s Food &amp; Event.
+                          </span>
+                        </div>
+                      ) : (isObsoleteDishName(previewDishData.mainDish.dishName) || isPermanentDish(previewDishData.mainDish.dishName)) ? (
                         <div className="p-3 rounded-xl bg-red-950/80 border border-red-500/60 text-red-200 text-xs font-semibold flex items-center gap-2">
                           <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
                           <span>
@@ -1093,7 +1302,7 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                       ) : (
                         <div className="p-2.5 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-emerald-200 text-xs font-semibold flex items-center gap-2">
                           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <span>✅ Plat officiel et image vérifiés, conformes à Khady&apos;s Food.</span>
+                          <span>✅ Plat officiel et image vérifiés, conformes à Khady&apos;s Food &amp; Event.</span>
                         </div>
                       )}
 
@@ -1111,7 +1320,8 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                           disabled={
                             isObsoleteDishName(previewDishData.mainDish.dishName) ||
                             isPermanentDish(previewDishData.mainDish.dishName) ||
-                            isImageInvalid
+                            isImageInvalid ||
+                            isAllorestoKitchen(selectedRestaurantId, currentRestaurant?.name)
                           }
                           onClick={() => handleConfirmImport(previewDishData, previewResolvedImageUrl)}
                           className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95"

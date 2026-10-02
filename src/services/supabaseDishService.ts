@@ -3,6 +3,12 @@ import { getSupabaseClient } from "./supabaseClient";
 import { RESTAURANTS_DATA } from "../data/allorestoData";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
+import {
+  isKhadysFoodRestaurant,
+  KHADYS_OFFICIAL_NAME,
+  KHADYS_OFFICIAL_SLUG,
+  KHADYS_STABLE_LOCAL_ID,
+} from "./khadysPartnerResolver";
 
 // SQL Schema for Supabase SQL Editor
 export const SUPABASE_SQL_SCHEMA = `-- ============================================================
@@ -250,10 +256,10 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
   }
 
   try {
-    // Récupérer les restaurants avec uniquement les colonnes sûres (aucun banner_image)
+    // Récupérer les restaurants avec id, name et slug
     const { data: restosData, error: restosError } = await client
       .from("restaurants")
-      .select("id, name")
+      .select("id, name, slug")
       .order("name", { ascending: true });
 
     if (restosError) {
@@ -277,6 +283,7 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
 
     // Map dishes per restaurant
     const restaurants: Restaurant[] = restosData.map((r: any) => {
+      const isKhady = isKhadysFoodRestaurant(r);
       const rawDishes = (dishesData || [])
         .filter((d: any) => d.restaurant_id === r.id)
         .map(mapSupabaseRowToDish);
@@ -294,15 +301,14 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
 
       const localMatch =
         RESTAURANTS_DATA.find((lr) => lr.id === r.id) ||
-        (r.name && r.name.toLowerCase().includes("khady")
-          ? RESTAURANTS_DATA.find((lr) => lr.id === "resto-khadys-food")
-          : undefined);
+        (isKhady ? RESTAURANTS_DATA.find((lr) => lr.id === KHADYS_STABLE_LOCAL_ID) : undefined);
 
       return {
         id: r.id,
-        name: r.name,
+        name: isKhady ? KHADYS_OFFICIAL_NAME : r.name,
+        slug: isKhady ? KHADYS_OFFICIAL_SLUG : (r.slug || localMatch?.slug),
         tagline: localMatch?.tagline || "",
-        cuisine: localMatch?.cuisine || "Africain",
+        cuisine: isKhady ? (localMatch?.cuisine || "Gastronomie Sahélienne, Braisés") : (localMatch?.cuisine || "Africain"),
         cuisineCategory: localMatch?.cuisineCategory || "africain",
         rating: Number(localMatch?.rating || 4.8),
         reviewCount: Number(localMatch?.reviewCount || 100),
@@ -325,18 +331,10 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
 
     // Conserver les restaurants locaux non encore migrés sur Supabase sans doublons
     const fetchedIds = new Set(restaurants.map((r) => r.id));
-    const isKhadyFetched = restaurants.some(
-      (r) =>
-        r.id === "resto-khadys-food" ||
-        r.id === "a8168cb5-fe46-4368-85fa-be1a64d854b5" ||
-        r.name.toLowerCase().includes("khady")
-    );
+    const isKhadyFetched = restaurants.some((r) => isKhadysFoodRestaurant(r));
 
     RESTAURANTS_DATA.forEach((defaultResto) => {
-      const isDefaultKhady =
-        defaultResto.id === "resto-khadys-food" ||
-        defaultResto.name.toLowerCase().includes("khady");
-
+      const isDefaultKhady = isKhadysFoodRestaurant(defaultResto);
       const alreadyIncluded =
         fetchedIds.has(defaultResto.id) || (isDefaultKhady && isKhadyFetched);
 
@@ -344,6 +342,15 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
         restaurants.push(defaultResto);
       }
     });
+
+    // Toujours s'assurer que Khady's Food & Event est en tête de liste
+    const khadyIndex = restaurants.findIndex((r) => isKhadysFoodRestaurant(r));
+    if (khadyIndex > 0) {
+      const [khadyResto] = restaurants.splice(khadyIndex, 1);
+      restaurants.unshift(khadyResto);
+    } else if (khadyIndex === -1) {
+      restaurants.unshift(RESTAURANTS_DATA[0]);
+    }
 
     return { success: true, data: restaurants };
   } catch (err: any) {
@@ -456,12 +463,12 @@ export async function syncAllLocalDataToSupabase(
 
     const existingIds = new Set<string>((existingRestos || []).map((r: any) => r.id));
 
-    // Identifier le restaurant Khady's en base s'il a un ID spécifique (ex: UUID)
+    // Identifier le restaurant Khady's en base s'il a un ID spécifique (ex: UUID ou slug)
     const khadysInDb = (existingRestos || []).find(
       (r: any) =>
         r.id === "resto-khadys-food" ||
-        (r.name && r.name.toLowerCase().includes("khady")) ||
-        r.id === "a8168cb5-fe46-4368-85fa-be1a64d854b5"
+        r.slug === "khadys-food-event" ||
+        (r.name && r.name.toLowerCase().includes("khady") && !r.name.toLowerCase().includes("kitchen"))
     );
 
     // Insérer uniquement les restaurants manquants avec les colonnes minimales sûres (id, name)
@@ -571,14 +578,20 @@ export async function syncDishesToSupabase(
     throw new Error(`Erreur restaurants : ${listError.message}`);
   }
 
-  // Chercher par slug cible, ou correspondance Khady, ou premier restaurant existant
+  // Chercher strictement par slug cible ou correspondance Khady sans jamais sélectionner Allôresto Kitchen
   const restaurant =
     restaurants?.find((r: any) => r.slug === targetRestaurantSlug) ||
-    restaurants?.find((r: any) => r.slug?.includes("khady") || r.name?.toLowerCase().includes("khady")) ||
-    restaurants?.[0];
+    restaurants?.find(
+      (r: any) =>
+        (r.slug?.includes("khady") || r.name?.toLowerCase().includes("khady")) &&
+        !r.name?.toLowerCase().includes("kitchen") &&
+        r.id !== "a8168cb5-fe46-4368-85fa-be1a64d854b5"
+    );
 
   if (!restaurant) {
-    throw new Error("Restaurant cible introuvable.");
+    throw new Error(
+      "Restaurant officiel Khady's Food & Event (slug: khadys-food-event) introuvable dans Supabase. Sauvegarde refusée."
+    );
   }
 
   const targetRestaurantId = restaurant.id;

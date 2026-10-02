@@ -46,6 +46,7 @@ export const RESTAURANTS_DATA: Restaurant[] = [
   {
     id: "resto-khadys-food",
     name: "Khady's Food & Event",
+    slug: "khadys-food-event",
     tagline: "Restaurant & Traiteur Événementiel de Référence à Niamey : Petits déjeuners, Choukouya au Kan-Kan, Dambou royal, Menus du Jour & Cocktails d'exception",
     cuisine: "Gastronomie Sahélienne, Braisés, Traiteur & Événements",
     cuisineCategory: "khadys",

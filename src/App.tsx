@@ -52,6 +52,11 @@ import { getJumuahStatus } from "./utils/jumuahSchedule";
 import { loadStoredRestaurants, syncFromSupabaseIfAvailable } from "./services/dishStorageService";
 import { applyOfficialBrandFavicon } from "./utils/faviconManager";
 import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "./utils/dishImageResolver";
+import {
+  isKhadysFoodRestaurant,
+  KHADYS_OFFICIAL_NAME,
+  KHADYS_STABLE_LOCAL_ID,
+} from "./services/khadysPartnerResolver";
 
 import {
   playSoundCartAdd,
@@ -336,9 +341,9 @@ export function App() {
   // Khady's Food & Event Restaurant and Validated Dishes
   const khadysRestaurant = useMemo(() => {
     return (
-      restaurants.find((r) => r.id === "resto-khadys-food") ||
-      restaurants.find((r) => r.name.toLowerCase().includes("khady")) ||
-      RESTAURANTS_DATA.find((r) => r.id === "resto-khadys-food")
+      restaurants.find((r) => isKhadysFoodRestaurant(r)) ||
+      RESTAURANTS_DATA.find((r) => r.id === KHADYS_STABLE_LOCAL_ID) ||
+      RESTAURANTS_DATA[0]
     );
   }, [restaurants]);
 

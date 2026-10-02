@@ -229,13 +229,17 @@ export function setupAllorestoApiRoutes(app: express.Express) {
       }
 
       const dishName = data.dish_name || data.title || "";
-      // Protection anti-spécialité permanente (ne jamais renvoyer attiéké/doukounou en plat du jour)
-      if (isPermanentDishName(dishName)) {
+      const isFromKitchen =
+        data.restaurant_id === "a8168cb5-fe46-4368-85fa-be1a64d854b5" ||
+        data.restaurant_id === "resto-alloresto-kitchen";
+
+      // Protection anti-spécialité permanente et anti-Allôresto Kitchen (Règle 5, 10)
+      if (isPermanentDishName(dishName) || dishName.toLowerCase().includes("tiep") || isFromKitchen) {
         return res.json({
           success: true,
           date: targetDate,
           data: null,
-          message: "Spécialité permanente ignorée pour le plat du jour.",
+          message: "Plat non éligible (permanent, obsolète ou provenant d'Allôresto Kitchen ignoré).",
         });
       }
 
@@ -385,9 +389,18 @@ export function setupAllorestoApiRoutes(app: express.Express) {
       }
 
       const effectivePrice = Number(price_xof || price || 4000);
-      const finalRestoId = (restaurant_id === "resto-khadys-food" || restaurant_id?.includes("khady"))
-        ? "a8168cb5-fe46-4368-85fa-be1a64d854b5"
-        : restaurant_id;
+      const isAllorestoKitchen =
+        restaurant_id === "a8168cb5-fe46-4368-85fa-be1a64d854b5" ||
+        restaurant_id === "resto-alloresto-kitchen";
+
+      if (isAllorestoKitchen) {
+        return res.status(400).json({
+          success: false,
+          error: "⛔ Sauvegarde interdite : Le restaurant source est Allôresto Kitchen. Les plats officiels de Khady's Food & Event doivent impérativement être enregistrés sous 'Khady's Food & Event'.",
+        });
+      }
+
+      const finalRestoId = restaurant_id || "resto-khadys-food";
 
       // Upsert du menu du jour conforme au schéma Supabase
       const payload: any = {

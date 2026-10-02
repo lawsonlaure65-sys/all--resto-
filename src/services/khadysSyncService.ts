@@ -1,5 +1,10 @@
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
+import {
+  findKhadysRestaurantInSupabase,
+  KHADYS_OFFICIAL_NAME,
+  KHADYS_STABLE_LOCAL_ID,
+} from "./khadysPartnerResolver";
 
 export interface KhadysDishItem {
   id: string;
@@ -245,8 +250,11 @@ export async function applyKhadysProgrammedMenuToApp(
   if (isSupabaseConfigured()) {
     try {
       const today = new Date().toISOString().split("T")[0];
+      const lookup = await findKhadysRestaurantInSupabase();
+      const realRestoId = lookup.found && lookup.id ? lookup.id : KHADYS_STABLE_LOCAL_ID;
+
       await (supabase.from("daily_menus") as any).upsert({
-        restaurant_id: "resto-khadys-food",
+        restaurant_id: realRestoId,
         menu_date: today,
         title: main.dishName,
         description: `${main.description}. Accompagnements : ${main.accompaniments}`,
