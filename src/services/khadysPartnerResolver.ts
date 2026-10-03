@@ -5,6 +5,8 @@ import { RESTAURANTS_DATA } from "../data/allorestoData";
 /**
  * Identifiants et constantes officielles et stables pour Khady's Food & Event
  */
+export const KHADYS_OFFICIAL_UUID = "99e2e632-4efd-4a44-8754-b806b50babfe";
+export const KHADYS_RESTAURANT_ID = KHADYS_OFFICIAL_UUID;
 export const KHADYS_OFFICIAL_SLUG = "khadys-food-event";
 export const KHADYS_FALLBACK_SLUG = "khadys-food";
 export const KHADYS_OFFICIAL_NAME = "Khady's Food & Event";
@@ -48,10 +50,13 @@ export function isKhadysFoodRestaurant(resto?: {
   // Exclusion absolue d'Allôresto Kitchen
   if (isAllorestoKitchen(id, name)) return false;
 
+  // Correspondance par UUID officiel Supabase
+  if (id === KHADYS_OFFICIAL_UUID || id === KHADYS_RESTAURANT_ID) return true;
+
   // Correspondance par slug officiel stable
   if (slug === KHADYS_OFFICIAL_SLUG || slug === KHADYS_FALLBACK_SLUG) return true;
 
-  // Correspondance par ID stable
+  // Correspondance par ID stable local
   if (id === KHADYS_STABLE_LOCAL_ID) return true;
 
   // Détection stricte selon la spécification officielle Allôresto
@@ -85,7 +90,7 @@ export async function findKhadysRestaurantInSupabase(): Promise<SupabaseKhadyLoo
   if (!client) {
     return {
       found: true,
-      id: KHADYS_STABLE_LOCAL_ID,
+      id: KHADYS_RESTAURANT_ID,
       name: KHADYS_OFFICIAL_NAME,
       slug: KHADYS_OFFICIAL_SLUG,
       isLocalFallback: true,
@@ -93,11 +98,11 @@ export async function findKhadysRestaurantInSupabase(): Promise<SupabaseKhadyLoo
   }
 
   try {
-    // 1. Recherche prioritaire par slug exact ("khadys-food-event" ou "khadys-food")
+    // 1. Recherche prioritaire par UUID officiel ou slug exact ("khadys-food-event" ou "khadys-food")
     const { data: slugData, error: slugError } = await client
       .from("restaurants")
       .select("id, name, slug")
-      .or(`slug.eq.${KHADYS_OFFICIAL_SLUG},slug.eq.${KHADYS_FALLBACK_SLUG}`)
+      .or(`id.eq.${KHADYS_OFFICIAL_UUID},slug.eq.${KHADYS_OFFICIAL_SLUG},slug.eq.${KHADYS_FALLBACK_SLUG}`)
       .limit(5);
 
     if (!slugError && slugData && slugData.length > 0) {
@@ -152,7 +157,7 @@ export async function findKhadysRestaurantInSupabase(): Promise<SupabaseKhadyLoo
     // Le restaurant officiel local certifié prend le relais
     return {
       found: true,
-      id: KHADYS_STABLE_LOCAL_ID,
+      id: KHADYS_RESTAURANT_ID,
       name: KHADYS_OFFICIAL_NAME,
       slug: KHADYS_OFFICIAL_SLUG,
       isLocalFallback: true,
@@ -160,7 +165,7 @@ export async function findKhadysRestaurantInSupabase(): Promise<SupabaseKhadyLoo
   } catch (err: any) {
     return {
       found: true,
-      id: KHADYS_STABLE_LOCAL_ID,
+      id: KHADYS_RESTAURANT_ID,
       name: KHADYS_OFFICIAL_NAME,
       slug: KHADYS_OFFICIAL_SLUG,
       isLocalFallback: true,

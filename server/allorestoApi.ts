@@ -287,55 +287,35 @@ export function setupAllorestoApiRoutes(app: express.Express) {
       let finalDesc = KHADYS_OFFICIAL_TODAY_DESC;
       let finalAccompaniments = KHADYS_OFFICIAL_TODAY_ACCOMP;
 
-      // Tentative d'interrogation live de la base officielle Khady's Food
+      // Interrogation live prioritaire de la clé plat_du_jour dans app_settings de Khady's Food
       try {
         const khadyUrl = "https://veygphkhehdnxefnnlwo.supabase.co";
         const khadyKey =
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZleWdwaGtoZWhkbnhlZm5ubHdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MTE0MjgsImV4cCI6MjEwMTA4NzQyOH0.FsSg9wjrvVZ1zNHZH_D7qVxPd3EC1h1yM1mDMvxfAqw";
 
-        let items: any[] = [];
-        try {
-          const fetchRes = await fetch(
-            `${khadyUrl}/rest/v1/menu_items?category=eq.Plat%20du%20Jour&select=*`,
-            {
-              headers: { apikey: khadyKey, Authorization: `Bearer ${khadyKey}` },
-            }
-          );
-          if (fetchRes.ok) {
-            items = (await fetchRes.json()) as any[];
+        const setRes = await fetch(`${khadyUrl}/rest/v1/app_settings?key=eq.plat_du_jour&select=*`, {
+          headers: { apikey: khadyKey, Authorization: `Bearer ${khadyKey}` },
+        });
+        if (setRes.ok) {
+          const setData = (await setRes.json()) as any[];
+          if (setData && setData[0] && setData[0].value) {
+            const val = setData[0].value;
+            if (val.name) finalDishName = val.name.trim();
+            if (val.promoPrice || val.price) finalPrice = Number(val.promoPrice || val.price);
+            if (val.description) finalDesc = val.description;
+            if (val.accompaniments) finalAccompaniments = val.accompaniments;
+            if (val.image) finalImage = val.image;
           }
-        } catch (_) {}
-
-        if (!items || items.length === 0) {
-          try {
-            const fetchRes2 = await fetch(
-              `${khadyUrl}/rest/v1/menu_items?id=eq.item-1790412092632&select=*`,
-              {
-                headers: { apikey: khadyKey, Authorization: `Bearer ${khadyKey}` },
-              }
-            );
-            if (fetchRes2.ok) {
-              items = (await fetchRes2.json()) as any[];
-            }
-          } catch (_) {}
-        }
-
-        if (items && items.length > 0 && items[0]) {
-          const item = items[0];
-          finalDishName = item.name ? item.name.trim() : KHADYS_OFFICIAL_TODAY_DISH_NAME;
-          finalPrice = Number(item.price || KHADYS_OFFICIAL_TODAY_PRICE);
-          if (item.description) finalDesc = item.description;
-          if (item.image) finalImage = item.image;
         }
       } catch (err) {
-        console.warn("[/api/khadys-food/daily-menu] Fallback image Sauce crin-crin:", err);
+        console.warn("[/api/khadys-food/daily-menu] Interrogation live app_settings:", err);
       }
 
       return res.json({
         success: true,
         source: "https://khadysfood.vercel.app",
         restaurantName: "Khady's Food & Event",
-        restaurantId: "resto-khadys-food",
+        restaurantId: "99e2e632-4efd-4a44-8754-b806b50babfe",
         title: `Menu du Jour — ${finalDishName}`,
         tagline: "Le Plat du Jour officiel programmé chez Khady's Food & Event",
         mainDish: {

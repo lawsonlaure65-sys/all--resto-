@@ -58,11 +58,19 @@ export function SupabaseSyncModal({
     try {
       const { data, error } = await (supabase as any)
         .from("restaurants")
-        .select("id, name")
-        .limit(1);
+        .select("id, name, slug");
 
       if (error) throw error;
-      setMessage(`Test OK. Restaurants trouvés : ${data?.length || 0}`);
+      const khadyMatch = (data || []).find((r: any) =>
+        r.id === "99e2e632-4efd-4a44-8754-b806b50babfe" ||
+        r.slug === "khadys-food-event" ||
+        (r.name?.toLowerCase().includes("khady") && !r.name?.toLowerCase().includes("kitchen"))
+      );
+      if (khadyMatch) {
+        setMessage(`Test OK. Khady's Food & Event validé (ID: ${khadyMatch.id}, Slug: ${khadyMatch.slug || "khadys-food-event"}). Total restaurants : ${data?.length || 0}`);
+      } else {
+        setMessage(`Test OK. Restaurants trouvés : ${data?.length || 0}`);
+      }
       setStatus("done");
     } catch (e: any) {
       setMessage(`Erreur : ${e?.message || "Échec du test"}`);

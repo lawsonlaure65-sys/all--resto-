@@ -466,6 +466,7 @@ export async function syncAllLocalDataToSupabase(
     // Identifier le restaurant Khady's en base s'il a un ID spécifique (ex: UUID ou slug)
     const khadysInDb = (existingRestos || []).find(
       (r: any) =>
+        r.id === "99e2e632-4efd-4a44-8754-b806b50babfe" ||
         r.id === "resto-khadys-food" ||
         r.slug === "khadys-food-event" ||
         (r.name && r.name.toLowerCase().includes("khady") && !r.name.toLowerCase().includes("kitchen"))
@@ -580,6 +581,7 @@ export async function syncDishesToSupabase(
 
   // Chercher strictement par slug cible ou correspondance Khady sans jamais sélectionner Allôresto Kitchen
   const restaurant =
+    restaurants?.find((r: any) => r.id === "99e2e632-4efd-4a44-8754-b806b50babfe") ||
     restaurants?.find((r: any) => r.slug === targetRestaurantSlug) ||
     restaurants?.find(
       (r: any) =>

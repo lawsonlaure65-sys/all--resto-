@@ -24,7 +24,7 @@ export interface SupabaseDailyMenuRow {
   is_ai_suggested?: boolean;
 }
 
-const KHADYS_RESTAURANT_ID = "resto-khadys-food";
+const KHADYS_RESTAURANT_ID = "99e2e632-4efd-4a44-8754-b806b50babfe";
 
 export function useDailyMenu() {
   const [supabaseMenu, setSupabaseMenu] = useState<DailySpecial | null>(null);

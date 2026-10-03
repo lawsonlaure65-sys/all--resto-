@@ -16,6 +16,8 @@ import {
   findKhadysRestaurantInSupabase,
   KHADYS_OFFICIAL_NAME,
   KHADYS_STABLE_LOCAL_ID,
+  KHADYS_RESTAURANT_ID,
+  KHADYS_OFFICIAL_UUID,
 } from "./khadysPartnerResolver";
 
 export interface KhadysDishItem {
@@ -59,7 +61,7 @@ export const KHADYS_FALLBACK_MENU: KhadysDailyMenuResponse = {
   success: true,
   source: "https://khadysfood.vercel.app",
   restaurantName: "Khady's Food & Event",
-  restaurantId: "resto-khadys-food",
+  restaurantId: KHADYS_RESTAURANT_ID,
   title: "Menu du Jour — Sauce crin-crin (fakou frais/Ademe)",
   tagline: "Le Plat du Jour officiel programmé chez Khady's Food & Event",
   mainDish: {
@@ -213,7 +215,63 @@ export async function fetchKhadysProgrammedDailyMenu(): Promise<KhadysDailyMenuR
     const khadyKey =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZleWdwaGtoZWhkbnhlZm5ubHdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MTE0MjgsImV4cCI6MjEwMTA4NzQyOH0.FsSg9wjrvVZ1zNHZH_D7qVxPd3EC1h1yM1mDMvxfAqw";
 
-    // 2.a Interroger en priorité la catégorie 'Plat du Jour' sur la base officielle
+    // 2.a Interroger en priorité la clé 'plat_du_jour' dans app_settings (source officielle live)
+    let livePdj: any = null;
+    try {
+      const setRes = await fetch(`${khadyUrl}/rest/v1/app_settings?key=eq.plat_du_jour&select=*`, {
+        headers: { apikey: khadyKey, Authorization: `Bearer ${khadyKey}` },
+      });
+      if (setRes.ok) {
+        const setData = await setRes.json();
+        if (setData && setData[0] && setData[0].value) {
+          livePdj = setData[0].value;
+        }
+      }
+    } catch (_) {}
+
+    if (livePdj && livePdj.name) {
+      const dishTitle = livePdj.name.trim();
+      const dishPrice = Number(livePdj.promoPrice || livePdj.price || 3000);
+      const dishDesc = livePdj.description || "Plat cuisiné du jour mijoté avec amour par Cheffe Khady.";
+      const dishImg = livePdj.image || KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE;
+      const dishAccomp = livePdj.accompaniments || "Alloco doré croustillant, piment vert maison";
+
+      return {
+        ...KHADYS_FALLBACK_MENU,
+        title: `Menu du Jour — ${dishTitle}`,
+        mainDish: {
+          dishName: dishTitle,
+          priceFcfa: dishPrice,
+          originalPrice: Math.round(dishPrice * 1.15),
+          imageUrl: dishImg,
+          description: dishDesc,
+          accompaniments: dishAccomp,
+          availablePortions: livePdj.remainingStock || 25,
+          badgeLabel: "🍲 Plat Cuisiné du Jour",
+          type: "PLAT_DU_JOUR",
+        },
+        trio: [
+          {
+            id: `dish-${livePdj.id || "plat-du-jour"}`,
+            type: "PLAT_DU_JOUR",
+            dishName: dishTitle,
+            badgeLabel: "🍲 Plat Cuisiné du Jour",
+            badgeColor: "bg-brand-orange text-white",
+            tagline: "Spécialité cuisinée ce matin par Cheffe Khady à Niamey",
+            description: dishDesc,
+            accompaniments: dishAccomp,
+            price: Math.round(dishPrice * 1.15),
+            promoPrice: dishPrice,
+            dishImage: dishImg,
+            remainingStock: livePdj.remainingStock || 25,
+          },
+          KHADYS_FALLBACK_MENU.trio[1],
+          KHADYS_FALLBACK_MENU.trio[2],
+        ],
+      };
+    }
+
+    // 2.b Interroger la catégorie 'Plat du Jour' sur la base officielle
     let items: any[] = [];
     try {
       const r = await fetch(
@@ -316,7 +374,7 @@ export async function applyKhadysProgrammedMenuToApp(
     id: `khadys-live-${Date.now()}`,
     targetDate: new Date().toISOString().split("T")[0],
     targetDateLabel: todayStr,
-    restaurantId: "resto-khadys-food",
+    restaurantId: KHADYS_RESTAURANT_ID,
     restaurantName: "Khady's Food & Event",
     dishName: main.dishName,
     priceFcfa: main.priceFcfa,
@@ -345,7 +403,7 @@ export async function applyKhadysProgrammedMenuToApp(
     try {
       const today = new Date().toISOString().split("T")[0];
       const lookup = await findKhadysRestaurantInSupabase();
-      const realRestoId = lookup.found && lookup.id ? lookup.id : KHADYS_STABLE_LOCAL_ID;
+      const realRestoId = lookup.found && lookup.id ? lookup.id : KHADYS_RESTAURANT_ID;
 
       await (supabase.from("daily_menus") as any).upsert({
         restaurant_id: realRestoId,

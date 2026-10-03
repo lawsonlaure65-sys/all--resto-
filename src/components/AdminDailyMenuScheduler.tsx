@@ -32,6 +32,7 @@ import {
   X,
   ShieldCheck,
   ShieldAlert,
+  Search,
 } from "lucide-react";
 import { RESTAURANTS_DATA, ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { Restaurant, MenuItem } from "../types";
@@ -64,6 +65,8 @@ import {
   KHADYS_OFFICIAL_NAME,
   KHADYS_OFFICIAL_SLUG,
   KHADYS_STABLE_LOCAL_ID,
+  KHADYS_OFFICIAL_UUID,
+  KHADYS_RESTAURANT_ID,
   SupabaseKhadyLookupResult,
 } from "../services/khadysPartnerResolver";
 
@@ -140,7 +143,7 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
   // État du formulaire de programmation : Source Unique Officielle Khady's Food
   const [targetDate, setTargetDate] = useState<string>(capitalizedTomorrow);
   const [selectedRestaurantId, setSelectedRestaurantId] = useState<string>(
-    "resto-khadys-food"
+    KHADYS_RESTAURANT_ID
   );
   const [dishName, setDishName] = useState<string>(
     KHADYS_OFFICIAL_TODAY_DISH_NAME
@@ -236,6 +239,11 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [isSyncingKhadys, setIsSyncingKhadys] = useState<boolean>(false);
+  const [isTestingPartner, setIsTestingPartner] = useState<boolean>(false);
+  const [testResultMessage, setTestResultMessage] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
   const [khadysSyncNotice, setKhadysSyncNotice] = useState<string | null>(null);
   const [previewDishData, setPreviewDishData] = useState<KhadysDailyMenuResponse | null>(null);
   const [previewImageError, setPreviewImageError] = useState<boolean>(false);
@@ -302,12 +310,12 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
       };
     }
 
-    // Données officielles locales certifiées (fallback stable)
+    // Données officielles locales certifiées (fallback stable sur l'identifiant Supabase officiel)
     const defaultLocal =
-      RESTAURANTS_DATA.find((r) => r.id === KHADYS_STABLE_LOCAL_ID) || RESTAURANTS_DATA[0];
+      RESTAURANTS_DATA.find((r) => r.id === KHADYS_RESTAURANT_ID || r.id === KHADYS_STABLE_LOCAL_ID) || RESTAURANTS_DATA[0];
     return {
       ...defaultLocal,
-      id: KHADYS_STABLE_LOCAL_ID,
+      id: KHADYS_RESTAURANT_ID,
       name: KHADYS_OFFICIAL_NAME,
       slug: KHADYS_OFFICIAL_SLUG,
     };
@@ -384,13 +392,102 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
     return list;
   }, [khadysDishes]);
 
+  const handleTestOnly = async () => {
+    setIsTestingPartner(true);
+    setTestResultMessage(null);
+    setKhadysSyncNotice(null);
+
+    try {
+      // 1. Détection du partenaire Khady's Food & Event dans Supabase Allôresto
+      let targetRestaurant: any = null;
+
+      if (isSupabaseConfigured()) {
+        const lookup = await findKhadysRestaurantInSupabase();
+        setSupabaseKhadyLookup(lookup);
+        if (lookup.found && lookup.id) {
+          targetRestaurant = {
+            id: lookup.id,
+            name: lookup.name || KHADYS_OFFICIAL_NAME,
+            slug: lookup.slug || KHADYS_OFFICIAL_SLUG,
+          };
+        }
+      }
+
+      if (!targetRestaurant) {
+        targetRestaurant = restaurants.find((restaurant) => {
+          const value = `${restaurant.name} ${restaurant.slug || ""}`
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase();
+
+          return (
+            value.includes("khady") &&
+            value.includes("food") &&
+            !value.includes("kitchen")
+          );
+        });
+      }
+
+      if (!targetRestaurant) {
+        throw new Error(
+          "Khady's Food & Event n'existe pas dans la table restaurants d'Allôresto."
+        );
+      }
+
+      if (isAllorestoKitchen(targetRestaurant.id, targetRestaurant.name)) {
+        throw new Error(
+          "Référence incorrecte : Allôresto Kitchen détecté à la place de Khady's Food & Event."
+        );
+      }
+
+      // Verrouiller la sélection sur Khady's Food & Event
+      setSelectedRestaurantId(targetRestaurant.id);
+
+      // 2. Test du menu source chez Khady's Food & Event (https://khadysfood.vercel.app)
+      const sourceData = await fetchKhadysProgrammedDailyMenu();
+      const importedDailyDish = sourceData?.mainDish;
+
+      const permanentNames = ["attieke", "doukounou"];
+      const isPermanent = (name = "") => {
+        const normalized = name
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase();
+
+        return permanentNames.some((item) => normalized.includes(item));
+      };
+
+      if (!importedDailyDish) {
+        throw new Error("Le menu source ne contient pas de données récupérables.");
+      }
+
+      if (isPermanent(importedDailyDish.dishName)) {
+        throw new Error(
+          "Le menu source ne contient pas de plat cuisiné du jour importable (plat permanent détecté)."
+        );
+      }
+
+      setTestResultMessage({
+        success: true,
+        message: `✅ Test validé avec succès !\n• Fiche partenaire validée : ${targetRestaurant.name}\n• ID Supabase : ${targetRestaurant.id}\n• Slug : ${targetRestaurant.slug || "khadys-food-event"}\n• Référence Allôresto Kitchen : Exclue (non ciblée)\n• Plat source du jour détecté : ${importedDailyDish.dishName} (${(importedDailyDish.priceFcfa || 3500).toLocaleString()} FCFA)\n• Spécialités permanentes (Attiéké / Doukounou) : Bien dissociées et non confondues avec le plat cuisiné du jour.`,
+      });
+    } catch (err: any) {
+      setTestResultMessage({
+        success: false,
+        message: `❌ Échec du test : ${err?.message || "Erreur de détection du partenaire."}`,
+      });
+    } finally {
+      setIsTestingPartner(false);
+    }
+  };
+
   const handleImportFromKhadysFood = async () => {
     setIsSyncingKhadys(true);
     setKhadysSyncNotice(null);
     setPreviewImageError(false);
 
     // 1. Résolution stricte et prioritaire de Khady's Food & Event (exclusion absolue d'Allôresto Kitchen)
-    let targetRestoId = khadysResto?.id || "resto-khadys-food";
+    let targetRestoId = khadysResto?.id || KHADYS_RESTAURANT_ID;
     if (isSupabaseConfigured()) {
       try {
         const lookup = await findKhadysRestaurantInSupabase();
@@ -432,7 +529,11 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase();
 
-      return value.includes("khady") && value.includes("food");
+      return (
+        value.includes("khady") &&
+        value.includes("food") &&
+        !value.includes("kitchen")
+      );
     }) || khadysResto;
 
     if (!targetRestaurant) {
@@ -443,7 +544,18 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
       return;
     }
 
-    const targetRestaurantId = targetRestaurant.id;
+    if (isAllorestoKitchen(targetRestaurant.id, targetRestaurant.name)) {
+      setKhadysSyncNotice(
+        "❌ Erreur critique : La référence pointe vers Allôresto Kitchen. L'importation doit cibler Khady's Food & Event."
+      );
+      setPreviewDishData(null);
+      return;
+    }
+
+    const targetRestaurantId =
+      targetRestaurant.id && targetRestaurant.id !== "resto-khadys-food"
+        ? targetRestaurant.id
+        : KHADYS_RESTAURANT_ID;
 
     // 2. Le menu à importer (uniquement le plat principal programmé)
     const importedDailyDish = data?.mainDish;
@@ -1143,28 +1255,57 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                 </div>
               </div>
 
-              {/* BOUTON ULTRA-RAPIDE : VÉRIFIER ET IMPORTER LE PLAT DU JOUR DE KHADY'S FOOD & EVENT */}
-              <button
-                type="button"
-                onClick={handleImportFromKhadysFood}
-                disabled={isSyncingKhadys}
-                className="w-full p-3 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs transition flex items-center justify-between gap-2 shadow-lg shadow-orange-500/20 active:scale-[0.99] cursor-pointer disabled:opacity-50"
-              >
-                <div className="flex items-center gap-2 text-left">
-                  <RefreshCw className={`w-4 h-4 shrink-0 ${isSyncingKhadys ? "animate-spin" : ""}`} />
-                  <div>
-                    <span className="block leading-tight font-extrabold text-[12px]">
-                      ⚡ Vérifier et importer le plat du jour de Khady&apos;s Food &amp; Event
-                    </span>
-                    <span className="block text-[10px] text-slate-900/80 font-medium">
-                      Plat officiel du jour : Sauce crin-crin (fakou frais/Ademe) • 3 500 FCFA (Spécialité Cheffe Khady)
-                    </span>
-                  </div>
+              {/* BOUTONS D'ACTION : 1. TESTER SEULEMENT & 2. VÉRIFIER & IMPORTER */}
+              <div className="space-y-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleTestOnly}
+                    disabled={isTestingPartner || isSyncingKhadys}
+                    className="sm:col-span-5 px-3.5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs transition flex items-center justify-center gap-2 border border-slate-700 hover:border-amber-400/50 active:scale-[0.99] cursor-pointer disabled:opacity-50 shadow-md"
+                  >
+                    <Search className={`w-4 h-4 text-amber-400 shrink-0 ${isTestingPartner ? "animate-spin" : ""}`} />
+                    <span>{isTestingPartner ? "Test en cours..." : "1. Tester seulement"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleImportFromKhadysFood}
+                    disabled={isSyncingKhadys || isTestingPartner}
+                    className="sm:col-span-7 p-3 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-[0.99] cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 shrink-0 ${isSyncingKhadys ? "animate-spin" : ""}`} />
+                    <span>{isSyncingKhadys ? "Vérification..." : "2. Vérifier & Importer le plat du jour"}</span>
+                  </button>
                 </div>
-                <span className="px-2.5 py-1 bg-slate-950 text-amber-300 rounded-lg text-[10px] font-black uppercase tracking-wider shrink-0 border border-amber-400/40">
-                  {isSyncingKhadys ? "Vérification..." : "Vérifier & Importer"}
-                </span>
-              </button>
+
+                {/* RÉSULTAT DU TEST / DÉTECTION DU PARTENAIRE */}
+                {testResultMessage && (
+                  <div
+                    className={`p-3.5 rounded-xl border text-xs leading-relaxed space-y-1.5 animate-fade-in ${
+                      testResultMessage.success
+                        ? "bg-emerald-950/50 border-emerald-500/50 text-emerald-100"
+                        : "bg-red-950/50 border-red-500/50 text-red-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-black text-xs sm:text-sm">
+                      {testResultMessage.success ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                      )}
+                      <span>
+                        {testResultMessage.success
+                          ? "Test réussi : Fiche partenaire reconnue !"
+                          : "Échec du test de détection"}
+                      </span>
+                    </div>
+                    <p className="whitespace-pre-line text-[11px] font-mono opacity-95">
+                      {testResultMessage.message}
+                    </p>
+                  </div>
+                )}
+              </div>
 
               {/* 👑 FICHE UNIQUE OFFICIELLE KHADY'S FOOD (Affichage clair : Nom, Prix, Image, Date, Portions, Source) */}
               <div className="p-4 rounded-2xl bg-slate-950 border border-amber-500/40 shadow-xl space-y-3">
