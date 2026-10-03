@@ -1374,13 +1374,13 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                       <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-3">
                         <div>
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase tracking-wider border border-amber-500/40">
-                            🔍 Contrôle &amp; Validation avant Importation
+                            🔍 Contrôle &amp; Validation avant Importation dans Allôresto
                           </span>
                           <h4 className="text-base font-black text-white mt-1">
-                            Plat trouvé sur Khady&apos;s Food
+                            Plat détecté chez le partenaire Khady&apos;s Food &amp; Event
                           </h4>
                           <p className="text-[11px] text-slate-400">
-                            Source officielle : <code className="text-amber-400 font-mono">https://khadysfood.vercel.app</code>
+                            Source partenaire : <code className="text-amber-400 font-mono">https://khadysfood.vercel.app</code> → Cible : <strong>Allôresto Niamey</strong>
                           </p>
                         </div>
                         <button
@@ -1423,23 +1423,18 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                           <span className="text-slate-400 font-medium">Prix :</span>
                           <span className="font-bold text-emerald-400">{previewDishData.mainDish.priceFcfa.toLocaleString()} FCFA</span>
                         </div>
-                        <div className="py-1">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-slate-400 font-medium">Image :</span>
-                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${isImageInvalid ? "bg-red-500/20 text-red-300" : "bg-emerald-500/20 text-emerald-300"}`}>
-                              {isImageInvalid ? "❌ Non accessible" : "✅ Image vérifiée"}
-                            </span>
-                          </div>
-                          <div className="p-2 rounded bg-slate-900 border border-slate-800 text-[10px] font-mono text-amber-300/90 break-all select-all">
-                            {previewResolvedImageUrl || "Aucune URL trouvée"}
-                          </div>
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-slate-400 font-medium">Image du plat :</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isImageInvalid ? "bg-red-500/20 text-red-300" : "bg-emerald-500/20 text-emerald-300"}`}>
+                            {isImageInvalid ? "❌ Non accessible" : "✅ Photo HD officielle vérifiée (Khady's Food)"}
+                          </span>
                         </div>
                       </div>
 
                       {/* 4. Aperçu Réel de l'Image avec détection d'erreur */}
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300">
-                          <span>4. Aperçu réel de l&apos;image :</span>
+                          <span>Aperçu réel de la photo reçue :</span>
                         </div>
                         <div className="relative rounded-2xl overflow-hidden aspect-video border border-slate-800 bg-slate-950 flex items-center justify-center">
                           {previewResolvedImageUrl && !previewImageError ? (
@@ -1523,10 +1518,15 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                             isImageInvalid
                           }
                           onClick={() => handleConfirmImport(previewDishData, previewResolvedImageUrl)}
-                          className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-amber-500/20 active:scale-95"
+                          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-black transition flex items-center gap-2 shadow-lg shadow-emerald-500/25 active:scale-95 cursor-pointer"
                         >
-                          <Check className="w-4 h-4" />
-                          <span>Importer ce plat pour {KHADYS_OFFICIAL_NAME}</span>
+                          <Check className="w-4 h-4 text-white" />
+                          <div className="flex flex-col items-start leading-tight text-left">
+                            <span>Importer ce plat dans Allôresto</span>
+                            <span className="text-[10px] text-emerald-100/90 font-normal">
+                              Cuisine Partenaire : {KHADYS_OFFICIAL_NAME}
+                            </span>
+                          </div>
                         </button>
                       </div>
                     </div>
