@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "./components/Header";
 import { HeroBanner } from "./components/HeroBanner";
@@ -1874,6 +1875,9 @@ export function App() {
         onOpenFaq={() => setIsFaqOpen(true)}
         onOpenMarketingAI={() => setIsMarketingAIOpen(true)}
       />
+
+      {/* Vercel Web Analytics */}
+      <Analytics />
     </div>
   );
 }

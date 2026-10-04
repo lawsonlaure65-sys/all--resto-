@@ -1,4 +1,5 @@
 import React from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import MotionProvider from './components/MotionProvider';
 
 export default function RootLayout({
@@ -12,6 +13,7 @@ export default function RootLayout({
         <MotionProvider>
           {children}
         </MotionProvider>
+        <Analytics />
       </body>
     </html>
   );
