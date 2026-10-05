@@ -4,7 +4,11 @@ import { motion } from "framer-motion";
 import { DailySpecial } from "../types";
 import { useTranslation } from "../context/TranslationContext";
 import { shareDailySpecialOnWhatsApp } from "../utils/whatsappNotifications";
-import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
+import {
+  resolveDishImageUrl,
+  KHADYS_OFFICIAL_SUYA_IMAGE,
+  KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+} from "../utils/dishImageResolver";
 
 interface DailySpecialCardProps {
   special: DailySpecial;
@@ -27,7 +31,13 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
   const special = translateDailySpecial(rawSpecial);
   const [imageError, setImageError] = useState(false);
 
-  const effectiveImageUrl = resolveDishImageUrl(special.image) || (special.title?.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : "");
+  const effectiveImageUrl =
+    resolveDishImageUrl(special.image) ||
+    (special.title?.toLowerCase().includes("crin") || special.title?.toLowerCase().includes("fakou") || special.title?.toLowerCase().includes("ademe")
+      ? KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE
+      : special.title?.toLowerCase().includes("brochette") || special.title?.toLowerCase().includes("suya")
+      ? KHADYS_OFFICIAL_SUYA_IMAGE
+      : special.image || "");
 
   const handleOrder = (e: React.MouseEvent) => {
     e.stopPropagation();

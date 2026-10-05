@@ -9,6 +9,7 @@ import {
   KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
   KHADYS_OFFICIAL_TODAY_DISH_NAME,
   KHADYS_OFFICIAL_TODAY_PRICE,
+  KHADYS_OFFICIAL_TODAY_ORIGINAL_PRICE,
   KHADYS_OFFICIAL_TODAY_DESC,
   KHADYS_OFFICIAL_TODAY_ACCOMP,
 } from "../data/khadysPlatDuJourImage";
@@ -67,7 +68,7 @@ export const KHADYS_FALLBACK_MENU: KhadysDailyMenuResponse = {
   mainDish: {
     dishName: KHADYS_OFFICIAL_TODAY_DISH_NAME,
     priceFcfa: KHADYS_OFFICIAL_TODAY_PRICE,
-    originalPrice: 4000,
+    originalPrice: KHADYS_OFFICIAL_TODAY_ORIGINAL_PRICE,
     imageUrl: KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
     description: KHADYS_OFFICIAL_TODAY_DESC,
     accompaniments: KHADYS_OFFICIAL_TODAY_ACCOMP,
@@ -82,7 +83,7 @@ export const KHADYS_FALLBACK_MENU: KhadysDailyMenuResponse = {
       dishName: KHADYS_OFFICIAL_TODAY_DISH_NAME,
       badgeLabel: "🍲 Plat Cuisiné du Jour",
       badgeColor: "bg-brand-orange text-white",
-      tagline: "Spécialité maison mijotée ce vendredi par Cheffe Khady",
+      tagline: "Sauce gluante traditionnelle aux feuilles de corète mijotées",
       description: KHADYS_OFFICIAL_TODAY_DESC,
       accompaniments: KHADYS_OFFICIAL_TODAY_ACCOMP,
       price: 4000,
@@ -233,7 +234,7 @@ export async function fetchKhadysProgrammedDailyMenu(): Promise<KhadysDailyMenuR
       const dishTitle = livePdj.name.trim();
       const dishPrice = Number(livePdj.promoPrice || livePdj.price || 3000);
       const dishDesc = livePdj.description || "Plat cuisiné du jour mijoté avec amour par Cheffe Khady.";
-      const dishImg = livePdj.image || KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE;
+      const dishImg = livePdj.image || KHADYS_OFFICIAL_SUYA_IMAGE;
       const dishAccomp = livePdj.accompaniments || "Alloco doré croustillant, piment vert maison";
 
       return {

@@ -52,7 +52,11 @@ import { VoiceOrderModal } from "./components/VoiceOrderModal";
 import { getJumuahStatus } from "./utils/jumuahSchedule";
 import { loadStoredRestaurants, syncFromSupabaseIfAvailable } from "./services/dishStorageService";
 import { applyOfficialBrandFavicon } from "./utils/faviconManager";
-import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "./utils/dishImageResolver";
+import {
+  resolveDishImageUrl,
+  KHADYS_OFFICIAL_SUYA_IMAGE,
+  KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+} from "./utils/dishImageResolver";
 import {
   isKhadysFoodRestaurant,
   KHADYS_OFFICIAL_NAME,
@@ -379,7 +383,7 @@ export function App() {
       !supabaseMenu.title.toLowerCase().includes("tiep")
     ) {
       const resolvedImg =
-        resolveDishImageUrl(supabaseMenu) || "/images/dishes/khadys_sauce_crincrin.jpg";
+        resolveDishImageUrl(supabaseMenu) || KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE;
 
       return [
         {
@@ -387,43 +391,31 @@ export function App() {
           title: supabaseMenu.title,
           price: supabaseMenu.price || 3500,
           originalPrice: supabaseMenu.originalPrice || 4000,
-          image: resolvedImg || "/images/dishes/khadys_sauce_crincrin.jpg",
+          image: resolvedImg || KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
           restaurantName: "Khady's Food & Event",
           restaurantId: "resto-khadys-food",
           accompaniedBy:
             supabaseMenu.accompaniedBy ||
-            "Pâte blanche de maïs ou pâte noire d'igname (cossette)",
+            "Pâte blanche de maïs ou pâte noire d'igname + Poisson/Bœuf + Piment vert maison",
           tags: ["👑 Khady's Food", "🔥 Plat du Jour", `🍲 ${(supabaseMenu.price || 3500).toLocaleString()} FCFA`],
         },
       ];
     }
 
-    // Fiche officielle de référence Khady's Food & Event (Sauce crin-crin fakou frais/Ademe - Plat du Jour)
-    const khadysPlatDuJourFromMenu = khadysRestaurant?.menu?.find(
-      (m) =>
-        m.name.toLowerCase().includes("crin") ||
-        m.name.toLowerCase().includes("ademe") ||
-        m.category.toLowerCase().includes("plat du jour")
-    ) || khadysRestaurant?.menu?.[0];
-
-    const verifiedImg =
-      resolveDishImageUrl(khadysPlatDuJourFromMenu) || "/images/dishes/khadys_sauce_crincrin.jpg";
-
+    // Fiche officielle de référence Khady's Food & Event (Sauce crin-crin fakou frais / Ademe)
     const singleOfficialSpecial: DailySpecial = {
       id: "khadys-official-crincrin-daily",
-      title: khadysPlatDuJourFromMenu?.name || "Sauce crin-crin (fakou frais/Ademe)",
+      title: "Sauce crin-crin (fakou frais/Ademe)",
       restaurantName: "Khady's Food & Event",
       restaurantId: "resto-khadys-food",
       description:
-        khadysPlatDuJourFromMenu?.description ||
         "Sauce gluante à base de feuilles de corète, mijotée avec du poisson de mer et/ou viande de bœuf. Accompagnement : pâte blanche de maïs ou pâte noire d'igname (cossette). Plat du jour officiel de Cheffe Khady.",
-      price: khadysPlatDuJourFromMenu?.price || 3500,
+      price: 3500,
       originalPrice: 4000,
-      image: verifiedImg,
+      image: KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
       servingsLeft: 25,
       availableUntil: "15h00",
-      accompaniedBy:
-        "Pâte blanche de maïs ou pâte noire d'igname (cossette)",
+      accompaniedBy: "Pâte blanche de maïs ou pâte noire d'igname + Poisson/Bœuf + Piment vert maison",
       tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍲 3 500 FCFA"],
     };
 

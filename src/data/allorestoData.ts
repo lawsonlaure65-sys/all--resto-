@@ -1391,18 +1391,18 @@ export const DELIVERY_ZONES_CONFIG = {
 
 export const DAILY_SPECIALS_DATA: DailySpecial[] = [
   {
-    id: "spec-khadys-crincrin",
+    id: "spec-khadys-sauce-crincrin",
     title: "Sauce crin-crin (fakou frais/Ademe)",
     restaurantName: "Khady's Food & Event",
     restaurantId: "resto-khadys-food",
-    description: "Sauce gluante à base de feuilles de corète, mijotée avec du poisson de mer et/ou viande de bœuf. Formule officielle Plat Cuisiné du Jour Vendredi 02 Octobre de Cheffe Khady.",
+    description: "Sauce gluante à base de feuilles de corète, mijotée avec du poisson de mer et/ou viande de bœuf. Accompagnement : pâte blanche de maïs ou pâte noire d'igname (cossette). Plat du jour officiel de Cheffe Khady.",
     price: 3500,
     originalPrice: 4000,
     image: KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
     servingsLeft: 25,
     availableUntil: "15h00",
-    accompaniedBy: "Pâte blanche de maïs ou pâte noire d'igname (cossette)",
-    tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍲 3 500 FCFA"],
+    accompaniedBy: "Pâte blanche de maïs ou pâte noire d'igname + Poisson/Bœuf + Piment vert maison",
+    tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍲 3 500 FCFA", "⚡ Service 11h-15h"],
   },
 ];
 
