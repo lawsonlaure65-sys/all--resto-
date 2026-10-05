@@ -1167,8 +1167,8 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                 onChange={(e) => setSelectedRestaurantId(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-medium focus:outline-none focus:border-orange-500 cursor-pointer"
               >
-                {availableRestaurants.map((rest) => (
-                  <option key={rest.id} value={rest.id}>
+                {availableRestaurants.map((rest, idx) => (
+                  <option key={`${rest.id}-${idx}`} value={rest.id}>
                     {rest.name} ({rest.cuisine})
                   </option>
                 ))}
@@ -1559,8 +1559,8 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                   <option value="" disabled>
                     -- 🍽️ Sélectionner un plat ou formule Khady&apos;s Food --
                   </option>
-                  {selectableKhadysDishes.map((dish) => (
-                    <option key={dish.id} value={dish.id}>
+                  {selectableKhadysDishes.map((dish, idx) => (
+                    <option key={`${dish.id}-${idx}`} value={dish.id}>
                       {dish.name} • {dish.price.toLocaleString()} FCFA ({dish.category})
                     </option>
                   ))}
@@ -1589,9 +1589,9 @@ ${dishName} chez ${currentRestaurant?.name} pour seulement ${priceFcfa.toLocaleS
                         d.name.includes("Gboma")
                     )
                     .slice(0, 6)
-                    .map((dish) => (
+                    .map((dish, idx) => (
                       <button
-                        key={dish.id}
+                        key={`${dish.id}-${idx}`}
                         type="button"
                         onClick={() => handleSelectPresetDish(dish)}
                         className={`p-2 rounded-xl text-left text-[11px] font-bold transition flex items-center gap-2 cursor-pointer border ${

@@ -687,11 +687,11 @@ export const DishManagementModal: React.FC<DishManagementModalProps> = ({
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              {CATEGORIES_CONFIG.map((cat) => {
+              {CATEGORIES_CONFIG.map((cat, cIdx) => {
                 const isSelected = dishCategory === cat.id;
                 return (
                   <div
-                    key={cat.id}
+                    key={`${cat.id}-${cIdx}`}
                     onClick={() => setDishCategory(cat.id)}
                     className={`p-3 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                       isSelected

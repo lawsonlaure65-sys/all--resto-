@@ -187,9 +187,9 @@ export const UserAccountModal: React.FC<UserAccountModalProps> = ({
               </div>
             ) : (
               <div className="space-y-3">
-                {orders.map((order) => (
+                {orders.map((order, idx) => (
                   <div
-                    key={order.id}
+                    key={`${order.id}-${idx}`}
                     className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-orange-500/40 transition space-y-3"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
@@ -319,9 +319,9 @@ export const UserAccountModal: React.FC<UserAccountModalProps> = ({
               Vos adresses habituelles à Niamey
             </h4>
             <div className="space-y-2">
-              {userProfile.savedAddresses.map((addr) => (
+              {userProfile.savedAddresses.map((addr, idx) => (
                 <div
-                  key={addr.id}
+                  key={`${addr.id || "addr"}-${idx}`}
                   className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-start justify-between gap-3"
                 >
                   <div className="flex items-start gap-3">

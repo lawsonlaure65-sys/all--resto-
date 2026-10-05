@@ -1018,9 +1018,9 @@ export function App() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {displayedDailySpecials.map((special) => (
+                {displayedDailySpecials.map((special, idx) => (
                   <DailySpecialCard
-                    key={special.id}
+                    key={`${special.id}-${idx}`}
                     special={special}
                     onAddToCart={handleAddDailySpecialToCart}
                     onEditSpecial={
@@ -1229,9 +1229,9 @@ export function App() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredRestaurants.map((resto) => (
+                  {filteredRestaurants.map((resto, idx) => (
                     <RestaurantCard
-                      key={resto.id}
+                      key={`${resto.id}-${idx}`}
                       restaurant={resto}
                       serviceMode={serviceMode}
                       onOpenMenu={(r) => setSelectedRestaurantForMenu(r)}

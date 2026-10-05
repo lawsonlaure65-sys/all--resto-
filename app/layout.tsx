@@ -1,5 +1,5 @@
 import React from 'react';
-import { Analytics } from '@vercel/analytics/react';
+import { Analytics } from '@vercel/analytics/next';
 import MotionProvider from './components/MotionProvider';
 
 export default function RootLayout({

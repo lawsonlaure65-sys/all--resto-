@@ -741,9 +741,9 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
 
             {/* Quick Preview of Flagged Dishes */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
-              {lowStockDishes.map((dish) => (
+              {lowStockDishes.map((dish, idx) => (
                 <div
-                  key={dish.id}
+                  key={`${dish.id}-${idx}`}
                   className="p-3 rounded-2xl bg-slate-900/90 border border-amber-500/40 flex items-center justify-between gap-3 hover:border-amber-500/70 transition"
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -1016,9 +1016,9 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {filteredOrders.map((order) => (
+              {filteredOrders.map((order, idx) => (
                 <div
-                  key={order.id}
+                  key={`${order.id}-${idx}`}
                   className="p-5 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 shadow-lg"
                 >
                   <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -1065,8 +1065,8 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                     <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
                       Détail des plats à préparer :
                     </p>
-                    {order.items.map((it) => (
-                      <div key={it.id} className="flex justify-between items-center">
+                    {order.items.map((it, idx) => (
+                      <div key={`${it.id}-${idx}`} className="flex justify-between items-center">
                         <span>
                           <strong className="text-orange-400">{it.quantity}x</strong> {it.menuItem.name}
                         </span>
@@ -1312,14 +1312,14 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {displayedMenuItems.map((item) => {
+              {displayedMenuItems.map((item, idx) => {
                 const isLowStock =
                   typeof item.stock_count === "number" && item.stock_count < 5;
                 const isOutOfStock = (item.stock_count || 0) === 0;
 
                 return (
                   <div
-                    key={item.id}
+                    key={`${item.id}-${idx}`}
                     className={`p-4 rounded-2xl bg-slate-900 border transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
                       isLowStock
                         ? "border-amber-500/60 ring-1 ring-amber-500/20 shadow-lg shadow-amber-950/20"

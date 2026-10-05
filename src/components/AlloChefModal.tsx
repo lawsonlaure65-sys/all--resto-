@@ -424,9 +424,9 @@ export const AlloChefModal: React.FC<AlloChefModalProps> = ({
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {msg.suggestedDishes.map(({ item, restaurantName, restaurantId, district }) => (
+                      {msg.suggestedDishes.map(({ item, restaurantName, restaurantId, district }, dIdx) => (
                         <div
-                          key={item.id}
+                          key={`${item.id}-${dIdx}`}
                           className="p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between gap-2 shadow-sm"
                         >
                           <div className="flex gap-2.5 items-start">

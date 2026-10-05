@@ -605,8 +605,8 @@ export const LiveDemoShowcase: React.FC = () => {
                               {cart.length === 0 ? (
                                 <p className="text-xs text-slate-400 py-4 text-center">Votre panier est vide.</p>
                               ) : (
-                                cart.map((item) => (
-                                  <div key={item.id} className="flex items-center justify-between text-xs py-1 border-b border-slate-900">
+                                cart.map((item, idx) => (
+                                  <div key={`${item.id}-${idx}`} className="flex items-center justify-between text-xs py-1 border-b border-slate-900">
                                     <span>{item.name} (x{item.qty})</span>
                                     <span className="font-bold text-cyan-400">{item.price * item.qty} €</span>
                                   </div>

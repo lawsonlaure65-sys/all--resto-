@@ -56,11 +56,11 @@ export const SauceBoxesSection: React.FC<SauceBoxesSectionProps> = ({
 
       {/* Sauce Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {SAUCE_BOXES_DATA.map((rawSauce) => {
+        {SAUCE_BOXES_DATA.map((rawSauce, idx) => {
           const sauce = translateSauceBox(rawSauce);
           return (
             <motion.div
-              key={sauce.id}
+              key={`${sauce.id}-${idx}`}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}

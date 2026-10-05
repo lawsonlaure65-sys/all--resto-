@@ -271,11 +271,11 @@ export const DynamicFaqModal: React.FC<DynamicFaqModalProps> = ({
               </button>
             </div>
           ) : (
-            filteredFaqs.map((item) => {
+            filteredFaqs.map((item, idx) => {
               const isExpanded = expandedId === item.id;
               return (
                 <div
-                  key={item.id}
+                  key={`${item.id}-${idx}`}
                   className="rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden transition-all"
                 >
                   <button

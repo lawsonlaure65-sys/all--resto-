@@ -430,11 +430,11 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {readyOrders.map((order) => {
+              {readyOrders.map((order, idx) => {
                 const payout = order.deliveryFee || 1500;
                 return (
                   <div
-                    key={order.id}
+                    key={`${order.id}-${idx}`}
                     className="p-5 rounded-3xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 transition-all space-y-4 shadow-xl flex flex-col justify-between"
                   >
                     <div className="space-y-3">
@@ -545,9 +545,9 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {activeDeliveries.map((order) => (
+              {activeDeliveries.map((order, idx) => (
                 <div
-                  key={order.id}
+                  key={`${order.id}-${idx}`}
                   className="p-5 rounded-3xl bg-slate-900 border border-orange-500/50 space-y-4 shadow-2xl relative overflow-hidden"
                 >
                   {/* Status Banner */}
@@ -672,9 +672,9 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
             </div>
           ) : (
             <div className="space-y-2.5">
-              {deliveredOrders.map((order) => (
+              {deliveredOrders.map((order, idx) => (
                 <div
-                  key={order.id}
+                  key={`${order.id}-${idx}`}
                   className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs"
                 >
                   <div className="flex items-center gap-3">

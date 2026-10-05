@@ -403,9 +403,9 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
           {/* Menu Items Grid (Scrollable) */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredMenuItems.map((item) => (
+              {filteredMenuItems.map((item, idx) => (
                 <div
-                  key={item.id}
+                  key={`${item.id}-${idx}`}
                   onClick={() => handleOpenItemConfig(item)}
                   className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-orange-500/50 transition-all flex gap-3 cursor-pointer group shadow-sm"
                 >

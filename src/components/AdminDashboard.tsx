@@ -1051,9 +1051,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           <div className="space-y-3">
-            {depositOrders.map((dep) => (
+            {depositOrders.map((dep, idx) => (
               <div
-                key={dep.id}
+                key={`${dep.id}-${idx}`}
                 className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
               >
                 <div className="space-y-1">
@@ -1443,9 +1443,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 if (dishFilterExpress && !dish.isExpress && (dish.preparationTime || 20) > 15) return false;
                 return true;
               })
-              .map((dish) => (
+              .map((dish, idx) => (
                 <div
-                  key={dish.id}
+                  key={`${dish.id}-${idx}`}
                   className="p-4 rounded-3xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between gap-3 shadow-md"
                 >
                   <div className="flex gap-3.5">
@@ -1592,8 +1592,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sauceBoxes.map((sauce) => (
-              <div key={sauce.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
+            {sauceBoxes.map((sauce, idx) => (
+              <div key={`${sauce.id}-${idx}`} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-black text-white">{sauce.name}</h4>
                   <span className="text-xs font-bold text-orange-400 font-mono">
@@ -1647,8 +1647,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {clientsList.map((cli) => (
-                  <tr key={cli.id} className="hover:bg-slate-800/50 transition">
+                {clientsList.map((cli, idx) => (
+                  <tr key={`${cli.id}-${idx}`} className="hover:bg-slate-800/50 transition">
                     <td className="p-3 font-bold text-white">{cli.name}</td>
                     <td className="p-3 text-slate-400">
                       <div>{cli.email}</div>
@@ -1718,8 +1718,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           <div className="space-y-3">
-            {cateringQuotes.map((quote) => (
-              <div key={quote.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+            {cateringQuotes.map((quote, idx) => (
+              <div key={`${quote.id}-${idx}`} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-800 pb-2">
                   <div>
                     <h4 className="text-sm font-black text-white">{quote.clientName}</h4>

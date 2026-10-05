@@ -252,9 +252,9 @@ export const ReviewTemplateModal: React.FC<ReviewTemplateModalProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {categories.map((cat) => (
+            {categories.map((cat, cIdx) => (
               <button
-                key={cat.id}
+                key={`${cat.id}-${cIdx}`}
                 onClick={() => setActiveCategory(cat.id)}
                 className={`px-3 py-1 rounded-xl text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
                   activeCategory === cat.id

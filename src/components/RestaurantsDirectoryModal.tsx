@@ -240,9 +240,9 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredRestaurants.map((resto) => (
+              {filteredRestaurants.map((resto, idx) => (
                 <div
-                  key={resto.id}
+                  key={`${resto.id}-${idx}`}
                   className="rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-blue-500/50 transition-all p-4 flex flex-col justify-between group shadow-lg"
                 >
                   <div className="space-y-3">

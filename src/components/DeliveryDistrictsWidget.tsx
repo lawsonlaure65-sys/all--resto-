@@ -84,9 +84,9 @@ export const DeliveryDistrictsWidget: React.FC<DeliveryDistrictsWidgetProps> = (
                   Sélection rapide de quartiers fréquents :
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {popularDistricts.map((item) => (
+                  {popularDistricts.map((item, idx) => (
                     <button
-                      key={item.id}
+                      key={`${item.id}-${idx}`}
                       onClick={() => {
                         setSelectedDistrictId(item.id);
                         if (onSelectDistrict) onSelectDistrict(item.label);
