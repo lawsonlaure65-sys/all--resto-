@@ -188,9 +188,9 @@ export const Header: React.FC<HeaderProps> = ({
                   <div className="px-3 py-1 text-[10px] uppercase font-black tracking-wider text-slate-400 border-b border-slate-800 mb-1">
                     Langues Disponibles 🇳🇪
                   </div>
-                  {SUPPORTED_LANGUAGES.map((l) => (
+                  {SUPPORTED_LANGUAGES.map((l, idx) => (
                     <button
-                      key={l.code}
+                      key={`${l.code}-${idx}`}
                       onClick={() => {
                         if (onChangeLanguage) onChangeLanguage(l.code);
                         setLangDropdownOpen(false);
@@ -384,9 +384,9 @@ export const Header: React.FC<HeaderProps> = ({
                     <span className="text-[10px] font-bold text-slate-400 px-2 py-1 block uppercase tracking-wider">
                       Villes &amp; Quartiers Phares :
                     </span>
-                    {CITIES_DATA.map((city) => (
+                    {CITIES_DATA.map((city, idx) => (
                       <button
-                        key={city.name}
+                        key={`${city.name}-${idx}`}
                         onClick={() => {
                           onSelectCity(city.name);
                           setCityDropdownOpen(false);
@@ -554,13 +554,13 @@ export const Header: React.FC<HeaderProps> = ({
                   </div>
 
                   <div className="space-y-1">
-                    {(["client", "restaurant", "courier", "admin"] as UserRole[]).map((r) => {
+                    {(["client", "restaurant", "courier", "admin"] as UserRole[]).map((r, idx) => {
                       const info = getRoleLabel(r);
                       const Icon = info.icon;
                       const isActive = currentRole === r;
                       return (
                         <button
-                          key={r}
+                          key={`${r}-${idx}`}
                           type="button"
                           onClick={() => {
                             onChangeRole(r);

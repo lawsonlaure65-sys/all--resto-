@@ -669,9 +669,9 @@ export const VoiceOrderModal: React.FC<VoiceOrderModalProps> = ({
           </span>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {SUPPORTED_LANGUAGES.map((lang) => (
+            {SUPPORTED_LANGUAGES.map((lang, idx) => (
               <button
-                key={lang.code}
+                key={`${lang.code}-${idx}`}
                 onClick={() => handleSelectLanguage(lang.code)}
                 className={`px-2.5 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                   selectedLang === lang.code

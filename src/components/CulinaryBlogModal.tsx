@@ -104,9 +104,9 @@ export const CulinaryBlogModal: React.FC<CulinaryBlogModalProps> = ({
         ) : (
           /* Articles List */
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {BLOG_POSTS_DATA.map((post) => (
+            {BLOG_POSTS_DATA.map((post, idx) => (
               <div
-                key={post.id}
+                key={`${post.id}-${idx}`}
                 onClick={() => setSelectedPost(post)}
                 className="group rounded-2xl bg-slate-950 border border-slate-800 hover:border-orange-500/40 p-3.5 space-y-3 cursor-pointer transition-all duration-200 flex flex-col justify-between"
               >

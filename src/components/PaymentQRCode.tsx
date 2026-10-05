@@ -322,11 +322,11 @@ export const PaymentQRCode: React.FC<PaymentQRCodeProps> = ({
         </div>
 
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-          {QR_PROVIDERS.map((p) => {
+          {QR_PROVIDERS.map((p, idx) => {
             const isSelected = p.id === activeProviderId;
             return (
               <button
-                key={p.id}
+                key={`${p.id}-${idx}`}
                 type="button"
                 onClick={() => handleProviderSelect(p.id)}
                 className={`p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${

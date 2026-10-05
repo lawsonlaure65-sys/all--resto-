@@ -688,9 +688,9 @@ export const PaymentAnalyticsCharts: React.FC<PaymentAnalyticsChartsProps> = ({ 
 
             {/* Micro Legend Chips */}
             <div className="grid grid-cols-2 gap-1.5 mt-2 pt-2 border-t border-slate-800/80">
-              {donutChartData.slice(0, 6).map((item) => (
+              {donutChartData.slice(0, 6).map((item, idx) => (
                 <div
-                  key={item.name}
+                  key={`${item.name}-${idx}`}
                   className="flex items-center justify-between text-[11px] px-2 py-1 rounded-lg bg-slate-900/60 border border-slate-800"
                 >
                   <div className="flex items-center gap-1.5 min-w-0">
@@ -820,14 +820,14 @@ export const PaymentAnalyticsCharts: React.FC<PaymentAnalyticsChartsProps> = ({ 
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {barChartData.map((prov) => {
+                {barChartData.map((prov, idx) => {
                   const successRate =
                     prov.totalCount > 0
                       ? Math.round((prov.completedCount / prov.totalCount) * 100)
                       : 0;
 
                   return (
-                    <tr key={prov.providerId} className="hover:bg-slate-900/40 transition">
+                    <tr key={`${prov.providerId}-${idx}`} className="hover:bg-slate-900/40 transition">
                       <td className="py-2.5 px-3 flex items-center gap-2 font-bold text-white">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: prov.color }} />
                         <span>{prov.logo} {prov.name}</span>

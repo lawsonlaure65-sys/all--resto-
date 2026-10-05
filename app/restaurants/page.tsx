@@ -344,12 +344,12 @@ export default function RestaurantsPage({
         {/* Grille des restaurants */}
         {!loading && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredRestaurants.map((restaurant) => {
+            {filteredRestaurants.map((restaurant, idx) => {
               const currentQuartier = getRestaurantQuartier(restaurant);
 
               return (
                 <article
-                  key={restaurant.id}
+                  key={`${restaurant.id}-${idx}`}
                   className="group flex flex-col overflow-hidden rounded-2xl bg-slate-900 border border-slate-800/90 shadow-lg hover:border-slate-700 transition duration-200"
                 >
                   {/* Image du restaurant ou placeholder */}

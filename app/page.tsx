@@ -203,9 +203,9 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {KHADYS_DISHES.map((dish) => (
+          {KHADYS_DISHES.map((dish, idx) => (
             <DishCard
-              key={dish.id}
+              key={`${dish.id}-${idx}`}
               name={dish.name}
               description={dish.description}
               price={dish.price}

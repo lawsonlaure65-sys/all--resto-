@@ -328,7 +328,7 @@ export default function MenuPublicPage() {
             {filtered.map((dish, index) => (
               <motion.div
                 layout
-                key={dish.id}
+                key={`${dish.id}-${idx}`}
                 id={`dish-card-${dish.id}`}
                 variants={cardVariants}
                 initial="hidden"

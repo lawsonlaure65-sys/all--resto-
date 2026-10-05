@@ -489,8 +489,8 @@ export const LiveOrderTracker: React.FC<LiveOrderTrackerProps> = ({
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
               Détail de la commande ({order.items.length} articles)
             </h4>
-            {order.items.map((it) => (
-              <div key={it.id} className="flex justify-between text-xs text-slate-300">
+            {order.items.map((it, idx) => (
+              <div key={`${it.id}-${idx}`} className="flex justify-between text-xs text-slate-300">
                 <span>
                   {it.quantity}x {it.menuItem.name}
                 </span>

@@ -342,11 +342,11 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {CUISINES_DATA.map((cuisine) => {
+            {CUISINES_DATA.map((cuisine, idx) => {
               const isSelected = selectedCuisine === cuisine.id;
               return (
                 <button
-                  key={cuisine.id}
+                  key={`${cuisine.id}-${idx}`}
                   onClick={() => onSelectCuisine(cuisine.id)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer border shrink-0 ${
                     isSelected

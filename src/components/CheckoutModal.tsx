@@ -748,7 +748,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     const isSelected = paymentMethod === method.id;
                     return (
                       <button
-                        key={method.id}
+                        key={`${method.id}-${idx}`}
                         type="button"
                         onClick={() => setPaymentMethod(method.id)}
                         className={`p-3 rounded-2xl border text-left flex flex-col justify-between gap-1.5 transition-all cursor-pointer ${

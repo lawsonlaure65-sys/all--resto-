@@ -219,8 +219,8 @@ export const AdminPaymentsView: React.FC = () => {
             className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-none focus:border-orange-500 cursor-pointer font-medium"
           >
             <option value="all">Tous les opérateurs</option>
-            {PAYMENT_PROVIDERS.map((p) => (
-              <option key={p.id} value={p.id}>
+            {PAYMENT_PROVIDERS.map((p, pIdx) => (
+              <option key={`${p.id}-${pIdx}`} value={p.id}>
                 {p.logo} {p.name}
               </option>
             ))}
@@ -268,10 +268,10 @@ export const AdminPaymentsView: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredPayments.map((p) => {
+                filteredPayments.map((p, pIdx) => {
                   const prov = getProviderInfo(p.payment_method);
                   return (
-                    <tr key={p.id} className="hover:bg-slate-800/40 transition">
+                    <tr key={`${p.id}-${pIdx}`} className="hover:bg-slate-800/40 transition">
                       <td className="py-3.5 px-4 font-mono font-bold text-orange-400 flex items-center gap-1.5">
                         <span>{p.transaction_id}</span>
                         <button

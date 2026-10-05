@@ -161,9 +161,9 @@ export const CateringModal: React.FC<CateringModalProps> = ({
                 Type d'événement traiteur *
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {eventTypesList.map((t) => (
+                {eventTypesList.map((t, idx) => (
                   <button
-                    key={t.id}
+                    key={`${t.id}-${idx}`}
                     type="button"
                     onClick={() => setEventType(t.id as any)}
                     className={`p-2.5 rounded-xl border text-left font-medium transition cursor-pointer flex items-center justify-between ${

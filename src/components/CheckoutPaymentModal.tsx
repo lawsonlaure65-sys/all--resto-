@@ -249,11 +249,11 @@ export const CheckoutPaymentModal: React.FC<CheckoutPaymentModalProps> = ({
                     </label>
 
                     <div className="grid grid-cols-2 gap-2.5">
-                      {PAYMENT_PROVIDERS.map((provider) => {
+                      {PAYMENT_PROVIDERS.map((provider, idx) => {
                         const isSelected = selectedProvider === provider.id;
                         return (
                           <button
-                            key={provider.id}
+                            key={`${provider.id}-${idx}`}
                             type="button"
                             onClick={() => {
                               setSelectedProvider(provider.id);

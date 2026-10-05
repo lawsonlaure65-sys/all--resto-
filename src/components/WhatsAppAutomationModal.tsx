@@ -321,9 +321,9 @@ export const WhatsAppAutomationModal: React.FC<WhatsAppAutomationModalProps> = (
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {languagesList.map((lang) => (
+            {languagesList.map((lang, idx) => (
               <button
-                key={lang.code}
+                key={`${lang.code}-${idx}`}
                 onClick={() => setSelectedLanguage(lang.code)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                   selectedLanguage === lang.code
@@ -351,12 +351,12 @@ export const WhatsAppAutomationModal: React.FC<WhatsAppAutomationModalProps> = (
               { key: "status_update", label: "Livreur en Route", icon: CheckCircle2 },
               { key: "delivery_delay", label: "⏰ Alerte Retard (+15m)", icon: Clock },
             ] as const
-          ).map((item) => {
+          ).map((item, idx) => {
             const Icon = item.icon;
             const isSelected = selectedTemplate === item.key;
             return (
               <button
-                key={item.key}
+                key={`${item.key}-${idx}`}
                 onClick={() => setSelectedTemplate(item.key)}
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                   isSelected
