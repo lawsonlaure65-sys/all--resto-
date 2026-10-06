@@ -1,4 +1,5 @@
 import React from "react";
+import { track } from "@vercel/analytics";
 import { motion } from "framer-motion";
 import {
   Star,
@@ -184,7 +185,13 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
                     href="https://wa.me/c/22774441621"
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      track("whatsapp_click", {
+                        source: "alloresto",
+                        restaurant_name: restaurant.name || "Khady's Food & Event",
+                      });
+                    }}
                     className="flex-1 min-w-[125px] inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-white text-[11px] font-bold transition active:scale-95 shadow-sm"
                     title="Consulter le catalogue WhatsApp de Khady's Food & Event"
                   >
@@ -195,7 +202,13 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
                     href="https://wa.me/22774441621"
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      track("whatsapp_click", {
+                        source: "alloresto",
+                        restaurant_name: restaurant.name || "Khady's Food & Event",
+                      });
+                    }}
                     className="w-full inline-flex items-center justify-center gap-1.5 py-1 px-2.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/30 text-emerald-300 hover:text-white text-[10px] font-semibold transition active:scale-95"
                     title="Commander ou discuter sur WhatsApp avec Khady's Food & Event"
                   >

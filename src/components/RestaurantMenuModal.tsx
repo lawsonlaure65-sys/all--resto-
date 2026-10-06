@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { track } from "@vercel/analytics";
 import { motion, AnimatePresence } from "motion/react";
 import {
   X,
@@ -246,6 +247,12 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                       href="https://wa.me/c/22774441621"
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => {
+                        track("whatsapp_click", {
+                          source: "alloresto",
+                          restaurant_name: restaurant.name || "Khady's Food & Event",
+                        });
+                      }}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 font-bold text-xs transition active:scale-95 border border-emerald-500/40"
                       title="Consulter le catalogue WhatsApp de Khady's Food & Event"
                     >
@@ -256,6 +263,12 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                       href="https://wa.me/22774441621"
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => {
+                        track("whatsapp_click", {
+                          source: "alloresto",
+                          restaurant_name: restaurant.name || "Khady's Food & Event",
+                        });
+                      }}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition active:scale-95 shadow-md shadow-emerald-600/20 border border-emerald-400/40"
                       title="Commander ou discuter sur WhatsApp avec Khady's Food & Event"
                     >

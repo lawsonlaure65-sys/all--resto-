@@ -1,5 +1,6 @@
 import { Order, OrderStatus, KitchenWhatsAppMessage, AppLanguage } from "../types";
 import { ALLORESTO_BRAND_INFO } from "../data/allorestoData";
+import { track } from "@vercel/analytics";
 
 /**
  * Nettoie et formate un numéro de téléphone pour l'API WhatsApp
@@ -17,6 +18,12 @@ export function formatPhoneNumberForWhatsApp(phone: string): string {
  * Ouvre WhatsApp avec un numéro et un message encodé
  */
 export function openWhatsAppDirect(phone: string, message: string): void {
+  try {
+    track("whatsapp_click", {
+      source: "alloresto",
+      restaurant_name: "unknown",
+    });
+  } catch (_) {}
   const cleanPhone = formatPhoneNumberForWhatsApp(phone || ALLORESTO_BRAND_INFO.whatsappOrders);
   const encodedText = encodeURIComponent(message);
   window.open(`https://wa.me/${cleanPhone}?text=${encodedText}`, "_blank");
@@ -627,6 +634,12 @@ export function shareRestaurantOnWhatsApp(
     deliveryFee?: number;
   }
 ): void {
+  try {
+    track("whatsapp_click", {
+      source: "alloresto",
+      restaurant_name: restaurant.name || "unknown",
+    });
+  } catch (_) {}
   const ratingText = restaurant.rating ? `⭐ Note : ${restaurant.rating}/5 (${restaurant.reviewCount || 40}+ avis)\n` : "";
   const cuisineText = restaurant.cuisine ? `✨ Spécialités : ${restaurant.cuisine}\n` : "";
   const addressText = restaurant.address ? `📍 Quartier : ${restaurant.address}\n` : "";
@@ -664,6 +677,12 @@ export function shareDishOnWhatsApp(
   },
   restaurantName?: string
 ): void {
+  try {
+    track("whatsapp_click", {
+      source: "alloresto",
+      restaurant_name: restaurantName || "unknown",
+    });
+  } catch (_) {}
   const restoText = restaurantName ? `🏪 *Restaurant :* ${restaurantName}\n` : "";
   const descText = dish.description ? `📝 *Description :* ${dish.description}\n` : "";
   const prepText = dish.preparationTime ? `⏱️ *Préparation :* ~${dish.preparationTime} min\n` : "";
@@ -698,7 +717,14 @@ export function shareDailySpecialOnWhatsApp(special: {
   servingsLeft?: number;
   accompaniedBy?: string;
   description?: string;
+  restaurantName?: string;
 }): void {
+  try {
+    track("whatsapp_click", {
+      source: "alloresto",
+      restaurant_name: special.restaurantName || "Khady's Food & Event",
+    });
+  } catch (_) {}
   const origPriceText = special.originalPrice ? ` _(au lieu de ${special.originalPrice.toLocaleString()} FCFA)_` : "";
   const untilText = special.availableUntil ? `⏰ *Disponible jusqu'à :* ${special.availableUntil} (${special.servingsLeft || 10} portions restantes)\n` : "";
   const accText = special.accompaniedBy ? `✨ *Inclus :* ${special.accompaniedBy}\n` : "";
@@ -727,6 +753,12 @@ export function shareSauceBoxOnWhatsApp(sauce: {
   description: string;
   bestWith?: string[];
 }): void {
+  try {
+    track("whatsapp_click", {
+      source: "alloresto",
+      restaurant_name: "Allôresto Kitchen",
+    });
+  } catch (_) {}
   const bestText = sauce.bestWith && sauce.bestWith.length > 0 ? `✨ *Idéal avec :* ${sauce.bestWith.join(", ")}\n` : "";
   const text =
     `🥫 *Box Sauces & Saveurs du Sahel sur Allôresto Niamey !* 🇳🇪\n\n` +

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { track } from "@vercel/analytics";
 import { Sparkles, Clock, Flame, ShoppingBag, ArrowRight, ShieldCheck, MapPin, Share2, Calendar, MessageCircle, Edit3, Camera, FileImage } from "lucide-react";
 import { motion } from "framer-motion";
 import { DailySpecial } from "../types";
@@ -39,6 +40,16 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
       ? KHADYS_OFFICIAL_SUYA_IMAGE
       : special.image || "");
 
+  useEffect(() => {
+    if (rawSpecial?.id) {
+      track("daily_dish_view", {
+        dish_id: rawSpecial.id,
+        dish_name: rawSpecial.title,
+        restaurant_name: rawSpecial.restaurantName || "Khady's Food & Event",
+      });
+    }
+  }, [rawSpecial?.id]);
+
   const handleOrder = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onAddToCart) onAddToCart(rawSpecial);
@@ -52,6 +63,13 @@ export const DailySpecialCard: React.FC<DailySpecialCardProps> = ({
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
       whileHover={{ y: -3 }}
+      onClick={() => {
+        track("daily_dish_view", {
+          dish_id: rawSpecial.id,
+          dish_name: rawSpecial.title,
+          restaurant_name: rawSpecial.restaurantName || "Khady's Food & Event",
+        });
+      }}
       className="relative overflow-hidden rounded-3xl bg-slate-900 border border-orange-500/30 p-5 sm:p-7 shadow-lg transition-colors hover:border-orange-500/60"
     >
       {/* Golden Pre-Order Rule Ribbon */}

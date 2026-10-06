@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Analytics } from "@vercel/analytics/react";
+import { track } from "@vercel/analytics";
 import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "./components/Header";
 import { HeroBanner } from "./components/HeroBanner";
@@ -473,6 +474,15 @@ export function App() {
   const cartTotal = cartItems.reduce((sum, it) => sum + it.totalPrice, 0);
   const cartCount = cartItems.reduce((sum, it) => sum + it.quantity, 0);
 
+  // Ouverture et suivi commercial de la fiche restaurant
+  const handleOpenRestaurant = (restaurant: Restaurant) => {
+    track("restaurant_view", {
+      restaurant_id: restaurant.id,
+      restaurant_name: restaurant.name,
+    });
+    setSelectedRestaurantForMenu(restaurant);
+  };
+
   // Add Item to Cart
   const handleAddToCart = (
     item: MenuItem,
@@ -487,6 +497,19 @@ export function App() {
         if (match) unitPrice += match.extraPrice;
       });
     }
+
+    const parentRestaurant =
+      restaurants.find((r) => r.menu?.some((m) => m.id === item.id)) ||
+      (selectedRestaurantForMenu && selectedRestaurantForMenu.menu?.some((m) => m.id === item.id) ? selectedRestaurantForMenu : null) ||
+      (item.category === "Plat du Jour" ? restaurants.find((r) => r.id === "resto-khadys-food" || r.name.toLowerCase().includes("khady")) : null) ||
+      selectedRestaurantForMenu;
+
+    track("add_to_cart", {
+      dish_id: item.id,
+      dish_name: item.name,
+      restaurant_name: parentRestaurant?.name || "unknown",
+      price: item.price,
+    });
 
     const newItemId = `${item.id}-${Object.values(selectedOptions).join("-")}`;
 
@@ -561,6 +584,20 @@ export function App() {
     tip: number,
     cutlery: boolean
   ) => {
+    const activeRestoName =
+      selectedRestaurantForMenu?.name ||
+      (cartItems[0]?.menuItem
+        ? restaurants.find((r) =>
+            r.menu?.some((m) => m.id === cartItems[0].menuItem.id)
+          )?.name
+        : undefined) ||
+      "unknown";
+
+    track("checkout_started", {
+      cart_items_count: cartItems.length,
+      restaurant_name: activeRestoName,
+    });
+
     setAppliedDiscount(discount);
     setAppliedPromoCode(promoCode);
     setSelectedTip(tip);
@@ -857,7 +894,7 @@ export function App() {
           isRestaurantsDirectoryOpen || currentPath.startsWith("/restaurants") ? (
             <RestaurantsPage
               onBackHome={() => navigateTo("/")}
-              onOpenMenu={(resto) => setSelectedRestaurantForMenu(resto)}
+              onOpenMenu={(resto) => handleOpenRestaurant(resto)}
               onBookTable={(resto) => setSelectedRestaurantForBooking(resto)}
             />
           ) : (
@@ -879,7 +916,7 @@ export function App() {
               }}
               onOpenScheduleOrder={() => {
                 if (cartItems.length > 0) {
-                  setIsCheckoutOpen(true);
+                  handleOpenCheckout(0, "", 0, false);
                 } else {
                   setCatalogMealMoment("all");
                   setIsDishesCatalogOpen(true);
@@ -1079,6 +1116,12 @@ export function App() {
                     href="https://wa.me/c/22774441621"
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => {
+                      track("whatsapp_click", {
+                        source: "alloresto",
+                        restaurant_name: "Khady's Food & Event",
+                      });
+                    }}
                     className="px-3.5 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
                     title="Consulter le catalogue WhatsApp de Khady's Food & Event"
                   >
@@ -1088,6 +1131,12 @@ export function App() {
                     href="https://wa.me/22774441621"
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => {
+                      track("whatsapp_click", {
+                        source: "alloresto",
+                        restaurant_name: "Khady's Food & Event",
+                      });
+                    }}
                     className="px-3.5 py-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition flex items-center gap-1.5 active:scale-95"
                     title="Commander ou discuter sur WhatsApp"
                   >
@@ -1095,7 +1144,7 @@ export function App() {
                   </a>
                   {khadysRestaurant && (
                     <button
-                      onClick={() => setSelectedRestaurantForMenu(khadysRestaurant)}
+                      onClick={() => handleOpenRestaurant(khadysRestaurant)}
                       className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-slate-700 shadow-sm"
                     >
                       <span>Carte complète (10 plats)</span>
@@ -1120,7 +1169,7 @@ export function App() {
                     }
                     onAddToCart={() => {
                       if (dish.options && dish.options.length > 0 && khadysRestaurant) {
-                        setSelectedRestaurantForMenu(khadysRestaurant);
+                        handleOpenRestaurant(khadysRestaurant);
                       } else {
                         handleAddToCart(dish, {}, 1);
                       }
@@ -1237,7 +1286,7 @@ export function App() {
                       key={`${resto.id}-${idx}`}
                       restaurant={resto}
                       serviceMode={serviceMode}
-                      onOpenMenu={(r) => setSelectedRestaurantForMenu(r)}
+                      onOpenMenu={(r) => handleOpenRestaurant(r)}
                       onBookTable={(r) => setSelectedRestaurantForBooking(r)}
                     />
                   ))}
@@ -1272,7 +1321,7 @@ export function App() {
                 onSelectDistrictForDelivery={(district) => {
                   setSelectedDistrictName(district.name);
                   if (cartItems.length > 0) {
-                    setIsCheckoutOpen(true);
+                    handleOpenCheckout(0, "", 0, false);
                   } else {
                     setIsDistrictsModalOpen(true);
                   }
@@ -1449,7 +1498,7 @@ export function App() {
         isOpen={isChefAIOpen}
         onClose={() => setIsChefAIOpen(false)}
         onAddToCart={handleAddToCart}
-        onSelectRestaurant={(r) => setSelectedRestaurantForMenu(r)}
+        onSelectRestaurant={(r) => handleOpenRestaurant(r)}
       />
 
       {/* 6. Table Booking Modal */}
@@ -1472,7 +1521,7 @@ export function App() {
         isOpen={isGroupOrderOpen}
         onClose={() => setIsGroupOrderOpen(false)}
         onSelectRestaurantMenu={(resto) => {
-          setSelectedRestaurantForMenu(resto);
+          handleOpenRestaurant(resto);
           setIsGroupOrderOpen(false);
         }}
       />
@@ -1606,11 +1655,11 @@ export function App() {
           handleAddToCart(item, {}, 1);
           setIsCartOpen(true);
         }}
-        onSelectRestaurant={(resto) => setSelectedRestaurantForMenu(resto)}
+        onSelectRestaurant={(resto) => handleOpenRestaurant(resto)}
         onOpenRestaurantMenu={(restaurantId) => {
           const foundResto = restaurants.find((r) => r.id === restaurantId);
           if (foundResto) {
-            setSelectedRestaurantForMenu(foundResto);
+            handleOpenRestaurant(foundResto);
           }
         }}
       />

@@ -1,4 +1,5 @@
 import React from "react";
+import { track } from "@vercel/analytics";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -190,6 +191,12 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
                 href="https://wa.me/22774441621"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => {
+                  track("whatsapp_click", {
+                    source: "alloresto",
+                    restaurant_name: "Khady's Food & Event",
+                  });
+                }}
                 whileTap={{ scale: 0.94 }}
                 transition={{ duration: 0.12 }}
                 className="px-5 py-2.5 rounded-xl border border-emerald-500/50 bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 text-xs sm:text-sm font-bold transition-colors shadow-sm flex items-center gap-2"

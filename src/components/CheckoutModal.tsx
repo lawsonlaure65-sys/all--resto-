@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { track } from "@vercel/analytics";
 import { motion } from "motion/react";
 import confetti from "canvas-confetti";
 import {
@@ -223,6 +224,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       };
 
       if (notifyWhatsApp) {
+        track("whatsapp_click", {
+          source: "alloresto",
+          restaurant_name: restaurantName || "unknown",
+        });
         const message = generateWhatsAppOrderConfirmation(newOrder, currentLanguage);
         const waText = encodeURIComponent(message);
         window.open(`https://wa.me/22770032552?text=${waText}`, "_blank");
@@ -1242,6 +1247,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     href="https://wa.me/22770032552?text=Bonjour%20Allôresto,%20je%20vous%20transmets%20la%20capture%20de%20mon%20dépôt"
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => {
+                      track("whatsapp_click", {
+                        source: "alloresto",
+                        restaurant_name: restaurantName || "unknown",
+                      });
+                    }}
                     className="px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center gap-1 cursor-pointer"
                   >
                     <Send className="w-3 h-3" />
