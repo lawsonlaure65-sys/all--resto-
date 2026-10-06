@@ -63,13 +63,13 @@ export const KHADYS_FALLBACK_MENU: KhadysDailyMenuResponse = {
   source: "https://khadysfood.vercel.app",
   restaurantName: "Khady's Food & Event",
   restaurantId: KHADYS_RESTAURANT_ID,
-  title: "Menu du Jour — Sauce crin-crin (fakou frais/Ademe)",
+  title: "Menu du Jour — Brochettes de Filet de Bœuf (Suya)",
   tagline: "Le Plat du Jour officiel programmé chez Khady's Food & Event",
   mainDish: {
     dishName: KHADYS_OFFICIAL_TODAY_DISH_NAME,
     priceFcfa: KHADYS_OFFICIAL_TODAY_PRICE,
     originalPrice: KHADYS_OFFICIAL_TODAY_ORIGINAL_PRICE,
-    imageUrl: KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+    imageUrl: KHADYS_OFFICIAL_SUYA_IMAGE,
     description: KHADYS_OFFICIAL_TODAY_DESC,
     accompaniments: KHADYS_OFFICIAL_TODAY_ACCOMP,
     availablePortions: 25,
@@ -78,17 +78,17 @@ export const KHADYS_FALLBACK_MENU: KhadysDailyMenuResponse = {
   },
   trio: [
     {
-      id: "dish-sauce-crincrin",
+      id: "dish-suya-brochettes",
       type: "PLAT_DU_JOUR",
       dishName: KHADYS_OFFICIAL_TODAY_DISH_NAME,
       badgeLabel: "🍲 Plat Cuisiné du Jour",
       badgeColor: "bg-brand-orange text-white",
-      tagline: "Sauce gluante traditionnelle aux feuilles de corète mijotées",
+      tagline: "Tendres tranches de filet de bœuf marinées aux épices Kankankan et grillées au feu de bois",
       description: KHADYS_OFFICIAL_TODAY_DESC,
       accompaniments: KHADYS_OFFICIAL_TODAY_ACCOMP,
-      price: 4000,
+      price: 4500,
       promoPrice: KHADYS_OFFICIAL_TODAY_PRICE,
-      dishImage: KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+      dishImage: KHADYS_OFFICIAL_SUYA_IMAGE,
       remainingStock: 25,
     },
     {
@@ -135,6 +135,10 @@ const OBSOLETE_DISHES = [
   "tiep rouge",
   "tiep",
   "thieboudienne",
+  "crin-crin",
+  "crincrin",
+  "fakou",
+  "ademe",
 ];
 
 export const isPermanentDishName = (name?: string) => {
@@ -272,11 +276,11 @@ export async function fetchKhadysProgrammedDailyMenu(): Promise<KhadysDailyMenuR
       };
     }
 
-    // 2.b Interroger la catégorie 'Plat du Jour' sur la base officielle
+    // 2.b Interroger les plats marqués 'is_plat_du_jour = true' sur la base officielle
     let items: any[] = [];
     try {
       const r = await fetch(
-        `${khadyUrl}/rest/v1/menu_items?category=eq.Plat%20du%20Jour&select=*`,
+        `${khadyUrl}/rest/v1/menu_items?is_plat_du_jour=eq.true&select=*`,
         {
           headers: { apikey: khadyKey, Authorization: `Bearer ${khadyKey}` },
         }
@@ -286,11 +290,11 @@ export async function fetchKhadysProgrammedDailyMenu(): Promise<KhadysDailyMenuR
       }
     } catch (_) {}
 
-    // 2.b Si non trouvé, interroger par l'ID officiel du plat du jour
+    // 2.c Si non trouvé, interroger par catégorie Plat du Jour
     if (!items || items.length === 0) {
       try {
         const r2 = await fetch(
-          `${khadyUrl}/rest/v1/menu_items?id=eq.item-1790412092632&select=*`,
+          `${khadyUrl}/rest/v1/menu_items?category=eq.Plat%20du%20Jour&select=*`,
           {
             headers: { apikey: khadyKey, Authorization: `Bearer ${khadyKey}` },
           }
@@ -306,7 +310,7 @@ export async function fetchKhadysProgrammedDailyMenu(): Promise<KhadysDailyMenuR
       const dishTitle = item.name ? item.name.trim() : KHADYS_OFFICIAL_TODAY_DISH_NAME;
       const dishPrice = Number(item.price || KHADYS_OFFICIAL_TODAY_PRICE);
       const dishDesc = item.description || KHADYS_OFFICIAL_TODAY_DESC;
-      const dishImg = item.image || KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE;
+      const dishImg = item.image || KHADYS_OFFICIAL_SUYA_IMAGE;
       const dishAccomp =
         item.accompaniments ||
         (dishTitle.toLowerCase().includes("crin")

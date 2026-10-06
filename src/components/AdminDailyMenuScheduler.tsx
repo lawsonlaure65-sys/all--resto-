@@ -379,14 +379,14 @@ export const AdminDailyMenuScheduler: React.FC<AdminDailyMenuSchedulerProps> = (
       seen.add(dish.id);
       return !isPermanentDish(dish) && !dish.name.toLowerCase().includes("tiep");
     });
-    // Toujours placer le plat du jour officiel actif (Sauce crin-crin fakou frais / Ademe) en premier
+    // Toujours placer le plat du jour officiel actif (Brochettes de Filet de Bœuf (Suya)) en premier
     list.sort((a, b) => {
-      const aIsCrin =
-        a.name.toLowerCase().includes("crin") || a.name.toLowerCase().includes("ademe");
-      const bIsCrin =
-        b.name.toLowerCase().includes("crin") || b.name.toLowerCase().includes("ademe");
-      if (aIsCrin && !bIsCrin) return -1;
-      if (!aIsCrin && bIsCrin) return 1;
+      const aIsSuya =
+        a.name.toLowerCase().includes("suya") || a.name.toLowerCase().includes("brochette");
+      const bIsSuya =
+        b.name.toLowerCase().includes("suya") || b.name.toLowerCase().includes("brochette");
+      if (aIsSuya && !bIsSuya) return -1;
+      if (!aIsSuya && bIsSuya) return 1;
       return 0;
     });
     return list;

@@ -46,6 +46,13 @@ export function resolveDishImageUrl(source: any): string {
       : "";
 
   if (
+    dishName.includes("suya") ||
+    dishName.includes("brochette")
+  ) {
+    return KHADYS_OFFICIAL_SUYA_IMAGE;
+  }
+
+  if (
     dishName.includes("crin") ||
     dishName.includes("fakou") ||
     dishName.includes("ademe") ||

@@ -6,6 +6,15 @@ import DishCard from './components/DishCard';
 
 const KHADYS_DISHES = [
   {
+    id: 'kf-suya-brochettes',
+    name: 'Brochettes de Filet de Bœuf (Suya)',
+    description: 'Tendres tranches de filet de bœuf marinées à l\'huile d\'arachide et aux épices Kankankan, grillées au feu de bois avec poivrons frais, oignons doux et alloco.',
+    price: 4000,
+    imageSrc: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1000&auto=format&fit=crop&q=80',
+    badge: '🍲 Plat du Jour officiel',
+    optionsHint: 'Alloco doré croustillant • Piment vert maison',
+  },
+  {
     id: 'kf-attieke-caviar',
     name: 'Attiéké caviar',
     description: 'Attiéké fin cuit à la perfection avec caviar gourmand et assaisonnements authentiques signés Khady\'s Food.',

@@ -45,11 +45,17 @@ export function useDailyMenu() {
         if (localActivePlanStr) {
           const plan = JSON.parse(localActivePlanStr);
           if (plan && plan.dishName) {
-            // Si le cache local contient l'ancien Tiep obsolète, on le purge immédiatement
-            if (plan.dishName.toLowerCase().includes("tiep")) {
+            // Si le cache local contient l'ancien Tiep ou Sauce crin-crin obsolète, on le purge immédiatement
+            if (
+              plan.dishName.toLowerCase().includes("tiep") ||
+              plan.dishName.toLowerCase().includes("crin") ||
+              plan.dishName.toLowerCase().includes("fakou") ||
+              plan.dishName.toLowerCase().includes("ademe")
+            ) {
               localStorage.removeItem("alloresto_active_daily_special");
+              localStorage.removeItem("alloresto_khadys_trio");
             } else {
-              const dishPrice = plan.priceFcfa || 3500;
+              const dishPrice = plan.priceFcfa || 4000;
               const localSpecial: DailySpecial = {
                 id: plan.id || "local-khadys-daily",
                 title: plan.dishName,
@@ -57,14 +63,14 @@ export function useDailyMenu() {
                 restaurantId: plan.restaurantId || KHADYS_RESTAURANT_ID,
                 description:
                   plan.description ||
-                  `${plan.mainCourse || plan.dishName}. Accompagné de : ${plan.starter || "Pâte de maïs ou pâte noire"}${plan.drinkOrDessert ? ` • ${plan.drinkOrDessert}` : ""}`,
+                  `${plan.mainCourse || plan.dishName}. Accompagné de : ${plan.accompaniments || "Alloco doré croustillant + Piment vert maison"}`,
                 price: dishPrice,
-                originalPrice: Math.round(dishPrice * 1.2),
-                image: resolveDishImageUrl(plan) || KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+                originalPrice: Math.round(dishPrice * 1.15),
+                image: resolveDishImageUrl(plan) || KHADYS_OFFICIAL_SUYA_IMAGE,
                 servingsLeft: plan.availablePortions || 25,
-                availableUntil: "15h00",
-                accompaniedBy: plan.accompaniedBy || `${plan.starter || "Pâte de maïs"} + ${plan.drinkOrDessert || "Piment vert maison"}`,
-                tags: ["👑 Khady's Food", "🔥 Plat du Jour", `🍲 ${dishPrice.toLocaleString()} FCFA`, "⚡ Service 11h-15h"],
+                availableUntil: "14h30",
+                accompaniedBy: plan.accompaniedBy || "Alloco doré croustillant + Piment vert maison",
+                tags: ["👑 Khady's Food", "🔥 Plat du Jour", `🍢 ${dishPrice.toLocaleString()} FCFA`, "⚡ Service 11h30-14h30"],
               };
               if (active) setSupabaseMenu(localSpecial);
             }
@@ -154,6 +160,9 @@ export function useDailyMenu() {
           !candidateRow ||
           isFromKitchen ||
           (candidateRow.title && candidateRow.title.toLowerCase().includes("tiep")) ||
+          (candidateRow.title && candidateRow.title.toLowerCase().includes("crin")) ||
+          (candidateRow.title && candidateRow.title.toLowerCase().includes("fakou")) ||
+          (candidateRow.title && candidateRow.title.toLowerCase().includes("ademe")) ||
           (candidateRow.menu_date &&
             Math.abs(new Date(today).getTime() - new Date(candidateRow.menu_date).getTime()) > 2 * 86400000);
 
@@ -171,9 +180,9 @@ export function useDailyMenu() {
               originalPrice: main.originalPrice,
               image: resolveDishImageUrl(main) || KHADYS_OFFICIAL_SUYA_IMAGE,
               servingsLeft: main.availablePortions,
-              availableUntil: "15h00",
+              availableUntil: "14h30",
               accompaniedBy: main.accompaniments,
-              tags: ["👑 Khady's Food", "🔥 Plat du Jour Khady's", "✨ Sélection Officielle", "⚡ Service 11h-15h"],
+              tags: ["👑 Khady's Food", "🔥 Plat du Jour Khady's", "✨ Sélection Officielle", "⚡ Service 11h30-14h30"],
             });
             if (active) setLoading(false);
             return;
@@ -186,7 +195,7 @@ export function useDailyMenu() {
 
         if (candidateRow && active) {
           const row = candidateRow;
-          const dishPrice = row.price_xof || 3500;
+          const dishPrice = row.price_xof || 4000;
           const adaptedSpecial: DailySpecial = {
             id: row.id,
             title: row.title,
@@ -197,12 +206,12 @@ export function useDailyMenu() {
               row.description ||
               "Préparé avec soin ce matin chez Khady's Food & Event à Niamey.",
             price: dishPrice,
-            originalPrice: Math.round(dishPrice * 1.2),
-            image: resolveDishImageUrl(row) || KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+            originalPrice: Math.round(dishPrice * 1.15),
+            image: resolveDishImageUrl(row) || KHADYS_OFFICIAL_SUYA_IMAGE,
             servingsLeft: 25,
-            availableUntil: "15h00",
-            accompaniedBy: row.description || "Pâte de maïs ou pâte noire d'igname, poisson/bœuf et piment vert maison",
-            tags: ["👑 Khady's Food", "🔥 Plat du Jour Officiel", `🍲 ${dishPrice.toLocaleString()} FCFA`, "⚡ Service 11h-15h"],
+            availableUntil: "14h30",
+            accompaniedBy: row.description || "Alloco doré croustillant + Piment vert maison",
+            tags: ["👑 Khady's Food", "🔥 Plat du Jour Officiel", `🍢 ${dishPrice.toLocaleString()} FCFA`, "⚡ Service 11h30-14h30"],
           };
           setSupabaseMenu(adaptedSpecial);
         } else if (!candidateRow) {

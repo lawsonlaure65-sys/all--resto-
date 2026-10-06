@@ -300,9 +300,13 @@ export function App() {
         const parsed = JSON.parse(localSpecialStr);
         if (
           parsed?.dishName?.toLowerCase().includes("tiep") ||
+          parsed?.dishName?.toLowerCase().includes("crin") ||
+          parsed?.dishName?.toLowerCase().includes("fakou") ||
+          parsed?.dishName?.toLowerCase().includes("ademe") ||
           parsed?.priceFcfa !== 4000 ||
           parsed?.imageUrl?.includes("photo-1627308595229-7830a5c91f9f") ||
-          parsed?.imageUrl?.includes("khadys_suya_brochettes")
+          parsed?.imageUrl?.includes("khadys_suya_brochettes") ||
+          parsed?.imageUrl?.includes("khadys_sauce_crincrin")
         ) {
           localStorage.removeItem("alloresto_active_daily_special");
           localStorage.removeItem("alloresto_khadys_trio");
@@ -318,10 +322,14 @@ export function App() {
           if (r.id === "resto-khadys-food" || r.name.toLowerCase().includes("khady")) {
             const newMenu = r.menu.map((d) => {
               if (d.name.toLowerCase().includes("brochette") || d.name.toLowerCase().includes("suya")) {
-                if (d.price !== 4000 || d.image !== KHADYS_OFFICIAL_SUYA_IMAGE) {
+                if (d.price !== 4000 || d.image !== KHADYS_OFFICIAL_SUYA_IMAGE || !d.isDailySpecial || d.category !== "⭐ Menu & Plat du Jour") {
                   updated = true;
-                  return { ...d, price: 4000, image: KHADYS_OFFICIAL_SUYA_IMAGE };
+                  return { ...d, price: 4000, image: KHADYS_OFFICIAL_SUYA_IMAGE, isDailySpecial: true, isMenuDuJour: true, category: "⭐ Menu & Plat du Jour" };
                 }
+              }
+              if ((d.name.toLowerCase().includes("crin") || d.name.toLowerCase().includes("ademe")) && d.category === "⭐ Menu & Plat du Jour") {
+                updated = true;
+                return { ...d, category: "Plats Traditionnels & Sauces", isDailySpecial: false, isMenuDuJour: false };
               }
               if (d.name.toLowerCase().includes("tiep") && d.category === "⭐ Menu & Plat du Jour") {
                 updated = true;
@@ -380,43 +388,46 @@ export function App() {
     if (
       supabaseMenu &&
       !isPermanentDishName(supabaseMenu.title) &&
-      !supabaseMenu.title.toLowerCase().includes("tiep")
+      !supabaseMenu.title.toLowerCase().includes("tiep") &&
+      !supabaseMenu.title.toLowerCase().includes("crin") &&
+      !supabaseMenu.title.toLowerCase().includes("fakou") &&
+      !supabaseMenu.title.toLowerCase().includes("ademe")
     ) {
       const resolvedImg =
-        resolveDishImageUrl(supabaseMenu) || KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE;
+        resolveDishImageUrl(supabaseMenu) || KHADYS_OFFICIAL_SUYA_IMAGE;
 
       return [
         {
           ...supabaseMenu,
           title: supabaseMenu.title,
-          price: supabaseMenu.price || 3500,
-          originalPrice: supabaseMenu.originalPrice || 4000,
-          image: resolvedImg || KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+          price: supabaseMenu.price || 4000,
+          originalPrice: supabaseMenu.originalPrice || 4500,
+          image: resolvedImg || KHADYS_OFFICIAL_SUYA_IMAGE,
           restaurantName: "Khady's Food & Event",
           restaurantId: "resto-khadys-food",
           accompaniedBy:
             supabaseMenu.accompaniedBy ||
-            "Pâte blanche de maïs ou pâte noire d'igname + Poisson/Bœuf + Piment vert maison",
-          tags: ["👑 Khady's Food", "🔥 Plat du Jour", `🍲 ${(supabaseMenu.price || 3500).toLocaleString()} FCFA`],
+            "Alloco doré croustillant + Piment vert maison",
+          tags: ["👑 Khady's Food", "🔥 Plat du Jour", `🍢 ${(supabaseMenu.price || 4000).toLocaleString()} FCFA`],
         },
       ];
     }
 
-    // Fiche officielle de référence Khady's Food & Event (Sauce crin-crin fakou frais / Ademe)
+    // Fiche officielle de référence Khady's Food & Event (Brochettes de Filet de Bœuf (Suya) - khadysfood.vercel.app)
     const singleOfficialSpecial: DailySpecial = {
-      id: "khadys-official-crincrin-daily",
-      title: "Sauce crin-crin (fakou frais/Ademe)",
+      id: "khadys-official-suya-daily",
+      title: "Brochettes de Filet de Bœuf (Suya)",
       restaurantName: "Khady's Food & Event",
       restaurantId: "resto-khadys-food",
       description:
-        "Sauce gluante à base de feuilles de corète, mijotée avec du poisson de mer et/ou viande de bœuf. Accompagnement : pâte blanche de maïs ou pâte noire d'igname (cossette). Plat du jour officiel de Cheffe Khady.",
-      price: 3500,
-      originalPrice: 4000,
-      image: KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
+        "Tendres tranches de filet de bœuf marinées à l'huile d'arachide et aux épices Kankankan, grillées au feu de bois avec poivrons frais, oignons doux et alloco.",
+      price: 4000,
+      originalPrice: 4500,
+      image: KHADYS_OFFICIAL_SUYA_IMAGE,
       servingsLeft: 25,
-      availableUntil: "15h00",
-      accompaniedBy: "Pâte blanche de maïs ou pâte noire d'igname + Poisson/Bœuf + Piment vert maison",
-      tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍲 3 500 FCFA"],
+      availableUntil: "14h30",
+      accompaniedBy: "Alloco doré croustillant + Piment vert maison",
+      tags: ["👑 Khady's Food", "🔥 Plat du Jour", "🍢 4 000 FCFA"],
     };
 
     return [singleOfficialSpecial];

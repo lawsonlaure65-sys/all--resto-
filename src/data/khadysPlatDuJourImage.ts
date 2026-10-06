@@ -5,18 +5,18 @@ export const KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE = "/images/dishes/khadys_sauce_
 export const KHADYS_OFFICIAL_SUYA_IMAGE =
   "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1000&auto=format&fit=crop&q=80";
 
-// Plat du Jour officiel certifié de Cheffe Khady (Sauce crin-crin fakou frais / Ademe)
-export const KHADYS_OFFICIAL_TODAY_DISH_NAME = "Sauce crin-crin (fakou frais/Ademe)";
-export const KHADYS_OFFICIAL_TODAY_PRICE = 3500;
-export const KHADYS_OFFICIAL_TODAY_ORIGINAL_PRICE = 4000;
+// Plat du Jour officiel actif programmé chez Khady's Food & Event (https://khadysfood.vercel.app)
+export const KHADYS_OFFICIAL_TODAY_DISH_NAME = "Brochettes de Filet de Bœuf (Suya)";
+export const KHADYS_OFFICIAL_TODAY_PRICE = 4000;
+export const KHADYS_OFFICIAL_TODAY_ORIGINAL_PRICE = 4500;
 export const KHADYS_OFFICIAL_TODAY_DESC =
-  "Sauce gluante à base de feuilles de corète, mijotée avec du poisson de mer et/ou viande de bœuf. Accompagnement : pâte blanche de maïs ou pâte noire d'igname (cossette). Plat du jour officiel de Cheffe Khady.";
+  "Tendres tranches de filet de bœuf marinées à l'huile d'arachide et aux épices Kankankan, grillées au feu de bois avec poivrons frais, oignons doux et alloco.";
 export const KHADYS_OFFICIAL_TODAY_ACCOMP =
-  "Pâte blanche de maïs ou pâte noire d'igname + Poisson/Bœuf + Piment vert maison";
-export const KHADYS_OFFICIAL_TODAY_IMAGE = KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE;
+  "Alloco doré croustillant + Piment vert maison";
+export const KHADYS_OFFICIAL_TODAY_IMAGE = KHADYS_OFFICIAL_SUYA_IMAGE;
 export const KHADYS_OFFICIAL_TODAY_TAGS = [
   "👑 Khady's Food",
   "🔥 Plat du Jour",
-  "🍲 3 500 FCFA",
-  "⚡ Service 11h-15h",
+  "🍢 4 000 FCFA",
+  "⚡ Service 11h30-14h30",
 ];
