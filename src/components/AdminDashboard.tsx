@@ -50,6 +50,7 @@ import {
   Settings,
 } from "lucide-react";
 import AdminSettingsPage from "../../app/admin/settings/page";
+import { getStoredAppSettings } from "../services/appSettingsService";
 import AdminDriversPage from "../../app/admin/drivers/page";
 import AdminOrdersPage from "../../app/admin/orders/page";
 import { AdminPaymentsView } from "./AdminPaymentsView";

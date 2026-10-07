@@ -12,35 +12,14 @@ import {
 } from '../../../src/utils/whatsappNotifications';
 import { AppLanguage } from '../../../src/types';
 
-interface AppSettings {
-  id?: string;
-  company_name: string;
-  nif: string;
-  rccm?: string;
-  address: string;
-  phone: string;
-  email: string;
-  website: string;
-  logo_url?: string;
-  default_commission_rate?: number;
-  delivery_base_fee?: number;
-  currency?: string;
-}
+import {
+  AppSettings,
+  OFFICIAL_DEFAULT_APP_SETTINGS,
+  getStoredAppSettings,
+  saveStoredAppSettings,
+} from '../../../src/services/appSettingsService';
 
-const DEFAULT_SETTINGS: AppSettings = {
-  id: 'main',
-  company_name: 'Allôresto Niger SARL',
-  nif: 'NIF-89210-NE',
-  rccm: 'RCCM-NI-NIA-2026-B-1142',
-  address: 'Plateau, Boulevard du 15 Avril, Niamey, Niger',
-  phone: '+227 80 82 82 82',
-  email: 'contact@alloresto.ne',
-  website: 'www.alloresto.ne',
-  logo_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop&q=80',
-  default_commission_rate: 0,
-  delivery_base_fee: 1000,
-  currency: 'FCFA',
-};
+const DEFAULT_SETTINGS: AppSettings = OFFICIAL_DEFAULT_APP_SETTINGS;
 
 interface AdminSettingsPageProps {
   isEmbedded?: boolean;
@@ -61,17 +40,8 @@ export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: Ad
   }, []);
 
   const loadSettings = async () => {
-    // 1. D'abord charger depuis localStorage pour un affichage immédiat
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('alloresto_app_settings');
-        if (cached) {
-          setSettings(JSON.parse(cached));
-        }
-      } catch (e) {
-        console.warn('Erreur lecture localStorage settings:', e);
-      }
-    }
+    // 1. D'abord charger depuis localStorage avec assainissement automatique des placeholders
+    setSettings(getStoredAppSettings());
 
     // Charger la configuration des alertes de retard
     setDelayConfig(loadDelayAutomationConfig());
@@ -90,11 +60,10 @@ export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: Ad
       if (error) {
         console.warn('Note Supabase app_settings:', error.message);
       } else if (data) {
-        setSettings(data);
+        const merged = { ...getStoredAppSettings(), ...data };
+        setSettings(merged);
         setSupabaseConnected(true);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('alloresto_app_settings', JSON.stringify(data));
-        }
+        saveStoredAppSettings(merged);
       }
     } catch (error) {
       console.warn('Mode local utilisé pour les paramètres:', error);
@@ -113,10 +82,8 @@ export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: Ad
         id: 'main',
       };
 
-      // Toujours persister dans localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('alloresto_app_settings', JSON.stringify(payload));
-      }
+      // Toujours persister dans localStorage et diffuser l'événement global
+      saveStoredAppSettings(payload);
 
       // Sauvegarder la configuration des alertes WhatsApp de retard
       saveDelayAutomationConfig(delayConfig);

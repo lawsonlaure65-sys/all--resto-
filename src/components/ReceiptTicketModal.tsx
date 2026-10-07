@@ -17,6 +17,7 @@ import {
 import { Order } from "../types";
 import { BilloExpressLogo } from "./BilloExpressLogo";
 import { BrandLogo } from "./BrandLogo";
+import { useAppSettings } from "../services/appSettingsService";
 
 interface ReceiptTicketModalProps {
   order: Order | null;
@@ -30,8 +31,11 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
   onTrackOrder,
 }) => {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const settings = useAppSettings();
 
   if (!order) return null;
+
+  const currencyUnit = settings.currency || "FCFA";
 
   const handlePrint = () => {
     window.print();
@@ -39,30 +43,55 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
 
   const handleShareWhatsApp = () => {
     const itemsList = order.items
-      .map(
-        (it) =>
-          `• ${it.quantity}x ${it.menuItem.name} : ${(it.totalPrice).toLocaleString()} FCFA`
-      )
+      .map((it) => {
+        const optionsList = Array.isArray(it.selectedOptions)
+          ? it.selectedOptions.map((o: any) => o.choice || o.label || String(o))
+          : it.selectedOptions && typeof it.selectedOptions === "object"
+          ? Object.entries(it.selectedOptions).map(([k, v]) => `${k}: ${v}`)
+          : [];
+        const optText = optionsList.length > 0 ? ` [${optionsList.join(", ")}]` : "";
+        const noteText = it.notes ? ` (Note: ${it.notes})` : "";
+        return `• ${it.quantity}x ${it.menuItem.name}${optText}${noteText} [PU: ${(it.unitPrice || it.menuItem.price || 0).toLocaleString()} ${currencyUnit}] = ${it.totalPrice.toLocaleString()} ${currencyUnit}`;
+      })
       .join("\n");
 
+    const serviceModeLabel =
+      order.serviceType === "delivery"
+        ? "🛵 Livraison à domicile"
+        : order.serviceType === "takeaway"
+        ? "🥡 À emporter"
+        : "🍽️ Sur place";
+
     const message = encodeURIComponent(
-      `🧾 *TICKET DE CAISSE ALLÔRESTO #${order.id}*\n` +
-        `_Livraison assurée par Bilo Express Niamey_\n\n` +
-        `📅 *Date :* ${order.createdAt}\n` +
-        `🏪 *Restaurant :* ${order.restaurantName}\n` +
+      `🧾 *TICKET DE CAISSE OFFICIEL ALLÔRESTO #${order.id}*\n` +
+        `🏢 *${settings.company_name}*\n` +
+        `📍 *Siège Social :* ${settings.address}\n` +
+        `📋 *NIF :* ${settings.nif} | *RCCM :* ${settings.rccm}\n` +
+        `📞 *Tél / Support :* ${settings.phone} | ✉️ *Email :* ${settings.email}\n` +
+        `🌐 *Site Web :* ${settings.website}\n` +
+        `_Livraison express assurée par Billo Express Niamey_\n\n` +
+        `📅 *Date :* ${order.createdAt || formattedDate}\n` +
+        `🛎️ *Service :* ${serviceModeLabel}\n` +
+        `🏪 *Restaurant :* ${order.restaurantName} (Tél: ${order.restaurantPhone || "+227 96 05 23 10"})\n` +
         `👤 *Client :* ${order.customerName} (${order.customerPhone})\n` +
-        `📍 *Lieu de livraison :* ${order.deliveryAddress}\n\n` +
-        `🍽️ *Détail des plats :*\n${itemsList}\n\n` +
-        `💵 *Sous-total :* ${order.subtotal.toLocaleString()} FCFA\n` +
-        `🛵 *Frais de livraison :* ${order.deliveryFee.toLocaleString()} FCFA\n` +
+        `📍 *Lieu :* ${order.deliveryAddress}\n` +
+        (order.scheduledTime ? `⏰ *Créneau souhaité :* ${order.scheduledTime}\n` : "") +
+        `\n🍽️ *Détail des plats & options :*\n${itemsList}\n\n` +
+        `💵 *Sous-total :* ${order.subtotal.toLocaleString()} ${currencyUnit}\n` +
+        `🛵 *Frais de livraison :* ${order.deliveryFee.toLocaleString()} ${currencyUnit}\n` +
         (order.discount > 0
-          ? `🎁 *Remise :* -${order.discount.toLocaleString()} FCFA\n`
+          ? `🎁 *Remise${order.promoCode ? ` (${order.promoCode})` : ""} :* -${order.discount.toLocaleString()} ${currencyUnit}\n`
           : "") +
-        `💰 *TOTAL RÉGLÉ :* ${order.total.toLocaleString()} FCFA\n` +
-        `💳 *Moyen :* ${order.paymentMethod.toUpperCase()} (${order.paymentStatus === "paid" ? "PAYÉ" : "À RÉGLER"})\n\n` +
-        `🛵 *Coursier :* ${order.courierName || "Bilo Express"} (${order.courierPhone || "+227 92 08 08 22"})\n` +
+        (order.tip > 0
+          ? `🪙 *Pourboire livreur :* +${order.tip.toLocaleString()} ${currencyUnit}\n`
+          : "") +
+        `💰 *TOTAL RÉGLÉ :* ${order.total.toLocaleString()} ${currencyUnit}\n` +
+        `💳 *Moyen :* ${order.paymentMethod.toUpperCase()} (${order.paymentStatus === "paid" ? "PAYÉ EN LIGNE" : "ESPÈCES À LA LIVRAISON"})\n` +
+        (order.paymentReference ? `🔢 *Réf. Transaction :* ${order.paymentReference}\n` : "") +
+        (order.cashChangeAmount ? `⚠️ *Monnaie :* ${order.cashChangeAmount}\n` : "") +
+        `\n🛵 *Coursier :* ${order.courierName || "Billo Express"} (${order.courierPhone || "+227 92 08 08 22"})\n` +
         `🕌 *Note Jumu'ah :* Pause le vendredi de 11h à 15h pour la prière.\n` +
-        `✅ Merci d'avoir choisi Allôresto & Bilo Express !`
+        `✅ Merci d'avoir choisi ${settings.company_name} !`
     );
 
     window.open(`https://wa.me/?text=${message}`, "_blank");
@@ -127,25 +156,38 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
             </div>
 
             <div className="p-5 sm:p-6 space-y-4 text-xs leading-relaxed">
-              {/* Receipt Header */}
+              {/* Receipt Header - Identité Légale & Fiscale Officielle (Niger) */}
               <div className="text-center space-y-1 pb-3 border-b border-dashed border-slate-300">
                 <div className="flex justify-center mb-1">
                   <span className="text-2xl font-black tracking-tight text-slate-900 font-sans">
                     ALLÔ<span className="text-[#F36C21]">RESTO</span>
                   </span>
                 </div>
-                <p className="text-[11px] font-bold text-slate-700 uppercase tracking-widest font-sans">
-                  Plateforme Gourmande de Niamey
+                <h4 className="text-[12px] font-black text-slate-900 uppercase tracking-wider font-sans">
+                  {settings.company_name || "Allôresto Niger SARL"}
+                </h4>
+                <p className="text-[10px] font-semibold text-slate-700">
+                  Plateforme de Commande &amp; Livraison en Ligne
                 </p>
-                <p className="text-[10px] text-slate-500">
-                  RÉPUBLIQUE DU NIGER 🇳🇪 &bull; NIAMEY
-                </p>
-                <p className="text-[9px] text-slate-400 font-mono">
-                  NIF : 48921/R - RCCM : NI-NIM-2026-B-1140
-                </p>
-                <p className="text-[9px] text-slate-400 font-mono">
-                  Agrément HAPDP &bull; Partenaire Bilo Express
-                </p>
+                <div className="text-[9px] text-slate-600 space-y-0.5 pt-0.5">
+                  <p className="font-medium text-slate-800">
+                    📍 {settings.address || "Poudrière II, Niamey, Niger"}
+                  </p>
+                  <p className="font-mono font-bold text-slate-900">
+                    NIF : {settings.nif || "NIF-10024/P-NE"} &bull; RCCM : {settings.rccm || "RCCM-NE-NIA-2019-B-898"}
+                  </p>
+                  <p className="text-[8.5px] text-slate-600">
+                    📞 Tél : <span className="font-bold text-slate-900">{settings.phone || "+227 96052310"}</span> &bull; ✉️ {settings.email || "lawson.laure65@gmail.com"}
+                  </p>
+                  {settings.website && (
+                    <p className="text-[8.5px] text-orange-600 font-bold">
+                      🌐 {settings.website}
+                    </p>
+                  )}
+                  <p className="text-[8px] text-slate-400 uppercase tracking-widest pt-0.5 font-sans">
+                    RÉPUBLIQUE DU NIGER 🇳🇪 &bull; Agrément HAPDP &bull; Billo Express
+                  </p>
+                </div>
               </div>
 
               {/* Order Metadata */}
@@ -159,11 +201,27 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                   <span className="text-slate-800">{order.createdAt || formattedDate}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-slate-500">SERVICE :</span>
+                  <span className="font-bold text-slate-900 uppercase">
+                    {order.serviceType === "delivery"
+                      ? "🛵 Livraison à domicile"
+                      : order.serviceType === "takeaway"
+                      ? "🥡 À emporter"
+                      : "🍽️ Sur place"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-slate-500">RESTO :</span>
                   <span className="font-bold text-slate-900 truncate max-w-[190px]">
                     {order.restaurantName}
                   </span>
                 </div>
+                {order.restaurantPhone && (
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-slate-500">TÉL RESTO :</span>
+                    <span className="text-slate-800 font-mono">{order.restaurantPhone}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-slate-500">CLIENT :</span>
                   <span className="font-bold text-slate-900 truncate max-w-[190px]">
@@ -172,75 +230,114 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">TÉLÉPHONE :</span>
-                  <span className="text-slate-900">{order.customerPhone}</span>
+                  <span className="text-slate-900 font-mono font-bold">{order.customerPhone}</span>
                 </div>
-                <div className="flex justify-between items-start pt-1">
+                <div className="flex justify-between items-start pt-0.5">
                   <span className="text-slate-500 shrink-0">ADRESSE :</span>
                   <span className="text-right text-slate-800 font-medium text-[10px] max-w-[190px]">
                     {order.deliveryAddress}
                   </span>
                 </div>
+                {order.scheduledTime && (
+                  <div className="flex justify-between text-[10px] text-amber-800 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 mt-1">
+                    <span>CRÉNEAU SOUHAITÉ :</span>
+                    <span>{order.scheduledTime}</span>
+                  </div>
+                )}
               </div>
 
               {/* Items Table */}
               <div className="space-y-2 pb-3 border-b border-dashed border-slate-300 text-[11px]">
                 <div className="flex justify-between text-[10px] font-bold uppercase text-slate-400 pb-1 border-b border-slate-200">
-                  <span>DÉSIGNATION</span>
+                  <span>DÉSIGNATION &amp; OPTIONS</span>
                   <span>TOTAL</span>
                 </div>
 
-                {order.items.map((it, idx) => (
-                  <div key={idx} className="space-y-0.5">
-                    <div className="flex justify-between font-bold text-slate-900">
-                      <span className="truncate max-w-[210px]">
-                        {it.quantity}x {it.menuItem.name}
-                      </span>
-                      <span className="font-mono shrink-0">
-                        {it.totalPrice.toLocaleString()} F
-                      </span>
-                    </div>
+                {order.items.map((it, idx) => {
+                  const optionsList = Array.isArray(it.selectedOptions)
+                    ? it.selectedOptions.map((o: any) => ({
+                        name: o.name || "Option",
+                        choice: o.choice || o.label || String(o),
+                        extraPrice: Number(o.extraPrice || 0),
+                      }))
+                    : it.selectedOptions && typeof it.selectedOptions === "object"
+                    ? Object.entries(it.selectedOptions).map(([key, val]) => ({
+                        name: key,
+                        choice: String(val),
+                        extraPrice: 0,
+                      }))
+                    : [];
 
-                    {it.selectedOptions && it.selectedOptions.length > 0 && (
-                      <div className="pl-3 text-[10px] text-slate-500 space-y-0.5">
-                        {it.selectedOptions.map((opt, oIdx) => (
-                          <div key={oIdx} className="flex justify-between">
-                            <span>&bull; {opt.choice}</span>
-                            {opt.extraPrice > 0 && (
-                              <span>+{opt.extraPrice * it.quantity} F</span>
-                            )}
-                          </div>
-                        ))}
+                  const unitPrice = it.unitPrice || it.menuItem.price || 0;
+
+                  return (
+                    <div key={idx} className="space-y-0.5 pb-1 border-b border-slate-100 last:border-none">
+                      <div className="flex justify-between font-bold text-slate-900">
+                        <span className="truncate max-w-[210px]">
+                          {it.quantity}x {it.menuItem.name}
+                        </span>
+                        <span className="font-mono shrink-0">
+                          {it.totalPrice.toLocaleString()} {currencyUnit}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      <div className="text-[9.5px] text-slate-500 flex justify-between pl-2">
+                        <span>P.U. : {unitPrice.toLocaleString()} {currencyUnit}</span>
+                        {it.quantity > 1 && <span>x{it.quantity}</span>}
+                      </div>
+
+                      {optionsList.length > 0 && (
+                        <div className="pl-3 text-[10px] text-slate-600 space-y-0.5">
+                          {optionsList.map((opt, oIdx) => (
+                            <div key={oIdx} className="flex justify-between items-baseline">
+                              <span className="font-medium text-slate-700">
+                                ↳ {opt.name && opt.name !== "Option" ? `${opt.name}: ` : ""}{opt.choice}
+                              </span>
+                              {opt.extraPrice > 0 && (
+                                <span className="font-mono text-[9px] text-slate-500">
+                                  +{opt.extraPrice * it.quantity} {currencyUnit}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {it.notes && (
+                        <div className="pl-3 text-[9.5px] italic text-amber-900 bg-amber-50/80 px-1.5 py-0.5 rounded border border-amber-200/60 font-medium">
+                          👉 Note cuisine : {it.notes}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Price Calculation & Total */}
               <div className="space-y-1.5 text-[11px] pb-3 border-b border-dashed border-slate-300">
                 <div className="flex justify-between text-slate-600">
                   <span>SOUS-TOTAL PLATS :</span>
-                  <span className="font-mono">{order.subtotal.toLocaleString()} FCFA</span>
+                  <span className="font-mono">{order.subtotal.toLocaleString()} {currencyUnit}</span>
                 </div>
 
                 <div className="flex justify-between text-slate-600">
                   <span className="flex items-center gap-1">
-                    <span>LIVRAISON BILO EXPRESS :</span>
+                    <span>LIVRAISON BILLO EXPRESS :</span>
                   </span>
-                  <span className="font-mono">{order.deliveryFee.toLocaleString()} FCFA</span>
+                  <span className="font-mono">{order.deliveryFee.toLocaleString()} {currencyUnit}</span>
                 </div>
 
                 {order.discount > 0 && (
                   <div className="flex justify-between text-emerald-700 font-bold">
-                    <span>REMISE PROMO :</span>
-                    <span className="font-mono">-{order.discount.toLocaleString()} FCFA</span>
+                    <span>REMISE PROMO {order.promoCode ? `(${order.promoCode})` : ""} :</span>
+                    <span className="font-mono">-{order.discount.toLocaleString()} {currencyUnit}</span>
                   </div>
                 )}
 
                 {order.tip && order.tip > 0 ? (
                   <div className="flex justify-between text-slate-600">
                     <span>POURBOIRE LIVREUR :</span>
-                    <span className="font-mono">{order.tip.toLocaleString()} FCFA</span>
+                    <span className="font-mono">+{order.tip.toLocaleString()} {currencyUnit}</span>
                   </div>
                 ) : null}
 
@@ -249,11 +346,11 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                   <div className="flex justify-between items-baseline">
                     <span className="font-black text-xs text-slate-900">NET À PAYER :</span>
                     <span className="font-black text-base text-slate-900 font-mono">
-                      {order.total.toLocaleString()} FCFA
+                      {order.total.toLocaleString()} {currencyUnit}
                     </span>
                   </div>
                   <p className="text-[9px] text-slate-500 text-right mt-0.5">
-                    TVA / Taxes incluses
+                    TVA &amp; Taxes républicaines incluses
                   </p>
                 </div>
               </div>
@@ -272,10 +369,22 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                     <span className="font-bold">{order.paymentReference}</span>
                   </div>
                 )}
+                {order.cashChangeAmount && (
+                  <div className="flex justify-between text-amber-900 font-bold bg-amber-50 px-1 py-0.5 rounded border border-amber-200">
+                    <span>MONNAIE DEMANDÉE :</span>
+                    <span>{order.cashChangeAmount}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>COURSIER ASSIGNÉ :</span>
                   <span className="font-bold text-slate-900">
-                    {order.courierName || "Bilo Express Niamey"}
+                    {order.courierName || "Billo Express Niamey"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>TÉL COURSIER :</span>
+                  <span className="font-bold text-slate-900 font-mono">
+                    {order.courierPhone || "+227 92 08 08 22"}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -312,12 +421,26 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                   *{order.id}-NE-2026*
                 </p>
 
-                <p className="text-[10px] font-bold text-slate-800">
+                <p className="text-[10px] font-black text-slate-800 uppercase tracking-wider">
                   *** MERCI DE VOTRE CONFIANCE ! ***
                 </p>
-                <p className="text-[9px] text-slate-500">
-                  Service Client WhatsApp : +227 70 03 25 52 &bull; Appel : +227 96 05 23 10
-                </p>
+
+                <div className="p-2.5 w-full rounded-xl bg-slate-50 border border-slate-200 text-[9px] text-slate-600 space-y-1 text-left">
+                  <div className="flex justify-between items-center text-[8.5px] font-mono font-bold text-slate-800">
+                    <span>NIF : {settings.nif}</span>
+                    <span>RCCM : {settings.rccm}</span>
+                  </div>
+                  <p className="text-[8.5px] text-slate-700">
+                    🏢 <strong>{settings.company_name}</strong> &bull; Siège : {settings.address}
+                  </p>
+                  <p className="text-[8.5px] font-medium text-slate-800">
+                    📞 Support Client &amp; Urgence : <strong className="text-slate-900">{settings.phone}</strong>
+                  </p>
+                  <div className="flex flex-wrap justify-between gap-1 text-[8px] text-slate-500 pt-0.5 border-t border-slate-200">
+                    <span>✉️ {settings.email}</span>
+                    {settings.website && <span className="font-medium text-orange-600">🌐 {settings.website}</span>}
+                  </div>
+                </div>
               </div>
             </div>
 

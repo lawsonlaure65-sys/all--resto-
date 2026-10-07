@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
+import { getStoredAppSettings } from '../../src/services/appSettingsService';
 
 export default function AboutPage() {
+  const settings = getStoredAppSettings();
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -81,19 +83,27 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-300">
             <div>
               <span className="text-slate-500 block">Raison Sociale :</span>
-              <strong className="text-white">Allôresto Niger SARL</strong>
+              <strong className="text-white">{settings.company_name}</strong>
             </div>
             <div>
-              <span className="text-slate-500 block">NIF (Numéro Fiscale) :</span>
-              <strong className="text-white font-mono">NIF-89210-NE</strong>
+              <span className="text-slate-500 block">NIF (Numéro Fiscal) :</span>
+              <strong className="text-white font-mono">{settings.nif}</strong>
             </div>
             <div>
               <span className="text-slate-500 block">RCCM :</span>
-              <strong className="text-white font-mono">RCCM-NI-NIA-2026-B-1142</strong>
+              <strong className="text-white font-mono">{settings.rccm}</strong>
             </div>
             <div>
-              <span className="text-slate-500 block">Siège Social :</span>
-              <strong className="text-white">Plateau, Boulevard du 15 Avril, Niamey, Niger</strong>
+              <span className="text-slate-500 block">Siège Social à Niamey :</span>
+              <strong className="text-white">{settings.address}</strong>
+            </div>
+            <div>
+              <span className="text-slate-500 block">Téléphone &amp; Support :</span>
+              <strong className="text-white font-mono">{settings.phone}</strong>
+            </div>
+            <div>
+              <span className="text-slate-500 block">Email Officiel :</span>
+              <strong className="text-white font-mono">{settings.email}</strong>
             </div>
           </div>
         </div>

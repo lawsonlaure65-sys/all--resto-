@@ -21,6 +21,12 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 
+import {
+  AppSettings as GlobalAppSettings,
+  OFFICIAL_DEFAULT_APP_SETTINGS,
+  getStoredAppSettings,
+} from '../../../src/services/appSettingsService';
+
 interface AppSettings {
   company_name: string;
   nif: string;
@@ -33,14 +39,14 @@ interface AppSettings {
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
-  company_name: 'Allôresto Niger SARL',
-  nif: 'NIF-89210-NE',
-  rccm: 'RCCM-NI-NIA-2026-B-1142',
-  address: 'Plateau, Boulevard du 15 Avril, Niamey, Niger',
-  phone: '+227 80 82 82 82',
-  email: 'contact@alloresto.ne',
-  website: 'www.alloresto.ne',
-  default_commission_rate: 10, // 10% de commission par défaut
+  company_name: OFFICIAL_DEFAULT_APP_SETTINGS.company_name,
+  nif: OFFICIAL_DEFAULT_APP_SETTINGS.nif,
+  rccm: OFFICIAL_DEFAULT_APP_SETTINGS.rccm || 'RCCM-NE-NIA-2019-B-898',
+  address: OFFICIAL_DEFAULT_APP_SETTINGS.address,
+  phone: OFFICIAL_DEFAULT_APP_SETTINGS.phone,
+  email: OFFICIAL_DEFAULT_APP_SETTINGS.email,
+  website: OFFICIAL_DEFAULT_APP_SETTINGS.website,
+  default_commission_rate: 10,
 };
 
 interface ReportOrder {
@@ -78,6 +84,17 @@ export default function AdminReportsPage() {
   }, []);
 
   const loadSettings = async () => {
+    const local = getStoredAppSettings();
+    setSettings({
+      company_name: local.company_name,
+      nif: local.nif,
+      rccm: local.rccm || 'RCCM-NE-NIA-2019-B-898',
+      address: local.address,
+      phone: local.phone,
+      email: local.email,
+      website: local.website,
+      default_commission_rate: Number(local.default_commission_rate) || 10,
+    });
     try {
       const supabase = getSupabaseClient();
       if (supabase) {
@@ -89,13 +106,13 @@ export default function AdminReportsPage() {
 
         if (!error && data) {
           setSettings({
-            company_name: data.company_name || DEFAULT_SETTINGS.company_name,
-            nif: data.nif || DEFAULT_SETTINGS.nif,
-            rccm: data.rccm || DEFAULT_SETTINGS.rccm,
-            address: data.address || DEFAULT_SETTINGS.address,
-            phone: data.phone || DEFAULT_SETTINGS.phone,
-            email: data.email || DEFAULT_SETTINGS.email,
-            website: data.website || DEFAULT_SETTINGS.website,
+            company_name: data.company_name || local.company_name,
+            nif: data.nif || local.nif,
+            rccm: data.rccm || local.rccm,
+            address: data.address || local.address,
+            phone: data.phone || local.phone,
+            email: data.email || local.email,
+            website: data.website || local.website,
             default_commission_rate: Number(data.default_commission_rate) || 10,
           });
         }
