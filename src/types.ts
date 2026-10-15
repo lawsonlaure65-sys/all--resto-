@@ -2,7 +2,7 @@ export type UserRole = "client" | "restaurant" | "courier" | "admin";
 
 export type AppLanguage = "fr" | "en" | "ha" | "zm";
 
-export type ServiceMode = "delivery" | "takeaway" | "booking";
+export type ServiceMode = "delivery" | "takeaway" | "booking" | "dine_in";
 
 export interface MenuItemOptionChoice {
   label: string;
@@ -150,6 +150,8 @@ export interface Order {
   orderStatus: OrderStatus;
   estimatedDeliveryTime: string;
   scheduledTime?: string; // Ex: "Aujourd'hui à 12h30 (Midi au Bureau)"
+  tableNumber?: string; // Ex: "Table 4" ou "Terrasse 2" (Commande sur place par QR Code)
+  isQrOrder?: boolean;
   deliveryPartner?: string; // "Billo Express Niamey 🏍️"
   courierName?: string;
   courierPhone?: string;

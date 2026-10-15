@@ -48,6 +48,7 @@ import { VisualNotificationToast, ToastNotification } from "./components/VisualN
 import { Footer } from "./components/Footer";
 import { useDailyMenu } from "./hooks/useDailyMenu";
 import { ReceiptTicketModal } from "./components/ReceiptTicketModal";
+import { RestaurantQrLandingModal } from "./components/RestaurantQrLandingModal";
 import { JumuahBanner } from "./components/JumuahBanner";
 import { VoiceOrderModal } from "./components/VoiceOrderModal";
 import { getJumuahStatus } from "./utils/jumuahSchedule";
@@ -251,6 +252,47 @@ export function App() {
     return false;
   });
 
+  // Table QR Code Scan & Direct Order Landing State
+  const [qrLandingData, setQrLandingData] = useState<{
+    isOpen: boolean;
+    restaurant: Restaurant | null;
+    table: string;
+    mode: "dine_in" | "takeaway" | "delivery";
+  }>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const scanParam = params.get("scan");
+      const restoId = params.get("resto");
+      const tableParam = params.get("table");
+      const qrParam = params.get("qr");
+      if (scanParam === "resto" || qrParam === "1" || restoId || tableParam) {
+        const stored = loadStoredRestaurants();
+        const matched = restoId
+          ? stored.find(
+              (r) =>
+                r.id === restoId ||
+                r.slug === restoId ||
+                r.name.toLowerCase().includes(restoId.toLowerCase())
+            ) || stored[0]
+          : stored[0];
+        if (matched) {
+          return {
+            isOpen: true,
+            restaurant: matched,
+            table: tableParam || "Table 1",
+            mode: (params.get("mode") as any) || "dine_in",
+          };
+        }
+      }
+    }
+    return {
+      isOpen: false,
+      restaurant: null,
+      table: "Table 1",
+      mode: "dine_in",
+    };
+  });
+
   useEffect(() => {
     const handlePopState = () => {
       if (typeof window !== "undefined") {
@@ -260,6 +302,21 @@ export function App() {
           setIsRestaurantsDirectoryOpen(true);
         } else {
           setIsRestaurantsDirectoryOpen(false);
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("scan") === "resto" || params.get("resto")) {
+          const restoId = params.get("resto");
+          const stored = loadStoredRestaurants();
+          const matched = restoId ? stored.find((r) => r.id === restoId) : stored[0];
+          if (matched) {
+            setQrLandingData({
+              isOpen: true,
+              restaurant: matched,
+              table: params.get("table") || "Table 1",
+              mode: (params.get("mode") as any) || "dine_in",
+            });
+          }
         }
       }
     };
@@ -1392,6 +1449,14 @@ export function App() {
             onCreateTestOrder={handleCreateTestOrder}
             onOpenPlans={() => setIsPlansOpen(true)}
             onOpenContract={() => setIsContractOpen(true)}
+            onOpenQrScanLanding={(resto, table) =>
+              setQrLandingData({
+                isOpen: true,
+                restaurant: resto,
+                table: table || "Table 1",
+                mode: "dine_in",
+              })
+            }
           />
         )}
 
@@ -1431,6 +1496,23 @@ export function App() {
         onBookTable={(resto) => setSelectedRestaurantForBooking(resto)}
         serviceMode={serviceMode}
       />
+
+      {/* 1-bis. Restaurant Table QR Scan Direct Order Landing Modal */}
+      {qrLandingData.isOpen && qrLandingData.restaurant && (
+        <RestaurantQrLandingModal
+          restaurant={qrLandingData.restaurant}
+          initialTable={qrLandingData.table}
+          initialMode={qrLandingData.mode}
+          isOpen={qrLandingData.isOpen}
+          onClose={() => setQrLandingData((prev) => ({ ...prev, isOpen: false }))}
+          onOrderPlaced={(order) => {
+            handleOrderPlaced(order);
+          }}
+          onViewReceipt={(order) => {
+            setActiveReceiptOrder(order);
+          }}
+        />
+      )}
 
       {/* 2. Cart Drawer */}
       <CartDrawer

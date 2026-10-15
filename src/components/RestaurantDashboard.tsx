@@ -40,9 +40,11 @@ import {
   Receipt,
   AlertTriangle,
   Minus,
+  QrCode,
 } from "lucide-react";
 import { Order, Restaurant, MenuItem, OrderStatus } from "../types";
 import { RESTAURANTS_DATA } from "../data/allorestoData";
+import { RestaurantMenuQrModal } from "./RestaurantMenuQrModal";
 import { DishManagementModal } from "./DishManagementModal";
 import { KitchenThermalTicketModal } from "./KitchenThermalTicketModal";
 import { BilloExpressDispatchModal } from "./BilloExpressDispatchModal";
@@ -71,6 +73,7 @@ interface RestaurantDashboardProps {
   onCreateTestOrder?: () => void;
   onOpenPlans?: () => void;
   onOpenContract?: () => void;
+  onOpenQrScanLanding?: (resto: Restaurant, table?: string) => void;
 }
 
 export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
@@ -80,6 +83,7 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
   onCreateTestOrder,
   onOpenPlans,
   onOpenContract,
+  onOpenQrScanLanding,
 }) => {
   // Session State
   const [session, setSession] = useState<RestaurantUserSession | null>(() =>
@@ -98,10 +102,11 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Active Tab State
-  const [activeTab, setActiveTab] = useState<"orders" | "menu" | "analytics" | "supabase">("orders");
+  const [activeTab, setActiveTab] = useState<"orders" | "menu" | "analytics" | "supabase" | "qr_menu">("orders");
   const [orderFilter, setOrderFilter] = useState<"all" | "pending" | "preparing" | "ready" | "delivered">("all");
   const [isRestaurantOpen, setIsRestaurantOpen] = useState(true);
   const [soundAlerts, setSoundAlerts] = useState(true);
+  const [showQrModal, setShowQrModal] = useState(false);
 
   // Thermal Ticket & Courier Dispatch Modals
   const [ticketModalOrder, setTicketModalOrder] = useState<Order | null>(null);
@@ -156,13 +161,22 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
     return () => clearInterval(interval);
   }, [session]);
 
+  // Restaurant Entity for current session
+  const currentRestaurant: Restaurant = useMemo(() => {
+    const stored = loadStoredRestaurants();
+    if (!session) return stored[0];
+    return (
+      stored.find(
+        (r) =>
+          r.id === session.restaurantId ||
+          r.name.toLowerCase().includes(session.restaurantName.toLowerCase())
+      ) || stored[0]
+    );
+  }, [session]);
+
   // Dishes State
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
-    const stored = loadStoredRestaurants();
-    const currentResto = session
-      ? stored.find((r) => r.id === session.restaurantId) || stored[0]
-      : stored[0];
-    const raw = currentResto?.menu || RESTAURANTS_DATA[0].menu;
+    const raw = currentRestaurant?.menu || RESTAURANTS_DATA[0].menu;
     const seen = new Set<string>();
     return raw.filter((d) => {
       if (!d || !d.id || seen.has(d.id)) return false;
@@ -614,6 +628,16 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
 
           <button
             type="button"
+            onClick={() => setShowQrModal(true)}
+            className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 text-xs font-black flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-orange-500/20"
+            title="Générer les QR Codes pour vos tables et votre carte"
+          >
+            <QrCode className="w-4 h-4" />
+            <span>QR Code Tables &amp; Menu 📱</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => {
               if (onOpenContract) onOpenContract();
               else window.location.href = "/app/restaurant/contract";
@@ -917,6 +941,22 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
               ⚠️ {lowStockDishes.length}
             </span>
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("qr_menu")}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+            activeTab === "qr_menu"
+              ? "bg-orange-500 text-slate-950 font-black shadow-md shadow-orange-500/20"
+              : "bg-slate-900 text-slate-400 hover:text-white"
+          }`}
+        >
+          <QrCode className="w-4 h-4 text-orange-400" />
+          <span>QR Code Menu &amp; Tables 📱</span>
+          <span className="px-1.5 py-0.2 rounded bg-orange-500/20 text-orange-400 text-[9px] font-black uppercase">
+            Nouveau
+          </span>
         </button>
 
         <button
@@ -1586,6 +1626,75 @@ CREATE TABLE IF NOT EXISTS public.restaurant_orders (
         </div>
       )}
 
+      {/* ========================================================================= */}
+      {/* TAB 4: QR CODE MENU & TABLE STUDIO                                        */}
+      {/* ========================================================================= */}
+      {activeTab === "qr_menu" && (
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center shrink-0">
+                <QrCode className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white">QR Code Menu &amp; Tables de Restaurant</h3>
+                <p className="text-xs text-slate-400">
+                  Générez, personnalisez et exportez en haute définition les QR codes de vos tables pour commande immédiate en salle.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowQrModal(true)}
+                className="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 text-xs font-black flex items-center gap-2 transition cursor-pointer shadow-md shadow-orange-500/20"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Ouvrir l&apos;Atelier d&apos;Impression HD</span>
+              </button>
+
+              {onOpenQrScanLanding && (
+                <button
+                  type="button"
+                  onClick={() => onOpenQrScanLanding(currentRestaurant, "Table 1")}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-black flex items-center gap-2 transition cursor-pointer"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>Tester le Rendu Client ↗</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+              <span className="text-2xl">📱</span>
+              <h4 className="text-sm font-black text-white">Zéro Attente Serveur</h4>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Le client scanne le QR code posé sur sa table avec son smartphone, consulte la carte en temps réel et passe commande sans attendre que le serveur lui apporte la carte papier.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+              <span className="text-2xl">🖨️</span>
+              <h4 className="text-sm font-black text-white">Export Chevalet &amp; Stickers</h4>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Formats chevalet de table (10×15 cm), autocollants carrés de table et affiches comptoir A4 prêts pour impression directe ou téléchargement en PNG 1024px.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+              <span className="text-2xl">🛎️</span>
+              <h4 className="text-sm font-black text-white">Direct en Cuisine</h4>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Les commandes à table arrivent immédiatement sur votre écran de cuisine avec le numéro de table pré-rempli et le carillon sonore automatique.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Dish Modal */}
       {showDishModal && (
         <DishManagementModal
@@ -1596,6 +1705,19 @@ CREATE TABLE IF NOT EXISTS public.restaurant_orders (
           }}
           onSaveDish={handleSaveDish}
           initialDish={editingDish}
+        />
+      )}
+
+      {/* Restaurant Menu QR Code & Print Export Modal */}
+      {showQrModal && (
+        <RestaurantMenuQrModal
+          restaurant={currentRestaurant}
+          isOpen={showQrModal}
+          onClose={() => setShowQrModal(false)}
+          onTestOrder={(table) => {
+            setShowQrModal(false);
+            onOpenQrScanLanding?.(currentRestaurant, table);
+          }}
         />
       )}
 

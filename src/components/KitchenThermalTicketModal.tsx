@@ -33,9 +33,24 @@ export const KitchenThermalTicketModal: React.FC<KitchenThermalTicketModalProps>
   if (!isOpen || !order) return null;
 
   const currencyUnit = settings.currency || "FCFA";
+  const cleanWebsite = (settings.website || "https://alloresto-niamey.vercel.app").replace(/^https?:\/\//, "");
 
   const handlePrint = () => {
+    const prevTitle = document.title;
+    document.title = `Bon-commande-ticket-${order.id}-Alloresto`;
     window.print();
+    setTimeout(() => {
+      document.title = prevTitle;
+    }, 1000);
+  };
+
+  const handleDownloadPdf = () => {
+    const prevTitle = document.title;
+    document.title = `Bon-commande-ticket-${order.id}-Alloresto-Niger`;
+    window.print();
+    setTimeout(() => {
+      document.title = prevTitle;
+    }, 1200);
   };
 
   const handleCopyText = () => {
@@ -46,15 +61,20 @@ export const KitchenThermalTicketModal: React.FC<KitchenThermalTicketModalProps>
         ? "À EMPORTER"
         : "SUR PLACE";
 
+    const company = (settings.company_name || settings.companyName || "ALLÔRESTO NIGER SARL").toUpperCase();
+
     const textReceipt = `
 ========================================
-     ${settings.company_name.toUpperCase()}
-  NIF : ${settings.nif} | RCCM : ${settings.rccm || "N/A"}
-  ${settings.address}
-  Tél HQ : ${settings.phone}
+     ${company}
+  📍 ${settings.address}
+  📞 Tél. : ${settings.phone}
+  ✉️ Email : ${settings.email}
+  🌐 Site : ${cleanWebsite}
+  📋 NIF : ${settings.nif} | RCCM : ${settings.rccm || "N/A"}
 ========================================
+REÇU DE COMMANDE & BON DE PREPARATION
 RESTAURANT : ${order.restaurantName}
-TÉL RESTO  : ${order.restaurantPhone || "+227 96 05 23 10"}
+TÉL RESTO  : ${order.restaurantPhone || "+227 96052310"}
 ----------------------------------------
 COMMANDE   : #${order.id}
 DATE/HEURE : ${order.createdAt}
@@ -87,6 +107,10 @@ ${order.discount > 0 ? `REMISE     : -${order.discount.toLocaleString()} ${curre
 ----------------------------------------
 RÈGLEMENT  : ${order.paymentMethod.toUpperCase()} (${order.paymentStatus === "paid" ? "PAYÉ EN LIGNE ✅" : "ESPÈCES À ENCAISSER 💵"})
 ${order.paymentReference ? `RÉF DÉPÔT  : ${order.paymentReference}\n` : ""}${order.cashChangeAmount ? `MONNAIE    : ${order.cashChangeAmount}\n` : ""}COURSIER   : ${order.courierName || "Billo Express Niamey"} (${order.courierPhone || "+227 92 08 08 22"})
+========================================
+Merci pour votre commande.
+Allôresto — Niamey
+Site : ${settings.website} • Support : ${settings.phone}
 ========================================
 `;
     navigator.clipboard.writeText(textReceipt.trim());
@@ -168,7 +192,17 @@ ${order.paymentReference ? `RÉF DÉPÔT  : ${order.paymentReference}\n` : ""}${
                 className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold flex items-center gap-1.5 transition cursor-pointer"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? "Copié !" : "Copier Texte"}</span>
+                <span>{copied ? "Copié !" : "Copier"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white font-bold flex items-center gap-1.5 transition cursor-pointer"
+                title="Enregistrer en PDF"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>PDF</span>
               </button>
 
               <button
@@ -192,15 +226,22 @@ ${order.paymentReference ? `RÉF DÉPÔT  : ${order.paymentReference}\n` : ""}${
             >
               {/* Header Slip */}
               <div className="text-center border-b-2 border-dashed border-black pb-3 space-y-1">
-                <h2 className="text-base font-black uppercase tracking-wider">{settings.company_name}</h2>
+                <h2 className="text-base font-black uppercase tracking-wider">
+                  {settings.company_name || settings.companyName || "ALLÔRESTO NIGER SARL"}
+                </h2>
                 <p className="text-[10px] font-bold text-gray-700">★ PLATEFORME DE COMMANDE &amp; LIVRAISON ★</p>
-                <div className="text-[9px] text-gray-700 font-mono space-y-0.5">
-                  <p>NIF : {settings.nif} | RCCM : {settings.rccm || "N/A"}</p>
+                <div className="text-[9px] text-gray-800 font-mono space-y-0.5">
                   <p>📍 {settings.address}</p>
+                  <p>📞 Tél. : {settings.phone} &bull; ✉️ {settings.email}</p>
+                  <p>🌐 Site : {cleanWebsite}</p>
+                  <p className="font-bold pt-0.5">NIF : {settings.nif} | RCCM : {settings.rccm || "N/A"}</p>
                 </div>
-                <div className="pt-1.5 border-t border-dashed border-gray-400 mt-1">
-                  <p className="font-black text-sm text-gray-900 uppercase">{order.restaurantName}</p>
-                  <p className="text-[10px] text-gray-700">📞 Tél Resto : {order.restaurantPhone || "+227 96 05 23 10"}</p>
+                <div className="pt-2 border-t border-dashed border-gray-400 mt-1">
+                  <p className="text-[11px] font-black uppercase tracking-wider text-gray-900 bg-gray-100 py-0.5 rounded">
+                    REÇU DE COMMANDE &amp; BON DE PREPARATION
+                  </p>
+                  <p className="font-black text-sm text-gray-900 uppercase pt-1">{order.restaurantName}</p>
+                  <p className="text-[10px] text-gray-700">📞 Tél Resto : {order.restaurantPhone || "+227 96052310"}</p>
                 </div>
               </div>
 
@@ -368,27 +409,41 @@ ${order.paymentReference ? `RÉF DÉPÔT  : ${order.paymentReference}\n` : ""}${
                   Signature &amp; Emargement Livreur / Client
                   <div className="h-6"></div>
                 </div>
-                <div className="text-[8.5px] text-gray-600 space-y-0.5 pt-1">
+                <div className="text-[8.5px] text-gray-700 space-y-0.5 pt-2 border-t border-dashed border-gray-300 mt-2 text-center">
+                  <p className="font-bold text-gray-900">Merci pour votre commande.</p>
+                  <p className="font-bold text-gray-800">Allôresto — Niamey</p>
                   <p>NIF : {settings.nif} &bull; RCCM : {settings.rccm}</p>
-                  <p>Support Allôresto Niamey : {settings.phone} &bull; {settings.email}</p>
+                  <p>📍 Siège : {settings.address}</p>
+                  <p>📞 Tél : {settings.phone} &bull; ✉️ {settings.email}</p>
+                  <p>🌐 Site web : {settings.website}</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Footer Actions */}
-          <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between">
+          <div className="p-4 border-t border-slate-800 bg-slate-950 flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs text-slate-400">
-              Prêt pour impression directe avec toute imprimante ticket thermique.
+              Prêt pour impression directe thermique &bull; Export PDF conforme
             </span>
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="px-5 py-2.5 rounded-2xl bg-orange-500 hover:bg-orange-600 text-slate-950 font-black text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-orange-500/30 transition"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Lancer l&apos;impression</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer border border-slate-700"
+              >
+                <Download className="w-4 h-4" />
+                <span>Télécharger PDF</span>
+              </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="px-5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-slate-950 font-black text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-orange-500/30 transition"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Imprimer Bon</span>
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>

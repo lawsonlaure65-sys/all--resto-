@@ -50,7 +50,7 @@ import {
   Settings,
 } from "lucide-react";
 import AdminSettingsPage from "../../app/admin/settings/page";
-import { getStoredAppSettings } from "../services/appSettingsService";
+import { getStoredAppSettings, useAppSettings } from "../services/appSettingsService";
 import AdminDriversPage from "../../app/admin/drivers/page";
 import AdminOrdersPage from "../../app/admin/orders/page";
 import { AdminPaymentsView } from "./AdminPaymentsView";
@@ -107,6 +107,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenWhatsAppAutomation,
   initialTab,
 }) => {
+  // Admin Settings & Legal Entity
+  const appSettings = useAppSettings();
+
   // Admin Authentication State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [adminEmail, setAdminEmail] = useState<string>("admin@alloresto.ne");
@@ -1850,7 +1853,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 ### Plateforme Numérique de Commande et Livraison « ALLÔRESTO NIGER »
 
 ENTRE LES SOUSSIGNÉS :
-1. La Société ALLÔRESTO NIGER SARL (Niamey, Niger)
+1. La Société ${appSettings.company_name || appSettings.companyName || "ALLÔRESTO NIGER SARL"} (NIF : ${appSettings.nif}, RCCM : ${appSettings.rccm}, Siège : ${appSettings.address}, Tél : ${appSettings.phone}, Email : ${appSettings.email})
 ET
 2. L'Établissement : ${contractData.restaurantName}
 - RCCM : ${contractData.rccm} | NIF : ${contractData.nif}
@@ -2080,7 +2083,7 @@ Consultez le fichier alloresto-contrat-partenariat-restaurant.md pour le texte i
                 <p className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">Entre les Soussignés :</p>
                 <div className="space-y-1 text-slate-700">
                   <p>
-                    <strong>1. La Société ALLÔRESTO NIGER SARL</strong>, au capital de 5 000 000 FCFA, immatriculée au RCCM de Niamey, NIF : 89210/NE, sise à Niamey (Plateau), représentée par sa Direction Générale.
+                    <strong>1. La Société {appSettings.company_name || appSettings.companyName || "ALLÔRESTO NIGER SARL"}</strong>, au capital de 5 000 000 FCFA, immatriculée au RCCM : <span className="font-semibold">{appSettings.rccm}</span>, NIF : <span className="font-semibold">{appSettings.nif}</span>, sise à <span className="font-semibold">{appSettings.address}</span>, Tél : <span className="font-semibold">{appSettings.phone}</span>, représentée par sa Direction Générale.
                   </p>
                   <p className="text-right font-bold text-indigo-900">D&apos;UNE PART,</p>
                 </div>

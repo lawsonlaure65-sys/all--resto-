@@ -228,7 +228,7 @@ export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: Ad
                   required
                   value={settings.nif}
                   onChange={(e) => setSettings({ ...settings, nif: e.target.value })}
-                  placeholder="Ex: NIF-89210-NE"
+                  placeholder="NIF-10024/P-NE"
                   className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
                 />
               </div>
@@ -241,7 +241,7 @@ export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: Ad
                   type="text"
                   value={settings.rccm || ''}
                   onChange={(e) => setSettings({ ...settings, rccm: e.target.value })}
-                  placeholder="Ex: RCCM-NI-NIA-2026-B-1142"
+                  placeholder="RCCM-NE-NIA-2019-B-898"
                   className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
                 />
               </div>
@@ -281,7 +281,7 @@ export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: Ad
                   required
                   value={settings.address}
                   onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-                  placeholder="Ex: Plateau, Boulevard du 15 Avril, Niamey, Niger"
+                  placeholder="Poudrière II, Niamey, Niger"
                   className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
                 />
               </div>
@@ -294,7 +294,7 @@ export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: Ad
                   type="tel"
                   value={settings.phone}
                   onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
-                  placeholder="+227 80 82 82 82"
+                  placeholder="+227 96052310"
                   className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
                 />
               </div>
@@ -307,7 +307,7 @@ export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: Ad
                   type="email"
                   value={settings.email}
                   onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                  placeholder="contact@alloresto.ne"
+                  placeholder="lawson.laure65@gmail.com"
                   className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
                 />
               </div>
@@ -320,7 +320,7 @@ export default function AdminSettingsPage({ isEmbedded = false, onNavigate }: Ad
                   type="text"
                   value={settings.website}
                   onChange={(e) => setSettings({ ...settings, website: e.target.value })}
-                  placeholder="www.alloresto.ne"
+                  placeholder="https://alloresto-niamey.vercel.app"
                   className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
                 />
               </div>

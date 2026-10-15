@@ -36,9 +36,24 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
   if (!order) return null;
 
   const currencyUnit = settings.currency || "FCFA";
+  const cleanWebsite = (settings.website || "https://alloresto-niamey.vercel.app").replace(/^https?:\/\//, "");
 
   const handlePrint = () => {
+    const prevTitle = document.title;
+    document.title = `Recu-de-commande-${order.id}-Alloresto`;
     window.print();
+    setTimeout(() => {
+      document.title = prevTitle;
+    }, 1000);
+  };
+
+  const handleDownloadPdf = () => {
+    const prevTitle = document.title;
+    document.title = `Recu-de-commande-${order.id}-Alloresto-Niger`;
+    window.print();
+    setTimeout(() => {
+      document.title = prevTitle;
+    }, 1200);
   };
 
   const handleShareWhatsApp = () => {
@@ -62,17 +77,21 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
         ? "🥡 À emporter"
         : "🍽️ Sur place";
 
+    const companyName = settings.company_name || settings.companyName || "Allôresto Niger SARL";
+
     const message = encodeURIComponent(
-      `🧾 *TICKET DE CAISSE OFFICIEL ALLÔRESTO #${order.id}*\n` +
-        `🏢 *${settings.company_name}*\n` +
-        `📍 *Siège Social :* ${settings.address}\n` +
-        `📋 *NIF :* ${settings.nif} | *RCCM :* ${settings.rccm}\n` +
-        `📞 *Tél / Support :* ${settings.phone} | ✉️ *Email :* ${settings.email}\n` +
-        `🌐 *Site Web :* ${settings.website}\n` +
-        `_Livraison express assurée par Billo Express Niamey_\n\n` +
+      `🧾 *REÇU DE COMMANDE ALLÔRESTO #${order.id}*\n\n` +
+        `🏢 *${companyName}*\n` +
+        `📍 *Adresse :* ${settings.address}\n` +
+        `📞 *Tél. :* ${settings.phone}\n` +
+        `✉️ *Email :* ${settings.email}\n` +
+        `🌐 *Site :* ${cleanWebsite}\n` +
+        `📋 *NIF :* ${settings.nif}\n` +
+        `📋 *RCCM :* ${settings.rccm}\n` +
+        `--------------------------------\n` +
         `📅 *Date :* ${order.createdAt || formattedDate}\n` +
         `🛎️ *Service :* ${serviceModeLabel}\n` +
-        `🏪 *Restaurant :* ${order.restaurantName} (Tél: ${order.restaurantPhone || "+227 96 05 23 10"})\n` +
+        `🏪 *Restaurant :* ${order.restaurantName} (Tél: ${order.restaurantPhone || "+227 96052310"})\n` +
         `👤 *Client :* ${order.customerName} (${order.customerPhone})\n` +
         `📍 *Lieu :* ${order.deliveryAddress}\n` +
         (order.scheduledTime ? `⏰ *Créneau souhaité :* ${order.scheduledTime}\n` : "") +
@@ -85,13 +104,14 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
         (order.tip > 0
           ? `🪙 *Pourboire livreur :* +${order.tip.toLocaleString()} ${currencyUnit}\n`
           : "") +
-        `💰 *TOTAL RÉGLÉ :* ${order.total.toLocaleString()} ${currencyUnit}\n` +
-        `💳 *Moyen :* ${order.paymentMethod.toUpperCase()} (${order.paymentStatus === "paid" ? "PAYÉ EN LIGNE" : "ESPÈCES À LA LIVRAISON"})\n` +
+        `💰 *TOTAL :* ${order.total.toLocaleString()} ${currencyUnit}\n` +
+        `💳 *Mode de paiement :* ${order.paymentMethod.toUpperCase()} (${order.paymentStatus === "paid" ? "PAYÉ EN LIGNE" : "ESPÈCES À LA LIVRAISON"})\n` +
         (order.paymentReference ? `🔢 *Réf. Transaction :* ${order.paymentReference}\n` : "") +
         (order.cashChangeAmount ? `⚠️ *Monnaie :* ${order.cashChangeAmount}\n` : "") +
         `\n🛵 *Coursier :* ${order.courierName || "Billo Express"} (${order.courierPhone || "+227 92 08 08 22"})\n` +
-        `🕌 *Note Jumu'ah :* Pause le vendredi de 11h à 15h pour la prière.\n` +
-        `✅ Merci d'avoir choisi ${settings.company_name} !`
+        `--------------------------------\n` +
+        `Merci pour votre commande.\n` +
+        `Allôresto — Niamey`
     );
 
     window.open(`https://wa.me/?text=${message}`, "_blank");
@@ -119,8 +139,8 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
               🧾
             </span>
             <div>
-              <h3 className="text-sm font-black text-white">Ticket de Caisse Certifié</h3>
-              <p className="text-[10px] text-slate-400">Format Thermique &bull; N° {order.id}</p>
+              <h3 className="text-sm font-black text-white">Reçu de commande</h3>
+              <p className="text-[10px] text-slate-400">N° #{order.id} &bull; {settings.company_name || settings.companyName || "Allôresto Niger SARL"}</p>
             </div>
           </div>
 
@@ -131,6 +151,13 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
               title="Imprimer le ticket"
             >
               <Printer className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleDownloadPdf}
+              className="p-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 transition cursor-pointer"
+              title="Télécharger en PDF"
+            >
+              <Download className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
@@ -146,7 +173,8 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
           {/* Thermal Receipt Paper Card */}
           <div
             ref={receiptRef}
-            className="w-full max-w-sm mx-auto bg-white text-slate-900 font-mono rounded-2xl shadow-xl overflow-hidden border border-slate-200 relative print:shadow-none print:border-none"
+            id="printable-customer-receipt"
+            className="w-full max-w-sm mx-auto bg-white text-slate-900 font-mono rounded-2xl shadow-xl overflow-hidden border border-slate-200 relative print:shadow-none print:border-none print:m-0 print:p-0"
           >
             {/* Top Zigzag / Perforation Decor */}
             <div className="h-2.5 bg-slate-100 flex items-center justify-between px-2 overflow-hidden opacity-80">
@@ -156,37 +184,44 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
             </div>
 
             <div className="p-5 sm:p-6 space-y-4 text-xs leading-relaxed">
-              {/* Receipt Header - Identité Légale & Fiscale Officielle (Niger) */}
+              {/* En-tête officiel du reçu - Identité Légale & Fiscale (Niger) */}
               <div className="text-center space-y-1 pb-3 border-b border-dashed border-slate-300">
                 <div className="flex justify-center mb-1">
                   <span className="text-2xl font-black tracking-tight text-slate-900 font-sans">
                     ALLÔ<span className="text-[#F36C21]">RESTO</span>
                   </span>
                 </div>
-                <h4 className="text-[12px] font-black text-slate-900 uppercase tracking-wider font-sans">
-                  {settings.company_name || "Allôresto Niger SARL"}
+                <h4 className="text-[13px] font-black text-slate-900 uppercase tracking-wider font-sans">
+                  {settings.company_name || settings.companyName || "ALLÔRESTO NIGER SARL"}
                 </h4>
-                <p className="text-[10px] font-semibold text-slate-700">
-                  Plateforme de Commande &amp; Livraison en Ligne
+                <p className="text-[10px] font-medium text-slate-700">
+                  {settings.address || "Poudrière II, Niamey, Niger"}
                 </p>
-                <div className="text-[9px] text-slate-600 space-y-0.5 pt-0.5">
-                  <p className="font-medium text-slate-800">
-                    📍 {settings.address || "Poudrière II, Niamey, Niger"}
-                  </p>
-                  <p className="font-mono font-bold text-slate-900">
-                    NIF : {settings.nif || "NIF-10024/P-NE"} &bull; RCCM : {settings.rccm || "RCCM-NE-NIA-2019-B-898"}
-                  </p>
-                  <p className="text-[8.5px] text-slate-600">
-                    📞 Tél : <span className="font-bold text-slate-900">{settings.phone || "+227 96052310"}</span> &bull; ✉️ {settings.email || "lawson.laure65@gmail.com"}
-                  </p>
-                  {settings.website && (
-                    <p className="text-[8.5px] text-orange-600 font-bold">
-                      🌐 {settings.website}
-                    </p>
-                  )}
-                  <p className="text-[8px] text-slate-400 uppercase tracking-widest pt-0.5 font-sans">
-                    RÉPUBLIQUE DU NIGER 🇳🇪 &bull; Agrément HAPDP &bull; Billo Express
-                  </p>
+                <p className="text-[10px] text-slate-700">
+                  Tél. : <span className="font-bold text-slate-900">{settings.phone || "+227 96052310"}</span>
+                </p>
+                <p className="text-[10px] text-slate-700">
+                  Email : <span className="text-slate-900 font-medium">{settings.email || "lawson.laure65@gmail.com"}</span>
+                </p>
+                <p className="text-[10px] text-slate-700">
+                  Site : <span className="text-orange-600 font-semibold">{cleanWebsite}</span>
+                </p>
+
+                <div className="pt-2 text-[10px] font-mono font-bold text-slate-900 space-y-0.5 border-t border-dotted border-slate-200 mt-2">
+                  <p>NIF : {settings.nif || "NIF-10024/P-NE"}</p>
+                  <p>RCCM : {settings.rccm || "RCCM-NE-NIA-2019-B-898"}</p>
+                </div>
+              </div>
+
+              {/* Titre officiel du document : REÇU DE COMMANDE */}
+              <div className="text-center py-1.5 border-b border-dashed border-slate-300 bg-slate-50 -mx-5 sm:-mx-6 px-4">
+                <h5 className="text-[12px] font-black uppercase tracking-widest text-slate-900">
+                  REÇU DE COMMANDE
+                </h5>
+                <div className="flex items-center justify-center gap-2 text-[10px] text-slate-600 pt-0.5">
+                  <span className="font-bold text-slate-900">N° commande : #{order.id}</span>
+                  <span>&bull;</span>
+                  <span>Date : {order.createdAt || formattedDate}</span>
                 </div>
               </div>
 
@@ -421,24 +456,36 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                   *{order.id}-NE-2026*
                 </p>
 
-                <p className="text-[10px] font-black text-slate-800 uppercase tracking-wider">
-                  *** MERCI DE VOTRE CONFIANCE ! ***
-                </p>
+                <div className="space-y-0.5 pt-1">
+                  <p className="text-[11px] font-black text-slate-900 uppercase tracking-wider">
+                    Merci pour votre commande.
+                  </p>
+                  <p className="text-xs font-bold text-[#F36C21]">
+                    Allôresto — Niamey
+                  </p>
+                </div>
 
-                <div className="p-2.5 w-full rounded-xl bg-slate-50 border border-slate-200 text-[9px] text-slate-600 space-y-1 text-left">
-                  <div className="flex justify-between items-center text-[8.5px] font-mono font-bold text-slate-800">
+                <div className="p-3 w-full rounded-xl bg-slate-50 border border-slate-200 text-[9px] text-slate-600 space-y-1.5 text-left">
+                  <div className="flex justify-between items-center text-[9px] font-mono font-bold text-slate-900 border-b border-slate-200 pb-1">
                     <span>NIF : {settings.nif}</span>
                     <span>RCCM : {settings.rccm}</span>
                   </div>
+                  <p className="text-[8.5px] text-slate-800 font-semibold">
+                    🏢 {settings.company_name || settings.companyName || "Allôresto Niger SARL"}
+                  </p>
                   <p className="text-[8.5px] text-slate-700">
-                    🏢 <strong>{settings.company_name}</strong> &bull; Siège : {settings.address}
+                    📍 Siège : {settings.address}
                   </p>
-                  <p className="text-[8.5px] font-medium text-slate-800">
-                    📞 Support Client &amp; Urgence : <strong className="text-slate-900">{settings.phone}</strong>
+                  <p className="text-[8.5px] text-slate-700">
+                    📞 Tél / Assistance : <strong className="text-slate-900">{settings.phone}</strong>
                   </p>
-                  <div className="flex flex-wrap justify-between gap-1 text-[8px] text-slate-500 pt-0.5 border-t border-slate-200">
-                    <span>✉️ {settings.email}</span>
-                    {settings.website && <span className="font-medium text-orange-600">🌐 {settings.website}</span>}
+                  <div className="pt-1 border-t border-slate-200 space-y-0.5 text-[8.5px]">
+                    <p className="text-slate-700">
+                      ✉️ Email : <span className="text-slate-900 font-medium">{settings.email}</span>
+                    </p>
+                    <p className="text-slate-700">
+                      🌐 Site web : <span className="text-orange-600 font-semibold">{settings.website}</span>
+                    </p>
                   </div>
                 </div>
               </div>
@@ -454,21 +501,32 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
         </div>
 
         {/* Action Buttons (Footer) */}
-        <div className="p-4 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row items-center gap-2.5 print:hidden">
+        <div className="p-4 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row items-center gap-2 print:hidden">
           <button
             onClick={handlePrint}
-            className="w-full sm:flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
+            className="w-full sm:flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer border border-slate-700"
+            title="Lancer l'impression directe"
           >
-            <Printer className="w-4 h-4" />
-            <span>Imprimer le Ticket (Thermique / PDF)</span>
+            <Printer className="w-4 h-4 text-orange-400" />
+            <span>Imprimer</span>
+          </button>
+
+          <button
+            onClick={handleDownloadPdf}
+            className="w-full sm:flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md shadow-orange-500/20"
+            title="Télécharger ou enregistrer le reçu au format PDF"
+          >
+            <Download className="w-4 h-4" />
+            <span>Télécharger PDF</span>
           </button>
 
           <button
             onClick={handleShareWhatsApp}
-            className="w-full sm:flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+            className="w-full sm:flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+            title="Partager le reçu avec tous les détails officiels sur WhatsApp"
           >
             <Share2 className="w-4 h-4" />
-            <span>Partager sur WhatsApp</span>
+            <span>Partager WhatsApp</span>
           </button>
 
           {onTrackOrder && (

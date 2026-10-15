@@ -357,11 +357,23 @@ a[role="button"]:active {
   body * {
     visibility: hidden !important;
   }
+  #printable-customer-receipt,
+  #printable-customer-receipt *,
   #printable-kitchen-receipt,
-  #printable-kitchen-receipt * {
+  #printable-kitchen-receipt *,
+  #printable-contract-content,
+  #printable-contract-content *,
+  #printable-qr-export,
+  #printable-qr-export *,
+  #printable-table-qr,
+  #printable-table-qr * {
     visibility: visible !important;
   }
-  #printable-kitchen-receipt {
+  #printable-customer-receipt,
+  #printable-kitchen-receipt,
+  #printable-contract-content,
+  #printable-qr-export,
+  #printable-table-qr {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
