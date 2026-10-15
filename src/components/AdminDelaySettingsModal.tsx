@@ -101,9 +101,9 @@ export const AdminDelaySettingsModal: React.FC<AdminDelaySettingsModalProps> = (
               </span>
             </label>
             <div className="grid grid-cols-5 gap-2">
-              {[25, 30, 35, 40, 45].map((val) => (
+              {[25, 30, 35, 40, 45].map((val, idx) => (
                 <button
-                  key={val}
+                  key={`thresh-${val}-${idx}`}
                   type="button"
                   onClick={() => setForm({ ...form, thresholdMinutes: val })}
                   className={`py-2 rounded-xl text-xs font-bold transition cursor-pointer border ${
@@ -124,9 +124,9 @@ export const AdminDelaySettingsModal: React.FC<AdminDelaySettingsModalProps> = (
               ⏱️ Retard additionnel annoncé par défaut au client
             </label>
             <div className="grid grid-cols-4 gap-2">
-              {[10, 15, 20, 30].map((val) => (
+              {[10, 15, 20, 30].map((val, idx) => (
                 <button
-                  key={val}
+                  key={`add-${val}-${idx}`}
                   type="button"
                   onClick={() => setForm({ ...form, defaultAdditionalMinutes: val })}
                   className={`py-2 rounded-xl text-xs font-bold transition cursor-pointer border ${
@@ -180,9 +180,9 @@ export const AdminDelaySettingsModal: React.FC<AdminDelaySettingsModalProps> = (
                 { code: "ha", label: "Hausa", flag: "🇳🇪" },
                 { code: "zm", label: "Zarma", flag: "🇳🇪" },
                 { code: "en", label: "English", flag: "🇬🇧" },
-              ].map((l) => (
+              ].map((l, idx) => (
                 <button
-                  key={l.code}
+                  key={`lang-${l.code}-${idx}`}
                   type="button"
                   onClick={() => setForm({ ...form, defaultLanguage: l.code as AppLanguage })}
                   className={`py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer border ${

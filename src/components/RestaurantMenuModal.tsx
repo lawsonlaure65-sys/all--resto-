@@ -324,9 +324,9 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
                 >
                   {currentLanguage === "ha" ? "Dukkan Abinci" : currentLanguage === "zm" ? "Ŋwaarey Kulu" : currentLanguage === "en" ? "All Items" : "Tout le menu"}
                 </button>
-                {categories.map((cat) => (
+                {categories.map((cat, cIdx) => (
                   <button
-                    key={cat}
+                    key={`cat-${cat}-${cIdx}`}
                     onClick={() => setSelectedCategory(cat)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                       selectedCategory === cat
@@ -546,17 +546,17 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
             {/* Options selection if available */}
             {selectedItemForConfig.options && selectedItemForConfig.options.length > 0 && (
               <div className="space-y-4 pt-2 border-t border-slate-800">
-                {selectedItemForConfig.options.map((opt) => (
-                  <div key={opt.name} className="space-y-2">
+                {selectedItemForConfig.options.map((opt, oIdx) => (
+                  <div key={`opt-${opt.name}-${oIdx}`} className="space-y-2">
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
                       {opt.name} :
                     </label>
                     <div className="grid grid-cols-1 gap-2">
-                      {opt.choices.map((choice) => {
+                      {opt.choices.map((choice, cIdx) => {
                         const isSelected = selectedOptions[opt.name] === choice.label;
                         return (
                           <button
-                            key={choice.label}
+                            key={`choice-${opt.name}-${choice.label}-${cIdx}`}
                             type="button"
                             onClick={() =>
                               setSelectedOptions((prev) => ({ ...prev, [opt.name]: choice.label }))

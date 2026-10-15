@@ -267,7 +267,7 @@ ${order.paymentReference ? `RÉF DÉPÔT  : ${order.paymentReference}\n` : ""}${
                   const unitPrice = it.unitPrice || it.menuItem.price || 0;
 
                   return (
-                    <div key={idx} className="space-y-0.5 border-b border-gray-200 pb-1.5 last:border-none">
+                    <div key={`kitchen-item-${it.id || idx}-${idx}`} className="space-y-0.5 border-b border-gray-200 pb-1.5 last:border-none">
                       <div className="flex justify-between items-start font-bold">
                         <span className="flex-1 pr-2">
                           {it.quantity}x {it.menuItem.name}
@@ -280,7 +280,7 @@ ${order.paymentReference ? `RÉF DÉPÔT  : ${order.paymentReference}\n` : ""}${
                       {optionsList.length > 0 && (
                         <div className="pl-3 text-[10px] text-gray-700 space-y-0.5">
                           {optionsList.map((opt, oIdx) => (
-                            <div key={oIdx} className="flex justify-between">
+                            <div key={`kitchen-opt-${idx}-${oIdx}-${opt.name}-${opt.choice}`} className="flex justify-between">
                               <span>↳ {opt.name && opt.name !== "Option" ? `${opt.name}: ` : ""}{opt.choice}</span>
                               {opt.extraPrice > 0 && <span>+{opt.extraPrice * it.quantity}</span>}
                             </div>

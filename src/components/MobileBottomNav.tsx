@@ -109,13 +109,13 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             </div>
 
             <div className="space-y-2 mb-4">
-              {(["client", "restaurant", "courier", "admin"] as UserRole[]).map((r) => {
+              {(["client", "restaurant", "courier", "admin"] as UserRole[]).map((r, idx) => {
                 const info = getRoleInfo(r);
                 const Icon = info.icon;
                 const isSelected = currentRole === r;
                 return (
                   <button
-                    key={r}
+                    key={`${r}-${idx}`}
                     type="button"
                     onClick={() => {
                       onChangeRole(r);

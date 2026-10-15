@@ -821,12 +821,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           { id: "events_catering", label: "Événements & Traiteur", icon: Calendar, badge: cateringQuotes.filter(c => c.status === "pending").length },
           { id: "partnership_contract", label: "Contrat Partenaires 📄", icon: FileSignature },
           { id: "pages_content", label: "Pages & Bannières", icon: Layers },
-        ].map((tab) => {
+        ].map((tab, idx) => {
           const Icon = tab.icon;
           const isActive = activeAdminTab === tab.id;
           return (
             <button
-              key={tab.id}
+              key={`tab-${tab.id}-${idx}`}
               onClick={() => setActiveAdminTab(tab.id as any)}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer ${
                 isActive
@@ -948,10 +948,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </thead>
                   <tbody className="divide-y divide-slate-800/60 font-medium">
                     {restaurantStats.length > 0 ? (
-                      restaurantStats.map((r) => {
+                      restaurantStats.map((r, idx) => {
                         const com = Math.round((r.total_revenue || 0) * 0.15);
                         return (
-                          <tr key={r.id} className="hover:bg-slate-800/40 transition">
+                          <tr key={`resto-stat-${r.id}-${idx}`} className="hover:bg-slate-800/40 transition">
                             <td className="py-2.5 px-3 font-bold text-white">{r.name}</td>
                             <td className="py-2.5 px-2 text-center text-cyan-400 font-mono">{r.total_orders}</td>
                             <td className="py-2.5 px-3 text-right font-mono text-emerald-400 font-bold">
@@ -1332,14 +1332,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 🍽️ Tous les Plats ({dishesList.length})
               </button>
 
-              {CATEGORIES_CONFIG.map((cat) => {
+              {CATEGORIES_CONFIG.map((cat, cIdx) => {
                 const isSelected = dishCategoryFilter === cat.id;
                 const count = dishesList.filter(
                   (d) => d.dishCategory === cat.id || d.category.toLowerCase().includes(cat.label.toLowerCase())
                 ).length;
                 return (
                   <button
-                    key={cat.id}
+                    key={`cat-${cat.id}-${cIdx}`}
                     onClick={() => setDishCategoryFilter(cat.id)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                       isSelected

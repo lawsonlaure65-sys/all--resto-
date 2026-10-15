@@ -335,9 +335,9 @@ export const AlloChefModal: React.FC<AlloChefModalProps> = ({
               <span>Quartier :</span>
             </div>
             <div className="flex gap-1">
-              {districts.slice(0, 4).map((d) => (
+              {districts.slice(0, 4).map((d, dIdx) => (
                 <button
-                  key={d}
+                  key={`dist-${d}-${dIdx}`}
                   onClick={() => setSelectedDistrict(d)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer whitespace-nowrap ${
                     selectedDistrict === d
@@ -358,8 +358,8 @@ export const AlloChefModal: React.FC<AlloChefModalProps> = ({
               onChange={(e) => setSelectedBudget(e.target.value)}
               className="bg-slate-900 border border-slate-800 text-slate-200 text-[11px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:border-orange-500 cursor-pointer"
             >
-              {budgetOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
+              {budgetOptions.map((opt, bIdx) => (
+                <option key={`budget-${opt.value}-${bIdx}`} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
@@ -392,9 +392,9 @@ export const AlloChefModal: React.FC<AlloChefModalProps> = ({
 
         {/* Chat Messages History */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-slate-900/60">
-          {messages.map((msg) => (
+          {messages.map((msg, mIdx) => (
             <div
-              key={msg.id}
+              key={`msg-${msg.id || mIdx}-${mIdx}`}
               className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "assistant" && (

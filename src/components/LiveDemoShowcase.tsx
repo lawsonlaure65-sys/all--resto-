@@ -486,9 +486,9 @@ export const LiveDemoShowcase: React.FC = () => {
                       {/* Role Switcher */}
                       <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800">
                         <span className="text-[10px] text-slate-400 px-1.5">Rôle :</span>
-                        {(["admin", "manager", "member"] as const).map((r) => (
+                        {(["admin", "manager", "member"] as const).map((r, rIdx) => (
                           <button
-                            key={r}
+                            key={`role-${r}-${rIdx}`}
                             onClick={() => setUserRole(r)}
                             className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase cursor-pointer ${
                               userRole === r ? "bg-indigo-500 text-white" : "text-slate-400 hover:text-white"
@@ -565,8 +565,8 @@ export const LiveDemoShowcase: React.FC = () => {
 
                     {/* Products Grid */}
                     <div className="grid grid-cols-2 gap-2.5">
-                      {products.map((p) => (
-                        <div key={p.id} className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+                      {products.map((p, pIdx) => (
+                        <div key={`product-${p.id}-${pIdx}`} className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
                           <div>
                             <span className="text-[9px] font-bold text-cyan-400 uppercase">{p.category}</span>
                             <p className="text-xs font-bold text-white line-clamp-1">{p.name}</p>
@@ -679,9 +679,9 @@ export const LiveDemoShowcase: React.FC = () => {
                     {/* Kanban Pipeline Items */}
                     <div className="space-y-2">
                       <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Prospects en cours (Cliquez pour faire avancer le statut) :</p>
-                      {crmLeads.map((lead) => (
+                      {crmLeads.map((lead, lIdx) => (
                         <div
-                          key={lead.id}
+                          key={`lead-${lead.id}-${lIdx}`}
                           onClick={() => advanceLead(lead.id)}
                           className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 transition-all flex items-center justify-between cursor-pointer"
                         >

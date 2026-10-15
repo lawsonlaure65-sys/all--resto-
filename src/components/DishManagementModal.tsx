@@ -750,9 +750,9 @@ export const DishManagementModal: React.FC<DishManagementModalProps> = ({
                   { level: 1, label: "1. Relevé", desc: "Aromates" },
                   { level: 2, label: "2. Épicé", desc: "Piment moyen" },
                   { level: 3, label: "3. Volcan", desc: "Kan-Kan fort" },
-                ].map((item) => (
+                ].map((item, idx) => (
                   <button
-                    key={item.level}
+                    key={`spice-${item.level}-${idx}`}
                     type="button"
                     onClick={() => {
                       setSpiceLevel(item.level);

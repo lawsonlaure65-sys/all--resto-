@@ -240,9 +240,9 @@ export const GroupOrderModal: React.FC<GroupOrderModalProps> = ({
               </div>
 
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {activeSession.members.map((member) => (
+                {activeSession.members.map((member, mIdx) => (
                   <div
-                    key={member.id}
+                    key={`member-${member.id}-${mIdx}`}
                     className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between hover:border-slate-700 transition"
                   >
                     <div className="flex items-center gap-3">
@@ -343,8 +343,8 @@ export const GroupOrderModal: React.FC<GroupOrderModalProps> = ({
                   onChange={(e) => setSelectedRestoId(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-orange-500"
                 >
-                  {RESTAURANTS_DATA.map((r) => (
-                    <option key={r.id} value={r.id}>
+                  {RESTAURANTS_DATA.map((r, rIdx) => (
+                    <option key={`resto-${r.id}-${rIdx}`} value={r.id}>
                       {r.name} — {r.cuisine} ({r.city})
                     </option>
                   ))}

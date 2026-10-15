@@ -228,9 +228,9 @@ export const AdminDeliveryDelayModal: React.FC<AdminDeliveryDelayModalProps> = (
                   <span className="text-amber-400 font-black text-sm">+{delayMinutes} minutes</span>
                 </label>
                 <div className="grid grid-cols-5 gap-1.5">
-                  {[10, 15, 20, 30, 45].map((mins) => (
+                  {[10, 15, 20, 30, 45].map((mins, idx) => (
                     <button
-                      key={mins}
+                      key={`delay-mins-${mins}-${idx}`}
                       type="button"
                       onClick={() => setDelayMinutes(mins)}
                       className={`py-2 px-1 rounded-xl text-xs font-black transition cursor-pointer border ${
@@ -317,9 +317,9 @@ export const AdminDeliveryDelayModal: React.FC<AdminDeliveryDelayModalProps> = (
                     { code: "ha", label: "Hausa", flag: "🇳🇪" },
                     { code: "zm", label: "Zarma", flag: "🇳🇪" },
                     { code: "en", label: "English", flag: "🇬🇧" },
-                  ].map((l) => (
+                  ].map((l, idx) => (
                     <button
-                      key={l.code}
+                      key={`lang-${l.code}-${idx}`}
                       type="button"
                       onClick={() => setSelectedLanguage(l.code as AppLanguage)}
                       className={`py-1.5 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer border ${

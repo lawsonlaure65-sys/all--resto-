@@ -177,8 +177,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       {/* Display chosen options */}
                       {Object.entries(cartItem.selectedOptions).length > 0 && (
                         <div className="text-[10px] text-slate-400 mt-0.5 space-y-0.5">
-                          {Object.entries(cartItem.selectedOptions).map(([key, val]) => (
-                            <span key={key} className="block text-slate-400">
+                          {Object.entries(cartItem.selectedOptions).map(([key, val], oIdx) => (
+                            <span key={`cart-opt-${key}-${oIdx}`} className="block text-slate-400">
                               &bull; {key}: <strong className="text-slate-300">{val}</strong>
                             </span>
                           ))}
@@ -273,9 +273,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     <span className="text-white font-bold">{selectedTip.toLocaleString()} FCFA</span>
                   </div>
                   <div className="flex gap-1.5">
-                    {[0, 200, 500, 1000, 2000].map((t) => (
+                    {[0, 200, 500, 1000, 2000].map((t, idx) => (
                       <button
-                        key={t}
+                        key={`tip-${t}-${idx}`}
                         type="button"
                         onClick={() => setSelectedTip(t)}
                         className={`flex-1 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${

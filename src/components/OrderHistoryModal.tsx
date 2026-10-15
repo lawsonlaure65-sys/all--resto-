@@ -177,13 +177,13 @@ export const OrderHistoryModal: React.FC<OrderHistoryModalProps> = ({
               </p>
             </div>
           ) : (
-            filteredOrders.map((order) => {
+            filteredOrders.map((order, oIdx) => {
               const statusInfo = getStatusBadge(order.orderStatus);
               const StatusIcon = statusInfo.icon;
 
               return (
                 <div
-                  key={order.id}
+                  key={`order-${order.id}-${oIdx}`}
                   className="p-5 rounded-3xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition space-y-4 shadow-lg"
                 >
                   {/* Order Top Bar */}
@@ -215,7 +215,7 @@ export const OrderHistoryModal: React.FC<OrderHistoryModalProps> = ({
                   <div className="space-y-1.5">
                     {order.items.map((item, idx) => (
                       <div
-                        key={idx}
+                        key={`order-item-${item.id || idx}-${idx}`}
                         className="flex items-center justify-between text-xs text-slate-300"
                       >
                         <div className="flex items-center gap-2">

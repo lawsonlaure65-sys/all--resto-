@@ -180,9 +180,9 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
                 <MapPin className="w-3 h-3 text-blue-400" />
                 <span>Quartier :</span>
               </span>
-              {neighborhoods.map((n) => (
+              {neighborhoods.map((n, nIdx) => (
                 <button
-                  key={n.id}
+                  key={`neigh-${n.id}-${nIdx}`}
                   onClick={() => setSelectedNeighborhood(n.id)}
                   className={`px-3 py-1 rounded-xl text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
                     selectedNeighborhood === n.id
@@ -201,9 +201,9 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
                 <Filter className="w-3 h-3 text-amber-400" />
                 <span>Cuisine :</span>
               </span>
-              {cuisines.map((c) => (
+              {cuisines.map((c, cIdx) => (
                 <button
-                  key={c.id}
+                  key={`cuis-${c.id}-${cIdx}`}
                   onClick={() => setSelectedCuisine(c.id)}
                   className={`px-3 py-1 rounded-xl text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
                     selectedCuisine === c.id

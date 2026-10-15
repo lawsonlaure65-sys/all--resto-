@@ -115,9 +115,9 @@ export const TableBookingModal: React.FC<TableBookingModalProps> = ({
                 Nombre de personnes :
               </label>
               <div className="flex gap-1.5 overflow-x-auto pb-1">
-                {[1, 2, 3, 4, 5, 6, 8, 10].map((num) => (
+                {[1, 2, 3, 4, 5, 6, 8, 10].map((num, idx) => (
                   <button
-                    key={num}
+                    key={`guest-${num}-${idx}`}
                     type="button"
                     onClick={() => setGuests(num)}
                     className={`flex-1 py-2 px-3 rounded-xl font-bold border transition-all cursor-pointer ${
@@ -156,8 +156,8 @@ export const TableBookingModal: React.FC<TableBookingModalProps> = ({
                   onChange={(e) => setBookingTime(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
                 >
-                  {timeSlots.map((slot) => (
-                    <option key={slot} value={slot}>
+                  {timeSlots.map((slot, idx) => (
+                    <option key={`slot-${slot}-${idx}`} value={slot}>
                       {slot}
                     </option>
                   ))}

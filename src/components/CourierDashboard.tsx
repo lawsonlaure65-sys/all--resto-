@@ -198,8 +198,8 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
                 }}
                 className="px-3 py-1 rounded-xl bg-slate-950 border border-slate-700 text-cyan-300 font-bold text-xs cursor-pointer focus:outline-none focus:border-cyan-400"
               >
-                {BILLO_COURIERS.map((c) => (
-                  <option key={c.id} value={c.id} className="bg-slate-900 text-white">
+                {BILLO_COURIERS.map((c, cIdx) => (
+                  <option key={`courier-${c.id}-${cIdx}`} value={c.id} className="bg-slate-900 text-white">
                     {c.name} &bull; {c.vehicle} ({c.zone})
                   </option>
                 ))}

@@ -85,9 +85,9 @@ export const HowItWorksModal: React.FC<HowItWorksModalProps> = ({
             { id: "delivery", label: "🛵 3. Livraison Billo Express", icon: Bike },
             { id: "payment", label: "💰 4. Modes de Paiement", icon: CreditCard },
             { id: "group", label: "👥 5. Déjeuner Bureau en Groupe", icon: Users },
-          ].map((tab) => (
+          ].map((tab, idx) => (
             <button
-              key={tab.id}
+              key={`tab-${tab.id}-${idx}`}
               onClick={() => setActiveTab(tab.id as any)}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
                 activeTab === tab.id

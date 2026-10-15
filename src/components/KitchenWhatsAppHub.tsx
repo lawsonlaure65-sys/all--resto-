@@ -234,9 +234,9 @@ export const KitchenWhatsAppHub: React.FC<KitchenWhatsAppHubProps> = ({
             </span>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {activePresets.map((preset) => (
+              {activePresets.map((preset, idx) => (
                 <button
-                  key={preset.id}
+                  key={`preset-${preset.id}-${idx}`}
                   type="button"
                   onClick={() => {
                     const text = preset.getText();
@@ -317,9 +317,9 @@ export const KitchenWhatsAppHub: React.FC<KitchenWhatsAppHubProps> = ({
               Historique des notifications &amp; échanges :
             </span>
             <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-              {liveMessages.map((msg) => (
+              {liveMessages.map((msg, idx) => (
                 <div
-                  key={msg.id}
+                  key={`hub-msg-${msg.id}-${idx}`}
                   className={`p-2.5 rounded-xl text-xs space-y-1 ${
                     msg.sender === "kitchen"
                       ? "bg-emerald-950/60 border border-emerald-500/30 text-emerald-200 ml-4"

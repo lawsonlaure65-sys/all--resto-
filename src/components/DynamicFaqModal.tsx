@@ -214,9 +214,9 @@ export const DynamicFaqModal: React.FC<DynamicFaqModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1">
-            {categories.map((cat) => (
+            {categories.map((cat, idx) => (
               <button
-                key={cat.key}
+                key={`faq-cat-${cat.key}-${idx}`}
                 onClick={() => setSelectedCategory(cat.key)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                   selectedCategory === cat.key

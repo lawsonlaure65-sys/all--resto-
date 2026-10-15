@@ -1241,11 +1241,11 @@ export function App() {
                   { id: "Harobanda", label: "Harobanda" },
                   { id: "Goudel", label: "Goudel" },
                   { id: "Recasement", label: "Recasement" },
-                ].map((quarter) => {
+                ].map((quarter, idx) => {
                   const isActive = homeNeighborhoodFilter === quarter.id;
                   return (
                     <button
-                      key={quarter.id}
+                      key={`${quarter.id}-${idx}`}
                       onClick={() => setHomeNeighborhoodFilter(quarter.id)}
                       className={`px-3 py-1 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap shrink-0 ${
                         isActive

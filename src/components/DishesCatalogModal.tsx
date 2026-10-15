@@ -401,11 +401,11 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
         {/* ======================================================== */}
         <div className="px-3 sm:px-4 py-2.5 bg-slate-950/90 border-b border-slate-800/80 shrink-0">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none sm:grid sm:grid-cols-5">
-            {MEAL_MOMENTS_CONFIG.map((moment) => {
+            {MEAL_MOMENTS_CONFIG.map((moment, mIdx) => {
               const isSelected = selectedMoment === moment.id;
               return (
                 <button
-                  key={moment.id}
+                  key={`moment-${moment.id}-${mIdx}`}
                   onClick={() => setSelectedMoment(moment.id)}
                   className={`p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl border transition-all text-left flex items-center gap-1.5 sm:gap-2 cursor-pointer shrink-0 sm:shrink ${
                     isSelected
@@ -456,7 +456,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
               <span className="text-[10px] opacity-80">({dishes.length})</span>
             </button>
 
-            {CATEGORIES_CONFIG.map((cat) => {
+            {CATEGORIES_CONFIG.map((cat, cIdx) => {
               const isSelected = selectedCategory === cat.id;
               const count = dishes.filter(
                 (d) => d.dishCategory === cat.id || d.category.toLowerCase().includes(cat.label.toLowerCase())
@@ -464,7 +464,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
 
               return (
                 <button
-                  key={cat.id}
+                  key={`cat-${cat.id}-${cIdx}`}
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shrink-0 ${
                     isSelected

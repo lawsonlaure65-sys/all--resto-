@@ -224,11 +224,11 @@ Merci de confirmer la prise en charge dès réception !`;
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {BILLO_COURIERS.map((courier) => {
+              {BILLO_COURIERS.map((courier, cIdx) => {
                 const isSelected = selectedCourier.id === courier.id;
                 return (
                   <div
-                    key={courier.id}
+                    key={`courier-${courier.id}-${cIdx}`}
                     onClick={() => setSelectedCourier(courier)}
                     className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
                       isSelected

@@ -113,9 +113,9 @@ export const DriverLoginScreen: React.FC<DriverLoginScreenProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {DEFAULT_DRIVERS.map((d) => (
+            {DEFAULT_DRIVERS.map((d, dIdx) => (
               <button
-                key={d.id}
+                key={`driver-${d.id}-${dIdx}`}
                 type="button"
                 onClick={() => handleQuickLogin(d)}
                 className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/60 hover:bg-cyan-950/20 text-left transition-all flex items-center gap-3 cursor-pointer group"

@@ -256,7 +256,7 @@ export const LiveOrderTracker: React.FC<LiveOrderTrackerProps> = ({
                 const isCurrent = idx === currentStepIdx;
                 const Icon = step.icon;
                 return (
-                  <div key={step.key} className="text-center space-y-2">
+                  <div key={`step-${step.key}-${idx}`} className="text-center space-y-2">
                     <div
                       className={`w-10 h-10 mx-auto rounded-2xl flex items-center justify-center transition-all ${
                         isPassed
@@ -508,9 +508,9 @@ export const LiveOrderTracker: React.FC<LiveOrderTrackerProps> = ({
             <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-500/15 to-orange-500/10 border border-amber-500/30 text-center space-y-3">
               <h4 className="text-sm font-bold text-white">Comment s&apos;est passée votre commande Allôresto ?</h4>
               <div className="flex justify-center gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
+                {[1, 2, 3, 4, 5].map((star, sIdx) => (
                   <button
-                    key={star}
+                    key={`star-${star}-${sIdx}`}
                     onClick={() => setRating(star)}
                     className="p-1.5 cursor-pointer transition-transform hover:scale-125"
                   >

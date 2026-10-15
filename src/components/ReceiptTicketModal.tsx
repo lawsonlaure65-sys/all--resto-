@@ -151,7 +151,7 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
             {/* Top Zigzag / Perforation Decor */}
             <div className="h-2.5 bg-slate-100 flex items-center justify-between px-2 overflow-hidden opacity-80">
               {Array.from({ length: 28 }).map((_, i) => (
-                <div key={i} className="w-1.5 h-1.5 bg-slate-900 rotate-45 shrink-0" />
+                <div key={`top-zag-${i}`} className="w-1.5 h-1.5 bg-slate-900 rotate-45 shrink-0" />
               ))}
             </div>
 
@@ -271,7 +271,7 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                   const unitPrice = it.unitPrice || it.menuItem.price || 0;
 
                   return (
-                    <div key={idx} className="space-y-0.5 pb-1 border-b border-slate-100 last:border-none">
+                    <div key={`receipt-item-${it.id || idx}-${idx}`} className="space-y-0.5 pb-1 border-b border-slate-100 last:border-none">
                       <div className="flex justify-between font-bold text-slate-900">
                         <span className="truncate max-w-[210px]">
                           {it.quantity}x {it.menuItem.name}
@@ -289,7 +289,7 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                       {optionsList.length > 0 && (
                         <div className="pl-3 text-[10px] text-slate-600 space-y-0.5">
                           {optionsList.map((opt, oIdx) => (
-                            <div key={oIdx} className="flex justify-between items-baseline">
+                            <div key={`receipt-opt-${idx}-${oIdx}-${opt.name}-${opt.choice}`} className="flex justify-between items-baseline">
                               <span className="font-medium text-slate-700">
                                 ↳ {opt.name && opt.name !== "Option" ? `${opt.name}: ` : ""}{opt.choice}
                               </span>
@@ -411,7 +411,7 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                 <div className="h-8 w-48 flex items-center justify-center gap-0.5 overflow-hidden">
                   {[2, 1, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 1, 2, 3, 1, 2, 4, 1, 2, 1].map((w, i) => (
                     <div
-                      key={i}
+                      key={`barcode-bar-${i}`}
                       className="bg-slate-900 h-full"
                       style={{ width: `${w * 2}px` }}
                     />
@@ -447,7 +447,7 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
             {/* Bottom Zigzag / Perforation Decor */}
             <div className="h-2.5 bg-slate-100 flex items-center justify-between px-2 overflow-hidden opacity-80">
               {Array.from({ length: 28 }).map((_, i) => (
-                <div key={i} className="w-1.5 h-1.5 bg-slate-900 rotate-45 shrink-0" />
+                <div key={`bot-zag-${i}`} className="w-1.5 h-1.5 bg-slate-900 rotate-45 shrink-0" />
               ))}
             </div>
           </div>

@@ -119,11 +119,11 @@ export const DeliveryFeeCalculatorModal: React.FC<DeliveryFeeCalculatorModalProp
         {/* Pricing Summary Banner */}
         <div className="bg-slate-950 px-4 py-3 border-b border-slate-800 shrink-0">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            {NIAMEY_PRICING_RULES.map((rule) => {
+            {NIAMEY_PRICING_RULES.map((rule, idx) => {
               const activeFee = forceNightMode ? rule.nightFee : rule.dayFee;
               return (
                 <div
-                  key={rule.zone}
+                  key={`rule-${rule.zone}-${idx}`}
                   onClick={() => setZoneFilter(rule.zone)}
                   className={`p-2.5 rounded-2xl border transition cursor-pointer flex flex-col justify-between ${
                     zoneFilter === rule.zone
@@ -256,8 +256,8 @@ export const DeliveryFeeCalculatorModal: React.FC<DeliveryFeeCalculatorModalProp
                 onChange={(e) => setCommuneFilter(e.target.value)}
                 className="bg-slate-950 border border-slate-800 text-slate-200 text-[11px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:border-orange-500 cursor-pointer"
               >
-                {communes.map((c) => (
-                  <option key={c.value} value={c.value}>
+                {communes.map((c, idx) => (
+                  <option key={`commune-${c.value}-${idx}`} value={c.value}>
                     {c.label}
                   </option>
                 ))}
@@ -305,13 +305,13 @@ export const DeliveryFeeCalculatorModal: React.FC<DeliveryFeeCalculatorModalProp
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {filteredDistricts.map((district) => {
+              {filteredDistricts.map((district, idx) => {
                 const isSelected = selectedItem?.id === district.id;
                 const fee = forceNightMode ? district.nightDeliveryFee : district.dayDeliveryFee;
 
                 return (
                   <div
-                    key={district.id}
+                    key={`district-${district.id}-${idx}`}
                     className={`p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3 ${
                       isSelected
                         ? "bg-slate-950 border-orange-500/80 shadow-lg shadow-orange-500/10"

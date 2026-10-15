@@ -443,22 +443,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-bold focus:outline-none focus:border-orange-500 cursor-pointer"
                       >
                         <optgroup label="📍 Centre-ville (1 000 F / 1 500 F nuit)">
-                          {NIAMEY_DISTRICTS_DATA.filter((d) => d.zone === "centre").map((d) => (
-                            <option key={d.id} value={d.id}>
+                          {NIAMEY_DISTRICTS_DATA.filter((d) => d.zone === "centre").map((d, idx) => (
+                            <option key={`centre-${d.id}-${idx}`} value={d.id}>
                               📍 {d.name} ({d.commune})
                             </option>
                           ))}
                         </optgroup>
                         <optgroup label="🗺️ Périphérie & Rive Droite (1 500 F / 2 000 F nuit)">
-                          {NIAMEY_DISTRICTS_DATA.filter((d) => d.zone === "peripherie").map((d) => (
-                            <option key={d.id} value={d.id}>
+                          {NIAMEY_DISTRICTS_DATA.filter((d) => d.zone === "peripherie").map((d, idx) => (
+                            <option key={`periph-${d.id}-${idx}`} value={d.id}>
                               🗺️ {d.name} ({d.commune})
                             </option>
                           ))}
                         </optgroup>
                         <optgroup label="🕌 Point de Retrait Offert (0 FCFA)">
-                          {NIAMEY_DISTRICTS_DATA.filter((d) => d.zone === "relais_gratuit").map((d) => (
-                            <option key={d.id} value={d.id}>
+                          {NIAMEY_DISTRICTS_DATA.filter((d) => d.zone === "relais_gratuit").map((d, idx) => (
+                            <option key={`relais-${d.id}-${idx}`} value={d.id}>
                               🕌 {d.name} (0 FCFA)
                             </option>
                           ))}
@@ -514,7 +514,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       <div className="flex flex-wrap gap-1">
                         {activeDistrict.landmarks.map((lm, i) => (
                           <button
-                            key={i}
+                            key={`landmark-${lm}-${i}`}
                             type="button"
                             onClick={() => {
                               setDeliveryNotes((prev) => (prev ? `${prev}, Près de ${lm}` : `Près de ${lm}`));

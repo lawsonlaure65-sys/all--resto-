@@ -505,9 +505,9 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                 Connexion Rapide Démo (1 Clic) :
               </span>
               <div className="grid grid-cols-1 gap-2">
-                {DEMO_RESTAURANT_ACCOUNTS.map((acc) => (
+                {DEMO_RESTAURANT_ACCOUNTS.map((acc, aIdx) => (
                   <button
-                    key={acc.email}
+                    key={`demo-acc-${acc.email}-${aIdx}`}
                     type="button"
                     onClick={() => handleQuickDemoLogin(acc)}
                     className="w-full p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-orange-500/40 text-left transition flex items-center justify-between group cursor-pointer"
@@ -947,9 +947,9 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                 { id: "preparing", label: "En préparation" },
                 { id: "ready", label: "Prêtes / En cours de livraison" },
                 { id: "delivered", label: "Livrées" },
-              ].map((f) => (
+              ].map((f, fIdx) => (
                 <button
-                  key={f.id}
+                  key={`order-filter-${f.id}-${fIdx}`}
                   type="button"
                   onClick={() => setOrderFilter(f.id as any)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
