@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import QRCode from "qrcode";
 import {
   Printer,
   X,
@@ -11,6 +12,8 @@ import {
   MapPin,
   Clock,
   Bike,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 import { Order } from "../types";
 import { useAppSettings } from "../services/appSettingsService";
@@ -29,6 +32,35 @@ export const KitchenThermalTicketModal: React.FC<KitchenThermalTicketModalProps>
   const settings = useAppSettings();
   const [paperWidth, setPaperWidth] = useState<"58mm" | "80mm">("80mm");
   const [copied, setCopied] = useState(false);
+  const [secefQrCodeUrl, setSecefQrCodeUrl] = useState<string | null>(null);
+
+  const isSecefCertified =
+    order?.secef_status === "certified" && Boolean(order?.secef_qr_data);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (isSecefCertified && order?.secef_qr_data) {
+      QRCode.toDataURL(
+        order.secef_qr_data,
+        {
+          width: 200,
+          margin: 1,
+          errorCorrectionLevel: "M",
+          color: { dark: "#000000", light: "#ffffff" },
+        },
+        (err, url) => {
+          if (!err && url && isMounted) {
+            setSecefQrCodeUrl(url);
+          }
+        }
+      );
+    } else {
+      setSecefQrCodeUrl(null);
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [isSecefCertified, order?.secef_qr_data]);
 
   if (!isOpen || !order) return null;
 
@@ -255,6 +287,18 @@ Site : ${settings.website} • Support : ${settings.phone}
                   <span>DATE : {order.createdAt}</span>
                   <span className="uppercase font-bold">{order.orderStatus}</span>
                 </div>
+                <div className="flex justify-between text-[10px] items-center pt-0.5 border-t border-dotted border-gray-400">
+                  <span className="font-bold text-gray-700">STATUT SECeF :</span>
+                  {isSecefCertified ? (
+                    <span className="font-black uppercase bg-black text-white px-1 py-0.5 rounded text-[9px]">
+                      Facture certifiée
+                    </span>
+                  ) : (
+                    <span className="font-bold text-gray-800 bg-gray-200 px-1 py-0.5 rounded text-[9px]">
+                      Reçu non certifié SECeF
+                    </span>
+                  )}
+                </div>
                 <div className="flex justify-between text-[10px] font-bold text-gray-900">
                   <span>SERVICE :</span>
                   <span>
@@ -395,8 +439,34 @@ Site : ${settings.website} • Support : ${settings.phone}
                 )}
               </div>
 
+              {/* Emplacement réservé SECeF / DGI Niger */}
+              <div className="my-2 p-2 border border-dashed border-black rounded text-center space-y-1">
+                <p className="text-[9px] font-black uppercase tracking-wider">CONFORMITÉ FISCALE DGI NIGER</p>
+                {isSecefCertified && secefQrCodeUrl ? (
+                  <div className="space-y-1 py-1">
+                    <img
+                      src={secefQrCodeUrl}
+                      alt="QR Code Vérification SECeF"
+                      className="w-24 h-24 mx-auto border border-black p-0.5"
+                    />
+                    <div className="text-[8px] font-mono text-left space-y-0.5 pt-1">
+                      <p className="font-bold">✓ Facture certifiée DGI</p>
+                      {order.nim && <p>NIM : {order.nim}</p>}
+                      {order.secef_code && <p>Code SECeF : {order.secef_code}</p>}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-0.5 space-y-0.5">
+                    <p className="font-black text-[9.5px] uppercase">Reçu non certifié SECeF</p>
+                    <p className="text-[8px] text-gray-600">
+                      [Emplacement réservé QR Code officiel &amp; NIM après certification DGI]
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Delivery Handover Signature */}
-              <div className="pt-3 text-center space-y-2">
+              <div className="pt-2 text-center space-y-2">
                 <div className="flex items-center justify-between text-[10px] font-bold text-gray-700">
                   <span>Coursier :</span>
                   <span>{order.courierName || "Billo Express 🏍️"}</span>

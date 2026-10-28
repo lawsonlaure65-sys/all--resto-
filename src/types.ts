@@ -163,6 +163,13 @@ export interface Order {
   kitchenNotes?: string[];
   cookingEtaMinutes?: number;
   whatsappChatLogs?: KitchenWhatsAppMessage[];
+
+  // Champs optionnels de certification fiscale DGI Niger (e-SECeF / SFE homologué)
+  secef_qr_data?: string;
+  secef_code?: string;
+  nim?: string;
+  secef_status?: "certified" | "uncertified" | "pending" | "rejected";
+  certified_at?: string;
 }
 
 export interface KitchenWhatsAppMessage {

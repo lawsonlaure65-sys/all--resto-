@@ -1,5 +1,6 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { motion } from "motion/react";
+import QRCode from "qrcode";
 import {
   X,
   Printer,
@@ -13,6 +14,8 @@ import {
   Building,
   QrCode,
   Sparkles,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 import { Order } from "../types";
 import { BilloExpressLogo } from "./BilloExpressLogo";
@@ -32,6 +35,39 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
 }) => {
   const receiptRef = useRef<HTMLDivElement>(null);
   const settings = useAppSettings();
+  const [secefQrCodeUrl, setSecefQrCodeUrl] = useState<string | null>(null);
+
+  const isSecefCertified =
+    order?.secef_status === "certified" && Boolean(order?.secef_qr_data);
+
+  // Générer le QR Code de vérification UNIQUEMENT si la facture a été réellement certifiée par la DGI
+  useEffect(() => {
+    let isMounted = true;
+    if (isSecefCertified && order?.secef_qr_data) {
+      QRCode.toDataURL(
+        order.secef_qr_data,
+        {
+          width: 240,
+          margin: 1,
+          errorCorrectionLevel: "M",
+          color: {
+            dark: "#0f172a",
+            light: "#ffffff",
+          },
+        },
+        (err, url) => {
+          if (!err && url && isMounted) {
+            setSecefQrCodeUrl(url);
+          }
+        }
+      );
+    } else {
+      setSecefQrCodeUrl(null);
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [isSecefCertified, order?.secef_qr_data]);
 
   if (!order) return null;
 
@@ -88,6 +124,9 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
         `🌐 *Site :* ${cleanWebsite}\n` +
         `📋 *NIF :* ${settings.nif}\n` +
         `📋 *RCCM :* ${settings.rccm}\n` +
+        `🏛️ *Statut fiscal :* ${isSecefCertified ? "Facture certifiée SECeF" : "Reçu non certifié SECeF"}\n` +
+        (isSecefCertified && order.secef_code ? `🔑 *Code SECeF/DGI :* ${order.secef_code}\n` : "") +
+        (isSecefCertified && order.nim ? `💻 *NIM :* ${order.nim}\n` : "") +
         `--------------------------------\n` +
         `📅 *Date :* ${order.createdAt || formattedDate}\n` +
         `🛎️ *Service :* ${serviceModeLabel}\n` +
@@ -234,6 +273,18 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                 <div className="flex justify-between">
                   <span className="text-slate-500">DATE :</span>
                   <span className="text-slate-800">{order.createdAt || formattedDate}</span>
+                </div>
+                <div className="flex justify-between items-center text-[10.5px] py-0.5">
+                  <span className="text-slate-500 font-bold">STATUT SECeF :</span>
+                  {isSecefCertified ? (
+                    <span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-300">
+                      ✓ Facture certifiée SECeF
+                    </span>
+                  ) : (
+                    <span className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">
+                      Reçu non certifié SECeF
+                    </span>
+                  )}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">SERVICE :</span>
@@ -440,10 +491,53 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                 </p>
               </div>
 
-              {/* QR Code & Barcode Simulation */}
-              <div className="pt-2 flex flex-col items-center justify-center space-y-2 text-center">
-                {/* Barcode Graphic */}
-                <div className="h-8 w-48 flex items-center justify-center gap-0.5 overflow-hidden">
+              {/* Section Conformité Fiscale DGI Niger & Emplacement réservé SECeF */}
+              <div className="w-full p-2.5 rounded-xl border border-dashed border-slate-300 bg-slate-50/90 text-center space-y-1.5 print:border-black print:bg-white my-2">
+                <div className="flex items-center justify-center gap-1.5 text-[9px] font-bold text-slate-800 uppercase tracking-wider">
+                  {isSecefCertified ? (
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : (
+                    <ShieldAlert className="w-3.5 h-3.5 text-slate-500" />
+                  )}
+                  <span>CONFORMITÉ FISCALE DGI NIGER</span>
+                </div>
+
+                {isSecefCertified && secefQrCodeUrl ? (
+                  /* Affichage UNIQUEMENT si la facture a été certifiée par l'API e-SECeF / DGI */
+                  <div className="space-y-1.5 py-1">
+                    <div className="flex justify-center">
+                      <img
+                        src={secefQrCodeUrl}
+                        alt="QR Code Officiel Vérification SECeF DGI"
+                        className="w-28 h-28 border border-slate-300 rounded-lg p-1 bg-white mx-auto shadow-sm"
+                      />
+                    </div>
+                    <div className="text-[8.5px] font-mono text-slate-800 space-y-0.5 text-left bg-white p-2 rounded border border-slate-200">
+                      <p className="font-bold text-emerald-800">✓ Facture certifiée DGI / e-SECeF</p>
+                      {order.nim && <p><strong>NIM :</strong> {order.nim}</p>}
+                      {order.secef_code && <p><strong>Code SECeF/DGI :</strong> {order.secef_code}</p>}
+                      {order.certified_at && <p><strong>Date certification :</strong> {order.certified_at}</p>}
+                    </div>
+                  </div>
+                ) : (
+                  /* Affichage obligatoire en attente d'agrément / raccordement officiel */
+                  <div className="space-y-1 py-0.5">
+                    <div className="inline-block px-2 py-0.5 rounded bg-slate-200/90 text-[10px] font-black text-slate-800 uppercase tracking-wide">
+                      Reçu non certifié SECeF
+                    </div>
+                    <p className="text-[8.5px] text-slate-600 leading-tight">
+                      Document commercial émis à titre de reçu de commande. En attente de certification par le dispositif agréé de la DGI.
+                    </p>
+                    <p className="text-[8px] text-slate-400 font-mono italic border-t border-dotted border-slate-300 pt-1">
+                      [Emplacement réservé QR Code &amp; NIM après certification DGI]
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Code-barres interne commande */}
+              <div className="pt-1 flex flex-col items-center justify-center space-y-1 text-center">
+                <div className="h-7 w-44 flex items-center justify-center gap-0.5 overflow-hidden">
                   {[2, 1, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 1, 2, 3, 1, 2, 4, 1, 2, 1].map((w, i) => (
                     <div
                       key={`barcode-bar-${i}`}
@@ -452,9 +546,10 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                     />
                   ))}
                 </div>
-                <p className="text-[9px] font-mono tracking-widest text-slate-500">
-                  *{order.id}-NE-2026*
+                <p className="text-[8.5px] font-mono tracking-widest text-slate-500">
+                  Réf. interne : *{order.id}-NE-2026*
                 </p>
+              </div>
 
                 <div className="space-y-0.5 pt-1">
                   <p className="text-[11px] font-black text-slate-900 uppercase tracking-wider">
@@ -489,7 +584,6 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
                   </div>
                 </div>
               </div>
-            </div>
 
             {/* Bottom Zigzag / Perforation Decor */}
             <div className="h-2.5 bg-slate-100 flex items-center justify-between px-2 overflow-hidden opacity-80">
