@@ -172,21 +172,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }, 1400);
   };
 
-  const handleQuickDemoFill = (type: "client" | "bureau") => {
-    if (type === "client") {
-      setEmail("amadou.seyni@gmail.com");
-      setPassword("Niamey2026");
-      setName("Amadou Seyni");
-      setPhone("🇳🇪 +227 96 05 23 10");
-      setCity("Niamey (Plateau)");
-    } else {
-      setEmail("fatima.cadre@finances.gouv.ne");
-      setPassword("MidiExpress2026");
-      setName("Fatima Oumarou (Direction)");
-      setPhone("🇳🇪 +227 90 40 51 18");
-      setCity("Niamey (Ministères)");
-    }
-  };
+
 
   const handleSendPhoneOtp = (e: React.FormEvent) => {
     e.preventDefault();
@@ -221,11 +207,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setTimeout(() => {
       setLoading(false);
       const cleanPhone = phone.trim();
-      const isDemoAdmin = cleanPhone.includes("96052310") || cleanPhone.includes("96 05 23 10");
+      const userPhoneDigits = phone.replace(/[^\d]/g, "").slice(-8);
 
       const loggedUser: UserProfile = {
-        name: isDemoAdmin ? "Directeur Allôresto (Admin)" : "Client Sahel (" + phone.slice(-8) + ")",
-        email: isDemoAdmin ? "direction@alloresto.ne" : "client." + phone.replace(/[^\d]/g, "").slice(-8) + "@alloresto.ne",
+        name: "Client Sahel (" + (userPhoneDigits || "Niamey") + ")",
+        email: "client." + (userPhoneDigits || "user") + "@alloresto.ne",
         phone: cleanPhone,
         city: city || "Niamey (Plateau)",
         loyaltyPoints: 350,
@@ -350,29 +336,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </button>
             </div>
 
-            {/* Quick Demo Autofill helper */}
-            <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px]">
-              <span className="text-slate-400 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-400" />
-                <span>Remplissage rapide Démo :</span>
-              </span>
-              <div className="flex gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemoFill("client")}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-semibold cursor-pointer"
-                >
-                  Amadou Seyni
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemoFill("bureau")}
-                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-semibold cursor-pointer"
-                >
-                  Fatima (Finances)
-                </button>
-              </div>
-            </div>
 
             {/* Error / Success Notifications */}
             {errorMessage && (

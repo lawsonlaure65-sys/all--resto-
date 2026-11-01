@@ -48,7 +48,9 @@ import {
   FileSignature,
   CreditCard,
   Settings,
+  Loader2,
 } from "lucide-react";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import AdminSettingsPage from "../../app/admin/settings/page";
 import { getStoredAppSettings, useAppSettings } from "../services/appSettingsService";
 import AdminDriversPage from "../../app/admin/drivers/page";
@@ -110,12 +112,155 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Admin Settings & Legal Entity
   const appSettings = useAppSettings();
 
-  // Admin Authentication State
+  // Admin Authentication & Authorization State (Supabase Auth + Role Verification)
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
-  const [adminEmail, setAdminEmail] = useState<string>("admin@alloresto.ne");
-  const [adminPassword, setAdminPassword] = useState<string>("Niamey2026!");
+  const [isCheckingSession, setIsCheckingSession] = useState<boolean>(true);
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+  const [adminEmail, setAdminEmail] = useState<string>("");
+  const [adminPassword, setAdminPassword] = useState<string>("");
   const [showAdminPassword, setShowAdminPassword] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authErrorType, setAuthErrorType] = useState<"credentials" | "unauthorized" | "disabled" | "network" | null>(null);
+  const [authenticatedAdminEmail, setAuthenticatedAdminEmail] = useState<string | null>(null);
+  const [authenticatedAdminName, setAuthenticatedAdminName] = useState<string | null>(null);
+
+  /**
+   * Vérifie de manière stricte si l'utilisateur connecté possède le rôle 'admin'
+   * dans la table protégée public.profiles.
+   * Ne se fie JAMAIS au localStorage, ni aux états React, ni aux user_metadata.
+   */
+  const verifyAdminRole = async (
+    userId: string
+  ): Promise<{
+    isAdmin: boolean;
+    fullName?: string;
+    error?: string;
+    errorType?: "credentials" | "unauthorized" | "disabled" | "network";
+  }> => {
+    try {
+      const res = await (supabase.from("profiles") as any)
+        .select("role, is_active, full_name")
+        .eq("id", userId)
+        .maybeSingle();
+
+      const profile = res.data as { role?: string; is_active?: boolean; full_name?: string | null } | null;
+      const error = res.error;
+
+      if (error) {
+        console.warn("[AdminAuth] Erreur de lecture du profil:", error.message);
+        return {
+          isAdmin: false,
+          error: "Impossible de vérifier les privilèges administrateur (erreur d'accès à la table profiles).",
+          errorType: "network",
+        };
+      }
+
+      if (!profile) {
+        return {
+          isAdmin: false,
+          error: "Profil introuvable : aucun enregistrement dans public.profiles pour ce compte.",
+          errorType: "unauthorized",
+        };
+      }
+
+      if (profile.is_active === false) {
+        return {
+          isAdmin: false,
+          error: "Compte désactivé : ce profil administrateur n'est plus actif.",
+          errorType: "disabled",
+        };
+      }
+
+      if (profile.role !== "admin") {
+        return {
+          isAdmin: false,
+          error: "Accès refusé : ce compte est bien authentifié mais ne possède pas le rôle 'admin'.",
+          errorType: "unauthorized",
+        };
+      }
+
+      return { isAdmin: true, fullName: profile.full_name || undefined };
+    } catch (err: any) {
+      return {
+        isAdmin: false,
+        error: err?.message || "Erreur inattendue lors de la vérification des droits.",
+        errorType: "network",
+      };
+    }
+  };
+
+  // Restauration de session et écoute des changements d'authentification Supabase
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkExistingSession() {
+      setIsCheckingSession(true);
+      try {
+        if (!isSupabaseConfigured()) {
+          if (isMounted) setIsCheckingSession(false);
+          return;
+        }
+
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session?.user) {
+          if (isMounted) {
+            setIsAdminAuthenticated(false);
+            setIsCheckingSession(false);
+          }
+          return;
+        }
+
+        // L'utilisateur est connecté : vérification stricte du rôle dans public.profiles
+        const authCheck = await verifyAdminRole(session.user.id);
+        if (isMounted) {
+          if (authCheck.isAdmin) {
+            setIsAdminAuthenticated(true);
+            setAuthenticatedAdminEmail(session.user.email || null);
+            setAuthenticatedAdminName(authCheck.fullName || null);
+          } else {
+            // Utilisateur connecté sans rôle admin : refus immédiat et déconnexion
+            setIsAdminAuthenticated(false);
+            setAuthError(authCheck.error || "Accès restreint à la direction Allôresto.");
+          }
+          setIsCheckingSession(false);
+        }
+      } catch (err) {
+        console.warn("[AdminAuth] Erreur vérification session:", err);
+        if (isMounted) {
+          setIsAdminAuthenticated(false);
+          setIsCheckingSession(false);
+        }
+      }
+    }
+
+    checkExistingSession();
+
+    // Écouter les événements d'authentification Supabase
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+      if (event === "SIGNED_OUT" || !session) {
+        setIsAdminAuthenticated(false);
+        setAuthenticatedAdminEmail(null);
+        setAuthenticatedAdminName(null);
+      } else if (event === "SIGNED_IN" && session?.user) {
+        const authCheck = await verifyAdminRole(session.user.id);
+        if (authCheck.isAdmin) {
+          setIsAdminAuthenticated(true);
+          setAuthenticatedAdminEmail(session.user.email || null);
+          setAuthenticatedAdminName(authCheck.fullName || null);
+          setAuthError(null);
+        } else {
+          setIsAdminAuthenticated(false);
+          setAuthError(authCheck.error || "Accès refusé : privilèges administrateur requis.");
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
 
   // Active Admin Section Tab
   const [activeAdminTab, setActiveAdminTab] = useState<AdminTabType>(() => {
@@ -413,19 +558,105 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     },
   ]);
 
-  // Admin Login Action
-  const handleAdminLogin = (e: React.FormEvent) => {
+  // Action de connexion Administrateur sécurisée via Supabase Auth
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
+    setAuthErrorType(null);
 
-    if (adminEmail.trim().toLowerCase() === "admin@alloresto.ne" || adminEmail.includes("@")) {
-      if (adminPassword.length >= 4) {
-        setIsAdminAuthenticated(true);
-      } else {
-        setAuthError("Le mot de passe doit comporter au moins 4 caractères.");
+    const email = adminEmail.trim().toLowerCase();
+    const password = adminPassword;
+
+    if (!email || !password) {
+      setAuthError("Veuillez renseigner votre email et votre mot de passe administrateur.");
+      setAuthErrorType("credentials");
+      return;
+    }
+
+    if (!isSupabaseConfigured()) {
+      setAuthError("La connexion à Supabase n'est pas encore configurée sur cet environnement.");
+      setAuthErrorType("network");
+      return;
+    }
+
+    setIsLoggingIn(true);
+
+    try {
+      // 1. Authentification stricte via Supabase Auth
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        let errorMsg = "Identifiants administrateur incorrects.";
+        let errType: "credentials" | "network" = "credentials";
+        const msg = signInError.message.toLowerCase();
+        if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {
+          errorMsg = "Email ou mot de passe incorrect.";
+        } else if (msg.includes("email not confirmed")) {
+          errorMsg = "L'adresse email n'a pas encore été confirmée dans Supabase Auth.";
+        } else if (msg.includes("network") || msg.includes("fetch")) {
+          errorMsg = "Erreur réseau : impossible de joindre le serveur d'authentification Supabase.";
+          errType = "network";
+        } else {
+          errorMsg = signInError.message;
+        }
+        setAuthError(errorMsg);
+        setAuthErrorType(errType);
+        setIsLoggingIn(false);
+        return;
       }
-    } else {
-      setAuthError("Adresse email administrateur invalide.");
+
+      if (!authData?.user) {
+        setAuthError("Erreur d'authentification : session utilisateur introuvable.");
+        setAuthErrorType("credentials");
+        setIsLoggingIn(false);
+        return;
+      }
+
+      // 2. Autorisation stricte : vérifier le rôle administrateur dans public.profiles
+      const authCheck = await verifyAdminRole(authData.user.id);
+
+      if (!authCheck.isAdmin) {
+        // Déconnexion immédiate de la session pour ne pas laisser un compte non-admin dans l'espace admin
+        await supabase.auth.signOut();
+        setAuthError(authCheck.error || "Accès refusé : Ce compte ne dispose pas des privilèges administrateur.");
+        setAuthErrorType(authCheck.errorType || "unauthorized");
+        setIsAdminAuthenticated(false);
+        setIsLoggingIn(false);
+        return;
+      }
+
+      // 3. Succès : authentifié ET autorisé avec rôle admin vérifié
+      setIsAdminAuthenticated(true);
+      setAuthenticatedAdminEmail(authData.user.email || email);
+      setAuthenticatedAdminName(authCheck.fullName || null);
+      setAdminPassword(""); // Effacer le mot de passe de la mémoire React
+      setAuthError(null);
+      setAuthErrorType(null);
+    } catch (err: any) {
+      console.error("[AdminAuth] Erreur inattendue:", err);
+      setAuthError(err?.message || "Une erreur inattendue est survenue lors de la connexion.");
+      setAuthErrorType("network");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  // Action de déconnexion Administrateur
+  const handleAdminLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn("Erreur déconnexion Supabase Auth:", err);
+    } finally {
+      setIsAdminAuthenticated(false);
+      setAuthenticatedAdminEmail(null);
+      setAuthenticatedAdminName(null);
+      setAdminPassword("");
+      setAuthError(null);
+      setAuthErrorType(null);
     }
   };
 
@@ -573,7 +804,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // ==========================================
   // VIEW 1: ADMIN LOGIN SCREEN (IF NOT AUTH)
   // ==========================================
+  // ==========================================
+  // VIEW 1: ADMIN LOGIN SCREEN (IF NOT AUTH)
+  // ==========================================
   if (!isAdminAuthenticated) {
+    if (isCheckingSession) {
+      return (
+        <div className="min-h-[70vh] flex items-center justify-center p-4">
+          <div className="text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-purple-950/80 border border-purple-500/40 flex items-center justify-center text-purple-400 mx-auto shadow-xl">
+              <Loader2 className="w-7 h-7 animate-spin text-purple-400" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-bold text-white">Vérification de la session administrateur...</p>
+              <p className="text-xs text-slate-400">Contrôle de sécurité Supabase Auth en cours</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-slate-900 border border-purple-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-fade-in">
@@ -587,29 +837,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </p>
           </div>
 
-          <div className="p-3 rounded-2xl bg-purple-950/60 border border-purple-500/30 text-xs text-purple-200 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] text-purple-400 font-bold block uppercase tracking-wider">
-                Identifiants Administrateur Démo
-              </span>
-              <span className="font-mono text-white text-[11px]">admin@alloresto.ne / Niamey2026!</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setAdminEmail("admin@alloresto.ne");
-                setAdminPassword("Niamey2026!");
-              }}
-              className="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold cursor-pointer transition"
-            >
-              Préremplir
-            </button>
+          <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 flex items-center gap-2.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="text-[11px] leading-snug">
+              Authentification sécurisée par compte Supabase Auth officiel avec vérification des privilèges administrateur.
+            </span>
           </div>
 
           {authError && (
-            <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-500 text-xs text-rose-200 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-              <span>{authError}</span>
+            <div
+              className={`p-3.5 rounded-2xl border text-xs flex items-start gap-2.5 ${
+                authErrorType === "unauthorized"
+                  ? "bg-amber-950/80 border-amber-500/60 text-amber-200"
+                  : authErrorType === "disabled"
+                  ? "bg-purple-950/80 border-purple-500/60 text-purple-200"
+                  : "bg-rose-950/80 border-rose-500 text-rose-200"
+              }`}
+            >
+              <AlertTriangle
+                className={`w-4 h-4 shrink-0 mt-0.5 ${
+                  authErrorType === "unauthorized"
+                    ? "text-amber-400"
+                    : authErrorType === "disabled"
+                    ? "text-purple-400"
+                    : "text-rose-400"
+                }`}
+              />
+              <div className="space-y-0.5">
+                <span className="font-bold block text-white">
+                  {authErrorType === "unauthorized"
+                    ? "Compte connecté non autorisé"
+                    : authErrorType === "disabled"
+                    ? "Compte administrateur désactivé"
+                    : authErrorType === "network"
+                    ? "Erreur de communication réseau"
+                    : "Identifiants invalides"}
+                </span>
+                <span className="leading-relaxed block text-[11px]">{authError}</span>
+              </div>
             </div>
           )}
 
@@ -623,10 +888,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <input
                   type="email"
                   required
+                  disabled={isLoggingIn}
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
-                  placeholder="admin@alloresto.ne"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                  placeholder="nom@alloresto.ne"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500 disabled:opacity-50"
                 />
               </div>
             </div>
@@ -640,12 +906,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <input
                   type={showAdminPassword ? "text" : "password"}
                   required
+                  disabled={isLoggingIn}
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
-                  placeholder="Mot de passe sécurisé"
-                  className="w-full pl-10 pr-12 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                  placeholder="Mot de passe confidentiel"
+                  className="w-full pl-10 pr-12 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-purple-500 disabled:opacity-50"
                 />
-                {/* Bouton VU pour le mot de passe */}
                 <button
                   type="button"
                   onClick={() => setShowAdminPassword(!showAdminPassword)}
@@ -669,15 +935,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs shadow-lg shadow-purple-600/30 transition cursor-pointer flex items-center justify-center gap-2"
+              disabled={isLoggingIn}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs shadow-lg shadow-purple-600/30 transition cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>Accéder au Panneau d&apos;Administration</span>
-              <ArrowRight className="w-4 h-4" />
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Vérification des identifiants &amp; privilèges...</span>
+                </>
+              ) : (
+                <>
+                  <span>Accéder au Panneau d&apos;Administration</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </form>
 
           <div className="pt-3 border-t border-slate-800 text-center text-[10px] text-slate-500">
-            Protégé par clé d&apos;autorisation 256-bit SSL &bull; Conformité HAPDP Niger
+            Contrôle d&apos;accès basé sur le rôle (RBAC) &bull; Clé d&apos;autorisation 256-bit SSL
           </div>
         </div>
       </div>
@@ -698,8 +974,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl sm:text-2xl font-black text-white">Supervision Allôresto Niger 🇳🇪</h2>
-              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-500/40">
-                Direction HQ (Connecté)
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                <span>Direction HQ • {authenticatedAdminName || authenticatedAdminEmail || "Session vérifiée"}</span>
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -799,7 +1076,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           )}
 
           <button
-            onClick={() => setIsAdminAuthenticated(false)}
+            onClick={handleAdminLogout}
             className="px-3.5 py-2 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />

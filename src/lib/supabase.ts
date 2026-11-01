@@ -85,6 +85,20 @@ export interface Database {
         };
         Update: Partial<Database["public"]["Tables"]["payments"]["Insert"]>;
       };
+      profiles: {
+        Row: {
+          id: string;
+          full_name: string | null;
+          phone: string | null;
+          role: "customer" | "restaurant" | "driver" | "admin";
+          avatar_url: string | null;
+          is_active: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
+      };
     };
   };
 }

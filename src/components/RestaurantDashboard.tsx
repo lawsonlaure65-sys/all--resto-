@@ -57,7 +57,6 @@ import {
   logoutRestaurantSession,
   syncOrderStatusToSupabase,
   fetchRestaurantOrdersFromSupabase,
-  DEMO_RESTAURANT_ACCOUNTS,
   RestaurantUserSession,
 } from "../services/supabaseRestaurantService";
 import {
@@ -234,20 +233,6 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
     }
   };
 
-  // Quick Demo Login Helper
-  const handleQuickDemoLogin = async (account: (typeof DEMO_RESTAURANT_ACCOUNTS)[0]) => {
-    setLoginEmail(account.email);
-    setLoginPassword(account.password);
-    setIsLoggingIn(true);
-    setLoginError(null);
-
-    const res = await authenticateRestaurantUser(account.email, account.password);
-    if (res.success && res.session) {
-      setSession(res.session);
-      refreshSupabaseOrders();
-    }
-    setIsLoggingIn(false);
-  };
 
   // Handle Logout
   const handleLogout = () => {
@@ -513,32 +498,6 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
               </button>
             </form>
 
-            {/* Quick Demo Logins for Instant Testing */}
-            <div className="pt-4 border-t border-slate-800 space-y-2.5">
-              <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block text-center">
-                Connexion Rapide Démo (1 Clic) :
-              </span>
-              <div className="grid grid-cols-1 gap-2">
-                {DEMO_RESTAURANT_ACCOUNTS.map((acc, aIdx) => (
-                  <button
-                    key={`demo-acc-${acc.email}-${aIdx}`}
-                    type="button"
-                    onClick={() => handleQuickDemoLogin(acc)}
-                    className="w-full p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-orange-500/40 text-left transition flex items-center justify-between group cursor-pointer"
-                  >
-                    <div>
-                      <p className="text-xs font-bold text-white group-hover:text-orange-400 transition">
-                        {acc.restaurantName}
-                      </p>
-                      <p className="text-[10px] text-slate-400">{acc.email}</p>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 group-hover:bg-orange-500 group-hover:text-slate-950 font-bold transition">
-                      Tester ⚡
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {/* Formules & Contrat Quick Access */}
             <div className="pt-2 border-t border-slate-800 flex items-center justify-center gap-2">
