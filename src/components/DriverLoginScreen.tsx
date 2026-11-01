@@ -4,18 +4,15 @@ import {
   Bike,
   Phone,
   ShieldCheck,
-  ArrowRight,
   UserCheck,
-  MapPin,
   Lock,
-  Sparkles,
   AlertCircle,
-  Clock,
-  Radio,
+  Mail,
+  Loader2,
 } from "lucide-react";
 import { BilloExpressLogo } from "./BilloExpressLogo";
 import { DriverProfile } from "../types";
-import { verifyDriverLogin, DEFAULT_DRIVERS } from "../services/supabaseDriverService";
+import { supabase } from "../lib/supabase";
 import { playCourierHandoverSound } from "../services/kitchenAudioService";
 
 interface DriverLoginScreenProps {
@@ -27,15 +24,20 @@ export const DriverLoginScreen: React.FC<DriverLoginScreenProps> = ({
   onLoginSuccess,
   onExitToClient,
 }) => {
-  const [phoneNumber, setPhoneNumber] = useState("+227 99 00 00 00");
-  const [pinCode, setPinCode] = useState("");
+  const [loginIdentifier, setLoginIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleManualLogin = async (e: React.FormEvent) => {
+  const handleDriverLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneNumber.trim()) {
-      setErrorMsg("Veuillez saisir votre numéro de téléphone de livreur.");
+    const identifier = loginIdentifier.trim();
+    if (!identifier) {
+      setErrorMsg("Veuillez saisir votre identifiant (email ou téléphone).");
+      return;
+    }
+    if (!password) {
+      setErrorMsg("Veuillez saisir votre mot de passe.");
       return;
     }
 
@@ -43,36 +45,83 @@ export const DriverLoginScreen: React.FC<DriverLoginScreenProps> = ({
     setErrorMsg(null);
 
     try {
-      const driver = await verifyDriverLogin(phoneNumber);
-      if (driver) {
-        playCourierHandoverSound();
-        onLoginSuccess(driver);
-      } else {
-        // Fallback: create a session for this phone number
-        const tempDriver: DriverProfile = {
-          id: `driver-${Date.now()}`,
-          fullName: "Livreur Billo Express",
-          phone: phoneNumber,
-          motoPlate: "RN-2024-X",
-          vehicle: "Moto 125cc",
-          status: "available",
-          currentZone: "Niamey Plateau & Ville",
-          rating: 5.0,
-          completedDeliveries: 12,
-        };
-        playCourierHandoverSound();
-        onLoginSuccess(tempDriver);
+      // 1. Tenter la connexion officielle Supabase Auth
+      const isEmail = identifier.includes("@");
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword(
+        isEmail
+          ? { email: identifier.toLowerCase(), password }
+          : { phone: identifier.replace(/[^\d+]/g, ""), password }
+      );
+
+      if (!authError && authData.user) {
+        // Vérifier le rôle dans public.profiles
+        const { data: profile, error: profileErr } = await (supabase.from("profiles") as any)
+          .select("role, is_active, full_name, phone")
+          .eq("id", authData.user.id)
+          .maybeSingle();
+
+        if (profileErr) {
+          setErrorMsg("Impossible de vérifier vos autorisations. Réessayez.");
+          return;
+        }
+
+        if (profile?.is_active === false) {
+          setErrorMsg("Compte désactivé. Veuillez contacter la Direction Allôresto.");
+          return;
+        }
+
+        const role = profile?.role;
+        if (role === "driver") {
+          const driver: DriverProfile = {
+            id: authData.user.id,
+            fullName: profile.full_name || "Coursier Billo Express",
+            phone: profile.phone || authData.user.phone || identifier,
+            motoPlate: "Billo Express 227",
+            vehicle: "Moto de livraison",
+            status: "available",
+            currentZone: "Niamey & Agglomération",
+            rating: 5.0,
+            completedDeliveries: 0,
+          };
+          playCourierHandoverSound();
+          onLoginSuccess(driver);
+          return;
+        } else if (role === "admin") {
+          // La Direction a un accès complet de supervision
+          const adminDriver: DriverProfile = {
+            id: authData.user.id,
+            fullName: profile?.full_name ? `${profile.full_name} (Direction HQ)` : "Direction Allôresto HQ",
+            phone: authData.user.email || identifier,
+            motoPlate: "Direction HQ",
+            vehicle: "Supervision Flotte",
+            status: "available",
+            currentZone: "Tous secteurs Niamey",
+            rating: 5.0,
+            completedDeliveries: 0,
+          };
+          playCourierHandoverSound();
+          onLoginSuccess(adminDriver);
+          return;
+        } else {
+          // Client ou rôle non autorisé : REFUS STRICT
+          setErrorMsg(
+            "Accès refusé : ce compte possède le rôle 'Client'. L'espace coursier Billo Express est strictement réservé aux livreurs agréés et à la Direction."
+          );
+          await supabase.auth.signOut();
+          return;
+        }
       }
-    } catch (err) {
-      setErrorMsg("Erreur de connexion. Veuillez réessayer.");
+
+      setErrorMsg(
+        authError?.message === "Invalid login credentials"
+          ? "Identifiant ou mot de passe incorrect."
+          : authError?.message || "Identifiants de coursier invalides."
+      );
+    } catch (err: any) {
+      setErrorMsg(err?.message || "Erreur lors de la tentative de connexion.");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickLogin = (driver: DriverProfile) => {
-    playCourierHandoverSound();
-    onLoginSuccess(driver);
   };
 
   return (
@@ -80,14 +129,11 @@ export const DriverLoginScreen: React.FC<DriverLoginScreenProps> = ({
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden"
+        className="max-w-md w-full bg-slate-900 border border-cyan-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6"
       >
-        {/* Glow Header */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-orange-500"></div>
-
-        {/* Brand Banner */}
-        <div className="flex flex-col items-center text-center space-y-2">
-          <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 shadow-inner">
+        {/* Header */}
+        <div className="text-center space-y-3">
+          <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 shadow-inner inline-block">
             <BilloExpressLogo variant="full" />
           </div>
           <div className="space-y-1">
@@ -95,97 +141,60 @@ export const DriverLoginScreen: React.FC<DriverLoginScreenProps> = ({
               Espace Livreur &bull; Billo Express Niamey
             </h2>
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              Plateforme opérationnelle de prise en charge et livraison des commandes Allôresto au Niger.
+              Portail opérationnel sécurisé de prise en charge et livraison des commandes Allôresto.
             </p>
           </div>
         </div>
 
-        {/* Quick Driver Selection Grid */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Connexion Rapide Coursier (1-Clic) :</span>
-            </label>
-            <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">
-              ● En service
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {DEFAULT_DRIVERS.map((d, dIdx) => (
-              <button
-                key={`driver-${d.id}-${dIdx}`}
-                type="button"
-                onClick={() => handleQuickLogin(d)}
-                className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-cyan-500/60 hover:bg-cyan-950/20 text-left transition-all flex items-center gap-3 cursor-pointer group"
-              >
-                <img
-                  src={d.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"}
-                  alt={d.fullName}
-                  referrerPolicy="no-referrer"
-                  className="w-10 h-10 rounded-full object-cover border border-slate-700 group-hover:border-cyan-400 transition"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-white group-hover:text-cyan-300 truncate">
-                    {d.fullName}
-                  </p>
-                  <p className="text-[10px] text-slate-400 truncate">{d.motoPlate} &bull; {d.phone}</p>
-                  <p className="text-[10px] text-cyan-400 font-semibold truncate flex items-center gap-1 mt-0.5">
-                    <MapPin className="w-2.5 h-2.5" />
-                    <span>{d.currentZone}</span>
-                  </p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-cyan-400 group-hover:translate-x-0.5 transition" />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="relative flex items-center justify-center">
-          <div className="border-t border-slate-800 w-full"></div>
-          <span className="bg-slate-900 px-3 text-[11px] text-slate-500 font-bold uppercase">
-            ou connexion par numéro
+        {/* Security Notice */}
+        <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 flex items-center gap-2.5">
+          <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0" />
+          <span className="text-[11px] leading-snug">
+            Accès protégé par Supabase Auth. Réservé aux coursiers partenaires agréés et à la Direction Allôresto.
           </span>
         </div>
 
-        {/* Manual Phone Form */}
-        <form onSubmit={handleManualLogin} className="space-y-4">
+        {/* Login Form */}
+        <form onSubmit={handleDriverLogin} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-300 block">
-              Numéro de téléphone Niamey :
+            <label className="text-xs font-bold text-slate-300 block flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Email ou Téléphone Coursier *</span>
             </label>
             <div className="relative">
-              <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="+227 99 00 00 00"
-                className="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 text-xs font-bold focus:outline-none focus:border-cyan-400"
+                type="text"
+                required
+                disabled={isLoading}
+                value={loginIdentifier}
+                onChange={(e) => setLoginIdentifier(e.target.value)}
+                placeholder="coursier@alloresto.ne ou +227 9X XX XX XX"
+                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-cyan-400 disabled:opacity-50"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-300 block">
-              Code PIN / Mot de passe :
+            <label className="text-xs font-bold text-slate-300 block flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Mot de passe confidentiel *</span>
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="password"
-                value={pinCode}
-                onChange={(e) => setPinCode(e.target.value)}
-                placeholder="•••• (Optionnel pour test)"
-                className="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 text-xs font-bold focus:outline-none focus:border-cyan-400"
+                required
+                disabled={isLoading}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Votre mot de passe"
+                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-cyan-400 disabled:opacity-50"
               />
             </div>
           </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-200 text-xs flex items-center gap-2 animate-shake">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
               <span>{errorMsg}</span>
             </div>
           )}
@@ -193,14 +202,17 @@ export const DriverLoginScreen: React.FC<DriverLoginScreenProps> = ({
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25 transition cursor-pointer"
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25 transition cursor-pointer disabled:opacity-50"
           >
             {isLoading ? (
-              <span>Vérification...</span>
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Vérification des droits livreur...</span>
+              </>
             ) : (
               <>
                 <UserCheck className="w-4 h-4" />
-                <span>Se Connecter comme Livreur</span>
+                <span>Se Connecter à l&apos;Espace Coursier</span>
               </>
             )}
           </button>
@@ -215,10 +227,10 @@ export const DriverLoginScreen: React.FC<DriverLoginScreenProps> = ({
           >
             ← Retour à l&apos;application cliente
           </button>
-
-          <span className="text-[11px] text-cyan-400 font-semibold">
-            Test : +227 99 00 00 00 (Issoufou Moussa)
-          </span>
+          <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-semibold">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>RLS Active</span>
+          </div>
         </div>
       </motion.div>
     </div>

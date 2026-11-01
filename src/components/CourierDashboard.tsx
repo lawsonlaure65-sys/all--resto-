@@ -37,6 +37,8 @@ import { playCourierHandoverSound, playKitchenOrderChime } from "../services/kit
 import { fetchRestaurantOrdersFromSupabase } from "../services/supabaseRestaurantService";
 import { DriverOrderDetailModal } from "./DriverOrderDetailModal";
 import { DriverOrderDetailView } from "./DriverOrderDetailView";
+import { DriverLoginScreen } from "./DriverLoginScreen";
+import { supabase } from "../lib/supabase";
 
 interface CourierDashboardProps {
   orders: Order[];
@@ -51,8 +53,69 @@ export const CourierDashboard: React.FC<CourierDashboardProps> = ({
   onCreateTestOrder,
   onExitToClient,
 }) => {
-  // Active Courier Profile (defaults to Oumarou Diallo)
-  const [selectedCourierId, setSelectedCourierId] = useState<string>(BILLO_COURIERS[0].id);
+  // Session authentifiée du coursier (ou null si non connecté)
+  const [currentDriver, setCurrentDriver] = useState<DriverProfile | null>(() => {
+    try {
+      const saved = localStorage.getItem("alloresto_courier_session");
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return null;
+  });
+
+  // Synchronisation avec la session Supabase Auth officielle & vérification des rôles
+  useEffect(() => {
+    let isMounted = true;
+    async function syncAuth() {
+      try {
+        const { data: { session: authSession } } = await supabase.auth.getSession();
+        if (authSession?.user && isMounted) {
+          const { data: profile } = await (supabase.from("profiles") as any)
+            .select("role, is_active, full_name, phone")
+            .eq("id", authSession.user.id)
+            .maybeSingle();
+
+          if (profile && profile.is_active !== false) {
+            if (profile.role === "admin") {
+              const adminDriver: DriverProfile = {
+                id: authSession.user.id,
+                fullName: profile.full_name ? `${profile.full_name} (Direction HQ)` : "Direction Allôresto HQ",
+                phone: authSession.user.email || "lawson.laure65@gmail.com",
+                motoPlate: "Direction HQ",
+                vehicle: "Supervision Flotte",
+                status: "available",
+                currentZone: "Tous secteurs Niamey",
+                rating: 5.0,
+                completedDeliveries: 0,
+              };
+              setCurrentDriver(adminDriver);
+            } else if (profile.role === "driver") {
+              const driver: DriverProfile = {
+                id: authSession.user.id,
+                fullName: profile.full_name || "Coursier Billo Express",
+                phone: profile.phone || authSession.user.phone || "",
+                motoPlate: "Billo Express 227",
+                vehicle: "Moto de livraison",
+                status: "available",
+                currentZone: "Niamey & Agglomération",
+                rating: 5.0,
+                completedDeliveries: 0,
+              };
+              setCurrentDriver(driver);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("[CourierDashboard] Auth check error:", e);
+      }
+    }
+    syncAuth();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [soundAlerts, setSoundAlerts] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<"available" | "active" | "history">("available");
@@ -65,8 +128,43 @@ export const CourierDashboard: React.FC<CourierDashboardProps> = ({
   const [isLoadingSupabase, setIsLoadingSupabase] = useState<boolean>(false);
   const [supabaseOrders, setSupabaseOrders] = useState<Order[]>([]);
 
-  const activeCourier = BILLO_COURIERS.find((c) => c.id === selectedCourierId) || BILLO_COURIERS[0];
+  const activeCourier = currentDriver ? {
+    id: currentDriver.id,
+    name: currentDriver.fullName,
+    phone: currentDriver.phone,
+    whatsapp: currentDriver.phone.replace(/[^0-9]/g, ""),
+    zone: currentDriver.currentZone || "Niamey",
+    vehicle: currentDriver.vehicle || "Moto 125cc",
+    plate: currentDriver.motoPlate || "RN-001",
+    rating: currentDriver.rating || 5.0,
+    completedDeliveries: currentDriver.completedDeliveries || 0,
+    status: currentDriver.status as "available" | "busy",
+    avatar: currentDriver.avatar || "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80",
+  } : BILLO_COURIERS[0];
+
+  const handleLogout = async () => {
+    try {
+      localStorage.removeItem("alloresto_courier_session");
+      await supabase.auth.signOut();
+    } catch {}
+    setCurrentDriver(null);
+  };
+
   const lastKnownCountRef = useRef<number>(0);
+
+  if (!currentDriver) {
+    return (
+      <DriverLoginScreen
+        onLoginSuccess={(driver) => {
+          setCurrentDriver(driver);
+          try {
+            localStorage.setItem("alloresto_courier_session", JSON.stringify(driver));
+          } catch {}
+        }}
+        onExitToClient={onExitToClient || (() => {})}
+      />
+    );
+  }
 
   // Poll orders from Supabase periodically
   const fetchLiveOrders = async () => {
@@ -186,24 +284,13 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
               </span>
             </div>
 
-            {/* Courier Profile Selection Selector */}
+            {/* Authenticated Courier Badge */}
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <span className="text-xs text-slate-400 font-semibold">Livreur connecté :</span>
-              <select
-                aria-label="Sélectionner le profil du coursier Billo Express"
-                value={selectedCourierId}
-                onChange={(e) => {
-                  setSelectedCourierId(e.target.value);
-                  playCourierHandoverSound();
-                }}
-                className="px-3 py-1 rounded-xl bg-slate-950 border border-slate-700 text-cyan-300 font-bold text-xs cursor-pointer focus:outline-none focus:border-cyan-400"
-              >
-                {BILLO_COURIERS.map((c, cIdx) => (
-                  <option key={`courier-${c.id}-${cIdx}`} value={c.id} className="bg-slate-900 text-white">
-                    {c.name} &bull; {c.vehicle} ({c.zone})
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-950 border border-cyan-500/30">
+                <span className="text-cyan-300 font-bold text-xs">{currentDriver.fullName}</span>
+                <span className="text-[10px] text-slate-400 font-mono">({currentDriver.phone})</span>
+              </div>
             </div>
           </div>
         </div>
@@ -250,6 +337,17 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
             <span>{isOnline ? "En Ligne" : "Hors Ligne"}</span>
           </button>
 
+          {/* Logout Button */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-500/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+            title="Se déconnecter"
+          >
+            <LogOut className="w-3.5 h-3.5 text-rose-400" />
+            <span>Déconnexion</span>
+          </button>
+
           {/* Return to Client */}
           {onExitToClient && (
             <button
@@ -257,7 +355,6 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
               onClick={onExitToClient}
               className="px-3 py-2 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
             >
-              <LogOut className="w-3.5 h-3.5" />
               <span>Espace Client</span>
             </button>
           )}
