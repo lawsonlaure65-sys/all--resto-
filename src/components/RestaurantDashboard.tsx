@@ -64,6 +64,7 @@ import {
   addOrUpdateDishInStorage,
   updateDishStockCount,
 } from "../services/dishStorageService";
+import { supabase } from "../lib/supabase";
 
 interface RestaurantDashboardProps {
   orders: Order[];
@@ -88,6 +89,50 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
   const [session, setSession] = useState<RestaurantUserSession | null>(() =>
     getActiveRestaurantSession()
   );
+
+  // Synchronisation avec la session Supabase Auth officielle & vérification des rôles
+  useEffect(() => {
+    let isMounted = true;
+    async function syncSupabaseAuthSession() {
+      try {
+        const { data: { session: authSession } } = await supabase.auth.getSession();
+        if (authSession?.user && isMounted) {
+          const { data: profile } = await (supabase.from("profiles") as any)
+            .select("role, is_active, full_name")
+            .eq("id", authSession.user.id)
+            .maybeSingle();
+
+          if (profile && profile.is_active !== false) {
+            if (profile.role === "admin") {
+              // Direction HQ : accès de supervision avec affichage de l'email officiel
+              setSession({
+                userId: authSession.user.id,
+                restaurantId: "resto-alloresto-kitchen",
+                restaurantName: "Allôresto Kitchen (Cuisine Centrale)",
+                email: authSession.user.email || "lawson.laure65@gmail.com",
+                role: "Direction HQ (Admin)",
+              });
+            } else if (profile.role === "restaurant") {
+              setSession({
+                userId: authSession.user.id,
+                restaurantId: "resto-alloresto-kitchen",
+                restaurantName: profile.full_name || "Restaurant Partenaire",
+                email: authSession.user.email || "",
+                role: "Gérant Restaurant",
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("[RestaurantDashboard] Erreur synchronisation session:", e);
+      }
+    }
+
+    syncSupabaseAuthSession();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Supabase live orders state
   const [supabaseOrders, setSupabaseOrders] = useState<Order[]>([]);
@@ -235,9 +280,14 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
 
 
   // Handle Logout
-  const handleLogout = () => {
+  const handleLogout = async () => {
     logoutRestaurantSession();
     setSession(null);
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      // ignore
+    }
   };
 
   // Combine parent orders with Supabase live orders (deduped by ID)

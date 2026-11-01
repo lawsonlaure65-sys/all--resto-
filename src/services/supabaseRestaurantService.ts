@@ -1,4 +1,5 @@
 import { getSupabaseClient } from "./supabaseClient";
+import { supabase } from "../lib/supabase";
 import { Order, OrderStatus } from "../types";
 
 export interface RestaurantUserSession {
@@ -9,52 +10,84 @@ export interface RestaurantUserSession {
   role: string;
 }
 
-export const DEMO_RESTAURANT_ACCOUNTS: Array<{
-  email: string;
-  password: string;
-  restaurantId: string;
-  restaurantName: string;
-  role: string;
-}> = [
-  {
-    email: "restaurant@alloresto.ne",
-    password: "admin123",
-    restaurantId: "resto-alloresto-kitchen",
-    restaurantName: "Allôresto Kitchen (Cuisine Centrale)",
-    role: "Administrateur Restaurant",
-  },
-  {
-    email: "kitchen@alloresto.ne",
-    password: "alloresto2026",
-    restaurantId: "resto-khadys-food",
-    restaurantName: "Allôresto Kitchen / Khady's Food",
-    role: "Chef Gérant",
-  },
-  {
-    email: "sahel@alloresto.ne",
-    password: "sahel2026",
-    restaurantId: "resto-saveurs-sahel",
-    restaurantName: "Saveurs du Sahel",
-    role: "Responsable Cuisine",
-  },
-  {
-    email: "gourmet@alloresto.ne",
-    password: "gourmet2026",
-    restaurantId: "resto-gourmet-fleuve",
-    restaurantName: "Le Gourmet du Fleuve",
-    role: "Manager",
-  },
-];
-
-// Authenticate against Supabase `restaurant_users` or fallback to verified demo accounts
+/**
+ * Authentifie un utilisateur pour l'espace Restaurant.
+ * Règle de sécurité :
+ * 1. Tente Supabase Auth (email / mot de passe).
+ * 2. Vérifie dans public.profiles que le rôle est 'admin' ou 'restaurant'.
+ *    - Si le rôle est 'customer' : accès strictement refusé (fail-closed).
+ * 3. En cas d'échec Auth, vérifie la table spécialisée restaurant_users.
+ */
 export async function authenticateRestaurantUser(
   email: string,
   password: string
 ): Promise<{ success: boolean; session?: RestaurantUserSession; error?: string }> {
-  const client = getSupabaseClient();
   const trimmedEmail = email.trim().toLowerCase();
 
-  // 1. Try Supabase if client is active
+  // 1. Tenter Supabase Auth officiel
+  try {
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: trimmedEmail,
+      password,
+    });
+
+    if (!authError && authData.user) {
+      // Vérifier le rôle strict dans public.profiles
+      const { data: profile } = await (supabase.from("profiles") as any)
+        .select("role, is_active, full_name")
+        .eq("id", authData.user.id)
+        .maybeSingle();
+
+      if (profile && profile.is_active === false) {
+        return {
+          success: false,
+          error: "Votre compte est désactivé. Veuillez contacter la Direction Allôresto.",
+        };
+      }
+
+      const role = profile?.role;
+      if (role === "admin") {
+        // La Direction HQ a tous les droits de supervision sur la cuisine centrale
+        const session: RestaurantUserSession = {
+          userId: authData.user.id,
+          restaurantId: "resto-alloresto-kitchen",
+          restaurantName: "Allôresto Kitchen (Cuisine Centrale)",
+          email: authData.user.email || trimmedEmail,
+          role: "Direction HQ (Admin)",
+        };
+        localStorage.setItem("alloresto_restaurant_session", JSON.stringify(session));
+        return { success: true, session };
+      } else if (role === "restaurant") {
+        // Rôle restaurant vérifié
+        const client = getSupabaseClient() || supabase;
+        const { data: restoUser } = await (client.from("restaurant_users") as any)
+          .select("restaurant_id, full_name, role")
+          .eq("email", trimmedEmail)
+          .maybeSingle();
+
+        const session: RestaurantUserSession = {
+          userId: authData.user.id,
+          restaurantId: restoUser?.restaurant_id || "resto-alloresto-kitchen",
+          restaurantName: restoUser?.full_name || "Restaurant Partenaire",
+          email: authData.user.email || trimmedEmail,
+          role: restoUser?.role || "Gérant Restaurant",
+        };
+        localStorage.setItem("alloresto_restaurant_session", JSON.stringify(session));
+        return { success: true, session };
+      } else {
+        // Rôle customer ou indéfini : REFUS FERME
+        return {
+          success: false,
+          error: "Accès refusé : ce compte possède le rôle 'Client'. L'espace restaurant est réservé aux cuisines partenaires et à la Direction.",
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("Supabase Auth check skipped or failed:", err);
+  }
+
+  // 2. Vérification dans la table restaurant_users
+  const client = getSupabaseClient();
   if (client) {
     try {
       const { data, error } = await client
@@ -66,7 +99,6 @@ export async function authenticateRestaurantUser(
         .maybeSingle();
 
       if (!error && data) {
-        // Fetch restaurant name
         let restaurantName = data.full_name || "Restaurant Partenaire";
         const { data: restoData } = await client
           .from("restaurants")
@@ -86,44 +118,17 @@ export async function authenticateRestaurantUser(
           role: data.role || "manager",
         };
 
-        // Persist session
         localStorage.setItem("alloresto_restaurant_session", JSON.stringify(session));
-        localStorage.setItem("restaurant_id", session.restaurantId);
-        localStorage.setItem("restaurant_name", session.restaurantName);
-        localStorage.setItem("restaurant_user_id", session.userId);
-
         return { success: true, session };
       }
     } catch (err) {
-      console.warn("Supabase restaurant auth error, trying local demo fallback:", err);
+      console.warn("Supabase restaurant auth error:", err);
     }
-  }
-
-  // 2. Demo accounts validation fallback
-  const demo = DEMO_RESTAURANT_ACCOUNTS.find(
-    (acc) => acc.email.toLowerCase() === trimmedEmail && acc.password === password
-  );
-
-  if (demo) {
-    const session: RestaurantUserSession = {
-      userId: `demo-user-${demo.restaurantId}`,
-      restaurantId: demo.restaurantId,
-      restaurantName: demo.restaurantName,
-      email: demo.email,
-      role: demo.role,
-    };
-
-    localStorage.setItem("alloresto_restaurant_session", JSON.stringify(session));
-    localStorage.setItem("restaurant_id", session.restaurantId);
-    localStorage.setItem("restaurant_name", session.restaurantName);
-    localStorage.setItem("restaurant_user_id", session.userId);
-
-    return { success: true, session };
   }
 
   return {
     success: false,
-    error: "Identifiants incorrects. Veuillez vérifier votre adresse email et votre mot de passe.",
+    error: "Identifiants invalides ou compte non autorisé pour l'espace restaurant.",
   };
 }
 
@@ -132,18 +137,10 @@ export function getActiveRestaurantSession(): RestaurantUserSession | null {
   try {
     const stored = localStorage.getItem("alloresto_restaurant_session");
     if (stored) {
-      return JSON.parse(stored);
-    }
-    const legacyId = localStorage.getItem("restaurant_id");
-    const legacyName = localStorage.getItem("restaurant_name");
-    if (legacyId) {
-      return {
-        userId: localStorage.getItem("restaurant_user_id") || "user-1",
-        restaurantId: legacyId,
-        restaurantName: legacyName || "Allôresto Kitchen",
-        email: "kitchen@alloresto.ne",
-        role: "Gérant",
-      };
+      const parsed = JSON.parse(stored);
+      if (parsed && parsed.userId && parsed.restaurantId) {
+        return parsed;
+      }
     }
   } catch (e) {
     console.error("Error parsing restaurant session:", e);
