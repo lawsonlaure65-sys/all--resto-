@@ -177,7 +177,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
             dish.mealMoments && dish.mealMoments.includes(selectedMoment);
 
           if (!matchDishCategory && !hasExplicitMoment) {
-            // Soft fallback matching for demo dishes
+            // Matching intelligent pour les plats sans moment explicite
             if (selectedMoment === "petit_dejeuner") {
               const nameLower = dish.name.toLowerCase();
               if (

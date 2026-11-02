@@ -228,6 +228,15 @@ export function loadStoredRestaurants(): Restaurant[] {
             }
           }
 
+          // S'assurer qu'Allôresto Kitchen (Cuisine Centrale) est toujours présente à l'index 1
+          const hasKitchen = finalRestos.some((r) => isAllorestoKitchen(r.id, r.name));
+          if (!hasKitchen) {
+            const kitchenDefault = RESTAURANTS_DATA.find((r) => isAllorestoKitchen(r.id, r.name));
+            if (kitchenDefault) {
+              finalRestos.splice(1, 0, kitchenDefault);
+            }
+          }
+
           const normalized = normalizeDishesStock(finalRestos);
           return normalized;
         }
@@ -391,11 +400,7 @@ export function addOrUpdateDishInStorage(
     targetId = typeof dishOrTargetId === "string" ? dishOrTargetId : undefined;
   }
 
-  let defaultRestoId = targetId || restaurants[0]?.id || KHADYS_STABLE_LOCAL_ID;
-  if (isAllorestoKitchen(defaultRestoId)) {
-    const khady = restaurants.find((r) => isKhadysFoodRestaurant(r));
-    defaultRestoId = khady?.id || KHADYS_STABLE_LOCAL_ID;
-  }
+  const defaultRestoId = targetId || restaurants[0]?.id || KHADYS_STABLE_LOCAL_ID;
 
   // Cloud sync to Supabase (non-blocking)
   try {

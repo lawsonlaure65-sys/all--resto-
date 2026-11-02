@@ -41,17 +41,10 @@ export const JumuahBanner: React.FC<JumuahBannerProps> = ({
 
         {/* Right actions */}
         <div className="flex flex-wrap items-center justify-center gap-2 shrink-0">
-          <button
-            onClick={onToggleSimulatedFriday}
-            className={`px-3 py-1 rounded-xl text-[11px] font-bold transition flex items-center gap-1 cursor-pointer border ${
-              simulatedFridayPause
-                ? "bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm"
-                : "bg-slate-900/80 text-amber-300 border-amber-500/40 hover:bg-slate-800"
-            }`}
-            title="Tester le comportement de la pause Jumu'ah"
-          >
-            <span>{simulatedFridayPause ? "🧪 Pause Active" : "🧪 Test Vendredi"}</span>
-          </button>
+          <span className="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[11px] font-semibold flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            <span>Pause 11h - 15h</span>
+          </span>
 
           {onOpenScheduleOrder && (
             <button

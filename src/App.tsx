@@ -710,14 +710,18 @@ export function App() {
     }
   };
 
-  // Helper to generate a realistic instant test order (e.g. for Plateau)
+  // Helper to generate a realistic instant express order (comptoir / guichet Plateau 1)
   const handleCreateTestOrder = () => {
-    const testOrder: Order = {
+    const kitchenResto = restaurants.find((r) => r.id === "resto-alloresto-kitchen") || restaurants[0] || RESTAURANTS_DATA[1];
+    const dish1 = kitchenResto?.menu?.find((m) => m.id === "ak-4") || kitchenResto?.menu?.[3] || RESTAURANTS_DATA[1].menu[3];
+    const dish2 = kitchenResto?.menu?.find((m) => m.id === "ak-10") || kitchenResto?.menu?.[9] || RESTAURANTS_DATA[1].menu[9];
+
+    const directOrder: Order = {
       id: "CMD-" + Math.floor(1000 + Math.random() * 9000),
       createdAt: "À l'instant",
       customerName: "Moussa Garba",
-      customerPhone: "+227 96 00 00 01",
-      deliveryAddress: "Quartier Plateau, Ministère de l'Intérieur, Niamey",
+      customerPhone: "+227 96 05 23 10",
+      deliveryAddress: "Quartier Plateau 1, Boulevard de la République, Niamey",
       city: "Niamey - Plateau (Ministères)",
       serviceType: "delivery",
       restaurantId: "resto-alloresto-kitchen",
@@ -726,25 +730,25 @@ export function App() {
       items: [
         {
           id: `item-${Date.now()}-1`,
-          menuItem: restaurants[0]?.menu[5] || RESTAURANTS_DATA[0].menu[5] || {
-            id: "kf-1",
-            name: "Choukouya Royal d'Agneau au Véritable Kan-Kan",
-            price: 4000,
-            category: "Grillades",
+          menuItem: dish1 || {
+            id: "ak-4",
+            name: "Choukouya d'Agneau Prestige au Vrai Kan-Kan",
+            price: 4500,
+            category: "Grillades & Rôtisserie",
             image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80",
           } as MenuItem,
           quantity: 2,
-          selectedOptions: { "Intensité du Kan-Kan": "Kan-Kan Traditionnel Relevé" },
-          unitPrice: 4000,
-          totalPrice: 8000,
+          selectedOptions: { "Cuisson & Épices": "Kan-Kan Traditionnel Sahélien" },
+          unitPrice: 4500,
+          totalPrice: 9000,
         },
         {
           id: `item-${Date.now()}-2`,
-          menuItem: restaurants[0]?.menu[10] || RESTAURANTS_DATA[0].menu[10] || {
-            id: "kf-baobab",
-            name: "Jus de Baobab Naturel Frais 33cl",
+          menuItem: dish2 || {
+            id: "ak-10",
+            name: "Jus de Bissap Rouge Glacé à la Menthe Fraîche (50 cl)",
             price: 1000,
-            category: "Boissons",
+            category: "Boissons & Jus Locaux",
             image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500&auto=format&fit=crop&q=80",
           } as MenuItem,
           quantity: 2,
@@ -753,24 +757,25 @@ export function App() {
           totalPrice: 2000,
         },
       ],
-      subtotal: 10000,
-      deliveryFee: 1000,
+      subtotal: 11000,
+      deliveryFee: 500,
       discount: 0,
-      tip: 500,
+      tip: 0,
       total: 11500,
-      paymentMethod: "cash",
-      paymentStatus: "pending",
+      paymentMethod: "cash_on_delivery",
+      paymentStatus: "cash_on_delivery",
       orderStatus: "received",
-      estimatedDeliveryTime: "25-35 min",
+      estimatedDeliveryTime: "20-30 min",
       deliveryPartner: "Billo Express Niamey 🏍️",
       courierName: "Ibrahim Oumarou (Billo Express)",
       courierPhone: "+227 92 08 08 22",
+      kitchenNotes: ["À encaisser par le coursier Billo Express: 11 500 FCFA", "Commande Express Comptoir Plateau 1"],
     };
 
-    setOrders((prev) => [testOrder, ...prev]);
+    setOrders((prev) => [directOrder, ...prev]);
     showNotification(
       "Nouvelle commande en cuisine ! 🔔",
-      `Commande #${testOrder.id} de Moussa Garba reçue pour le Plateau (11 500 FCFA).`,
+      `Commande #${directOrder.id} de Moussa Garba reçue pour le Plateau 1 (11 500 FCFA).`,
       "success",
       "order"
     );

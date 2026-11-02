@@ -198,8 +198,7 @@ export async function fetchRestaurantOrdersFromSupabase(
     if (
       restaurantId &&
       !restaurantId.includes("alloresto") &&
-      restaurantId !== "resto-alloresto-kitchen" &&
-      !restaurantId.includes("demo")
+      restaurantId !== "resto-alloresto-kitchen"
     ) {
       query = query.eq("restaurant_id", restaurantId);
     }
@@ -238,18 +237,18 @@ export async function fetchRestaurantOrdersFromSupabase(
           id: ro.id || `ord-${Math.random().toString(36).substr(2, 6)}`,
           createdAt: ro.created_at || new Date().toISOString(),
           customerName: ro.customer_name || "Client Allôresto",
-          customerPhone: ro.customer_phone || "+227 90 00 00 00",
+          customerPhone: ro.customer_phone || "+227 96 05 23 10",
           deliveryAddress: ro.delivery_address || "Niamey",
           city: "Niamey",
           serviceType: ro.fulfillment === "pickup" ? "takeaway" : "delivery",
           restaurantId: ro.restaurant_id || "resto-alloresto-kitchen",
           restaurantName: "Allôresto Kitchen (Cuisine Centrale)",
-          restaurantPhone: "+227 96 00 00 00",
+          restaurantPhone: "+227 96 05 23 10",
           items: [
             {
               id: `item-${ro.id}-1`,
               menuItem: {
-                id: "dish-test-1",
+                id: `dish-${ro.id}-main`,
                 name: ro.notes?.includes("Riz") ? "Riz au gras spécial" : "Menu Commande Client",
                 description: ro.notes || "Commande enregistrée via Supabase",
                 price: Number(ro.subtotal_xof || ro.total_xof || 5000),

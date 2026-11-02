@@ -660,11 +660,11 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
           <button
             type="button"
             onClick={handleTestKitchenChime}
-            title="Tester le carillon sonore de la cuisine"
+            title="Vérifier la sonnette audio de la cuisine"
             className="px-3 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
           >
             <BellRing className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Tester Sonnette 🔔</span>
+            <span className="hidden sm:inline">Alerte Sonore 🔔</span>
           </button>
 
           <button
@@ -1031,7 +1031,7 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                   className="px-3 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-slate-950 text-xs font-black flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-orange-500/20"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>+ Simuler commande</span>
+                  <span>+ Commande Express</span>
                 </button>
               )}
               <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
@@ -1049,7 +1049,7 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
               <div className="space-y-1">
                 <h4 className="text-base font-bold text-white">Aucune commande pour le moment</h4>
                 <p className="text-xs max-w-md mx-auto text-slate-400">
-                  Passez une commande depuis l&apos;écran client ou cliquez ci-dessous pour injecter immédiatement une commande test vers le Quartier Plateau.
+                  Les commandes passées par les clients ou reçues au guichet/téléphone s&apos;affichent ici en direct avec notification sonore.
                 </p>
               </div>
               {onCreateTestOrder && (
@@ -1059,7 +1059,7 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                   className="px-5 py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 mx-auto transition cursor-pointer shadow-lg shadow-orange-500/30"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>🚀 Créer une Commande Test (Moussa Garba • Plateau)</span>
+                  <span>🚀 Enregistrer Commande Express Directe (Plateau 1)</span>
                 </button>
               )}
             </div>
@@ -1723,7 +1723,7 @@ CREATE TABLE IF NOT EXISTS public.restaurant_orders (
                   className="px-4 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-black flex items-center gap-2 transition cursor-pointer"
                 >
                   <Eye className="w-4 h-4" />
-                  <span>Tester le Rendu Client ↗</span>
+                  <span>Aperçu Vue Client ↗</span>
                 </button>
               )}
             </div>

@@ -550,7 +550,7 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
           </button>
         </div>
 
-        {/* Quick Test Creator Button */}
+        {/* Quick Express Dispatch Button */}
         {onCreateTestOrder && (
           <button
             type="button"
@@ -558,7 +558,7 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
             className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 text-xs font-black flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-orange-500/20"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>+ Simuler Nouvelle Course</span>
+            <span>+ Course Express Directe</span>
           </button>
         )}
       </div>
@@ -597,7 +597,7 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
                   className="px-5 py-2.5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs inline-flex items-center gap-2 transition cursor-pointer shadow-lg shadow-cyan-500/20"
                 >
                   <Bike className="w-4 h-4" />
-                  <span>Générer une course test à récupérer</span>
+                  <span>Enregistrer une course express directe</span>
                 </button>
               )}
             </div>

@@ -2198,7 +2198,7 @@ Consultez le fichier alloresto-contrat-partenariat-restaurant.md pour le texte i
                 }}
                 className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-semibold cursor-pointer transition"
               >
-                Exemple Restaurant Test
+                Exemple : Le Gourmet du Fleuve
               </button>
             </div>
 
