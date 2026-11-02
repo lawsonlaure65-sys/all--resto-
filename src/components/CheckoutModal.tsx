@@ -29,7 +29,7 @@ import {
   Search,
   QrCode,
 } from "lucide-react";
-import { CartItem, PaymentMethod, ServiceMode, Order, AppLanguage } from "../types";
+import { CartItem, PaymentMethod, PaymentStatus, ServiceMode, Order, AppLanguage } from "../types";
 import { LOCAL_PAYMENT_METHODS } from "../data/allorestoData";
 import {
   NIAMEY_DISTRICTS_DATA,
@@ -41,7 +41,9 @@ import { getJumuahStatus } from "../utils/jumuahSchedule";
 import { generateWhatsAppOrderConfirmation } from "../utils/whatsappNotifications";
 import { CheckoutPaymentModal } from "./CheckoutPaymentModal";
 import { PaymentQRCode } from "./PaymentQRCode";
-import { PaymentRecord } from "../services/paymentService";
+import { PaymentRecord, processPayment } from "../services/paymentService";
+import { persistOrderToSupabase } from "../services/supabaseRestaurantService";
+import { supabase } from "../lib/supabase";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -84,10 +86,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const [selectedDistrictId, setSelectedDistrictId] = useState<string>("plateau");
   const [deliveryZone, setDeliveryZone] = useState<"centre" | "peripherie" | "mosquee_pickup">("centre");
-  const [customerName, setCustomerName] = useState("Amadou Seyni");
-  const [customerPhone, setCustomerPhone] = useState("🇳🇪 +227 90 12 34 56");
-  const [deliveryAddress, setDeliveryAddress] = useState("Quartier Plateau, Ministère des Finances, Niamey");
-  const [deliveryNotes, setDeliveryNotes] = useState("Bureau 204, 2ème étage aile Ouest");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryNotes, setDeliveryNotes] = useState("");
   const [scheduledOption, setScheduledOption] = useState<string>(
     jumuahStatus.isPauseActive ? "custom" : "asap"
   );
@@ -101,11 +103,43 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [receiptProofAttached, setReceiptProofAttached] = useState<boolean>(false);
   const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState<string>("Airtel Money");
-  const [mobileMoneyNumber, setMobileMoneyNumber] = useState("🇳🇪 +227 96 00 11 22");
+  const [mobileMoneyNumber, setMobileMoneyNumber] = useState("");
   const [notifyWhatsApp, setNotifyWhatsApp] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMobilePaymentFlow, setShowMobilePaymentFlow] = useState(false);
   const [onlinePaymentRecord, setOnlinePaymentRecord] = useState<PaymentRecord | null>(null);
+
+  // Synchroniser automatiquement avec le profil Supabase connecté s'il existe
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCustomerProfile() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user && isMounted) {
+          const { data: profile } = await (supabase.from("profiles") as any)
+            .select("full_name, phone")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          if (profile && isMounted) {
+            if (profile.full_name) setCustomerName(profile.full_name);
+            if (profile.phone) {
+              setCustomerPhone(profile.phone);
+              setMobileMoneyNumber(profile.phone);
+            }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (isOpen) {
+      loadCustomerProfile();
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
 
   // Sync initial district if passed
   useEffect(() => {
@@ -132,10 +166,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setTimeout(() => setCopiedNumber(null), 2500);
   };
 
-  // Card Mock Data
-  const [cardNumber, setCardNumber] = useState("4532 •••• •••• 8892");
-  const [cardExpiry, setCardExpiry] = useState("09/28");
-  const [cardCvc, setCardCvc] = useState("742");
+  // Card details state (empty by default)
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvc, setCardCvc] = useState("");
 
   if (!isOpen) return null;
 
@@ -160,10 +194,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     if (d) {
       if (d.zone === "relais_gratuit") {
         setDeliveryZone("mosquee_pickup");
-        setDeliveryAddress("Point de retrait : Grande Mosquée Kadhafi (Avenue de l'Islam)");
       } else {
         setDeliveryZone(d.zone);
-        setDeliveryAddress(`Quartier ${d.name}, Niamey`);
       }
     }
   };
@@ -184,15 +216,30 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         : customScheduledTime;
 
     setTimeout(() => {
+      const finalAddress =
+        serviceMode === "takeaway" || deliveryZone === "mosquee_pickup"
+          ? "Point de retrait : Grande Mosquée Mouhamar Kadhafi (Avenue de l'Islam)"
+          : (deliveryAddress.trim() || `Quartier ${activeDistrict?.name || "Niamey"}`);
+
+      const isCash = paymentMethod === "cash" || paymentMethod === "cash_on_delivery";
+      
+      let canonicalPaymentMethod: PaymentMethod = paymentMethod;
+      if (paymentMethod === "cash") canonicalPaymentMethod = "cash_on_delivery";
+      else if (paymentMethod === "mobile_money") canonicalPaymentMethod = "airtel_money";
+      else if (paymentMethod === "al_izza_business" || paymentMethod === "al_izza_transfer") canonicalPaymentMethod = "al_izza_cash";
+
+      const resolvedPaymentStatus: PaymentStatus = isCash
+        ? "cash_on_delivery"
+        : "awaiting_mobile_money_validation";
+
+      const cleanRef = paymentReference ? paymentReference.trim() : undefined;
+
       const newOrder: Order = {
         id: "CMD-" + Math.floor(1000 + Math.random() * 9000),
         createdAt: "À l'instant",
-        customerName: customerName || "Client Allôresto Niamey",
-        customerPhone: customerPhone || "+227 90 00 00 00",
-        deliveryAddress:
-          serviceMode === "takeaway" || deliveryZone === "mosquee_pickup"
-            ? "Point de retrait : Grande Mosquée Mouhamar Kadhafi (Avenue de l'Islam)"
-            : deliveryAddress,
+        customerName: customerName.trim() || "Client Allôresto",
+        customerPhone: customerPhone.trim() || "+227 90 00 00 00",
+        deliveryAddress: finalAddress,
         city: city || "Niamey",
         serviceType: serviceMode,
         restaurantId,
@@ -205,8 +252,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         promoCode,
         tip,
         total: grandTotal,
-        paymentMethod,
-        paymentStatus: paymentMethod === "cash" ? "pending" : (receiptProofAttached ? "paid" : "pending"),
+        paymentMethod: canonicalPaymentMethod,
+        paymentStatus: resolvedPaymentStatus,
+        mobile_money_reference: cleanRef,
+        paymentReference: cleanRef,
         orderStatus: "received",
         estimatedDeliveryTime:
           scheduledOption === "asap"
@@ -216,12 +265,26 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             : `Prévue pour ${finalScheduledTime}`,
         scheduledTime: finalScheduledTime,
         deliveryPartner: "Billo Express 🏍️",
-        cashChangeAmount: paymentMethod === "cash" ? cashChangeAmount : undefined,
-        paymentReference: paymentReference ? paymentReference.trim() : undefined,
+        cashChangeAmount: isCash && cashChangeAmount ? String(cashChangeAmount) : undefined,
         receiptProofAttached,
-        courierName: serviceMode === "delivery" && deliveryZone !== "mosquee_pickup" ? "Ibrahim Oumarou (Billo Express)" : undefined,
-        courierPhone: serviceMode === "delivery" && deliveryZone !== "mosquee_pickup" ? "+227 92 08 08 22" : undefined,
+        courierName: undefined,
+        courierPhone: undefined,
       };
+
+      // Si paiement Mobile Money, enregistrer la transaction dans la table payments
+      if (!isCash) {
+        processPayment({
+          orderId: newOrder.id,
+          amount: grandTotal,
+          paymentMethod: String(canonicalPaymentMethod),
+          phoneNumber: customerPhone.trim() || mobileMoneyNumber.trim() || "+227 90 00 00 00",
+          reference: cleanRef,
+          paymentStatus: "awaiting_mobile_money_validation",
+        }).catch((err) => console.warn("Erreur enregistrement transaction:", err));
+      }
+
+      // Persistance de la commande dans Supabase
+      persistOrderToSupabase(newOrder).catch((err) => console.warn("Erreur sauvegarde commande:", err));
 
       if (notifyWhatsApp) {
         track("whatsapp_click", {
@@ -611,7 +674,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   required
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Ex: Amadou Seyni"
+                  placeholder="Nom et prénom"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-orange-500"
                 />
               </div>
@@ -625,7 +688,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   required
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="+227 90 12 34 56"
+                  placeholder="+227 9X XX XX XX"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-orange-500"
                 />
               </div>
@@ -642,7 +705,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     required
                     value={deliveryAddress}
                     onChange={(e) => setDeliveryAddress(e.target.value)}
-                    placeholder="Ex: Plateau, Ministère des Finances / Koira Kano / Yantala..."
+                    placeholder="Quartier Plateau, Rue des Banques"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-orange-500"
                   />
                 </div>
@@ -655,7 +718,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     type="text"
                     value={deliveryNotes}
                     onChange={(e) => setDeliveryNotes(e.target.value)}
-                    placeholder="Ex: Direction Générale, Bureau 102 / Près de la Grande Mosquée Khadafi"
+                    placeholder="Précisions de livraison pour le coursier (repère, villa, barrière...)"
                     className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-orange-500"
                   />
                 </div>

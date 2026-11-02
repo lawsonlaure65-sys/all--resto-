@@ -71,7 +71,7 @@ export const DriverLoginScreen: React.FC<DriverLoginScreenProps> = ({
         }
 
         const role = profile?.role;
-        if (role === "driver") {
+        if (role === "driver" || role === "courier") {
           const driver: DriverProfile = {
             id: authData.user.id,
             fullName: profile.full_name || "Coursier Billo Express",
@@ -85,6 +85,22 @@ export const DriverLoginScreen: React.FC<DriverLoginScreenProps> = ({
           };
           playCourierHandoverSound();
           onLoginSuccess(driver);
+          return;
+        } else if (role === "delivery_manager") {
+          // Responsable de flotte Billo Express
+          const managerProfile: DriverProfile = {
+            id: authData.user.id,
+            fullName: profile?.full_name ? `${profile.full_name} (Responsable Flotte)` : "Responsable Flotte Billo Express",
+            phone: profile?.phone || authData.user.email || identifier,
+            motoPlate: "Billo HQ Supervision",
+            vehicle: "Dispatch & Supervision Flotte",
+            status: "available",
+            currentZone: "Tous secteurs Niamey",
+            rating: 5.0,
+            completedDeliveries: 0,
+          };
+          playCourierHandoverSound();
+          onLoginSuccess(managerProfile);
           return;
         } else if (role === "admin") {
           // La Direction a un accès complet de supervision
@@ -105,7 +121,7 @@ export const DriverLoginScreen: React.FC<DriverLoginScreenProps> = ({
         } else {
           // Client ou rôle non autorisé : REFUS STRICT
           setErrorMsg(
-            "Accès refusé : ce compte possède le rôle 'Client'. L'espace coursier Billo Express est strictement réservé aux livreurs agréés et à la Direction."
+            "Accès refusé : ce compte possède le rôle 'Client'. L'espace coursier Billo Express est strictement réservé aux livreurs agréés, au Responsable de flotte et à la Direction."
           );
           await supabase.auth.signOut();
           return;

@@ -31,10 +31,10 @@ export const TableBookingModal: React.FC<TableBookingModalProps> = ({
   const [guests, setGuests] = useState(2);
   const [bookingDate, setBookingDate] = useState("2025-05-18");
   const [bookingTime, setBookingTime] = useState("20:00");
-  const [customerName, setCustomerName] = useState("Amadou Seyni");
-  const [customerPhone, setCustomerPhone] = useState("+227 90 12 34 56");
-  const [customerEmail, setCustomerEmail] = useState("amadou.seyni@alloresto.ne");
-  const [specialRequests, setSpecialRequests] = useState("Terrasse ou salon climatisé");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [specialRequests, setSpecialRequests] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
 
   if (!restaurant || !isOpen) return null;
@@ -174,7 +174,7 @@ export const TableBookingModal: React.FC<TableBookingModalProps> = ({
                   required
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Ex: Sophie Laurent"
+                  placeholder="Votre nom complet"
                   className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
@@ -187,6 +187,7 @@ export const TableBookingModal: React.FC<TableBookingModalProps> = ({
                     required
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
+                    placeholder="+227 9X XX XX XX"
                     className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
                   />
                 </div>
@@ -197,6 +198,7 @@ export const TableBookingModal: React.FC<TableBookingModalProps> = ({
                     required
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="contact@exemple.com"
                     className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-500"
                   />
                 </div>

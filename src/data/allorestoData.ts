@@ -1119,139 +1119,19 @@ export const RESTAURANTS_DATA: Restaurant[] = [
 ];
 
 export const DEFAULT_USER_PROFILE: UserProfile = {
-  name: "Amadou Seyni",
-  phone: "+227 90 12 34 56",
-  email: "amadou.seyni@finances.gouv.ne",
-  city: "Niamey - Plateau (Ministères)",
-  loyaltyPoints: 1450,
-  sahelClubTier: "Or",
+  name: "",
+  phone: "",
+  email: "",
+  city: "Niamey",
+  loyaltyPoints: 0,
+  sahelClubTier: "Bronze",
   favoriteRestaurantIds: ["resto-khadys-food", "resto-khadafi"],
-  savedAddresses: [
-    {
-      id: "addr-1",
-      label: "🏢 Bureau Ministère des Finances (Plateau)",
-      address: "Rue des Ministères, Immeuble Principal, 3ème étage aile Ouest, Bureau 304",
-      notes: "Livraison Billo Express à l'accueil ou bureau 304",
-      isDefault: true,
-    },
-    {
-      id: "addr-2",
-      label: "🏠 Domicile Koira Kano",
-      address: "Quartier Koira Kano, Rue KK-14, Villa 42",
-      notes: "Sonner au portail noir",
-      isDefault: false,
-    },
-  ],
+  savedAddresses: [],
 };
 
-export const SAMPLE_GROUP_SESSIONS: GroupOrderSession[] = [
-  {
-    id: "grp-session-1",
-    code: "PLATEAU-MINISTERE-404",
-    title: "Déjeuner Direction Financière & Trésor (Plateau)",
-    creatorName: "Amadou Seyni",
-    restaurantId: "resto-khadys-food",
-    restaurantName: "Khady's Food & Event",
-    cutoffTime: "11:45",
-    deliveryAddress: "Ministère des Finances, 3ème étage, Bureau 304, Niamey",
-    scheduledTime: "12:30",
-    isActive: true,
-    members: [
-      { id: "m-1", name: "Amadou S.", department: "Chef de Division", itemsCount: 2, subtotal: 5200 },
-      { id: "m-2", name: "Mariama D.", department: "Trésorerie", itemsCount: 1, subtotal: 3500 },
-      { id: "m-3", name: "Ousseini K.", department: "Comptabilité", itemsCount: 2, subtotal: 4200 },
-    ],
-  },
-];
+export const SAMPLE_GROUP_SESSIONS: GroupOrderSession[] = [];
 
-export const INITIAL_ORDERS: Order[] = [
-  {
-    id: "CMD-2026-8801",
-    createdAt: "Aujourd'hui à 11:45",
-    customerName: "Amadou Seyni",
-    customerPhone: "+227 90 12 34 56",
-    deliveryAddress: "Ministère des Finances, 3ème étage, Plateau, Niamey",
-    city: "Niamey - Plateau (Ministères)",
-    serviceType: "delivery",
-    restaurantId: "resto-khadys-food",
-    restaurantName: "Khady's Food & Event",
-    restaurantPhone: "+227 96 05 23 10",
-    items: [
-      {
-        id: "cart-item-1",
-        menuItem: RESTAURANTS_DATA[0].menu[5], // Choukouya Royal
-        quantity: 1,
-        selectedOptions: {},
-        unitPrice: 4000,
-        totalPrice: 4000,
-      },
-      {
-        id: "cart-item-2",
-        menuItem: RESTAURANTS_DATA[0].menu[10], // Jus de Baobab
-        quantity: 2,
-        selectedOptions: {},
-        unitPrice: 1000,
-        totalPrice: 2000,
-      },
-    ],
-    subtotal: 6000,
-    deliveryFee: 1000,
-    discount: 500,
-    promoCode: "MIDI2026",
-    tip: 500,
-    total: 7000,
-    paymentMethod: "mobile_money",
-    paymentStatus: "paid",
-    orderStatus: "delivering",
-    estimatedDeliveryTime: "12:15",
-    scheduledTime: "12:15",
-    deliveryPartner: "Billo Express Niamey 🏍️",
-    courierName: "Moussa Billo Express",
-    courierPhone: "+227 92 08 08 22",
-  },
-  {
-    id: "CMD-2026-8742",
-    createdAt: "Hier à 19:30",
-    customerName: "Amadou Seyni",
-    customerPhone: "+227 90 12 34 56",
-    deliveryAddress: "Quartier Koira Kano, Rue KK-14, Villa 42, Niamey",
-    city: "Niamey - Koira Kano",
-    serviceType: "delivery",
-    restaurantId: "resto-khadafi",
-    restaurantName: "Le Khadafi Palace & Grillades",
-    restaurantPhone: "+227 90 12 34 56",
-    items: [
-      {
-        id: "cart-item-3",
-        menuItem: RESTAURANTS_DATA[1].menu[2], // Choukouya Mouton
-        quantity: 2,
-        selectedOptions: {},
-        unitPrice: 3500,
-        totalPrice: 7000,
-      },
-      {
-        id: "cart-item-4",
-        menuItem: RESTAURANTS_DATA[1].menu[7], // Jus de Bissap
-        quantity: 2,
-        selectedOptions: {},
-        unitPrice: 1000,
-        totalPrice: 2000,
-      },
-    ],
-    subtotal: 9000,
-    deliveryFee: 1500,
-    discount: 0,
-    tip: 500,
-    total: 11000,
-    paymentMethod: "cash",
-    paymentStatus: "paid",
-    orderStatus: "delivered",
-    estimatedDeliveryTime: "20:05",
-    deliveryPartner: "Billo Express Niamey 🏍️",
-    courierName: "Alioune Billo",
-    courierPhone: "+227 92 08 08 22",
-  },
-];
+export const INITIAL_ORDERS: Order[] = [];
 
 export const ALLORESTO_BRAND_INFO = {
   name: "Allôresto",

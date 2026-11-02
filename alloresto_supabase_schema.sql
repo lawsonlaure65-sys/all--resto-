@@ -670,10 +670,58 @@ create table if not exists public.restaurant_orders (
   status text not null default 'pending',
   payment_method text default 'cash',
   payment_status text default 'pending',
+  operator_reference text,
   notes text,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+  constraint restaurant_orders_positive_total check (total > 0),
+  constraint restaurant_orders_subtotal_non_neg check (subtotal >= 0),
+  constraint restaurant_orders_delivery_fee_non_neg check (delivery_fee >= 0)
+);
+
+-- ==============================================================================
+-- 19. MOBILE MONEY PAYMENTS & TRANSACTIONS (Airtel Money, Moov Money, Al-Izza)
+-- ==============================================================================
+create table if not exists public.payments (
+  id uuid primary key default gen_random_uuid(),
+  order_id text not null,
+  amount_xof integer not null check (amount_xof > 0),
+  payment_method text not null,
+  payment_status text not null default 'pending' check (payment_status in ('pending', 'completed', 'paid_online', 'failed', 'refunded')),
+  transaction_id text unique,
+  operator_reference text,
+  phone_number text not null,
+  provider_response jsonb not null default '{}'::jsonb,
+  is_verified boolean not null default false,
+  verified_at timestamptz,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+-- Index pour la performance des paiements
+create index if not exists payments_order_id_idx on public.payments(order_id);
+create index if not exists payments_status_idx on public.payments(payment_status);
+create index if not exists payments_created_at_idx on public.payments(created_at desc);
+
+-- RLS sur les paiements
+alter table public.payments enable row level security;
+
+create policy "payments: select all for admin or manager"
+on public.payments for select to authenticated
+using (public.is_admin() or exists (
+  select 1 from public.profiles p where p.id = auth.uid() and p.role in ('admin', 'delivery_manager')
+));
+
+create policy "payments: insert authenticated or anon checkout"
+on public.payments for insert to anon, authenticated
+with check (amount_xof > 0);
+
+create policy "payments: admin or manager updates status"
+on public.payments for update to authenticated
+using (public.is_admin() or exists (
+  select 1 from public.profiles p where p.id = auth.uid() and p.role in ('admin', 'delivery_manager')
+))
+with check (true);
 
 -- Index pour la performance
 create index if not exists restaurant_orders_resto_idx on public.restaurant_orders(restaurant_id);

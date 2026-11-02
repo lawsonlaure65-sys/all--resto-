@@ -90,7 +90,20 @@ export const CourierDashboard: React.FC<CourierDashboardProps> = ({
                 completedDeliveries: 0,
               };
               setCurrentDriver(adminDriver);
-            } else if (profile.role === "driver") {
+            } else if (profile.role === "delivery_manager") {
+              const managerDriver: DriverProfile = {
+                id: authSession.user.id,
+                fullName: profile.full_name ? `${profile.full_name} (Responsable Flotte)` : "Responsable Flotte Billo Express",
+                phone: profile.phone || authSession.user.email || "",
+                motoPlate: "Billo HQ Supervision",
+                vehicle: "Dispatch & Supervision Flotte",
+                status: "available",
+                currentZone: "Tous secteurs Niamey",
+                rating: 5.0,
+                completedDeliveries: 0,
+              };
+              setCurrentDriver(managerDriver);
+            } else if (profile.role === "driver" || profile.role === "courier") {
               const driver: DriverProfile = {
                 id: authSession.user.id,
                 fullName: profile.full_name || "Coursier Billo Express",
@@ -124,6 +137,7 @@ export const CourierDashboard: React.FC<CourierDashboardProps> = ({
   // Modals & UI States
   const [selectedOrderDetail, setSelectedOrderDetail] = useState<Order | null>(null);
   const [paymentCollectModalOrder, setPaymentCollectModalOrder] = useState<Order | null>(null);
+  const [cashTenderedInput, setCashTenderedInput] = useState<number | "">("");
   const [acceptedToast, setAcceptedToast] = useState<string | null>(null);
   const [isLoadingSupabase, setIsLoadingSupabase] = useState<boolean>(false);
   const [supabaseOrders, setSupabaseOrders] = useState<Order[]>([]);
@@ -219,21 +233,83 @@ export const CourierDashboard: React.FC<CourierDashboardProps> = ({
   }, [readyOrders.length, soundAlerts, isOnline]);
 
   // Handle Taking an Order
-  const handleTakeOrder = (order: Order) => {
+  const handleTakeOrder = async (order: Order) => {
     playCourierHandoverSound();
     onUpdateOrderStatus(order.id, "delivering");
     setAcceptedToast(`Course #${order.id} acceptée ! Mission assignée à ${activeCourier.name}.`);
     setActiveTab("active");
     setTimeout(() => setAcceptedToast(null), 5000);
+
+    try {
+      await (supabase.from("restaurant_orders") as any)
+        .update({ status: "delivering" })
+        .eq("order_id", order.id);
+      await (supabase.from("orders") as any)
+        .update({ order_status: "delivering" })
+        .eq("id", order.id);
+    } catch (e) {
+      console.warn("[CourierDashboard] take order note:", e);
+    }
   };
 
   // Handle Completing & Collecting payment
-  const handleConfirmDelivered = (order: Order) => {
+  const handleConfirmDelivered = async (order: Order) => {
     playCourierHandoverSound();
     onUpdateOrderStatus(order.id, "delivered");
     setPaymentCollectModalOrder(null);
     setAcceptedToast(`Livraison #${order.id} terminée avec succès ! Commission créditée.`);
     setTimeout(() => setAcceptedToast(null), 5000);
+
+    const isCash = order.paymentMethod === "cash" || order.paymentMethod === "cash_on_delivery";
+    const tendered = typeof cashTenderedInput === "number" && cashTenderedInput > 0 ? cashTenderedInput : order.total;
+    const collected = isCash ? order.total : 0;
+
+    try {
+      // 1. Mettre à jour restaurant_orders
+      await (supabase.from("restaurant_orders") as any)
+        .update({
+          status: "delivered",
+          payment_status: "paid",
+          notes: isCash
+            ? `Encaissé en espèces par coursier Billo Express (${activeCourier.name}): ${collected.toLocaleString()} FCFA (Reçu: ${tendered.toLocaleString()} FCFA)`
+            : undefined,
+        })
+        .eq("order_id", order.id);
+
+      // 2. Mettre à jour orders avec cash_collected_xof et cash_tendered_xof
+      const orderUpdate: Record<string, any> = {
+        order_status: "delivered",
+        payment_status: "paid",
+      };
+      if (isCash) {
+        orderUpdate.cash_collected_xof = collected;
+        orderUpdate.cash_tendered_xof = tendered;
+      }
+      await (supabase.from("orders") as any)
+        .update(orderUpdate)
+        .eq("id", order.id);
+
+      // 3. Enregistrer la transaction réelle dans public.payments
+      if (isCash) {
+        await (supabase.from("payments") as any)
+          .insert({
+            order_id: order.id,
+            amount_xof: Math.max(1, collected),
+            payment_method: "cash_on_delivery",
+            payment_status: "paid",
+            transaction_id: `CASH-${order.id}-${Date.now().toString().slice(-4)}`,
+            operator_reference: `Billo-${activeCourier.name}`,
+            phone_number: order.customerPhone || "+227 00 00 00 00",
+            provider_response: {
+              cash_tendered: tendered,
+              cash_collected: collected,
+              courier: activeCourier.name,
+            },
+          });
+      }
+    } catch (e) {
+      console.warn("[CourierDashboard] Delivery persistence note:", e);
+    }
   };
 
   // Build GPS Google Maps link
@@ -252,11 +328,11 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
     return `https://wa.me/${order.customerPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(msg)}`;
   };
 
-  // Calculations
-  const completedCount = 8 + deliveredOrders.length;
-  const baseEarnings = 24500 + deliveredOrders.reduce((sum, o) => sum + (o.deliveryFee || 1500), 0);
+  // Calculations financières réelles (Chantier 2 : zéro donnée fictive)
+  const completedCount = deliveredOrders.length;
+  const baseEarnings = deliveredOrders.reduce((sum, o) => sum + (o.deliveryFee || 1500), 0);
   const totalCashToRemit = deliveredOrders
-    .filter((o) => o.paymentMethod === "cash")
+    .filter((o) => o.paymentMethod === "cash" || o.paymentMethod === "cash_on_delivery")
     .reduce((sum, o) => sum + o.total, 0);
 
   return (
@@ -587,10 +663,10 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
                       {/* Payment Indicator */}
                       <div className="flex items-center justify-between text-xs px-1">
                         <span className="text-slate-400">Règlement :</span>
-                        <strong className={order.paymentMethod === "cash" ? "text-amber-400" : "text-emerald-400"}>
-                          {order.paymentMethod === "cash"
-                            ? `💵 Espèces à encaisser (${order.total.toLocaleString()} FCFA)`
-                            : `✅ Payé en ligne (${order.paymentMethod.toUpperCase()})`}
+                        <strong className={order.paymentMethod === "cash" || order.paymentMethod === "cash_on_delivery" ? "text-amber-400 font-black" : "text-emerald-400"}>
+                          {order.paymentMethod === "cash" || order.paymentMethod === "cash_on_delivery"
+                            ? `💵 À encaisser par le coursier : ${order.total.toLocaleString()} FCFA`
+                            : `✅ Mobile Money (${order.paymentMethod.toUpperCase()})`}
                         </strong>
                       </div>
                     </div>
@@ -662,8 +738,10 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
                       <span className="text-lg font-black text-orange-400 block">
                         {order.total.toLocaleString()} FCFA
                       </span>
-                      <span className="text-[10px] text-slate-400">
-                        {order.paymentMethod === "cash" ? "💵 À encaisser" : "✅ Déjà payé"}
+                      <span className={`text-[10px] font-bold ${order.paymentMethod === "cash" || order.paymentMethod === "cash_on_delivery" ? "text-amber-400" : "text-emerald-400"}`}>
+                        {order.paymentMethod === "cash" || order.paymentMethod === "cash_on_delivery"
+                          ? `💵 À encaisser par le coursier : ${order.total.toLocaleString()} FCFA`
+                          : "✅ Mobile Money payé (0 FCFA à encaisser)"}
                       </span>
                     </div>
                   </div>
@@ -737,7 +815,10 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
                   {/* Main Deliver Action */}
                   <button
                     type="button"
-                    onClick={() => setPaymentCollectModalOrder(order)}
+                    onClick={() => {
+                      setPaymentCollectModalOrder(order);
+                      setCashTenderedInput(order.total);
+                    }}
                     className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-500/20 transition-transform active:scale-98"
                   >
                     <CheckCircle2 className="w-4 h-4" />
@@ -823,50 +904,122 @@ Je suis en route vers votre adresse : ${order.deliveryAddress}.
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
-                <div className="flex justify-between text-slate-300">
-                  <span>Client :</span>
-                  <strong className="text-white">{paymentCollectModalOrder.customerName}</strong>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Mode :</span>
-                  <strong className="uppercase text-orange-400">{paymentCollectModalOrder.paymentMethod}</strong>
-                </div>
-                <div className="flex justify-between text-sm font-black border-t border-slate-800 pt-2 text-white">
-                  <span>Montant Total :</span>
-                  <span className="text-emerald-400">{paymentCollectModalOrder.total.toLocaleString()} FCFA</span>
-                </div>
-              </div>
+              {(() => {
+                const isCash =
+                  paymentCollectModalOrder.paymentMethod === "cash" ||
+                  paymentCollectModalOrder.paymentMethod === "cash_on_delivery";
+                const tenderedVal =
+                  typeof cashTenderedInput === "number" ? cashTenderedInput : paymentCollectModalOrder.total;
+                const changeVal = Math.max(0, tenderedVal - paymentCollectModalOrder.total);
+                const isInsufficient = isCash && tenderedVal < paymentCollectModalOrder.total;
 
-              <div className="text-xs text-slate-300 leading-relaxed">
-                {paymentCollectModalOrder.paymentMethod === "cash" ? (
-                  <p className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300">
-                    💵 <strong>Rappel :</strong> Assurez-vous d&apos;avoir encaissé la somme de{" "}
-                    <strong>{paymentCollectModalOrder.total.toLocaleString()} FCFA</strong> en espèces et remis la monnaie exacte.
-                  </p>
-                ) : (
-                  <p className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
-                    ✅ <strong>Paiement en ligne :</strong> Cette commande a déjà été réglée en ligne. Vous n&apos;avez rien à encaisser.
-                  </p>
-                )}
-              </div>
+                return (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+                      <div className="flex justify-between text-slate-300">
+                        <span>Client :</span>
+                        <strong className="text-white">{paymentCollectModalOrder.customerName}</strong>
+                      </div>
+                      <div className="flex justify-between text-slate-300">
+                        <span>Adresse Niamey :</span>
+                        <span className="text-slate-300 font-medium text-right max-w-[200px] truncate">
+                          {paymentCollectModalOrder.deliveryAddress}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-300">
+                        <span>Règlement :</span>
+                        <strong className="uppercase text-orange-400">
+                          {isCash ? "Espèces à la livraison" : `Mobile Money (${paymentCollectModalOrder.paymentMethod.toUpperCase()})`}
+                        </strong>
+                      </div>
+                      <div className="flex justify-between text-sm font-black border-t border-slate-800 pt-2 text-white">
+                        <span>Montant Commande :</span>
+                        <span className="text-emerald-400">{paymentCollectModalOrder.total.toLocaleString()} FCFA</span>
+                      </div>
+                    </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setPaymentCollectModalOrder(null)}
-                  className="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs cursor-pointer transition"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleConfirmDelivered(paymentCollectModalOrder)}
-                  className="py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs cursor-pointer shadow-lg shadow-emerald-500/25 transition"
-                >
-                  Confirmer Livré ✓
-                </button>
-              </div>
+                    {isCash ? (
+                      <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/30 space-y-3">
+                        <div className="flex items-center justify-between text-xs font-black text-amber-300">
+                          <span>💵 À ENCAISSER PAR LE COURSIER</span>
+                          <span className="text-sm font-mono text-white">
+                            {paymentCollectModalOrder.total.toLocaleString()} FCFA
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-slate-300 block">
+                            Espèces reçues du client (FCFA) :
+                          </label>
+                          <input
+                            type="number"
+                            min={paymentCollectModalOrder.total}
+                            step={500}
+                            value={cashTenderedInput}
+                            onChange={(e) => {
+                              const val = e.target.value === "" ? "" : Number(e.target.value);
+                              setCashTenderedInput(val);
+                            }}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-sm focus:outline-none focus:border-amber-400"
+                            placeholder={String(paymentCollectModalOrder.total)}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
+                          <span className="text-slate-300 font-medium">Monnaie à rendre :</span>
+                          <span className={`font-mono font-bold ${changeVal > 0 ? "text-amber-400 text-sm" : "text-slate-400"}`}>
+                            {changeVal.toLocaleString()} FCFA
+                          </span>
+                        </div>
+
+                        {isInsufficient && (
+                          <p className="text-[11px] text-red-400 font-bold">
+                            ⚠️ Le montant reçu ({tenderedVal.toLocaleString()} FCFA) est inférieur au total de la commande ({paymentCollectModalOrder.total.toLocaleString()} FCFA).
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 space-y-2 text-xs">
+                        <p className="font-bold text-emerald-300 flex items-center gap-1.5">
+                          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span>Paiement en ligne vérifié (0 FCFA à encaisser)</span>
+                        </p>
+                        <p className="text-slate-300 text-[11px] leading-relaxed">
+                          Cette commande a déjà été payée via opérateur Mobile Money. Ne réclamez aucun montant en espèces au client.
+                        </p>
+                        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex justify-between items-center text-[11px]">
+                          <span className="text-slate-400">Réf SMS Client :</span>
+                          <span className="font-mono font-bold text-cyan-300">
+                            {paymentCollectModalOrder.mobile_money_reference || paymentCollectModalOrder.paymentReference || "Déclarée validée"}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentCollectModalOrder(null)}
+                        className="py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs cursor-pointer transition"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isInsufficient}
+                        onClick={() => handleConfirmDelivered(paymentCollectModalOrder)}
+                        className={`py-3 rounded-xl font-black text-xs cursor-pointer transition shadow-lg ${
+                          isInsufficient
+                            ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                            : "bg-emerald-500 hover:bg-emerald-600 text-slate-950 shadow-emerald-500/25"
+                        }`}
+                      >
+                        Confirmer Livré ✓
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </motion.div>
           </div>
         )}

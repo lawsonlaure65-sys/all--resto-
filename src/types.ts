@@ -1,4 +1,4 @@
-export type UserRole = "client" | "restaurant" | "courier" | "admin";
+export type UserRole = "client" | "restaurant" | "courier" | "delivery_manager" | "admin";
 
 export type AppLanguage = "fr" | "en" | "ha" | "zm";
 
@@ -104,16 +104,27 @@ export interface CartItem {
 }
 
 export type PaymentMethod =
+  | "airtel_money"
+  | "moov_money"
+  | "al_izza_cash"
+  | "cash_on_delivery"
   | "mynita"
   | "amanata"
   | "al_izza_business"
   | "al_izza_transfer"
   | "zeyna"
   | "mobile_money"
-  | "moov_money"
   | "cash"
   | "card"
   | "apple_pay";
+
+export type PaymentStatus =
+  | "awaiting_mobile_money_validation"
+  | "paid"
+  | "cash_on_delivery"
+  | "failed"
+  | "refunded"
+  | "pending";
 
 export interface LocalPaymentOption {
   id: PaymentMethod;
@@ -146,7 +157,8 @@ export interface Order {
   tip: number;
   total: number;
   paymentMethod: PaymentMethod;
-  paymentStatus: "paid" | "pending";
+  paymentStatus: PaymentStatus;
+  mobile_money_reference?: string;
   orderStatus: OrderStatus;
   estimatedDeliveryTime: string;
   scheduledTime?: string; // Ex: "Aujourd'hui à 12h30 (Midi au Bureau)"

@@ -716,7 +716,7 @@ export function App() {
       id: "CMD-" + Math.floor(1000 + Math.random() * 9000),
       createdAt: "À l'instant",
       customerName: "Moussa Garba",
-      customerPhone: "+227 90 12 34 56",
+      customerPhone: "+227 96 00 00 01",
       deliveryAddress: "Quartier Plateau, Ministère de l'Intérieur, Niamey",
       city: "Niamey - Plateau (Ministères)",
       serviceType: "delivery",

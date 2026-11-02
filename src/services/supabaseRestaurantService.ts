@@ -1,6 +1,6 @@
 import { getSupabaseClient } from "./supabaseClient";
 import { supabase } from "../lib/supabase";
-import { Order, OrderStatus } from "../types";
+import { Order, OrderStatus, PaymentMethod, PaymentStatus } from "../types";
 
 export interface RestaurantUserSession {
   userId: string;
@@ -372,8 +372,10 @@ export async function fetchRestaurantOrdersFromSupabase(
         discount: 0,
         tip: 0,
         total: Number(ro.total || 8700),
-        paymentMethod: ro.payment_method?.includes("cash") ? "cash" : "mynita",
-        paymentStatus: ro.payment_status === "paid" ? "paid" : "pending",
+        paymentMethod: (ro.payment_method || (ro.payment_status === "cash_on_delivery" ? "cash_on_delivery" : "airtel_money")) as PaymentMethod,
+        paymentStatus: (ro.payment_status || (ro.payment_method?.includes("cash") ? "cash_on_delivery" : "awaiting_mobile_money_validation")) as PaymentStatus,
+        mobile_money_reference: ro.operator_reference || undefined,
+        paymentReference: ro.operator_reference || undefined,
         orderStatus: mappedStatus,
         estimatedDeliveryTime: "20-30 min",
         deliveryPartner: "Billo Express Niamey 🏍️",
@@ -383,6 +385,128 @@ export async function fetchRestaurantOrdersFromSupabase(
   } catch (err) {
     console.warn("Exception fetching restaurant orders from Supabase:", err);
     return [];
+  }
+}
+
+/**
+ * Enregistre une nouvelle commande confirmée dans Supabase.
+ * Permet à la cuisine centrale et à Billo Express de la recevoir instantanément.
+ */
+export async function persistOrderToSupabase(order: Order): Promise<{ success: boolean; id?: string }> {
+  const client = getSupabaseClient() || supabase;
+  if (!client) return { success: false };
+
+  try {
+    const itemsJson = JSON.stringify(
+      order.items.map((it) => ({
+        name: it.menuItem.name,
+        quantity: it.quantity,
+        price: it.unitPrice,
+        options: it.selectedOptions,
+        notes: it.notes,
+      }))
+    );
+
+    const isCash = order.paymentMethod === "cash" || order.paymentMethod === "cash_on_delivery";
+    const paymentLabel = isCash
+      ? `À encaisser par le coursier Billo Express: ${order.total.toLocaleString()} FCFA`
+      : `En attente de validation Mobile Money (Réf: ${order.mobile_money_reference || order.paymentReference || "Non renseignée"})`;
+
+    const notesSummary = [
+      paymentLabel,
+      order.scheduledTime ? `Horaire: ${order.scheduledTime}` : null,
+      order.cashChangeAmount ? `Rendre monnaie sur: ${order.cashChangeAmount} FCFA` : null,
+      order.paymentReference ? `Réf Mobile Money: ${order.paymentReference}` : null,
+      order.receiptProofAttached ? "Capture / Preuve SMS fournie" : null,
+    ]
+      .filter(Boolean)
+      .join(" • ");
+
+    const basePayload: Record<string, any> = {
+      order_id: order.id,
+      restaurant_id: order.restaurantId || "resto-alloresto-kitchen",
+      customer_name: order.customerName,
+      customer_phone: order.customerPhone,
+      customer_address: order.deliveryAddress,
+      items: itemsJson,
+      subtotal: Math.max(0, Number(order.subtotal || 0)),
+      delivery_fee: Math.max(0, Number(order.deliveryFee || 0)),
+      total: Math.max(1, Number(order.total || 0)),
+      payment_method: order.paymentMethod,
+      payment_status: order.paymentStatus || (isCash ? "cash_on_delivery" : "awaiting_mobile_money_validation"),
+      status: "pending",
+      notes: notesSummary || null,
+    };
+
+    if (order.paymentReference && order.paymentReference.trim()) {
+      basePayload.operator_reference = order.paymentReference.trim();
+    }
+
+    let insertRes = await (client.from("restaurant_orders") as any)
+      .insert(basePayload)
+      .select("id")
+      .maybeSingle();
+
+    // Si la colonne operator_reference n'existe pas encore sur une ancienne version de la table, repli sans bloquer
+    if (insertRes.error && (insertRes.error.message?.includes("operator_reference") || insertRes.error.code === "PGRST204")) {
+      delete basePayload.operator_reference;
+      insertRes = await (client.from("restaurant_orders") as any)
+        .insert(basePayload)
+        .select("id")
+        .maybeSingle();
+    }
+
+    const { data, error } = insertRes;
+
+    if (error) {
+      console.warn("[persistOrderToSupabase] restaurant_orders insert note:", error);
+    }
+
+    // Persistance dans public.orders & public.order_items (Chantier 2 : intégrité SQL)
+    try {
+      const orderPayload: Record<string, any> = {
+        id: order.id,
+        customer_name: order.customerName,
+        customer_phone: order.customerPhone,
+        delivery_address: order.deliveryAddress,
+        subtotal_xof: Math.max(0, Number(order.subtotal || 0)),
+        discount_xof: Math.max(0, Number(order.discount || 0)),
+        delivery_fee_xof: Math.max(0, Number(order.deliveryFee || 0)),
+        total_xof: Math.max(1, Number(order.total || 0)),
+        payment_method: order.paymentMethod,
+        payment_status: order.paymentStatus || (isCash ? "cash_on_delivery" : "awaiting_mobile_money_validation"),
+        order_status: "received",
+      };
+
+      if (order.mobile_money_reference || order.paymentReference) {
+        orderPayload.mobile_money_reference = (order.mobile_money_reference || order.paymentReference)?.trim();
+      }
+      if (order.cashChangeAmount) {
+        const parsedTendered = Number(order.cashChangeAmount);
+        if (!isNaN(parsedTendered) && parsedTendered >= 0) {
+          orderPayload.cash_tendered_xof = parsedTendered;
+        }
+      }
+
+      const { error: orderErr } = await (client.from("orders") as any).insert(orderPayload);
+      if (!orderErr && order.items && order.items.length > 0) {
+        const itemsPayload = order.items.map((it) => ({
+          order_id: order.id,
+          quantity: Math.max(1, Number(it.quantity || 1)),
+          unit_price_xof: Math.max(0, Number(it.unitPrice || 0)),
+          options_total_xof: 0,
+          line_total_xof: Math.max(0, Number(it.totalPrice || (it.unitPrice * (it.quantity || 1)))),
+        }));
+        await (client.from("order_items") as any).insert(itemsPayload);
+      }
+    } catch (sqlErr) {
+      console.warn("[persistOrderToSupabase] orders/order_items SQL sync note:", sqlErr);
+    }
+
+    return { success: !error, id: data?.id };
+  } catch (e) {
+    console.warn("[persistOrderToSupabase] Error:", e);
+    return { success: false };
   }
 }
 

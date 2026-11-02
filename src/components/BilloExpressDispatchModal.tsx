@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Bike,
@@ -12,11 +12,13 @@ import {
   Navigation,
   Sparkles,
   ShieldCheck,
+  Loader2,
 } from "lucide-react";
 import { Order } from "../types";
 import { playCourierHandoverSound } from "../services/kitchenAudioService";
+import { supabase } from "../lib/supabase";
 
-interface CourierDriver {
+export interface CourierDriver {
   id: string;
   name: string;
   phone: string;
@@ -30,73 +32,21 @@ interface CourierDriver {
   avatar: string;
 }
 
-export const BILLO_COURIERS: CourierDriver[] = [
-  {
-    id: "courier-issoufou",
-    name: "Issoufou Moussa",
-    phone: "+22799000000",
-    whatsapp: "22799000000",
-    zone: "Plateau & Ministères (Secteur 1)",
-    vehicle: "Moto 125cc",
-    plate: "MTO-001",
-    rating: 5.0,
-    completedDeliveries: 450,
-    status: "available",
-    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80",
-  },
-  {
-    id: "courier-1",
-    name: "Oumarou Diallo",
-    phone: "+22790112233",
-    whatsapp: "22790112233",
-    zone: "Plateau & Ministères (Secteur 1)",
-    vehicle: "Moto Boxer 150",
-    plate: "RN-8492-A",
-    rating: 4.9,
-    completedDeliveries: 342,
-    status: "available",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
-  },
-  {
-    id: "courier-2",
-    name: "Salifou Mamane",
-    phone: "+22796445566",
-    whatsapp: "22796445566",
-    zone: "Yantala & Francophonie (Secteur 2)",
-    vehicle: "Moto CG 125",
-    plate: "RN-5120-B",
-    rating: 4.8,
-    completedDeliveries: 218,
-    status: "available",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
-  },
-  {
-    id: "courier-3",
-    name: "Ibrahim Harouna",
-    phone: "+22788778899",
-    whatsapp: "22788778899",
-    zone: "Harobanda & Rive Droite (Secteur 3)",
-    vehicle: "TVS Star 110",
-    plate: "RN-9034-C",
-    rating: 5.0,
-    completedDeliveries: 410,
-    status: "available",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80",
-  },
-  {
-    id: "courier-4",
-    name: "Abdoulaye Seydou",
-    phone: "+22791332211",
-    whatsapp: "22791332211",
-    zone: "Banifandou & Lazaret (Secteur 4)",
-    vehicle: "Bajaj Boxer",
-    plate: "RN-2241-D",
-    rating: 4.9,
-    completedDeliveries: 185,
-    status: "available",
-    avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80",
-  },
-];
+export const BILLO_CENTRAL_DISPATCH: CourierDriver = {
+  id: "billo-central",
+  name: "Centrale Billo Express (Dispatch)",
+  phone: "+227 92 08 08 22",
+  whatsapp: "22792080822",
+  zone: "Centrale Tous Secteurs Niamey",
+  vehicle: "Flotte Motorisée Express",
+  plate: "Billo HQ",
+  rating: 5.0,
+  completedDeliveries: 1540,
+  status: "available",
+  avatar: "https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=200&q=80",
+};
+
+export const BILLO_COURIERS: CourierDriver[] = [BILLO_CENTRAL_DISPATCH];
 
 interface BilloExpressDispatchModalProps {
   order: Order | null;
@@ -111,8 +61,50 @@ export const BilloExpressDispatchModal: React.FC<BilloExpressDispatchModalProps>
   onClose,
   onAssignCourier,
 }) => {
-  const [selectedCourier, setSelectedCourier] = useState<CourierDriver>(BILLO_COURIERS[0]);
+  const [couriersList, setCouriersList] = useState<CourierDriver[]>([BILLO_CENTRAL_DISPATCH]);
+  const [selectedCourier, setSelectedCourier] = useState<CourierDriver>(BILLO_CENTRAL_DISPATCH);
+  const [isLoadingDrivers, setIsLoadingDrivers] = useState(false);
   const [isDispatched, setIsDispatched] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadRealDrivers() {
+      setIsLoadingDrivers(true);
+      try {
+        const { data, error } = await (supabase.from("profiles") as any)
+          .select("id, full_name, phone, role, is_active")
+          .in("role", ["driver", "courier", "delivery_manager"])
+          .eq("is_active", true);
+
+        if (!error && data && data.length > 0 && isMounted) {
+          const mapped: CourierDriver[] = data.map((p: any) => ({
+            id: p.id,
+            name: p.full_name || (p.role === "delivery_manager" ? "Responsable Billo Express" : "Livreur Billo"),
+            phone: p.phone || "+227 92 08 08 22",
+            whatsapp: (p.phone || "22792080822").replace(/[^0-9]/g, ""),
+            zone: p.role === "delivery_manager" ? "Centrale Flotte Niamey" : "Niamey Secteurs",
+            vehicle: p.role === "delivery_manager" ? "Supervision Flotte" : "Moto de livraison",
+            plate: "Billo Express",
+            rating: 5.0,
+            completedDeliveries: 0,
+            status: "available",
+            avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80",
+          }));
+          setCouriersList([BILLO_CENTRAL_DISPATCH, ...mapped]);
+        }
+      } catch (e) {
+        console.warn("[BilloExpressDispatchModal] Error loading drivers:", e);
+      } finally {
+        if (isMounted) setIsLoadingDrivers(false);
+      }
+    }
+    if (isOpen) {
+      loadRealDrivers();
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
 
   if (!isOpen || !order) return null;
 
@@ -219,12 +211,20 @@ Merci de confirmer la prise en charge dès réception !`;
 
           {/* Couriers List */}
           <div className="p-4 sm:p-6 space-y-3 bg-slate-950/60 max-h-[50vh] overflow-y-auto">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Coursiers Billo Express en service :
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Disponibilité Flotte Billo Express :
+              </p>
+              {isLoadingDrivers && (
+                <div className="flex items-center gap-1.5 text-xs text-cyan-400">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Synchronisation...</span>
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {BILLO_COURIERS.map((courier, cIdx) => {
+              {couriersList.map((courier, cIdx) => {
                 const isSelected = selectedCourier.id === courier.id;
                 return (
                   <div

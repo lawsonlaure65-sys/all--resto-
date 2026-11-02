@@ -90,7 +90,7 @@ export interface Database {
           id: string;
           full_name: string | null;
           phone: string | null;
-          role: "customer" | "restaurant" | "driver" | "admin";
+          role: "customer" | "restaurant" | "driver" | "courier" | "delivery_manager" | "admin";
           avatar_url: string | null;
           is_active: boolean;
           created_at?: string;

@@ -1125,31 +1125,84 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                   </div>
 
                   {/* Payment & Reçu Verification Status */}
-                  <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
-                    <div>
-                      <span className="text-[10px] text-slate-400 block font-semibold">Mode de règlement :</span>
-                      <span className="font-bold text-white uppercase">{order.paymentMethod}</span>
-                      {order.paymentReference && (
-                        <span className="text-[10px] text-amber-400 font-mono block">
-                          Réf: {order.paymentReference}
+                  <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-semibold">Mode de règlement :</span>
+                        <span className="font-bold text-white uppercase text-xs">
+                          {order.paymentMethod === "cash_on_delivery" || order.paymentMethod === "cash"
+                            ? "Espèces à la livraison"
+                            : order.paymentMethod === "airtel_money"
+                            ? "Airtel Money Niger"
+                            : order.paymentMethod === "moov_money"
+                            ? "Moov Money Niger"
+                            : order.paymentMethod === "al_izza_cash"
+                            ? "Al-Izza Cash"
+                            : order.paymentMethod.toUpperCase()}
                         </span>
-                      )}
+                      </div>
+                      <div>
+                        {order.paymentStatus === "cash_on_delivery" || order.paymentMethod === "cash" || order.paymentMethod === "cash_on_delivery" ? (
+                          <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-black flex items-center gap-1.5">
+                            <span>💵 À encaisser par le coursier :</span>
+                            <span className="text-white font-mono">{order.total.toLocaleString()} FCFA</span>
+                          </span>
+                        ) : order.paymentStatus === "paid" ? (
+                          <span className="px-3 py-1 rounded-full bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-[11px] font-bold">
+                            ✅ Mobile Money Confirmé &amp; Encaissé
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full bg-amber-950 border border-amber-500/40 text-amber-300 text-[11px] font-black flex items-center gap-1 animate-pulse">
+                            <span>⏳ En attente de validation Mobile Money</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      {order.paymentMethod === "cash" ? (
-                        <span className="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 text-[10px] font-bold">
-                          💵 Espèces à la livraison
-                        </span>
-                      ) : order.receiptProofAttached ? (
-                        <span className="px-2.5 py-1 rounded-full bg-emerald-950 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold">
-                          ✅ Reçu de dépôt vérifié
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-1 rounded-full bg-amber-950 border border-amber-500/40 text-amber-300 text-[10px] font-bold">
-                          ⚠️ Reçu à valider
-                        </span>
-                      )}
-                    </div>
+
+                    {/* Référence SMS Mobile Money et validation gérant */}
+                    {(order.paymentMethod !== "cash" && order.paymentMethod !== "cash_on_delivery") && (
+                      <div className="pt-2 border-t border-slate-900 flex items-center justify-between gap-2">
+                        <div className="text-[11px]">
+                          <span className="text-slate-400">Réf SMS / Transaction : </span>
+                          <strong className="text-orange-400 font-mono">
+                            {order.mobile_money_reference || order.paymentReference || "Non renseignée"}
+                          </strong>
+                          <span className="text-[10px] text-slate-500 block">
+                            {order.paymentStatus === "paid"
+                              ? "Vérifié en compte marchand Allôresto"
+                              : "Déclarée par le client — Vérifier la réception avant préparation"}
+                          </span>
+                        </div>
+                        {order.paymentStatus !== "paid" && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              order.paymentStatus = "paid";
+                              try {
+                                await (supabase.from("restaurant_orders") as any)
+                                  .update({ payment_status: "paid" })
+                                  .eq("order_id", order.id);
+                                await (supabase.from("orders") as any)
+                                  .update({ payment_status: "paid" })
+                                  .eq("id", order.id);
+                                await (supabase.from("payments") as any)
+                                  .update({
+                                    payment_status: "paid",
+                                    updated_at: new Date().toISOString(),
+                                  })
+                                  .eq("order_id", order.id);
+                              } catch (e) {
+                                // local fallback
+                              }
+                              refreshSupabaseOrders();
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold transition cursor-pointer shrink-0"
+                          >
+                            ✓ Marquer Payé
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Dynamic WhatsApp Communication Hub Cuisine ↔ Client */}

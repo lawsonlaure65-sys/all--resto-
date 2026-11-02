@@ -5,8 +5,10 @@ export interface PaymentRecord {
   order_id: string;
   amount_xof: number;
   payment_method: string;
-  payment_status: "pending" | "completed" | "failed" | "refunded";
+  payment_status: "awaiting_mobile_money_validation" | "paid" | "cash_on_delivery" | "failed" | "refunded" | "pending" | "completed";
   transaction_id: string;
+  operator_reference?: string;
+  mobile_money_reference?: string;
   phone_number: string;
   provider_response?: Record<string, any>;
   created_at: string;
@@ -105,153 +107,23 @@ export const PAYMENT_PROVIDERS: PaymentProvider[] = [
 
 const PAYMENTS_STORAGE_KEY = "alloresto_mobile_money_payments";
 
-// Initial mock dataset representing recent Niamey customer transactions
-const INITIAL_PAYMENTS: PaymentRecord[] = [
-  {
-    id: "pay_01",
-    order_id: "CMD-8812",
-    amount_xof: 15500,
-    payment_method: "airtel_money",
-    payment_status: "completed",
-    transaction_id: "AIRTEL-1725619412",
-    phone_number: "+227 96 12 34 56",
-    provider_response: { status: "success", code: "TXN_OK_200" },
-    created_at: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
-  },
-  {
-    id: "pay_02",
-    order_id: "CMD-8810",
-    amount_xof: 7500,
-    payment_method: "moov_money",
-    payment_status: "completed",
-    transaction_id: "MOOV-1725615821",
-    phone_number: "+227 90 55 44 33",
-    provider_response: { status: "success", code: "MOOV_VALIDATED" },
-    created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-  },
-  {
-    id: "pay_03",
-    order_id: "CMD-8809",
-    amount_xof: 12000,
-    payment_method: "orange_zamany",
-    payment_status: "pending",
-    transaction_id: "ORANGE-1725612104",
-    phone_number: "+227 91 88 77 66",
-    provider_response: { status: "pending_pin", code: "WAIT_CUSTOMER" },
-    created_at: new Date(Date.now() - 1000 * 60 * 80).toISOString(),
-  },
-  {
-    id: "pay_04",
-    order_id: "CMD-8805",
-    amount_xof: 5000,
-    payment_method: "mynita",
-    payment_status: "completed",
-    transaction_id: "MYN-994128",
-    phone_number: "+227 90 22 11 00",
-    provider_response: { status: "success", deposit_agent: "Agence Plateau" },
-    created_at: new Date(Date.now() - 1000 * 60 * 140).toISOString(),
-  },
-  {
-    id: "pay_05",
-    order_id: "CMD-8801",
-    amount_xof: 22500,
-    payment_method: "all_iza",
-    payment_status: "completed",
-    transaction_id: "IZZA-BUS-8831",
-    phone_number: "+227 97 33 44 55",
-    provider_response: { status: "success", branch: "Grande Mosquée" },
-    created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
-  },
-  {
-    id: "pay_06",
-    order_id: "CMD-8798",
-    amount_xof: 4500,
-    payment_method: "flooz",
-    payment_status: "pending",
-    transaction_id: "FLOOZ-1725598120",
-    phone_number: "+227 98 10 20 30",
-    provider_response: { status: "pending" },
-    created_at: new Date(Date.now() - 1000 * 60 * 320).toISOString(),
-  },
-  {
-    id: "pay_07",
-    order_id: "CMD-8795",
-    amount_xof: 18000,
-    payment_method: "amanata",
-    payment_status: "completed",
-    transaction_id: "AMN-442109",
-    phone_number: "+227 92 44 11 22",
-    provider_response: { status: "success", agent: "Guichet Yantala" },
-    created_at: new Date(Date.now() - 1000 * 60 * 460).toISOString(),
-  },
-  {
-    id: "pay_08",
-    order_id: "CMD-8792",
-    amount_xof: 9500,
-    payment_method: "zeyna",
-    payment_status: "completed",
-    transaction_id: "ZEYNA-88129",
-    phone_number: "+227 99 77 66 55",
-    provider_response: { status: "success", auth: "TOKEN_VERIFIED" },
-    created_at: new Date(Date.now() - 1000 * 60 * 580).toISOString(),
-  },
-  {
-    id: "pay_09",
-    order_id: "CMD-8788",
-    amount_xof: 28000,
-    payment_method: "airtel_money",
-    payment_status: "completed",
-    transaction_id: "AIRTEL-1725581102",
-    phone_number: "+227 96 88 99 00",
-    provider_response: { status: "success", code: "TXN_OK_200" },
-    created_at: new Date(Date.now() - 1000 * 60 * 720).toISOString(),
-  },
-  {
-    id: "pay_10",
-    order_id: "CMD-8780",
-    amount_xof: 14000,
-    payment_method: "orange_zamany",
-    payment_status: "completed",
-    transaction_id: "ORANGE-1725573401",
-    phone_number: "+227 91 23 45 67",
-    provider_response: { status: "success" },
-    created_at: new Date(Date.now() - 1000 * 60 * 890).toISOString(),
-  },
-  {
-    id: "pay_11",
-    order_id: "CMD-8775",
-    amount_xof: 8500,
-    payment_method: "moov_money",
-    payment_status: "completed",
-    transaction_id: "MOOV-1725562100",
-    phone_number: "+227 90 99 88 77",
-    provider_response: { status: "success" },
-    created_at: new Date(Date.now() - 1000 * 60 * 1100).toISOString(),
-  },
-  {
-    id: "pay_12",
-    order_id: "CMD-8769",
-    amount_xof: 3500,
-    payment_method: "mynita",
-    payment_status: "failed",
-    transaction_id: "MYN-FAILED-021",
-    phone_number: "+227 90 12 34 56",
-    provider_response: { error: "solde_insuffisant" },
-    created_at: new Date(Date.now() - 1000 * 60 * 1350).toISOString(),
-  },
-];
-
 export function getLocalPayments(): PaymentRecord[] {
   try {
     const raw = localStorage.getItem(PAYMENTS_STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(PAYMENTS_STORAGE_KEY, JSON.stringify(INITIAL_PAYMENTS));
-      return INITIAL_PAYMENTS;
+      return [];
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // Filtrer d'éventuelles anciennes données de démo (CMD-88*, CMD-87*)
+    if (Array.isArray(parsed)) {
+      return parsed.filter(
+        (p: PaymentRecord) => !p.order_id?.startsWith("CMD-88") && !p.order_id?.startsWith("CMD-87")
+      );
+    }
+    return [];
   } catch (err) {
     console.error("Error reading local payments:", err);
-    return INITIAL_PAYMENTS;
+    return [];
   }
 }
 
@@ -290,7 +162,21 @@ export async function processPayment(params: {
   amount: number;
   paymentMethod: string;
   phoneNumber: string;
+  reference?: string;
+  paymentStatus?: "awaiting_mobile_money_validation" | "paid" | "cash_on_delivery" | "failed" | "refunded" | "pending" | "completed";
 }): Promise<{ success: boolean; transactionId?: string; payment?: PaymentRecord; error?: string }> {
+  const transactionPrefix = params.paymentMethod.toUpperCase().replace(/_MONEY/g, "");
+  const transactionId = params.reference && params.reference.trim().length > 3
+    ? params.reference.trim()
+    : `${transactionPrefix}-${Date.now().toString().slice(-6)}`;
+
+  // Statut logique :
+  // Espèces -> cash_on_delivery (à encaisser par le coursier)
+  // Mobile Money -> awaiting_mobile_money_validation (la référence déclarée par le client reste à valider par le gérant)
+  const isCash = params.paymentMethod === "cash" || params.paymentMethod === "cash_on_delivery";
+  const resolvedStatus =
+    params.paymentStatus || (isCash ? "cash_on_delivery" : "awaiting_mobile_money_validation");
+
   try {
     // Try calling Express backend /api/payment/process first
     const res = await fetch("/api/payment/process", {
@@ -301,6 +187,8 @@ export async function processPayment(params: {
         amount: params.amount,
         paymentMethod: params.paymentMethod,
         phoneNumber: params.phoneNumber,
+        reference: transactionId,
+        paymentStatus: resolvedStatus,
       }),
     });
 
@@ -312,14 +200,15 @@ export async function processPayment(params: {
           order_id: params.orderId,
           amount_xof: params.amount,
           payment_method: params.paymentMethod,
-          payment_status: "completed",
-          transaction_id: data.transactionId || `TXN-${Date.now()}`,
+          payment_status: resolvedStatus,
+          transaction_id: transactionId,
+          operator_reference: transactionId,
+          mobile_money_reference: transactionId,
           phone_number: params.phoneNumber,
-          provider_response: { status: "success" },
+          provider_response: { status: resolvedStatus, reference: transactionId },
           created_at: new Date().toISOString(),
         };
 
-        // Cache locally as well
         const list = getLocalPayments();
         saveLocalPayments([newRecord, ...list]);
         return { success: true, transactionId: newRecord.transaction_id, payment: newRecord };
@@ -329,36 +218,49 @@ export async function processPayment(params: {
     console.warn("Backend API payment process call failed, executing client fallback:", e);
   }
 
-  // Resilient Client-side execution (with Supabase if configured)
-  const transactionPrefix = params.paymentMethod.toUpperCase().replace(/_MONEY/g, "");
-  const transactionId = `${transactionPrefix}-${Date.now().toString().slice(-6)}`;
-
+  // Client-side execution with Supabase if configured
   const newPayment: PaymentRecord = {
     id: `pay_${Date.now()}`,
     order_id: params.orderId,
     amount_xof: params.amount,
     payment_method: params.paymentMethod,
-    payment_status: "completed",
+    payment_status: resolvedStatus,
     transaction_id: transactionId,
+    operator_reference: transactionId,
+    mobile_money_reference: transactionId,
     phone_number: params.phoneNumber,
-    provider_response: { status: "success", gateway: "Allôresto Mobile Gateway Niger" },
+    provider_response: {
+      status: resolvedStatus,
+      reference: transactionId,
+      gateway: "Allôresto Mobile Gateway Niger",
+    },
     created_at: new Date().toISOString(),
   };
 
-  // If Supabase is configured, write directly to database
   if (isSupabaseConfigured()) {
     try {
-      await (supabase.from("payments") as any).insert({
+      const paymentPayload: Record<string, any> = {
         order_id: params.orderId,
-        amount_xof: params.amount,
+        amount_xof: Math.max(1, Number(params.amount || 0)),
         payment_method: params.paymentMethod,
-        payment_status: "completed",
+        payment_status: resolvedStatus,
         transaction_id: transactionId,
         phone_number: params.phoneNumber,
-        provider_response: { status: "success" },
-      });
+        provider_response: { status: resolvedStatus, reference: transactionId },
+      };
+      if (transactionId) {
+        paymentPayload.operator_reference = transactionId;
+        paymentPayload.mobile_money_reference = transactionId;
+      }
+
+      let res = await (supabase.from("payments") as any).insert(paymentPayload);
+      if (res.error && (res.error.message?.includes("operator_reference") || res.error.message?.includes("mobile_money_reference"))) {
+        delete paymentPayload.operator_reference;
+        delete paymentPayload.mobile_money_reference;
+        res = await (supabase.from("payments") as any).insert(paymentPayload);
+      }
     } catch (dbErr) {
-      console.warn("Supabase insert error:", dbErr);
+      console.warn("Supabase insert error in payments table:", dbErr);
     }
   }
 
