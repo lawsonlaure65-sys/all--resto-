@@ -102,7 +102,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           address: "Koira Kano, Rue KK-12, Villa 45, Niamey",
         },
       ],
-      favoriteRestaurantIds: ["khadafi-palace-1"],
+      favoriteRestaurantIds: ["resto-khadys-food", "resto-alloresto-kitchen"],
       referralCode: "ALLO-" + Math.floor(1000 + Math.random() * 9000),
       referralCount: 2,
     };
@@ -229,7 +229,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             address: "Koira Kano, Rue KK-12, Villa 45, Niamey",
           },
         ],
-        favoriteRestaurantIds: ["khadafi-palace-1"],
+        favoriteRestaurantIds: ["resto-khadys-food", "resto-alloresto-kitchen"],
         referralCode: "ALLO-" + Math.floor(1000 + Math.random() * 9000),
         referralCount: 2,
       };

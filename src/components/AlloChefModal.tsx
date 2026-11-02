@@ -232,7 +232,7 @@ export const AlloChefModal: React.FC<AlloChefModalProps> = ({
         {
           id: "msg-ai-" + Date.now(),
           role: "assistant",
-          text: `Je vous recommande chaudement le **Demi-Mouton & Grillades du Sahel** chez *Le Khadafi Palace & Grillades* (Grande Mosquée) ou notre **Dambou Royal au Poulet** chez *Saveurs du Niger* (Plateau). Livraison express en 20-25 min assurée par Billo Express !`,
+          text: `Je vous recommande chaudement le **Choukouya Royal d'Agneau au Véritable Kan-Kan** chez *Khady's Food & Event* ou notre **Capitaine du Fleuve Niger Braisé au Feu de Bois** chez *Allôresto Kitchen* (Plateau 1). Livraison express en 20-30 min assurée par Billo Express !`,
           suggestedDishes: suggested,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },

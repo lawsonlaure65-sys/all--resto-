@@ -15,10 +15,20 @@ import {
   KHADYS_OFFICIAL_SLUG,
 } from "./khadysPartnerResolver";
 
-const STORAGE_KEY_RESTAURANTS = "alloresto_restaurants_v2";
-const STORAGE_KEY_CUSTOM_DISHES = "alloresto_custom_dishes_v2";
-const STORAGE_KEY_EMERGENCY_BACKUP = "alloresto_emergency_backup_v2";
-const STORAGE_KEY_LAST_BACKUP = "alloresto_last_backup_timestamp";
+const STORAGE_KEY_RESTAURANTS = "alloresto_restaurants_v4";
+const STORAGE_KEY_CUSTOM_DISHES = "alloresto_custom_dishes_v4";
+const STORAGE_KEY_EMERGENCY_BACKUP = "alloresto_emergency_backup_v4";
+const STORAGE_KEY_LAST_BACKUP = "alloresto_last_backup_timestamp_v4";
+
+// Nettoyage automatique des anciens caches obsolètes (qui contenaient les anciens restaurants fictifs)
+try {
+  if (typeof window !== "undefined" && window.localStorage) {
+    localStorage.removeItem("alloresto_restaurants_v2");
+    localStorage.removeItem("alloresto_restaurants_v3");
+    localStorage.removeItem("alloresto_emergency_backup_v2");
+    localStorage.removeItem("alloresto_emergency_backup_v3");
+  }
+} catch {}
 
 // Helper for image compression to keep localStorage light & fast (max ~40-60KB per image)
 export async function compressImageBase64(
@@ -237,6 +247,11 @@ export function loadStoredRestaurants(): Restaurant[] {
             }
           }
 
+          // Filtrer strictement : seuls les 2 restaurants réels en base sont autorisés
+          finalRestos = finalRestos.filter(
+            (r) => isKhadysFoodRestaurant(r) || isAllorestoKitchen(r.id, r.name)
+          );
+
           const normalized = normalizeDishesStock(finalRestos);
           return normalized;
         }
@@ -317,7 +332,14 @@ export function saveStoredRestaurants(restaurants: Restaurant[]): boolean {
     return false;
   }
 
-  const cleanRestaurants = deduplicateRestaurants(restaurants);
+  // Filtrer strictement : seuls les 2 restaurants réels en base sont sauvegardés
+  const verifiedOnly = restaurants.filter(
+    (r) => isKhadysFoodRestaurant(r) || isAllorestoKitchen(r.id, r.name)
+  );
+
+  const cleanRestaurants = deduplicateRestaurants(
+    verifiedOnly.length > 0 ? verifiedOnly : RESTAURANTS_DATA
+  );
 
   // Nettoyer systématiquement la clé de backup redondante pour libérer 50% du quota localStorage (évite QuotaExceededError)
   try {

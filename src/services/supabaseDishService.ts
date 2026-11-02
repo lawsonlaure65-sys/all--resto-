@@ -5,6 +5,7 @@ import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { resolveDishImageUrl, KHADYS_OFFICIAL_SUYA_IMAGE } from "../utils/dishImageResolver";
 import {
   isKhadysFoodRestaurant,
+  isAllorestoKitchen,
   KHADYS_OFFICIAL_NAME,
   KHADYS_OFFICIAL_SLUG,
   KHADYS_STABLE_LOCAL_ID,
@@ -352,7 +353,12 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
       restaurants.unshift(RESTAURANTS_DATA[0]);
     }
 
-    return { success: true, data: restaurants };
+    // Filtrer strictement : seuls les 2 restaurants réels (Khady's Food & Event et Allôresto Kitchen) sont retournés
+    const verifiedRestaurants = restaurants.filter(
+      (r) => isKhadysFoodRestaurant(r) || isAllorestoKitchen(r.id, r.name)
+    );
+
+    return { success: true, data: verifiedRestaurants };
   } catch (err: any) {
     return { success: false, error: err?.message || String(err) };
   }

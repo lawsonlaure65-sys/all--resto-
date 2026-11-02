@@ -21,6 +21,7 @@ import {
 import { Restaurant, ServiceMode } from '../../src/types';
 import { loadStoredRestaurants } from '../../src/services/dishStorageService';
 import { getSupabaseClient } from '../../src/services/supabaseClient';
+import { isKhadysFoodRestaurant, isAllorestoKitchen } from '../../src/services/khadysPartnerResolver';
 
 export interface RestaurantsPageProps {
   onBackHome?: () => void;
@@ -115,7 +116,8 @@ export default function RestaurantsPage({
                 };
               });
 
-              setRestaurants(mapped);
+              const verifiedOnly = mapped.filter((r) => isKhadysFoodRestaurant(r) || isAllorestoKitchen(r.id, r.name));
+              setRestaurants(verifiedOnly.length > 0 ? verifiedOnly : mapped);
             }
           } catch (fetchErr: any) {
             console.warn('Erreur appel Supabase:', fetchErr?.message);
