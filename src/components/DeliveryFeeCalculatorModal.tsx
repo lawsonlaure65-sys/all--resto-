@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   MapPin,
@@ -27,11 +27,12 @@ import {
 } from "../data/niameyDistrictsData";
 import { BilloExpressLogo } from "./BilloExpressLogo";
 
-interface DeliveryFeeCalculatorModalProps {
+export interface DeliveryFeeCalculatorModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectDistrict?: (district: NiameyDistrict) => void;
   selectedDistrictName?: string;
+  selectedDistrictId?: string;
 }
 
 export const DeliveryFeeCalculatorModal: React.FC<DeliveryFeeCalculatorModalProps> = ({
@@ -39,6 +40,7 @@ export const DeliveryFeeCalculatorModal: React.FC<DeliveryFeeCalculatorModalProp
   onClose,
   onSelectDistrict,
   selectedDistrictName,
+  selectedDistrictId,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [zoneFilter, setZoneFilter] = useState<"all" | "centre" | "peripherie" | "relais_gratuit">("all");

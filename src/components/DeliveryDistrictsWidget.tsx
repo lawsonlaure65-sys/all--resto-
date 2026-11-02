@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import {
   MapPin,
   Bike,
@@ -22,14 +22,18 @@ import {
 } from "../data/niameyDistrictsData";
 import { BilloExpressLogo } from "./BilloExpressLogo";
 
-interface DeliveryDistrictsWidgetProps {
-  onOpenFullDirectory: () => void;
+export interface DeliveryDistrictsWidgetProps {
+  onOpenFullDirectory?: () => void;
+  onOpenFullCalculator?: () => void;
   onSelectDistrict?: (districtName: string) => void;
+  onSelectDistrictForDelivery?: (district: NiameyDistrict) => void;
 }
 
 export const DeliveryDistrictsWidget: React.FC<DeliveryDistrictsWidgetProps> = ({
   onOpenFullDirectory,
+  onOpenFullCalculator,
   onSelectDistrict,
+  onSelectDistrictForDelivery,
 }) => {
   const [selectedDistrictId, setSelectedDistrictId] = useState<string>("plateau");
   const isNight = isNiameyNightTime();

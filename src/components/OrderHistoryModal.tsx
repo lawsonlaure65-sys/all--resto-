@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   ShoppingBag,
@@ -21,13 +21,14 @@ import { Order, CartItem, MenuItem } from "../types";
 import { ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 import { ReceiptTicketModal } from "./ReceiptTicketModal";
 
-interface OrderHistoryModalProps {
+export interface OrderHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   orders: Order[];
   onReorder: (order: Order) => void;
   onTrackOrder: (order: Order) => void;
-  onOpenWhatsAppHelp: (order: Order) => void;
+  onOpenWhatsAppHelp?: (order: Order) => void;
+  onContactSupport?: () => void;
 }
 
 export const OrderHistoryModal: React.FC<OrderHistoryModalProps> = ({
@@ -37,6 +38,7 @@ export const OrderHistoryModal: React.FC<OrderHistoryModalProps> = ({
   onReorder,
   onTrackOrder,
   onOpenWhatsAppHelp,
+  onContactSupport,
 }) => {
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "delivered">("all");
   const [searchQuery, setSearchQuery] = useState("");

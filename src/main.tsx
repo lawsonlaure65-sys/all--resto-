@@ -4,6 +4,7 @@ import App from './App.tsx';
 import { TranslationProvider } from './context/TranslationContext';
 import { ThemeProvider } from './context/ThemeContext';
 import MotionProvider from './components/MotionProvider';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { applyOfficialBrandFavicon } from './utils/faviconManager';
 import './index.css';
 
@@ -37,13 +38,15 @@ applyOfficialBrandFavicon();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider>
-      <TranslationProvider>
-        <MotionProvider>
-          <App />
-        </MotionProvider>
-      </TranslationProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <TranslationProvider>
+          <MotionProvider>
+            <App />
+          </MotionProvider>
+        </TranslationProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );
 

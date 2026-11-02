@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   Sparkles,
@@ -116,12 +116,17 @@ const PRESET_CAMPAIGNS: MarketingCampaign[] = [
   },
 ];
 
-interface MarketingAIModalProps {
+export interface MarketingAIModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onApplyDiscountCampaign?: (code: string, discount: number) => void;
 }
 
-export const MarketingAIModal: React.FC<MarketingAIModalProps> = ({ isOpen, onClose }) => {
+export const MarketingAIModal: React.FC<MarketingAIModalProps> = ({
+  isOpen,
+  onClose,
+  onApplyDiscountCampaign,
+}) => {
   const [activeTab, setActiveTab] = useState<"campaigns" | "generator" | "automation" | "insights">("campaigns");
   const [selectedCampaign, setSelectedCampaign] = useState<MarketingCampaign>(PRESET_CAMPAIGNS[0]);
   const [copiedId, setCopiedId] = useState<string | null>(null);

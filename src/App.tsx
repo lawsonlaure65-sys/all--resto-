@@ -1120,22 +1120,6 @@ export function App() {
                     key={`${special.id}-${idx}`}
                     special={special}
                     onAddToCart={handleAddDailySpecialToCart}
-                    onEditSpecial={
-                      currentRole === "admin"
-                        ? (spec) => {
-                            setSelectedSpecialForEdit(spec);
-                            setIsEditSpecialOpen(true);
-                          }
-                        : undefined
-                    }
-                    onShareSpecial={
-                      currentRole === "admin"
-                        ? (spec) => {
-                            setSelectedSpecialForShare(spec);
-                            setIsSpecialShareOpen(true);
-                          }
-                        : undefined
-                    }
                   />
                 ))}
               </div>

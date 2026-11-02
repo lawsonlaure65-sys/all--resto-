@@ -1,5 +1,5 @@
 import React from 'react';
-import { MotionConfig } from 'motion/react';
+import { MotionConfig } from 'framer-motion';
 
 export default function MotionProvider({
   children,
@@ -7,7 +7,7 @@ export default function MotionProvider({
   children: React.ReactNode;
 }) {
   return (
-    <MotionConfig reducedMotion="never">
+    <MotionConfig reducedMotion="user">
       {children}
     </MotionConfig>
   );

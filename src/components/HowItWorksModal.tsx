@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   ShoppingBag,
@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { ALLORESTO_BRAND_INFO } from "../data/allorestoData";
 
-interface HowItWorksModalProps {
+export interface HowItWorksModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenCatalog?: () => void;
@@ -26,6 +26,8 @@ interface HowItWorksModalProps {
   onOpenContract?: () => void;
   onOpenGroupOrder?: () => void;
   onOpenContact?: () => void;
+  onOpenPartnerModal?: () => void;
+  onOpenCourierSpace?: () => void;
 }
 
 export const HowItWorksModal: React.FC<HowItWorksModalProps> = ({
@@ -36,6 +38,8 @@ export const HowItWorksModal: React.FC<HowItWorksModalProps> = ({
   onOpenContract,
   onOpenGroupOrder,
   onOpenContact,
+  onOpenPartnerModal,
+  onOpenCourierSpace,
 }) => {
   const [activeTab, setActiveTab] = useState<"client" | "restaurant" | "delivery" | "payment" | "group">("client");
 
