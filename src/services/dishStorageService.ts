@@ -509,7 +509,7 @@ export function exportAllDataBackup(restaurantsParam?: Restaurant[]): void {
     version: "2.0",
     exportDate: new Date().toISOString(),
     totalRestaurants: restaurants.length,
-    totalDishes: restaurants.reduce((sum, r) => sum + r.menu.length, 0),
+    totalDishes: restaurants.reduce((sum, r) => sum + (r?.menu?.length || 0), 0),
     restaurants,
   };
 
@@ -559,7 +559,7 @@ export function importDataBackup(jsonString: string): { success: boolean; data?:
 
 // Get storage metrics
 export function getStorageStats(restaurants: Restaurant[]) {
-  const totalDishes = restaurants.reduce((sum, r) => sum + r.menu.length, 0);
+  const totalDishes = restaurants.reduce((sum, r) => sum + (r?.menu?.length || 0), 0);
   const rawSize = (localStorage.getItem(STORAGE_KEY_RESTAURANTS) || "").length;
   const sizeKb = (rawSize / 1024).toFixed(1);
   const lastBackup = localStorage.getItem(STORAGE_KEY_LAST_BACKUP) || new Date().toISOString();

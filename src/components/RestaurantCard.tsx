@@ -154,7 +154,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
               Plats phares :
             </span>
             <div className="flex flex-wrap gap-1.5">
-              {restaurant.menu.slice(0, 2).map((item, idx) => (
+              {(restaurant.menu || []).slice(0, 2).map((item, idx) => (
                 <span
                   key={`${item.id}-${idx}`}
                   className="text-[11px] px-2 py-0.5 rounded-lg bg-slate-950 text-slate-300 border border-slate-800"

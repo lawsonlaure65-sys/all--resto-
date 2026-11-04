@@ -379,7 +379,7 @@ export function App() {
         let updated = false;
         const cleaned = storedRestos.map((r) => {
           if (r.id === "resto-khadys-food" || r.name.toLowerCase().includes("khady")) {
-            const newMenu = r.menu.map((d) => {
+            const newMenu = (r.menu || []).map((d) => {
               if (d.name.toLowerCase().includes("brochette") || d.name.toLowerCase().includes("suya")) {
                 if (d.price !== 4000 || d.image !== KHADYS_OFFICIAL_SUYA_IMAGE || !d.isDailySpecial || d.category !== "⭐ Menu & Plat du Jour") {
                   updated = true;
@@ -713,9 +713,9 @@ export function App() {
 
   // Helper to generate a realistic instant express order (comptoir / guichet Plateau 1)
   const handleCreateTestOrder = () => {
-    const kitchenResto = restaurants.find((r) => r.id === "resto-alloresto-kitchen") || restaurants[0] || RESTAURANTS_DATA[1];
-    const dish1 = kitchenResto?.menu?.find((m) => m.id === "ak-4") || kitchenResto?.menu?.[3] || RESTAURANTS_DATA[1].menu[3];
-    const dish2 = kitchenResto?.menu?.find((m) => m.id === "ak-10") || kitchenResto?.menu?.[9] || RESTAURANTS_DATA[1].menu[9];
+    const kitchenResto = restaurants.find((r) => r.id === "resto-alloresto-kitchen") || restaurants[0] || RESTAURANTS_DATA[0];
+    const dish1 = kitchenResto?.menu?.find((m) => m.id === "ak-4") || kitchenResto?.menu?.[0] || RESTAURANTS_DATA[0]?.menu?.[0];
+    const dish2 = kitchenResto?.menu?.find((m) => m.id === "ak-10") || kitchenResto?.menu?.[1] || RESTAURANTS_DATA[0]?.menu?.[1];
 
     const directOrder: Order = {
       id: "CMD-" + Math.floor(1000 + Math.random() * 9000),
@@ -887,7 +887,7 @@ export function App() {
       const q = searchQuery.toLowerCase();
       const matchName = resto.name.toLowerCase().includes(q);
       const matchCuisine = resto.cuisine.toLowerCase().includes(q);
-      const matchDish = resto.menu.some(
+      const matchDish = (resto.menu || []).some(
         (m) => m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q)
       );
       if (!matchName && !matchCuisine && !matchDish) return false;

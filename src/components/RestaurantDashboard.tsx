@@ -220,7 +220,7 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
 
   // Dishes State
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
-    const raw = currentRestaurant?.menu || RESTAURANTS_DATA[0].menu;
+    const raw = currentRestaurant?.menu || RESTAURANTS_DATA[0]?.menu || [];
     const seen = new Set<string>();
     return raw.filter((d) => {
       if (!d || !d.id || seen.has(d.id)) return false;

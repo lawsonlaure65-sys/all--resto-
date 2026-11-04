@@ -640,7 +640,7 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
               {filteredDishes.map((dish, index) => {
                 // Find restaurant name if available
                 const matchedResto = restaurants.find((r) =>
-                  r.menu.some((m) => m.id === dish.id)
+                  (r?.menu || []).some((m) => m.id === dish.id)
                 );
 
                 return (

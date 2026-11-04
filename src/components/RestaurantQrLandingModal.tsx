@@ -78,15 +78,15 @@ export const RestaurantQrLandingModal: React.FC<RestaurantQrLandingModalProps> =
   // Categories list
   const categories = useMemo(() => {
     const set = new Set<string>();
-    restaurant.menu.forEach((d) => {
+    (restaurant?.menu || []).forEach((d) => {
       if (d.category) set.add(d.category);
     });
     return ["all", ...Array.from(set)];
-  }, [restaurant.menu]);
+  }, [restaurant?.menu]);
 
   // Filtered dishes
   const filteredDishes = useMemo(() => {
-    return restaurant.menu.filter((dish) => {
+    return (restaurant?.menu || []).filter((dish) => {
       const q = searchQuery.toLowerCase().trim();
       const matchQuery =
         !q ||
@@ -96,7 +96,7 @@ export const RestaurantQrLandingModal: React.FC<RestaurantQrLandingModalProps> =
       const matchCat = selectedCategory === "all" || dish.category === selectedCategory;
       return matchQuery && matchCat;
     });
-  }, [restaurant.menu, searchQuery, selectedCategory]);
+  }, [restaurant?.menu, searchQuery, selectedCategory]);
 
   // Cart totals
   const subtotal = useMemo(() => {

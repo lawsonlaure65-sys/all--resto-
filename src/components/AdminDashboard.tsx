@@ -657,7 +657,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!targetDish) return;
     const updatedDish = { ...targetDish, isAvailable: !targetDish.isAvailable };
     const updatedRestaurants = addOrUpdateDishInStorage(updatedDish);
-    setDishesList(updatedRestaurants.flatMap((r) => r.menu));
+    setDishesList(updatedRestaurants.flatMap((r) => r?.menu || []));
     if (onUpdateRestaurants) {
       onUpdateRestaurants(updatedRestaurants);
     }
@@ -669,7 +669,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!targetDish) return;
     const updatedDish = { ...targetDish, isDailySpecial: !targetDish.isDailySpecial };
     const updatedRestaurants = addOrUpdateDishInStorage(updatedDish);
-    setDishesList(updatedRestaurants.flatMap((r) => r.menu));
+    setDishesList(updatedRestaurants.flatMap((r) => r?.menu || []));
     if (onUpdateRestaurants) {
       onUpdateRestaurants(updatedRestaurants);
     }
@@ -713,7 +713,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const updatedRestaurants = addOrUpdateDishInStorage(savedDish);
 
     // 2. Update local admin list
-    setDishesList(updatedRestaurants.flatMap((r) => r.menu));
+    setDishesList(updatedRestaurants.flatMap((r) => r?.menu || []));
 
     // 3. Notify parent app state
     if (onUpdateRestaurants) {
@@ -730,7 +730,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleDeleteDish = (dishId: string) => {
     if (window.confirm("Êtes-vous sûr de vouloir retirer définitivement ce plat du menu Allôresto ?")) {
       const updatedRestaurants = deleteDishFromStorage(dishId);
-      setDishesList(updatedRestaurants.flatMap((r) => r.menu));
+      setDishesList(updatedRestaurants.flatMap((r) => r?.menu || []));
       if (onUpdateRestaurants) {
         onUpdateRestaurants(updatedRestaurants);
       }
@@ -758,7 +758,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         const success = importDataBackup(content);
         if (success) {
           const fresh = loadStoredRestaurants();
-          setDishesList(fresh.flatMap((r) => r.menu));
+          setDishesList(fresh.flatMap((r) => r?.menu || []));
           if (onUpdateRestaurants) {
             onUpdateRestaurants(fresh);
           }
@@ -776,7 +776,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleResetData = () => {
     if (window.confirm("Voulez-vous réinitialiser les plats aux valeurs par défaut de Niamey ? Vos modifications locales seront remplacées.")) {
       const reset = resetStoredData();
-      setDishesList(reset.flatMap((r) => r.menu));
+      setDishesList(reset.flatMap((r) => r?.menu || []));
       if (onUpdateRestaurants) {
         onUpdateRestaurants(reset);
       }
@@ -1428,7 +1428,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   addOrUpdateDishInStorage(newDish, targetRest.id);
                 }
                 const updatedList = loadStoredRestaurants();
-                setDishesList(updatedList.flatMap((r) => r.menu));
+                setDishesList(updatedList.flatMap((r) => r?.menu || []));
                 if (onUpdateRestaurants) onUpdateRestaurants(updatedList);
               }
             } catch (err) {
@@ -2494,7 +2494,7 @@ Consultez le fichier alloresto-contrat-partenariat-restaurant.md pour le texte i
           onClose={() => setShowSupabaseModal(false)}
           restaurants={loadStoredRestaurants()}
           onRestaurantsUpdated={(updated) => {
-            setDishesList(updated.flatMap((r) => r.menu));
+            setDishesList(updated.flatMap((r) => r?.menu || []));
             if (onUpdateRestaurants) {
               onUpdateRestaurants(updated);
             }

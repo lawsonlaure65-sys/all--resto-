@@ -61,24 +61,42 @@ export const AlloChefModal: React.FC<AlloChefModalProps> = ({
       timestamp: "À l'instant",
       suggestedDishes: [
         {
-          item: RESTAURANTS_DATA[0].menu[0], // Demi-Mouton & Choukouya
-          restaurantName: RESTAURANTS_DATA[0].name,
-          restaurantId: RESTAURANTS_DATA[0].id,
-          district: "Grande Mosquée Khadafi",
+          item: RESTAURANTS_DATA[0]?.menu?.[0] || {
+            id: "kf-1",
+            name: "Brochettes de Filet de Bœuf (Suya)",
+            price: 4000,
+            category: "Les Plats Validés Khady's",
+            image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80",
+          } as MenuItem,
+          restaurantName: RESTAURANTS_DATA[0]?.name || "Khady's Food & Event",
+          restaurantId: RESTAURANTS_DATA[0]?.id || "resto-khadys-food",
+          district: "Avenue de l'Islam (Grande Mosquée)",
         },
         {
-          item: RESTAURANTS_DATA[1].menu[0], // Dambou Royal
-          restaurantName: RESTAURANTS_DATA[1].name,
-          restaurantId: RESTAURANTS_DATA[1].id,
-          district: "Plateau / Centre",
+          item: RESTAURANTS_DATA[0]?.menu?.[1] || {
+            id: "kf-2",
+            name: "Choukouya d'Agneau Prestige au Vrai Kan-Kan",
+            price: 4500,
+            category: "Les Plats Validés Khady's",
+            image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80",
+          } as MenuItem,
+          restaurantName: RESTAURANTS_DATA[0]?.name || "Khady's Food & Event",
+          restaurantId: RESTAURANTS_DATA[0]?.id || "resto-khadys-food",
+          district: "Plateau & Centre-ville",
         },
         {
-          item: RESTAURANTS_DATA[2].menu[0], // Capitaine Braisé
-          restaurantName: RESTAURANTS_DATA[2].name,
-          restaurantId: RESTAURANTS_DATA[2].id,
-          district: "Corniche / Fleuve",
+          item: RESTAURANTS_DATA[0]?.menu?.[2] || {
+            id: "kf-3",
+            name: "Sauce Crin-Crin au Poisson Fumé & Viande",
+            price: 4500,
+            category: "Les Plats Validés Khady's",
+            image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80",
+          } as MenuItem,
+          restaurantName: RESTAURANTS_DATA[0]?.name || "Khady's Food & Event",
+          restaurantId: RESTAURANTS_DATA[0]?.id || "resto-khadys-food",
+          district: "Yantala & Corniche",
         },
-      ],
+      ].filter((s) => s.item != null),
     },
   ];
 
@@ -133,7 +151,7 @@ export const AlloChefModal: React.FC<AlloChefModalProps> = ({
     const lower = text.toLowerCase();
 
     RESTAURANTS_DATA.forEach((resto) => {
-      resto.menu.forEach((item) => {
+      (resto?.menu || []).forEach((item) => {
         const itemNameLower = item.name.toLowerCase();
         const itemCatLower = item.category.toLowerCase();
         const itemDescLower = (item.description || "").toLowerCase();
@@ -164,20 +182,23 @@ export const AlloChefModal: React.FC<AlloChefModalProps> = ({
 
     // Default fallback dishes if none found
     if (found.length === 0) {
-      found.push(
-        {
-          item: RESTAURANTS_DATA[0].menu[0],
-          restaurantName: RESTAURANTS_DATA[0].name,
-          restaurantId: RESTAURANTS_DATA[0].id,
+      const defaultKhadyDishes = RESTAURANTS_DATA[0]?.menu || [];
+      if (defaultKhadyDishes[0]) {
+        found.push({
+          item: defaultKhadyDishes[0],
+          restaurantName: RESTAURANTS_DATA[0]?.name || "Khady's Food & Event",
+          restaurantId: RESTAURANTS_DATA[0]?.id || "resto-khadys-food",
           district: "Grande Mosquée",
-        },
-        {
-          item: RESTAURANTS_DATA[1].menu[0],
-          restaurantName: RESTAURANTS_DATA[1].name,
-          restaurantId: RESTAURANTS_DATA[1].id,
+        });
+      }
+      if (defaultKhadyDishes[1]) {
+        found.push({
+          item: defaultKhadyDishes[1],
+          restaurantName: RESTAURANTS_DATA[0]?.name || "Khady's Food & Event",
+          restaurantId: RESTAURANTS_DATA[0]?.id || "resto-khadys-food",
           district: "Plateau",
-        }
-      );
+        });
+      }
     }
 
     return found;
