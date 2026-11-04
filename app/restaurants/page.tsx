@@ -65,13 +65,16 @@ export default function RestaurantsPage({
       setError('');
 
       try {
-        // 1. Initialiser avec les données locales stockées
+        // 1. Initialiser avec les données locales stockées (Khady's Food & Event uniquement pour l'espace client)
         const localData = loadStoredRestaurants();
-        if (isMounted && localData && localData.length > 0) {
-          setRestaurants(localData);
+        const clientLocal = localData.filter((r) => isKhadysFoodRestaurant(r));
+        if (isMounted && clientLocal.length > 0) {
+          setRestaurants(clientLocal);
+        } else if (isMounted && localData.length > 0) {
+          setRestaurants(localData.filter((r) => !isAllorestoKitchen(r.id, r.name)));
         }
 
-        // 2. Si le client Supabase est connecté, tenter de synchroniser
+        // 2. Si le client Supabase est connecté, synchroniser
         const client = getSupabaseClient();
         if (client) {
           try {
@@ -116,8 +119,10 @@ export default function RestaurantsPage({
                 };
               });
 
-              const verifiedOnly = mapped.filter((r) => isKhadysFoodRestaurant(r) || isAllorestoKitchen(r.id, r.name));
-              setRestaurants(verifiedOnly.length > 0 ? verifiedOnly : mapped);
+              // Afficher exclusivement Khady's Food & Event (masquer Allôresto Kitchen en cuisine interne)
+              const khadysOnly = mapped.filter((r) => isKhadysFoodRestaurant(r));
+              const finalPublic = khadysOnly.length > 0 ? khadysOnly : mapped.filter((r) => !isAllorestoKitchen(r.id, r.name));
+              setRestaurants(finalPublic);
             }
           } catch (fetchErr: any) {
             console.warn('Erreur appel Supabase:', fetchErr?.message);

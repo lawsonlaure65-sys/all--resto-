@@ -338,40 +338,32 @@ app.post("/api/translate-text", async (req, res) => {
   }
 });
 
-// Fallback culinary recommendation generator for Niamey
+// Fallback culinary recommendation generator for Niamey (Khady's Food & Event officiel)
 function generateLocalAlloChefReply(message: string, district?: string, budget?: number): string {
   const lower = (message || "").toLowerCase();
   
-  if (lower.includes("choukouya") || lower.includes("grillade") || lower.includes("mouton") || lower.includes("viande") || lower.includes("tchintchinga")) {
-    return `Excellente idée ! Pour les meilleures grillades du Sahel à Niamey, je vous recommande vivement le **Demi-Mouton & Grillades du Sahel** chez *Le Khadafi Palace & Grillades* (Grande Mosquée / Plateau) à 15 000 FCFA pour partager, ou les brochettes **Tchintchinga & Poulet Braisé** (2 500 - 4 000 FCFA). Livraison express garantie en moins de 25 min par Billo Express !`;
+  if (lower.includes("choukouya") || lower.includes("grillade") || lower.includes("mouton") || lower.includes("viande") || lower.includes("tchintchinga") || lower.includes("suya")) {
+    return `Excellente idée ! Chez notre restaurant partenaire officiel **Khady's Food & Event** (Avenue de l'Islam, près Grande Mosquée), je vous recommande vivement les **Brochettes de Filet de Bœuf (Suya)** marinées aux épices Kankankan (4 000 FCFA avec alloco doré) ou le **Choukouya d'Agneau Prestige** au vrai Kan-Kan (4 500 FCFA). Livraison express garantie par Billo Express !`;
   }
 
-  if (lower.includes("dambou") || lower.includes("terroir") || lower.includes("tradition") || lower.includes("niger") || lower.includes("sahel")) {
-    return `Pour un goût 100% authentique du Niger 🇳🇪, je vous suggère le **Dambou Royal au Poulet Fermier** chez *Saveurs du Niger & Dambou Express* (4 500 FCFA). Préparé selon la recette traditionnelle avec feuilles de moringa fraîches et piment doux du terroir. Un régal copieux très apprécié pour le déjeuner !`;
+  if (lower.includes("plat du jour") || lower.includes("midi") || lower.includes("bureau") || lower.includes("ministère") || lower.includes("rapide")) {
+    return `Pour votre déjeuner au bureau à Niamey, découvrez le **Plat du Jour Khady's Food** (4 000 FCFA) : préparé chaque matin avec des ingrédients frais, accompagné d'alloco doré croustillant et de piment vert maison. Livré directement à votre bureau par Billo Express !`;
   }
 
-  if (lower.includes("poisson") || lower.includes("capitaine") || lower.includes("fleuve") || lower.includes("braisé")) {
-    return `Pour les amateurs de poisson frais, rien ne vaut le **Capitaine Braisé du Fleuve Niger** chez *Le Fleuve Gourmand & Capitaine Braisé* (5 500 FCFA). Servi avec alloco croustillant, attiéké frais et sauce tomate-oignon pimentée maison !`;
-  }
-
-  if (lower.includes("midi") || lower.includes("bureau") || lower.includes("ministère") || lower.includes("rapide") || lower.includes("groupe") || lower.includes("collègue")) {
-    return `Pour le déjeuner au bureau à Niamey, nos formules express sont idéales : testez le **Menu Express Déjeuner Sahel** (3 500 FCFA avec boisson) ou la **Box Salariés & Ministères** livrée directement à votre bureau avec couverts biodégradables inclus !`;
-  }
-
-  if (lower.includes("burger") || lower.includes("pizza") || lower.includes("chawarma") || lower.includes("fast")) {
-    return `Envie d'un plaisir street-food de qualité ? Le **Chawarma Mixte XXL** chez *Le Cèdre du Liban & Chawarma Palace* (3 500 FCFA) ou le **Burger Sahel Double Fromage** (4 000 FCFA) sont les favoris absolus de nos clients à Niamey !`;
+  if (lower.includes("sauce") || lower.includes("crin") || lower.includes("terroir") || lower.includes("tradition")) {
+    return `Pour un goût 100% authentique du Sahel, je vous conseille la **Sauce Crin-Crin au Poisson Fumé & Viande de Bœuf** chez **Khady's Food & Event**, servie avec pâte de maïs ou riz local parfumé. Un vrai délice du terroir nigérien !`;
   }
 
   if (budget && budget <= 3500) {
-    return `Avec votre budget de ${budget.toLocaleString()} FCFA, je vous conseille le **Chawarma Royal** (2 500 FCFA) ou le **Riz au Gras Sahel & Poulet** (3 200 FCFA). Livraison économique en centre-ville à 1 000 FCFA !`;
+    return `Avec votre budget de ${budget.toLocaleString()} FCFA, je vous conseille nos formules déjeuners et jus frais de bissap menthe chez **Khady's Food & Event**. Livraison rapide sur tout Niamey (Plateau, Yantala, Koubia) !`;
   }
 
-  return `Bonjour et bienvenue sur Allôresto Niamey 🇳🇪 ! En tant qu'AllôChef, je vous conseille aujourd'hui :
-1. 🥩 **Grillades & Choukouya Royal** chez *Le Khadafi Palace* (Grande Mosquée)
-2. 🍚 **Dambou Royal au Poulet** chez *Saveurs du Niger* (Plat traditionnel raffiné)
-3. 🐟 **Capitaine Braisé du Fleuve** chez *Le Fleuve Gourmand* (5 500 FCFA)
+  return `Bonjour et bienvenue sur Allôresto Niamey 🇳🇪 ! En tant qu'AllôChef, je vous recommande aujourd'hui les spécialités de notre restaurant partenaire certifié **Khady's Food & Event** :
+1. 🍢 **Brochettes de Filet de Bœuf (Suya)** aux épices Kankankan (4 000 FCFA avec alloco)
+2. 🥩 **Choukouya d'Agneau Prestige** au vrai Kan-Kan (4 500 FCFA)
+3. 🍲 **Sauce Crin-Crin du Terroir** avec viande tendre et poisson fumé
 
-Indiquez-moi votre budget, votre quartier à Niamey ou votre envie pour une recommandation sur mesure !`;
+Indiquez-moi votre quartier à Niamey ou votre envie pour une recommandation personnalisée !`;
 }
 
 // API: AllôChef Culinary AI Assistant (Gemini 3.7 + Resilient Local Fallback)
@@ -383,16 +375,13 @@ app.post("/api/allochef", async (req, res) => {
 
     if (ai) {
       const systemInstruction = `Tu es "AllôChef", le sommelier et assistant culinaire digital d'Allôresto Niger 🇳🇪, plateforme de commande et livraison de repas à Niamey.
-Restaurants partenaires phares :
-1. Le Khadafi Palace & Grillades (Grande Mosquée Khadafi / Plateau) : Demi-Mouton, Choukouya, Tchintchinga, Poulet braisé (4 500 à 15 000 FCFA).
-2. Saveurs du Niger & Dambou Express (Plateau) : Dambou Royal, Riz au gras, Sauce gombo (3 500 à 5 000 FCFA).
-3. Le Fleuve Gourmand (Corniche de Niamey) : Capitaine braisé du Fleuve Niger, Alloco, Attiéké (5 500 FCFA).
-4. Le Cèdre du Liban & Chawarma Palace (Yantala) : Chawarmas, Mezzés, Grillades mixtes (2 500 à 6 000 FCFA).
-5. L'Atelier du Burger Sahel (Koira Kano) : Burgers artisanaux, Frites maison (3 500 à 5 000 FCFA).
+Restaurant partenaire officiel certifié :
+- Khady's Food & Event (Avenue de l'Islam, près Grande Mosquée / Plateau) : Brochettes de Filet de Bœuf (Suya), Choukouya d'Agneau Prestige au Kan-Kan, Sauce Crin-Crin au Poisson Fumé, Poulet braisé, Alloco, Jus de Bissap frais Menthe (2 000 à 7 000 FCFA).
 
 Directives :
 - Réponds en français avec convivialité, énergie et chaleur sahélienne.
 - Mentionne les prix en FCFA (XOF).
+- Ne cite AUCUN restaurant fictif. Le seul partenaire officiel actif est Khady's Food & Event.
 - Cite les quartiers de Niamey (Plateau, Koira Kano, Grande Mosquée, Yantala, Goudel, Harobanda).
 - Sois concis (1 à 3 paragraphes max) et incite à ajouter le plat au panier.`;
 
@@ -444,75 +433,8 @@ app.post("/api/partner/register", async (req, res) => {
   }
 });
 
-// Memory payment records store with initial realistic Sahelian payments
-const IN_MEMORY_PAYMENTS: any[] = [
-  {
-    id: "pay_01",
-    order_id: "CMD-8812",
-    amount_xof: 15500,
-    payment_method: "airtel_money",
-    payment_status: "completed",
-    transaction_id: "AIRTEL-1725619412",
-    phone_number: "+227 96 12 34 56",
-    provider_response: { status: "success", code: "TXN_OK_200" },
-    created_at: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
-  },
-  {
-    id: "pay_02",
-    order_id: "CMD-8810",
-    amount_xof: 7500,
-    payment_method: "moov_money",
-    payment_status: "completed",
-    transaction_id: "MOOV-1725615821",
-    phone_number: "+227 90 55 44 33",
-    provider_response: { status: "success", code: "MOOV_VALIDATED" },
-    created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-  },
-  {
-    id: "pay_03",
-    order_id: "CMD-8809",
-    amount_xof: 12000,
-    payment_method: "orange_zamany",
-    payment_status: "pending",
-    transaction_id: "ORANGE-1725612104",
-    phone_number: "+227 91 88 77 66",
-    provider_response: { status: "pending_pin", code: "WAIT_CUSTOMER" },
-    created_at: new Date(Date.now() - 1000 * 60 * 80).toISOString(),
-  },
-  {
-    id: "pay_04",
-    order_id: "CMD-8805",
-    amount_xof: 5000,
-    payment_method: "mynita",
-    payment_status: "completed",
-    transaction_id: "MYN-994128",
-    phone_number: "+227 90 22 11 00",
-    provider_response: { status: "success", deposit_agent: "Agence Plateau" },
-    created_at: new Date(Date.now() - 1000 * 60 * 140).toISOString(),
-  },
-  {
-    id: "pay_05",
-    order_id: "CMD-8801",
-    amount_xof: 22500,
-    payment_method: "all_iza",
-    payment_status: "completed",
-    transaction_id: "IZZA-BUS-8831",
-    phone_number: "+227 97 33 44 55",
-    provider_response: { status: "success", branch: "Grande Mosquée" },
-    created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
-  },
-  {
-    id: "pay_06",
-    order_id: "CMD-8798",
-    amount_xof: 4500,
-    payment_method: "flooz",
-    payment_status: "pending",
-    transaction_id: "FLOOZ-1725598120",
-    phone_number: "+227 98 10 20 30",
-    provider_response: { status: "pending" },
-    created_at: new Date(Date.now() - 1000 * 60 * 320).toISOString(),
-  },
-];
+// Registre des paiements réels en mémoire (aucun faux paiement codé en dur)
+const IN_MEMORY_PAYMENTS: any[] = [];
 
 // API: Process Mobile Money Payment
 app.post("/api/payment/process", async (req, res) => {

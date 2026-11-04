@@ -61,6 +61,7 @@ import {
 } from "./utils/dishImageResolver";
 import {
   isKhadysFoodRestaurant,
+  isAllorestoKitchen,
   KHADYS_OFFICIAL_NAME,
   KHADYS_STABLE_LOCAL_ID,
 } from "./services/khadysPartnerResolver";
@@ -854,8 +855,14 @@ export function App() {
     );
   };
 
+  // Liste des restaurants visibles par le client (Exclusivement Khady's Food & Event, Allôresto Kitchen masqué en cuisine interne)
+  const clientVisibleRestaurants = useMemo(() => {
+    const khadys = restaurants.filter((r) => isKhadysFoodRestaurant(r));
+    return khadys.length > 0 ? khadys : restaurants.filter((r) => !isAllorestoKitchen(r.id, r.name));
+  }, [restaurants]);
+
   // Filter Restaurants
-  const filteredRestaurants = restaurants.filter((resto) => {
+  const filteredRestaurants = clientVisibleRestaurants.filter((resto) => {
     // Neighborhood filter
     if (homeNeighborhoodFilter !== "all") {
       const addr = (resto.address + " " + resto.city).toLowerCase();
@@ -1234,16 +1241,16 @@ export function App() {
                       Espace Restaurants
                     </span>
                     <span className="text-xs text-slate-400">
-                      {restaurants.length} partenaires certifiés
+                      {clientVisibleRestaurants.length} partenaire certifié
                     </span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
                     <Store className="w-6 h-6 text-blue-400" />
-                    <span>Restaurants partenaires à</span>
+                    <span>Restaurant partenaire à</span>
                     <span className="text-orange-500">{selectedCity}</span>
                   </h2>
                   <p className="text-xs text-slate-300 mt-0.5">
-                    Sélectionnez un restaurant pour afficher sa carte et commander, ou utilisez le filtre par quartier :
+                    Commandez directement auprès de notre restaurant partenaire officiel ou filtrez par quartier :
                   </p>
                 </div>
 
@@ -1255,7 +1262,7 @@ export function App() {
                     className="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 border border-orange-400/40 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-orange-500/20 cursor-pointer"
                   >
                     <Store className="w-4 h-4" />
-                    <span>Voir les restaurants (8)</span>
+                    <span>Voir les restaurants ({clientVisibleRestaurants.length})</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
 
@@ -1280,7 +1287,7 @@ export function App() {
                   <span>Quartier :</span>
                 </span>
                 {[
-                  { id: "all", label: "Tous (8)" },
+                  { id: "all", label: `Tous (${clientVisibleRestaurants.length})` },
                   { id: "Plateau", label: "Plateau" },
                   { id: "Yantala", label: "Yantala" },
                   { id: "Koubia", label: "Koubia" },

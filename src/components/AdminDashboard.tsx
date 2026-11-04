@@ -536,27 +536,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     },
   ]);
 
-  // State: Partner restaurant approvals
-  const [partnerRequests, setPartnerRequests] = useState([
-    {
-      id: "REQ-901",
-      name: "Le Dôme & Saveurs du Fleuve",
-      owner: "Moussa Garba",
-      city: "Niamey (Goudel)",
-      cuisine: "Capitaine grillé & Riz Local",
-      phone: "+227 96 55 44 33",
-      status: "pending",
-    },
-    {
-      id: "REQ-902",
-      name: "Kebab & Chawarma de la Mosquée",
-      owner: "Mariama Souley",
-      city: "Niamey (Grande Mosquée)",
-      cuisine: "Chawarmas & Grillades",
-      phone: "+227 90 12 34 56",
-      status: "pending",
-    },
-  ]);
+  // State: Partner restaurant approvals (aucun restaurant fictif en dur)
+  const [partnerRequests, setPartnerRequests] = useState<
+    Array<{
+      id: string;
+      name: string;
+      owner: string;
+      city: string;
+      cuisine: string;
+      phone: string;
+      status: string;
+    }>
+  >([]);
 
   // Action de connexion Administrateur sécurisée via Supabase Auth
   const handleAdminLogin = async (e: React.FormEvent) => {

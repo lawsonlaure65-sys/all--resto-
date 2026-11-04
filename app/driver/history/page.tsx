@@ -17,7 +17,7 @@ const SAMPLE_HISTORY: PastTrip[] = [
   {
     id: 'TRP-881',
     date: 'Aujourd’hui 11:30',
-    restaurant: 'Cuisine & Saveurs du Sahel',
+    restaurant: "Khady's Food & Event",
     district: 'Plateau',
     delivery_fee: 1000,
     tip: 500,
@@ -27,7 +27,7 @@ const SAMPLE_HISTORY: PastTrip[] = [
   {
     id: 'TRP-880',
     date: 'Aujourd’hui 10:15',
-    restaurant: 'Le Dambou d’Or',
+    restaurant: "Khady's Food & Event",
     district: 'Harobanda',
     delivery_fee: 1500,
     tip: 1000,
@@ -37,7 +37,7 @@ const SAMPLE_HISTORY: PastTrip[] = [
   {
     id: 'TRP-879',
     date: 'Aujourd’hui 09:00',
-    restaurant: 'Grillades & Braises du Sahel',
+    restaurant: "Khady's Food & Event",
     district: 'Koira Kano',
     delivery_fee: 1200,
     tip: 0,
@@ -47,7 +47,7 @@ const SAMPLE_HISTORY: PastTrip[] = [
   {
     id: 'TRP-878',
     date: 'Hier 19:45',
-    restaurant: 'Le Palmier - Oasis',
+    restaurant: "Khady's Food & Event",
     district: 'Koubia',
     delivery_fee: 1500,
     tip: 500,
@@ -57,11 +57,11 @@ const SAMPLE_HISTORY: PastTrip[] = [
   {
     id: 'TRP-877',
     date: 'Hier 18:20',
-    restaurant: 'Cuisine du Sahel',
-    district: 'Banifandou',
-    delivery_fee: 1200,
+    restaurant: "Khady's Food & Event",
+    district: 'Plateau',
+    delivery_fee: 1000,
     tip: 1000,
-    total_earned: 2200,
+    total_earned: 2000,
     payment_type: 'flooz',
   },
 ];

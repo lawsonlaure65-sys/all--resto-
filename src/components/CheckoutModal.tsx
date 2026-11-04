@@ -108,6 +108,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMobilePaymentFlow, setShowMobilePaymentFlow] = useState(false);
   const [onlinePaymentRecord, setOnlinePaymentRecord] = useState<PaymentRecord | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Synchroniser automatiquement avec le profil Supabase connecté s'il existe
   useEffect(() => {
@@ -206,6 +207,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const handleSubmitOrder = (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError(null);
+
+    const isCash = paymentMethod === "cash" || paymentMethod === "cash_on_delivery";
+    const cleanRef = paymentReference ? paymentReference.trim() : undefined;
+
+    // Règle financière stricte : Référence Mobile Money obligatoire pour vérification cuisine
+    if (!isCash && !onlinePaymentRecord && (!cleanRef || cleanRef.length < 3)) {
+      setValidationError(
+        "La référence de transaction Mobile Money (ou le numéro de dépôt) est obligatoire afin que la cuisine puisse vérifier la réception des fonds avant préparation."
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     const finalScheduledTime =
@@ -221,8 +235,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           ? "Point de retrait : Grande Mosquée Mouhamar Kadhafi (Avenue de l'Islam)"
           : (deliveryAddress.trim() || `Quartier ${activeDistrict?.name || "Niamey"}`);
 
-      const isCash = paymentMethod === "cash" || paymentMethod === "cash_on_delivery";
-      
       let canonicalPaymentMethod: PaymentMethod = paymentMethod;
       if (paymentMethod === "cash") canonicalPaymentMethod = "cash_on_delivery";
       else if (paymentMethod === "mobile_money") canonicalPaymentMethod = "airtel_money";
@@ -231,8 +243,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       const resolvedPaymentStatus: PaymentStatus = isCash
         ? "cash_on_delivery"
         : "awaiting_mobile_money_validation";
-
-      const cleanRef = paymentReference ? paymentReference.trim() : undefined;
 
       const newOrder: Order = {
         id: "CMD-" + Math.floor(1000 + Math.random() * 9000),
@@ -269,6 +279,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         receiptProofAttached,
         courierName: undefined,
         courierPhone: undefined,
+        kitchenNotes: isCash
+          ? [`À encaisser par le coursier : ${grandTotal.toLocaleString()} FCFA`]
+          : [`Paiement Mobile Money (${canonicalPaymentMethod}) - Réf : ${cleanRef || onlinePaymentRecord?.transaction_id || "Validé"}`],
       };
 
       // Si paiement Mobile Money, enregistrer la transaction dans la table payments
@@ -343,6 +356,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmitOrder} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+          {validationError && (
+            <div className="p-3.5 rounded-2xl bg-red-950/90 border-2 border-red-500 text-red-200 text-xs flex items-start gap-2.5 shadow-lg shadow-red-950/50 animate-in fade-in">
+              <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-black text-red-300">Action requise pour la cuisine :</p>
+                <p className="mt-0.5 text-red-100">{validationError}</p>
+              </div>
+            </div>
+          )}
+
           {/* 1. Horaire & Créneau de Livraison */}
           <div className="space-y-3 p-4 rounded-2xl bg-slate-950 border border-orange-500/20">
             <div className="flex items-center justify-between">
@@ -926,6 +949,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <p>
                     Total à régler en <strong>espèces</strong> au livreur Billo Express à la livraison : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
                   </p>
+                </div>
+
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-black text-xs">
+                  <span className="text-sm">🏷️</span>
+                  <span>À encaisser par le coursier : <strong>{grandTotal.toLocaleString()} FCFA</strong></span>
                 </div>
 
                 <div className="pt-2 border-t border-slate-800">
