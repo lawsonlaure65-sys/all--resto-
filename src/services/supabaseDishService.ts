@@ -503,7 +503,7 @@ export async function syncAllLocalDataToSupabase(
           ? khadysInDb.id
           : resto.id;
 
-      resto.menu.forEach((dish) => {
+      (resto.menu || []).forEach((dish) => {
         localDishes.push({ dish, targetRestoId });
         totalDishes++;
       });

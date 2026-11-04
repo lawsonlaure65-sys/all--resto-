@@ -114,7 +114,7 @@ export function deduplicateRestaurants(restaurants: Restaurant[]): Restaurant[] 
         // Merge dishes into the existing Khady restaurant
         const existingKhady = result.find((r) => isKhadysFoodRestaurant(r));
         if (existingKhady) {
-          existingKhady.menu = deduplicateMenu([...existingKhady.menu, ...(resto.menu || [])]);
+          existingKhady.menu = deduplicateMenu([...(existingKhady.menu || []), ...(resto?.menu || [])]);
         }
         continue;
       }
@@ -126,7 +126,7 @@ export function deduplicateRestaurants(restaurants: Restaurant[]): Restaurant[] 
 
     result.push({
       ...resto,
-      menu: deduplicateMenu(resto.menu || []),
+      menu: deduplicateMenu(resto?.menu || []),
     });
   }
 
@@ -139,7 +139,7 @@ export function normalizeDishesStock(restaurants: Restaurant[]): Restaurant[] {
   return dedupedRestaurants.map((resto) => ({
     ...resto,
     image: resto.image && resto.image.trim() !== "" ? resto.image : DEFAULT_RESTAURANT_FALLBACK_URL,
-    menu: deduplicateMenu(resto.menu).map((dish, index) => {
+    menu: deduplicateMenu(resto?.menu || []).map((dish, index) => {
       const safeImage =
         dish.image && dish.image.trim() !== "" ? dish.image : DEFAULT_DISH_FALLBACK_URL;
 
@@ -359,7 +359,7 @@ export function saveStoredRestaurants(restaurants: Restaurant[]): boolean {
       // 1. Alléger les images base64 trop volumineuses sans jamais introduire de chaîne vide ("")
       const optimized = restaurants.map((resto) => ({
         ...resto,
-        menu: resto.menu.map((d) => ({
+        menu: (resto?.menu || []).map((d) => ({
           ...d,
           // Conserver les URL web normales, remplacer les base64 trop lourds par le fallback valide
           image:
@@ -382,7 +382,7 @@ export function saveStoredRestaurants(restaurants: Restaurant[]): boolean {
         // 2. Dernier recours : conserver uniquement les URL d'images web, jamais de chaîne vide
         const minimal = restaurants.map((resto) => ({
           ...resto,
-          menu: resto.menu.map((d) => ({
+          menu: (resto?.menu || []).map((d) => ({
             ...d,
             image:
               d.name?.toLowerCase().includes("brochette")
@@ -436,10 +436,10 @@ export function addOrUpdateDishInStorage(
   // Check if dish already exists in any restaurant
   let updated = false;
   const updatedRestaurants = restaurants.map((resto) => {
-    const existingIndex = resto.menu.findIndex((d) => d.id === dish.id);
+    const existingIndex = (resto?.menu || []).findIndex((d) => d.id === dish.id);
     if (existingIndex >= 0) {
       updated = true;
-      const newMenu = [...resto.menu];
+      const newMenu = [...(resto?.menu || [])];
       newMenu[existingIndex] = dish;
       return { ...resto, menu: newMenu };
     }
@@ -456,7 +456,7 @@ export function addOrUpdateDishInStorage(
     if (resto.id === defaultRestoId) {
       return {
         ...resto,
-        menu: [dish, ...resto.menu],
+        menu: [dish, ...(resto?.menu || [])],
       };
     }
     return resto;
@@ -493,7 +493,7 @@ export function deleteDishFromStorage(
 
   const updatedRestaurants = restaurants.map((resto) => ({
     ...resto,
-    menu: resto.menu.filter((d) => d.id !== dishId),
+    menu: (resto?.menu || []).filter((d) => d.id !== dishId),
   }));
 
   saveStoredRestaurants(updatedRestaurants);
@@ -582,9 +582,9 @@ export function updateDishStockCount(
   const safeStock = Math.max(0, Math.round(stockCount));
 
   const updatedRestaurants = restaurants.map((resto) => {
-    const existingIndex = resto.menu.findIndex((d) => d.id === dishId);
+    const existingIndex = (resto?.menu || []).findIndex((d) => d.id === dishId);
     if (existingIndex >= 0) {
-      const newMenu = [...resto.menu];
+      const newMenu = [...(resto?.menu || [])];
       const currentDish = newMenu[existingIndex];
       const updatedDish: MenuItem = {
         ...currentDish,

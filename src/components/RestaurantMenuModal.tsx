@@ -58,10 +58,11 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
 
   if (!rawRestaurant || !isOpen) return null;
 
-  const restaurant = translateRestaurant(rawRestaurant);
-  const categories = Array.from(new Set(restaurant.menu.map((m) => m.category)));
+  const restaurant = translateRestaurant(rawRestaurant) || rawRestaurant;
+  const menuList = restaurant?.menu || rawRestaurant?.menu || [];
+  const categories = Array.from(new Set(menuList.map((m) => m.category)));
 
-  const filteredMenuItems = restaurant.menu.filter((m) => {
+  const filteredMenuItems = menuList.filter((m) => {
     if (selectedCategory !== "all" && m.category !== selectedCategory) return false;
     if (filterSpicyOnly && !m.isSpicy && (m.spiceLevel || 0) === 0) return false;
     if (filterVegeOnly && !m.isVegetarian && !m.isVegan) return false;

@@ -105,7 +105,7 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
         const matchCuisine = resto.cuisine.toLowerCase().includes(q);
         const matchCity = (resto.city || '').toLowerCase().includes(q);
         const matchAddress = resto.address.toLowerCase().includes(q);
-        const matchDish = resto.menu.some((m) => m.name.toLowerCase().includes(q));
+        const matchDish = (resto.menu || []).some((m) => m.name.toLowerCase().includes(q));
         if (!matchName && !matchCuisine && !matchCity && !matchAddress && !matchDish) {
           return false;
         }
@@ -330,7 +330,7 @@ export const RestaurantsDirectoryModal: React.FC<RestaurantsDirectoryModalProps>
                         <span>&bull;</span>
                         <span>Min. commande : <strong className="text-slate-200">{resto.minOrder} FCFA</strong></span>
                         <span>&bull;</span>
-                        <span className="text-emerald-400 font-semibold">{resto.menu.length} plats au menu</span>
+                        <span className="text-emerald-400 font-semibold">{(resto.menu || []).length} plats au menu</span>
                       </div>
 
                       {/* Liens Partenaire Directs */}

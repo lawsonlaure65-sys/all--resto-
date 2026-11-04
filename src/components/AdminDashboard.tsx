@@ -1397,7 +1397,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               const freshRestaurants = loadStoredRestaurants();
               const targetRest = freshRestaurants.find((r) => r.id === plan.restaurantId);
               if (targetRest) {
-                const existingDish = targetRest.menu.find(
+                const existingDish = (targetRest.menu || []).find(
                   (m) => m.name.toLowerCase() === plan.dishName.toLowerCase() || m.isMenuDuJour
                 );
                 if (existingDish) {
