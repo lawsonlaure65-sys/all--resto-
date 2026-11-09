@@ -6,6 +6,7 @@ import {
   ShoppingBag,
   Sparkles,
   User,
+  UserPlus,
   Store,
   Bike,
   ShieldCheck,
@@ -54,7 +55,7 @@ interface HeaderProps {
   onOpenPartnerModal: () => void;
   onOpenGroupOrder: () => void;
   onOpenAccount: () => void;
-  onOpenAuth?: () => void;
+  onOpenAuth?: (mode?: "login" | "register") => void;
   currentUser?: UserProfile | null;
   onOpenTechPack: () => void;
   onOpenCatering?: () => void;
@@ -480,15 +481,38 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right Actions: Decanted and fully responsive */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Button 1: User Account - visible on tablets/desktop, on mobile accessible via bottom nav */}
-          <button
-            id="account-nav-btn"
-            onClick={currentUser ? onOpenAccount : onOpenAuth}
-            className="hidden sm:flex w-8.5 h-8.5 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-xl sm:rounded-2xl bg-[#1c1412] hover:bg-[#28201a] border border-amber-900/40 text-amber-200/90 items-center justify-center shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
-            title={currentUser ? `Connecté : ${currentUser.name}` : "Connexion / Profil"}
-          >
-            <User className="w-4 h-4 text-amber-200/90" />
-          </button>
+          {/* Button 1: User Account / Inscription - Visible on ALL devices */}
+          {currentUser && currentUser.name ? (
+            <button
+              id="account-nav-btn"
+              onClick={onOpenAccount}
+              className="h-8 sm:h-9 md:h-10 px-2 sm:px-3 rounded-xl sm:rounded-2xl bg-[#1c1412] hover:bg-[#28201a] border border-amber-500/40 text-amber-200/90 flex items-center gap-1.5 shrink-0 transition active:scale-95 shadow-sm cursor-pointer"
+              title={`Connecté : ${currentUser.name}`}
+            >
+              <div className="relative">
+                <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
+                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              </div>
+              <span className="hidden sm:inline text-xs font-bold text-amber-100 max-w-[90px] truncate">
+                {currentUser.name.split(" ")[0]}
+              </span>
+            </button>
+          ) : (
+            <button
+              id="account-nav-btn"
+              onClick={() => onOpenAuth?.("register")}
+              className="h-8 sm:h-9 md:h-10 px-2 sm:px-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white flex items-center gap-1.5 shrink-0 transition active:scale-95 shadow-md shadow-orange-600/25 border border-orange-400/40 cursor-pointer"
+              title="Créer un compte client ou se connecter"
+            >
+              <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+              <span className="hidden md:inline text-xs font-black tracking-tight">
+                S'inscrire / Connexion
+              </span>
+              <span className="md:hidden text-[11px] font-bold">
+                S'inscrire
+              </span>
+            </button>
+          )}
 
           {/* Button 2: Voice Order - desktop / large mobile */}
           {onOpenVoiceOrder && (
@@ -595,6 +619,53 @@ export const Header: React.FC<HeaderProps> = ({
                         </button>
                       );
                     })}
+                  </div>
+
+                  {/* Section Inscription / Compte Client */}
+                  <div className="pt-2 mt-2 border-t border-slate-800">
+                    {currentUser && currentUser.name ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onOpenAccount();
+                          setRoleDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 transition cursor-pointer font-bold"
+                      >
+                        <div className="flex items-center gap-2">
+                          <User className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Mon Compte ({currentUser.name.split(" ")[0]})</span>
+                        </div>
+                        <span className="text-[10px] bg-amber-500/30 px-1.5 py-0.5 rounded text-amber-200">
+                          {currentUser.loyaltyPoints} Pts
+                        </span>
+                      </button>
+                    ) : (
+                      <div className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onOpenAuth?.("register");
+                            setRoleDropdownOpen(false);
+                          }}
+                          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black transition cursor-pointer shadow-md shadow-orange-600/20"
+                        >
+                          <UserPlus className="w-3.5 h-3.5" />
+                          <span>S'inscrire (Nouveau client)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onOpenAuth?.("login");
+                            setRoleDropdownOpen(false);
+                          }}
+                          className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold transition cursor-pointer border border-slate-700"
+                        >
+                          <User className="w-3.5 h-3.5 text-slate-400" />
+                          <span>Se connecter</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="pt-2 mt-2 border-t border-slate-800 space-y-1">

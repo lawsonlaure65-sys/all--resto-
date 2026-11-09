@@ -104,15 +104,19 @@ export interface CartItem {
 }
 
 export type PaymentMethod =
+  | "cash_delivery"
+  | "cash_pickup"
   | "airtel_money"
   | "moov_money"
+  | "zamany_cash"
+  | "al_izza"
   | "al_izza_cash"
-  | "cash_on_delivery"
   | "mynita"
   | "amanata"
+  | "zeyna"
+  | "cash_on_delivery"
   | "al_izza_business"
   | "al_izza_transfer"
-  | "zeyna"
   | "mobile_money"
   | "cash"
   | "card"

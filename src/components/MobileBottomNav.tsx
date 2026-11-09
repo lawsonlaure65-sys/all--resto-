@@ -9,6 +9,7 @@ import {
   Bike,
   ShieldCheck,
   User,
+  UserPlus,
   Clock,
   Package,
   HelpCircle,
@@ -18,7 +19,7 @@ import {
   Check,
   X,
 } from "lucide-react";
-import { UserRole, AppLanguage } from "../types";
+import { UserRole, AppLanguage, UserProfile } from "../types";
 import { t } from "../utils/translations";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -32,6 +33,8 @@ interface MobileBottomNavProps {
   onOpenVoiceOrder?: () => void;
   onOpenGroupOrder: () => void;
   onOpenAccount: () => void;
+  onOpenAuth?: (mode?: "login" | "register") => void;
+  currentUser?: UserProfile | null;
   onOpenTechPack: () => void;
   onOpenRestaurants?: () => void;
   onOpenMenu?: () => void;
@@ -52,6 +55,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onOpenVoiceOrder,
   onOpenGroupOrder,
   onOpenAccount,
+  onOpenAuth,
+  currentUser,
   onOpenTechPack,
   onOpenRestaurants,
   onOpenMenu,
@@ -149,6 +154,70 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               })}
             </div>
 
+            {/* Mobile Client Account & Inscription Card */}
+            <div className="p-3 mb-3 rounded-2xl bg-gradient-to-r from-orange-950/40 via-slate-900 to-amber-950/30 border border-orange-500/30 shadow-lg">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center">
+                    {currentUser && currentUser.name ? (
+                      <User className="w-4 h-4 text-amber-400" />
+                    ) : (
+                      <UserPlus className="w-4 h-4 text-orange-400" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-white">
+                      {currentUser && currentUser.name ? currentUser.name : "Espace Client Allôresto"}
+                    </h4>
+                    <p className="text-[10px] text-slate-400">
+                      {currentUser && currentUser.name
+                        ? `Membre ${currentUser.sahelClubTier} • ${currentUser.loyaltyPoints} Pts Sahel Club`
+                        : "Créez votre compte pour cumuler 50 Pts et vos adresses"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {currentUser && currentUser.name ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSpaceSelectorOpen(false);
+                    onOpenAccount();
+                  }}
+                  className="w-full py-2 px-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-slate-950 font-black text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/20"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Accéder à mon Compte Client</span>
+                </button>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSpaceSelectorOpen(false);
+                      onOpenAuth?.("register");
+                    }}
+                    className="py-2 px-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/20"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>S'inscrire (Nouveau)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSpaceSelectorOpen(false);
+                      onOpenAuth?.("login");
+                    }}
+                    className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition cursor-pointer border border-slate-700 flex items-center justify-center gap-1"
+                  >
+                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Connexion</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Mobile Theme Switcher */}
             <div className="pt-3 border-t border-slate-800">
               <ThemeToggle variant="segmented" />
@@ -181,7 +250,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               title="Liste de tous les restaurants partenaires à Niamey"
             >
               <Store className="w-4 h-4 mb-0.5 text-blue-400" />
-              <span className="text-[8.5px] font-bold truncate max-w-full leading-none">Restos (8)</span>
+              <span className="text-[8.5px] font-bold truncate max-w-full leading-none">Khady's</span>
             </button>
           )}
 
@@ -258,6 +327,39 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               </div>
               <span className="text-[8.5px] font-bold text-orange-400 truncate max-w-full leading-none">
                 {cartTotal > 0 ? `${cartTotal.toLocaleString()} F` : t(currentLanguage, "cart")}
+              </span>
+            </button>
+          )}
+
+          {/* Tab: Mon Compte / S'inscrire Client */}
+          {currentRole === "client" && (
+            <button
+              id="mobile-nav-account-btn"
+              type="button"
+              onClick={() => {
+                if (currentUser && currentUser.name) {
+                  onOpenAccount();
+                } else if (onOpenAuth) {
+                  onOpenAuth("register");
+                }
+              }}
+              className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-xl transition-all cursor-pointer flex-1 min-w-0 ${
+                currentUser && currentUser.name
+                  ? "text-amber-400 hover:text-amber-300"
+                  : "text-orange-400 hover:text-orange-300 font-bold"
+              }`}
+              title={currentUser && currentUser.name ? `Mon Compte (${currentUser.name})` : "S'inscrire / Se connecter"}
+            >
+              {currentUser && currentUser.name ? (
+                <div className="relative">
+                  <User className="w-4 h-4 mb-0.5 text-amber-400" />
+                  <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                </div>
+              ) : (
+                <UserPlus className="w-4 h-4 mb-0.5 text-orange-400" />
+              )}
+              <span className="text-[8.5px] truncate max-w-full leading-none font-bold">
+                {currentUser && currentUser.name ? "Compte" : "S'inscrire"}
               </span>
             </button>
           )}

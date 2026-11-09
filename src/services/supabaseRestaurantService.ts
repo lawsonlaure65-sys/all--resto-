@@ -421,9 +421,36 @@ export async function persistOrderToSupabase(order: Order): Promise<{ success: b
       .filter(Boolean)
       .join(" • ");
 
+    const resolvedRestoId =
+      order.restaurantId === "resto-khadys-food" ||
+      order.restaurantId === "99e2e632-4efd-4a44-8754-b806b50babfe" ||
+      !order.restaurantId
+        ? "99e2e632-4efd-4a44-8754-b806b50babfe"
+        : order.restaurantId === "resto-alloresto-kitchen" ||
+          order.restaurantId === "a8168cb5-fe46-4368-85fa-be1a64d854b5"
+        ? "a8168cb5-fe46-4368-85fa-be1a64d854b5"
+        : order.restaurantId;
+
+    const fulfillmentType =
+      order.serviceType === "takeaway" || order.deliveryAddress?.includes("Point de retrait")
+        ? "pickup"
+        : "delivery";
+
+    // Format payment_method pour respecter la contrainte et enum SQL
+    let resolvedPaymentMethod = String(order.paymentMethod);
+    if (resolvedPaymentMethod === "cash" || resolvedPaymentMethod === "cash_on_delivery") {
+      resolvedPaymentMethod = fulfillmentType === "pickup" ? "cash_pickup" : "cash_delivery";
+    } else if (
+      resolvedPaymentMethod === "al_izza_cash" ||
+      resolvedPaymentMethod === "al_izza_business" ||
+      resolvedPaymentMethod === "al_izza_transfer"
+    ) {
+      resolvedPaymentMethod = "al_izza";
+    }
+
     const basePayload: Record<string, any> = {
       order_id: order.id,
-      restaurant_id: order.restaurantId || "resto-alloresto-kitchen",
+      restaurant_id: resolvedRestoId,
       customer_name: order.customerName,
       customer_phone: order.customerPhone,
       customer_address: order.deliveryAddress,
@@ -431,7 +458,7 @@ export async function persistOrderToSupabase(order: Order): Promise<{ success: b
       subtotal: Math.max(0, Number(order.subtotal || 0)),
       delivery_fee: Math.max(0, Number(order.deliveryFee || 0)),
       total: Math.max(1, Number(order.total || 0)),
-      payment_method: order.paymentMethod,
+      payment_method: resolvedPaymentMethod,
       payment_status: order.paymentStatus || (isCash ? "cash_on_delivery" : "awaiting_mobile_money_validation"),
       status: "pending",
       notes: notesSummary || null,
@@ -465,6 +492,8 @@ export async function persistOrderToSupabase(order: Order): Promise<{ success: b
     try {
       const orderPayload: Record<string, any> = {
         id: order.id,
+        restaurant_id: resolvedRestoId,
+        fulfillment_type: fulfillmentType,
         customer_name: order.customerName,
         customer_phone: order.customerPhone,
         delivery_address: order.deliveryAddress,
@@ -472,8 +501,8 @@ export async function persistOrderToSupabase(order: Order): Promise<{ success: b
         discount_xof: Math.max(0, Number(order.discount || 0)),
         delivery_fee_xof: Math.max(0, Number(order.deliveryFee || 0)),
         total_xof: Math.max(1, Number(order.total || 0)),
-        payment_method: order.paymentMethod,
-        payment_status: order.paymentStatus || (isCash ? "cash_on_delivery" : "awaiting_mobile_money_validation"),
+        payment_method: resolvedPaymentMethod,
+        payment_status: order.paymentStatus || (isCash ? "cash_due" : "awaiting_mobile_money_validation"),
         order_status: "received",
       };
 

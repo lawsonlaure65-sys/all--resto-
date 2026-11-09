@@ -19,6 +19,8 @@ import {
   Home,
   CreditCard,
   Gift,
+  LogOut,
+  UserPlus,
 } from "lucide-react";
 import { Order, UserProfile, Restaurant, MenuItem } from "../types";
 import { DEFAULT_USER_PROFILE, RESTAURANTS_DATA } from "../data/allorestoData";
@@ -27,19 +29,34 @@ import { ThemeToggle } from "./ThemeToggle";
 interface UserAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
+  currentUser?: UserProfile | null;
   orders: Order[];
   onReorder: (order: Order) => void;
   onOpenDataProtection: () => void;
+  onLogout?: () => void;
+  onOpenAuth?: (mode?: "login" | "register") => void;
 }
 
 export const UserAccountModal: React.FC<UserAccountModalProps> = ({
   isOpen,
   onClose,
+  currentUser,
   orders,
   onReorder,
   onOpenDataProtection,
+  onLogout,
+  onOpenAuth,
 }) => {
-  const [userProfile, setUserProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
+  const userProfile: UserProfile = currentUser || {
+    name: "Client Allôresto",
+    email: "client@alloresto.ne",
+    phone: "+227 96 05 23 10",
+    city: "Niamey",
+    loyaltyPoints: 50,
+    sahelClubTier: "Bronze",
+    favoriteRestaurantIds: ["resto-khadys-food"],
+    savedAddresses: [],
+  };
   const [activeTab, setActiveTab] = useState<"orders" | "loyalty" | "addresses" | "preferences">("orders");
   const [reorderedAlert, setReorderedAlert] = useState<string | null>(null);
 
@@ -106,6 +123,77 @@ export const UserAccountModal: React.FC<UserAccountModalProps> = ({
                 </span>
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* Quick Auth Actions Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-2xl bg-slate-950 border border-slate-800 text-xs">
+          <div className="flex items-center gap-2 text-slate-300">
+            <span className={`w-2 h-2 rounded-full ${currentUser ? "bg-emerald-400" : "bg-amber-400"}`} />
+            <span>
+              {currentUser
+                ? `Connecté en tant que ${currentUser.name || currentUser.phone}`
+                : "Session invité — Sauvegardez vos adresses et gagnez 50 points :"}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {currentUser ? (
+              <>
+                {onOpenAuth && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenAuth("register");
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <UserPlus className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Créer un autre compte</span>
+                  </button>
+                )}
+                {onLogout && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onLogout();
+                      onClose();
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 border border-rose-500/40 text-rose-300 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Se déconnecter</span>
+                  </button>
+                )}
+              </>
+            ) : (
+              onOpenAuth && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenAuth("register");
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md shadow-orange-500/20"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>S'inscrire (Nouveau)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onOpenAuth("login");
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition cursor-pointer"
+                  >
+                    <span>Se connecter</span>
+                  </button>
+                </div>
+              )
+            )}
           </div>
         </div>
 

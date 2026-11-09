@@ -236,9 +236,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           : (deliveryAddress.trim() || `Quartier ${activeDistrict?.name || "Niamey"}`);
 
       let canonicalPaymentMethod: PaymentMethod = paymentMethod;
-      if (paymentMethod === "cash") canonicalPaymentMethod = "cash_on_delivery";
-      else if (paymentMethod === "mobile_money") canonicalPaymentMethod = "airtel_money";
-      else if (paymentMethod === "al_izza_business" || paymentMethod === "al_izza_transfer") canonicalPaymentMethod = "al_izza_cash";
+      const isPickup = serviceMode === "takeaway" || deliveryZone === "mosquee_pickup";
+      if (paymentMethod === "cash") {
+        canonicalPaymentMethod = isPickup ? "cash_pickup" : "cash_delivery";
+      } else if (paymentMethod === "mobile_money") {
+        canonicalPaymentMethod = "airtel_money";
+      } else if (paymentMethod === "al_izza_business" || paymentMethod === "al_izza_transfer" || paymentMethod === "al_izza_cash") {
+        canonicalPaymentMethod = "al_izza";
+      }
 
       const resolvedPaymentStatus: PaymentStatus = isCash
         ? "cash_on_delivery"
@@ -923,8 +928,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
             )}
 
-            {/* Validation Notice for Mobile Agency Deposits */}
-            {["mynita", "amanata", "al_izza_business", "zeyna", "mobile_money"].includes(paymentMethod) && (
+            {/* Validation Notice for Mobile Agency & Operator Deposits */}
+            {paymentMethod !== "cash" && (
               <div className="p-4 rounded-2xl bg-amber-950/90 border-2 border-amber-500 flex items-start gap-3.5 text-xs text-amber-200 shadow-xl shadow-amber-950/40">
                 <AlertTriangle className="w-6 h-6 text-amber-400 shrink-0 mt-0.5" />
                 <div className="space-y-1.5">
@@ -1121,18 +1126,73 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
             )}
 
-            {/* Detail Box: 4. All-Iza Business */}
-            {paymentMethod === "al_izza_business" && (
+            {/* Detail Box: Zamany Cash */}
+            {paymentMethod === "zamany_cash" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-amber-950/20 border border-amber-500/40 space-y-3 animate-in fade-in">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-black">
+                      Zamany Cash Niger
+                    </span>
+                    <span className="text-xs font-bold text-white">Allôresto Compte Marchand Zamany</span>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Effectuez votre transfert ou dépôt Zamany Cash du montant : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Numéro officiel Zamany Cash :</span>
+                    <span className="text-sm font-black text-amber-400 font-mono">+227 96 05 23 10</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyNumber("+227 96 05 23 10")}
+                    className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 text-xs font-bold border border-amber-500/30 flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    {copiedNumber === "+227 96 05 23 10" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-amber-400" />
+                        <span className="text-amber-400">Copié !</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Référence SMS ou Numéro d'envoi Zamany Cash * :
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={paymentReference}
+                    onChange={(e) => setPaymentReference(e.target.value)}
+                    placeholder="Ex: ZAM-88319 ou votre numéro"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Detail Box: 4. All-Iza Cash */}
+            {(paymentMethod === "al_izza" || paymentMethod === "al_izza_business") && (
               <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-emerald-950/20 border border-emerald-500/40 space-y-3 animate-in fade-in">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black">
-                      All-Iza Business
+                      Al-Izza Cash
                     </span>
-                    <span className="text-xs font-bold text-white">Compte Marchand All-Iza</span>
+                    <span className="text-xs font-bold text-white">Compte Marchand Al-Izza</span>
                   </div>
                   <p className="text-xs text-slate-300 mt-1">
-                    Réglez par dépôt ou virement All-Iza Business : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
+                    Réglez par dépôt ou virement Al-Izza Cash : <strong>{grandTotal.toLocaleString()} FCFA</strong>.
                   </p>
                 </div>
 
@@ -1230,7 +1290,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             )}
 
             {/* Detail Box: 6. Airtel Money Niger */}
-            {paymentMethod === "mobile_money" && (
+            {(paymentMethod === "mobile_money" || paymentMethod === "airtel_money") && (
               <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-950 to-red-950/20 border border-red-500/40 space-y-3.5 animate-in fade-in">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -1310,7 +1370,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             )}
 
             {/* Simulated Receipt Capture Attachment Option */}
-            {["mynita", "amanata", "al_izza_business", "zeyna", "mobile_money", "moov_money"].includes(paymentMethod) && (
+            {paymentMethod !== "cash" && (
               <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="text-base">📸</span>

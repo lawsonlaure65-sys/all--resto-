@@ -222,7 +222,27 @@ export function App() {
   // Modals & Drawers Visibility
   const [selectedRestaurantForMenu, setSelectedRestaurantForMenu] = useState<Restaurant | null>(null);
   const [selectedRestaurantForBooking, setSelectedRestaurantForBooking] = useState<Restaurant | null>(null);
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(DEFAULT_USER_PROFILE);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("alloresto_user_profile");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && (parsed.name || parsed.email || parsed.phone)) {
+            return parsed;
+          }
+        }
+      }
+    } catch {}
+    return null;
+  });
+  const [authInitialMode, setAuthInitialMode] = useState<"login" | "register">("register");
+
+  const handleOpenAuth = (mode?: "login" | "register") => {
+    setAuthInitialMode(mode || "register");
+    setIsAuthOpen(true);
+  };
+
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState<boolean>(false);
@@ -918,7 +938,7 @@ export function App() {
         onOpenPartnerModal={() => setIsPartnerModalOpen(true)}
         onOpenGroupOrder={() => setIsGroupOrderOpen(true)}
         onOpenAccount={() => setIsAccountOpen(true)}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenAuth={handleOpenAuth}
         currentUser={currentUser}
         onOpenTechPack={() => setIsTechPackOpen(true)}
         onOpenCatering={() => setIsCateringOpen(true)}
@@ -1608,9 +1628,22 @@ export function App() {
       <UserAccountModal
         isOpen={isAccountOpen}
         onClose={() => setIsAccountOpen(false)}
+        currentUser={currentUser}
         orders={orders}
         onReorder={handleReorder}
         onOpenDataProtection={() => setIsHapdpModalOpen(true)}
+        onLogout={() => {
+          try {
+            localStorage.removeItem("alloresto_user_profile");
+          } catch {}
+          setCurrentUser(null);
+          setIsAccountOpen(false);
+          showNotification("Déconnexion", "Vous avez été déconnecté.", "info");
+        }}
+        onOpenAuth={(mode) => {
+          setIsAccountOpen(false);
+          handleOpenAuth(mode);
+        }}
       />
 
       {/* 8b. Authentication Modal */}
@@ -1618,7 +1651,11 @@ export function App() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         currentUser={currentUser}
+        initialMode={authInitialMode}
         onLoginSuccess={(user) => {
+          try {
+            localStorage.setItem("alloresto_user_profile", JSON.stringify(user));
+          } catch {}
           setCurrentUser(user);
           setIsAuthOpen(false);
           showNotification(
@@ -1629,6 +1666,9 @@ export function App() {
           );
         }}
         onLogout={() => {
+          try {
+            localStorage.removeItem("alloresto_user_profile");
+          } catch {}
           setCurrentUser(null);
           setIsAuthOpen(false);
           showNotification(
@@ -1991,6 +2031,8 @@ export function App() {
         onOpenVoiceOrder={() => setIsVoiceOrderOpen(true)}
         onOpenGroupOrder={() => setIsGroupOrderOpen(true)}
         onOpenAccount={() => setIsAccountOpen(true)}
+        onOpenAuth={handleOpenAuth}
+        currentUser={currentUser}
         onOpenTechPack={() => setIsTechPackOpen(true)}
         onOpenRestaurants={() => setIsRestaurantsDirectoryOpen(true)}
         onOpenMenu={() => {

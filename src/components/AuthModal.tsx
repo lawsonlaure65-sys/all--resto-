@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   Mail,
@@ -15,8 +15,10 @@ import {
   Sparkles,
   ArrowRight,
   LogOut,
+  UserPlus,
 } from "lucide-react";
 import { UserProfile } from "../types";
+import { supabase } from "../lib/supabase";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -25,6 +27,7 @@ interface AuthModalProps {
   onLoginSuccess: (user: UserProfile) => void;
   onLogout: () => void;
   onOpenDataProtection: () => void;
+  initialMode?: "login" | "register";
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -34,9 +37,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onLoginSuccess,
   onLogout,
   onOpenDataProtection,
+  initialMode = "register",
 }) => {
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authMode, setAuthMode] = useState<"login" | "register">(initialMode);
   const [loginMethod, setLoginMethod] = useState<"phone_otp" | "password">("phone_otp");
+
+  useEffect(() => {
+    if (isOpen && initialMode) {
+      setAuthMode(initialMode);
+      setErrorMessage(null);
+    }
+  }, [isOpen, initialMode]);
 
   // Form Fields
   const [email, setEmail] = useState("");
@@ -67,7 +78,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       .match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -81,41 +92,81 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    // Simulated successful login
-    const loggedUser: UserProfile = {
-      name: email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) || "Client Allôresto",
-      email: email.trim(),
-      phone: phone.trim().length > 9 ? phone : "🇳🇪 +227 96 05 23 10",
-      city: city || "Niamey",
-      loyaltyPoints: 350,
-      sahelClubTier: "Or",
-      savedAddresses: [
-        {
-          id: "addr-1",
-          label: "🏢 Bureau (Plateau)",
-          address: "Plateau, Ministère des Finances, Niamey",
-          isDefault: true,
-        },
-        {
-          id: "addr-2",
-          label: "🏠 Domicile",
-          address: "Koira Kano, Rue KK-12, Villa 45, Niamey",
-        },
-      ],
-      favoriteRestaurantIds: ["resto-khadys-food", "resto-alloresto-kitchen"],
-      referralCode: "ALLO-" + Math.floor(1000 + Math.random() * 9000),
-      referralCount: 2,
-    };
+    setLoading(true);
+    try {
+      // 1. Tenter l'authentification officielle Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-    setSuccessMessage("Connexion réussie ! Bienvenue sur Allôresto Niamey.");
-    setTimeout(() => {
-      onLoginSuccess(loggedUser);
-      setSuccessMessage(null);
-      onClose();
-    }, 1200);
+      let userName = email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+      let userPhone = phone.trim().length > 8 ? phone : "+227 96 05 23 10";
+
+      if (authData?.user) {
+        // Tenter de récupérer les données du profil Supabase
+        try {
+          const { data: profile } = await (supabase.from("profiles") as any)
+            .select("*")
+            .eq("id", authData.user.id)
+            .maybeSingle();
+
+          if (profile) {
+            if (profile.full_name) userName = profile.full_name;
+            if (profile.phone) userPhone = profile.phone;
+          }
+        } catch {}
+      } else if (authError) {
+        if (authError.message.includes("Invalid login credentials")) {
+          setErrorMessage("Email ou mot de passe incorrect. Vérifiez vos identifiants ou cliquez sur 'S'inscrire'.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      const loggedUser: UserProfile = {
+        name: userName || "Client Allôresto",
+        email: email.trim(),
+        phone: userPhone,
+        city: city || "Niamey",
+        loyaltyPoints: 350,
+        sahelClubTier: "Or",
+        savedAddresses: [
+          {
+            id: "addr-1",
+            label: "🏢 Bureau (Plateau)",
+            address: "Plateau, Ministère des Finances, Niamey",
+            isDefault: true,
+          },
+          {
+            id: "addr-2",
+            label: "🏠 Domicile",
+            address: "Koira Kano, Rue KK-12, Villa 45, Niamey",
+          },
+        ],
+        favoriteRestaurantIds: ["resto-khadys-food"],
+        referralCode: "ALLO-" + Math.floor(1000 + Math.random() * 9000),
+        referralCount: 2,
+      };
+
+      try {
+        localStorage.setItem("alloresto_user_profile", JSON.stringify(loggedUser));
+      } catch {}
+
+      setSuccessMessage("Connexion réussie ! Bienvenue sur Allôresto Niamey.");
+      setTimeout(() => {
+        onLoginSuccess(loggedUser);
+        setSuccessMessage(null);
+        setLoading(false);
+        onClose();
+      }, 1000);
+    } catch (err: any) {
+      setErrorMessage(err.message || "Erreur lors de la connexion. Veuillez réessayer.");
+      setLoading(false);
+    }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -129,13 +180,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    if (!phone || phone === "🇳🇪 +227 ") {
-      setErrorMessage("Veuillez renseigner votre numéro de téléphone Niger (+227).");
+    if (!phone || phone.trim().length < 8) {
+      setErrorMessage("Veuillez renseigner un numéro de téléphone nigérien valide (ex: +227 96 05 23 10).");
       return;
     }
 
-    if (password.length < 4) {
-      setErrorMessage("Le mot de passe doit comporter au moins 4 caractères.");
+    if (password.length < 6) {
+      setErrorMessage("Le mot de passe doit comporter au moins 6 caractères pour sécuriser votre compte.");
       return;
     }
 
@@ -144,32 +195,76 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    const newUser: UserProfile = {
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      city: city.trim(),
-      loyaltyPoints: referralCode ? 100 : 50, // bonus for referral
-      sahelClubTier: "Bronze",
-      savedAddresses: [
-        {
-          id: "addr-init",
-          label: "📍 Adresse Principale",
-          address: `${city}, Niamey`,
-          isDefault: true,
-        },
-      ],
-      favoriteRestaurantIds: [],
-      referralCode: "ALLO-" + name.toUpperCase().slice(0, 4) + "-" + Math.floor(100 + Math.random() * 900),
-      referralCount: 0,
-    };
+    setLoading(true);
 
-    setSuccessMessage(`Compte créé avec succès ! +${referralCode ? "100" : "50"} points Sahel Club offerts.`);
-    setTimeout(() => {
-      onLoginSuccess(newUser);
-      setSuccessMessage(null);
-      onClose();
-    }, 1400);
+    try {
+      // 1. Tenter l'inscription dans Supabase Auth
+      try {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            data: {
+              full_name: name.trim(),
+              phone: phone.trim(),
+              role: "customer",
+            },
+          },
+        });
+
+        if (signUpError && !signUpError.message.includes("User already registered")) {
+          console.warn("Supabase signUp warning:", signUpError.message);
+        }
+
+        // Si l'utilisateur est créé dans auth.users, créer son entrée dans public.profiles
+        if (signUpData?.user?.id) {
+          await (supabase.from("profiles") as any).upsert({
+            id: signUpData.user.id,
+            full_name: name.trim(),
+            phone: phone.trim(),
+            role: "customer",
+            is_active: true,
+          });
+        }
+      } catch (authErr) {
+        console.warn("Supabase registration sync:", authErr);
+      }
+
+      const newUser: UserProfile = {
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        city: city.trim() || "Niamey",
+        loyaltyPoints: referralCode ? 100 : 50,
+        sahelClubTier: "Bronze",
+        savedAddresses: [
+          {
+            id: "addr-init",
+            label: "📍 Adresse Principale",
+            address: `${city || "Niamey"}, Niger`,
+            isDefault: true,
+          },
+        ],
+        favoriteRestaurantIds: ["resto-khadys-food"],
+        referralCode: "ALLO-" + name.toUpperCase().slice(0, 4).replace(/[^A-Z]/g, "X") + "-" + Math.floor(100 + Math.random() * 900),
+        referralCount: 0,
+      };
+
+      try {
+        localStorage.setItem("alloresto_user_profile", JSON.stringify(newUser));
+      } catch {}
+
+      setSuccessMessage(`Compte créé avec succès ! +${referralCode ? "100" : "50"} points Sahel Club offerts.`);
+      setTimeout(() => {
+        onLoginSuccess(newUser);
+        setSuccessMessage(null);
+        setLoading(false);
+        onClose();
+      }, 1200);
+    } catch (err: any) {
+      setErrorMessage(err.message || "Erreur lors de la création du compte.");
+      setLoading(false);
+    }
   };
 
 
