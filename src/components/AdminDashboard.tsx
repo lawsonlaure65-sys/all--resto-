@@ -342,8 +342,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const stored = loadStoredRestaurants();
     const seen = new Set<string>();
     const list: MenuItem[] = [];
-    for (const r of stored) {
-      for (const d of r.menu || []) {
+    for (const r of (stored || []).filter(Boolean)) {
+      if (!r) continue;
+      for (const d of r?.menu || []) {
         if (d && d.id && !seen.has(d.id)) {
           seen.add(d.id);
           list.push(d);

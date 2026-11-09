@@ -639,8 +639,8 @@ export const DishesCatalogModal: React.FC<DishesCatalogModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 pb-4">
               {filteredDishes.map((dish, index) => {
                 // Find restaurant name if available
-                const matchedResto = restaurants.find((r) =>
-                  (r?.menu || []).some((m) => m.id === dish.id)
+                const matchedResto = (restaurants || []).filter(Boolean).find((r) =>
+                  (r?.menu || []).some((m) => m && m.id === dish.id)
                 );
 
                 return (

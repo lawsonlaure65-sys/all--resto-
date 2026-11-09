@@ -262,10 +262,12 @@ class TranslationService {
    * Translates a list of MenuItems synchronously with instant fallback & triggers batch Gemini API call
    */
   public translateDishes(dishes: MenuItem[], targetLang: AppLanguage): MenuItem[] {
+    if (!dishes || !Array.isArray(dishes)) return [];
     if (targetLang === "fr") return dishes;
 
     const uncachedDishes: MenuItem[] = [];
-    const result = dishes.map((dish) => {
+    const result = dishes.filter(Boolean).map((dish) => {
+      if (!dish || !dish.id) return dish;
       const cacheKey = this.getCacheKey(dish.id, targetLang);
       const cached = this.cache.get(cacheKey);
       if (cached) {
@@ -309,35 +311,36 @@ class TranslationService {
    * Translates an entire restaurant object (tagline, cuisine, and menu)
    */
   public translateRestaurant(restaurant: Restaurant, targetLang: AppLanguage): Restaurant {
+    if (!restaurant) return restaurant;
     if (targetLang === "fr") return restaurant;
 
-    let translatedTagline = restaurant.tagline;
-    let translatedCuisine = restaurant.cuisine;
+    let translatedTagline = restaurant.tagline || "";
+    let translatedCuisine = restaurant.cuisine || "";
 
     if (targetLang === "ha") {
-      if (restaurant.tagline.includes("vitrine")) {
+      if (translatedTagline.includes("vitrine")) {
         translatedTagline = "Babban gidan abincin Niamey: Karin kumallo na safe, Choukouya na Kan-Kan, Dambou royal da abincin dare";
       } else {
-        translatedTagline = `Babban gidan abinci a Yamai: ${restaurant.tagline}`;
+        translatedTagline = `Babban gidan abinci a Yamai: ${translatedTagline}`;
       }
-      translatedCuisine = restaurant.cuisine.replace("Gastronomie Sahélienne", "Kayan Abincin Sahel").replace("Braisés", "Gasasshen Nama");
+      translatedCuisine = (translatedCuisine || "").replace("Gastronomie Sahélienne", "Kayan Abincin Sahel").replace("Braisés", "Gasasshen Nama");
     } else if (targetLang === "zm") {
-      if (restaurant.tagline.includes("vitrine")) {
+      if (translatedTagline.includes("vitrine")) {
         translatedTagline = "Niamey ŋwaari teedo cimi dumi: Susubay ŋwaari, Choukouya nda Kan-Kan, Dambou hanno nda cini ŋwaari";
       } else {
-        translatedTagline = `Niamey ŋwaari do: ${restaurant.tagline}`;
+        translatedTagline = `Niamey ŋwaari do: ${translatedTagline}`;
       }
-      translatedCuisine = restaurant.cuisine.replace("Gastronomie Sahélienne", "Sahel Ŋwaari").replace("Braisés", "Ham Tonte");
+      translatedCuisine = (translatedCuisine || "").replace("Gastronomie Sahélienne", "Sahel Ŋwaari").replace("Braisés", "Ham Tonte");
     } else if (targetLang === "en") {
-      translatedTagline = `Authentic Niamey Dining: ${restaurant.tagline}`;
-      translatedCuisine = restaurant.cuisine.replace("Gastronomie Sahélienne", "Sahelian Gastronomy").replace("Braisés", "Charcoal Grills");
+      translatedTagline = `Authentic Niamey Dining: ${translatedTagline}`;
+      translatedCuisine = (translatedCuisine || "").replace("Gastronomie Sahélienne", "Sahelian Gastronomy").replace("Braisés", "Charcoal Grills");
     }
 
     return {
       ...restaurant,
       tagline: translatedTagline,
       cuisine: translatedCuisine,
-      menu: this.translateDishes(restaurant.menu, targetLang),
+      menu: this.translateDishes(restaurant.menu || [], targetLang),
     };
   }
 

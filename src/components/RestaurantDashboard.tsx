@@ -238,14 +238,15 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
     if (session) {
       const stored = loadStoredRestaurants();
       const match =
-        stored.find(
+        (stored || []).filter(Boolean).find(
           (r) =>
-            r.id === session.restaurantId ||
-            r.name.toLowerCase().includes(session.restaurantName.toLowerCase())
+            r &&
+            (r.id === session.restaurantId ||
+              (r.name && r.name.toLowerCase().includes(session.restaurantName.toLowerCase())))
         ) || stored[0];
       if (match?.menu) {
         const seen = new Set<string>();
-        const deduped = match.menu.filter((d) => {
+        const deduped = (match.menu || []).filter((d) => {
           if (!d || !d.id || seen.has(d.id)) return false;
           seen.add(d.id);
           return true;

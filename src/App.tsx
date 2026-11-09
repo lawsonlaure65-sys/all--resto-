@@ -397,9 +397,11 @@ export function App() {
       if (storedRestosStr) {
         const storedRestos: Restaurant[] = JSON.parse(storedRestosStr);
         let updated = false;
-        const cleaned = storedRestos.map((r) => {
-          if (r.id === "resto-khadys-food" || r.name.toLowerCase().includes("khady")) {
-            const newMenu = (r.menu || []).map((d) => {
+        const cleaned = (storedRestos || []).filter(Boolean).map((r) => {
+          if (!r) return r;
+          if (r.id === "resto-khadys-food" || (r.name && r.name.toLowerCase().includes("khady"))) {
+            const newMenu = (r?.menu || []).filter(Boolean).map((d) => {
+              if (!d || !d.name) return d;
               if (d.name.toLowerCase().includes("brochette") || d.name.toLowerCase().includes("suya")) {
                 if (d.price !== 4000 || d.image !== KHADYS_OFFICIAL_SUYA_IMAGE || !d.isDailySpecial || d.category !== "⭐ Menu & Plat du Jour") {
                   updated = true;
@@ -419,7 +421,7 @@ export function App() {
             return { ...r, menu: newMenu };
           }
           return r;
-        });
+        }).filter(Boolean);
         if (updated) {
           localStorage.setItem("alloresto_restaurants_v2", JSON.stringify(cleaned));
           setRestaurants(cleaned);
@@ -433,16 +435,16 @@ export function App() {
   // Khady's Food & Event Restaurant and Validated Dishes
   const khadysRestaurant = useMemo(() => {
     return (
-      restaurants.find((r) => isKhadysFoodRestaurant(r)) ||
-      RESTAURANTS_DATA.find((r) => r.id === KHADYS_STABLE_LOCAL_ID) ||
+      (restaurants || []).filter(Boolean).find((r) => isKhadysFoodRestaurant(r)) ||
+      RESTAURANTS_DATA.find((r) => r && r.id === KHADYS_STABLE_LOCAL_ID) ||
       RESTAURANTS_DATA[0]
     );
   }, [restaurants]);
 
   const khadysValidatedDishes = useMemo(() => {
     if (!khadysRestaurant || !khadysRestaurant.menu) return [];
-    const val = khadysRestaurant.menu.filter((m) => m.category === "Les Plats Validés Khady's");
-    const base = val.length > 0 ? val : khadysRestaurant.menu.slice(0, 7);
+    const val = (khadysRestaurant.menu || []).filter((m) => m && m.category === "Les Plats Validés Khady's");
+    const base = val.length > 0 ? val : (khadysRestaurant.menu || []).slice(0, 7);
     const seen = new Set<string>();
     return base.filter((d) => {
       if (!d || !d.id || seen.has(d.id)) return false;
@@ -537,8 +539,9 @@ export function App() {
   const allDishes = useMemo(() => {
     const seen = new Set<string>();
     const list: MenuItem[] = [];
-    for (const r of restaurants) {
-      for (const d of r.menu || []) {
+    for (const r of (restaurants || []).filter(Boolean)) {
+      if (!r) continue;
+      for (const d of r?.menu || []) {
         if (d && d.id && !seen.has(d.id)) {
           seen.add(d.id);
           list.push(d);
@@ -577,9 +580,9 @@ export function App() {
     }
 
     const parentRestaurant =
-      restaurants.find((r) => r.menu?.some((m) => m.id === item.id)) ||
-      (selectedRestaurantForMenu && selectedRestaurantForMenu.menu?.some((m) => m.id === item.id) ? selectedRestaurantForMenu : null) ||
-      (item.category === "Plat du Jour" ? restaurants.find((r) => r.id === "resto-khadys-food" || r.name.toLowerCase().includes("khady")) : null) ||
+      (restaurants || []).filter(Boolean).find((r) => r?.menu?.some((m) => m && m.id === item.id)) ||
+      (selectedRestaurantForMenu && selectedRestaurantForMenu?.menu?.some((m) => m && m.id === item.id) ? selectedRestaurantForMenu : null) ||
+      (item.category === "Plat du Jour" ? (restaurants || []).filter(Boolean).find((r) => r && (r.id === "resto-khadys-food" || (r.name && r.name.toLowerCase().includes("khady")))) : null) ||
       selectedRestaurantForMenu;
 
     track("add_to_cart", {
@@ -665,8 +668,8 @@ export function App() {
     const activeRestoName =
       selectedRestaurantForMenu?.name ||
       (cartItems[0]?.menuItem
-        ? restaurants.find((r) =>
-            r.menu?.some((m) => m.id === cartItems[0].menuItem.id)
+        ? (restaurants || []).filter(Boolean).find((r) =>
+            r?.menu?.some((m) => m && m.id === cartItems[0].menuItem.id)
           )?.name
         : undefined) ||
       "unknown";
@@ -877,15 +880,17 @@ export function App() {
 
   // Liste des restaurants visibles par le client (Exclusivement Khady's Food & Event, Allôresto Kitchen masqué en cuisine interne)
   const clientVisibleRestaurants = useMemo(() => {
-    const khadys = restaurants.filter((r) => isKhadysFoodRestaurant(r));
-    return khadys.length > 0 ? khadys : restaurants.filter((r) => !isAllorestoKitchen(r.id, r.name));
+    const valid = (restaurants || []).filter(Boolean);
+    const khadys = valid.filter((r) => isKhadysFoodRestaurant(r));
+    return khadys.length > 0 ? khadys : valid.filter((r) => !isAllorestoKitchen(r.id, r.name));
   }, [restaurants]);
 
   // Filter Restaurants
   const filteredRestaurants = clientVisibleRestaurants.filter((resto) => {
+    if (!resto) return false;
     // Neighborhood filter
     if (homeNeighborhoodFilter !== "all") {
-      const addr = (resto.address + " " + resto.city).toLowerCase();
+      const addr = ((resto.address || "") + " " + (resto.city || "")).toLowerCase();
       if (!addr.includes(homeNeighborhoodFilter.toLowerCase())) {
         return false;
       }
@@ -899,16 +904,16 @@ export function App() {
       return false;
     }
     // Fast delivery filter (Livraison Express <= 55 min)
-    if (filterFastDelivery && !resto.deliveryTime.includes("45-55") && !resto.deliveryTime.includes("45-50") && !resto.deliveryTime.includes("45")) {
+    if (filterFastDelivery && !resto.deliveryTime?.includes("45-55") && !resto.deliveryTime?.includes("45-50") && !resto.deliveryTime?.includes("45")) {
       return false;
     }
     // Search query match (name, tagline, cuisine, or dishes)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const matchName = resto.name.toLowerCase().includes(q);
-      const matchCuisine = resto.cuisine.toLowerCase().includes(q);
-      const matchDish = (resto.menu || []).some(
-        (m) => m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q)
+      const matchName = (resto.name || "").toLowerCase().includes(q);
+      const matchCuisine = (resto.cuisine || "").toLowerCase().includes(q);
+      const matchDish = (resto?.menu || []).some(
+        (m) => (m.name || "").toLowerCase().includes(q) || (m.description || "").toLowerCase().includes(q)
       );
       if (!matchName && !matchCuisine && !matchDish) return false;
     }

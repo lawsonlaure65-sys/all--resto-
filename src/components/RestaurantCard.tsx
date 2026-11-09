@@ -34,7 +34,9 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   onBookTable,
 }) => {
   const { translateRestaurant } = useTranslation();
-  const restaurant = translateRestaurant(rawRestaurant);
+  const restaurant = (rawRestaurant ? translateRestaurant(rawRestaurant) : null) || rawRestaurant;
+
+  if (!restaurant) return null;
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}

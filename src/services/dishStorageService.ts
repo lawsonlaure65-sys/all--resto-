@@ -183,21 +183,22 @@ export function loadStoredRestaurants(): Restaurant[] {
     if (stored) {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        const dishCount = parsed.reduce((sum: number, r: any) => sum + (r.menu?.length || 0), 0);
+        const dishCount = parsed.filter(Boolean).reduce((sum: number, r: any) => sum + (r?.menu?.length || 0), 0);
         if (dishCount > 0) {
           const dedupedParsed = deduplicateRestaurants(parsed);
           // Merge partner updates (websiteUrl, onlineCatalogUrl, certified badge, updated names)
-          const merged = dedupedParsed.map((resto: Restaurant) => {
+          const merged = dedupedParsed.filter(Boolean).map((resto: Restaurant) => {
+            if (!resto) return resto;
             const isKhady = isKhadysFoodRestaurant(resto);
             const defaultMatch =
-              RESTAURANTS_DATA.find((d) => d.id === resto.id) ||
-              (isKhady ? RESTAURANTS_DATA.find((d) => d.id === KHADYS_STABLE_LOCAL_ID) : undefined);
+              RESTAURANTS_DATA.find((d) => d && d.id === resto.id) ||
+              (isKhady ? RESTAURANTS_DATA.find((d) => d && d.id === KHADYS_STABLE_LOCAL_ID) : undefined);
 
             if (defaultMatch) {
-              let updatedMenu = deduplicateMenu(resto.menu || []);
-              if (isKhady && defaultMatch.menu) {
-                const existingIds = new Set(updatedMenu.map((m) => m.id));
-                const missingDefaults = defaultMatch.menu.filter((m) => !existingIds.has(m.id));
+              let updatedMenu = deduplicateMenu(resto?.menu || []);
+              if (isKhady && defaultMatch?.menu) {
+                const existingIds = new Set(updatedMenu.map((m) => m?.id).filter(Boolean));
+                const missingDefaults = (defaultMatch.menu || []).filter((m) => m && !existingIds.has(m.id));
                 if (missingDefaults.length > 0) {
                   updatedMenu = [...updatedMenu, ...missingDefaults];
                 }
@@ -221,17 +222,17 @@ export function loadStoredRestaurants(): Restaurant[] {
             }
             return {
               ...resto,
-              menu: deduplicateMenu(resto.menu || []),
+              menu: deduplicateMenu(resto?.menu || []),
             };
-          });
+          }).filter(Boolean);
 
           let finalRestos = merged;
-          const hasKhady = finalRestos.some((r) => isKhadysFoodRestaurant(r));
+          const hasKhady = finalRestos.some((r) => r && isKhadysFoodRestaurant(r));
           if (!hasKhady) {
             finalRestos = [RESTAURANTS_DATA[0], ...finalRestos];
           } else {
             // S'assurer que Khady's Food & Event est en premier (index 0)
-            const khadyIdx = finalRestos.findIndex((r) => isKhadysFoodRestaurant(r));
+            const khadyIdx = finalRestos.findIndex((r) => r && isKhadysFoodRestaurant(r));
             if (khadyIdx > 0) {
               const [khadyResto] = finalRestos.splice(khadyIdx, 1);
               finalRestos.unshift(khadyResto);
@@ -263,9 +264,9 @@ export function loadStoredRestaurants(): Restaurant[] {
     if (emergency) {
       const parsedEmerg = JSON.parse(emergency);
       if (Array.isArray(parsedEmerg) && parsedEmerg.length > 0) {
-        const dishCount = parsedEmerg.reduce((sum: number, r: any) => sum + (r.menu?.length || 0), 0);
+        const dishCount = parsedEmerg.filter(Boolean).reduce((sum: number, r: any) => sum + (r?.menu?.length || 0), 0);
         if (dishCount > 0) {
-          const normalized = normalizeDishesStock(parsedEmerg);
+          const normalized = normalizeDishesStock(parsedEmerg.filter(Boolean));
           saveStoredRestaurants(normalized);
           return normalized;
         }
@@ -297,11 +298,11 @@ export async function syncFromSupabaseIfAvailable(
 
   try {
     const localRestos = loadStoredRestaurants();
-    const localDishCount = localRestos.reduce((s, r) => s + (r.menu?.length || 0), 0);
+    const localDishCount = (localRestos || []).filter(Boolean).reduce((s, r) => s + (r?.menu?.length || 0), 0);
 
     const res = await fetchRestaurantsFromSupabase();
     if (res.success && res.data && res.data.length > 0) {
-      const supabaseDishCount = res.data.reduce((s, r) => s + (r.menu?.length || 0), 0);
+      const supabaseDishCount = (res.data || []).filter(Boolean).reduce((s, r) => s + (r?.menu?.length || 0), 0);
 
       // ANTI-WIPEOUT SAFEGUARD:
       // If Supabase has 0 dishes but local storage has dishes, DO NOT overwrite!

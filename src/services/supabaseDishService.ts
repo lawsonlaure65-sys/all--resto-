@@ -497,13 +497,15 @@ export async function syncAllLocalDataToSupabase(
     let totalDishes = 0;
     const localDishes: { dish: MenuItem; targetRestoId: string }[] = [];
 
-    restaurants.forEach((resto) => {
+    (restaurants || []).filter(Boolean).forEach((resto) => {
+      if (!resto) return;
       const targetRestoId =
-        (resto.id === "resto-khadys-food" || resto.name.toLowerCase().includes("khady")) && khadysInDb
+        (resto.id === "resto-khadys-food" || (resto.name && resto.name.toLowerCase().includes("khady"))) && khadysInDb
           ? khadysInDb.id
           : resto.id;
 
       (resto.menu || []).forEach((dish) => {
+        if (!dish) return;
         localDishes.push({ dish, targetRestoId });
         totalDishes++;
       });
