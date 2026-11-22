@@ -403,18 +403,18 @@ export function App() {
             const newMenu = (r?.menu || []).filter(Boolean).map((d) => {
               if (!d || !d.name) return d;
               if (d.name.toLowerCase().includes("brochette") || d.name.toLowerCase().includes("suya")) {
-                if (d.price !== 4000 || d.image !== KHADYS_OFFICIAL_SUYA_IMAGE || !d.isDailySpecial || d.category !== "⭐ Menu & Plat du Jour") {
+                if (d.price !== 4000 || d.image !== KHADYS_OFFICIAL_SUYA_IMAGE || !d.isDailySpecial || d.category !== "Menu & Plat du Jour") {
                   updated = true;
-                  return { ...d, price: 4000, image: KHADYS_OFFICIAL_SUYA_IMAGE, isDailySpecial: true, isMenuDuJour: true, category: "⭐ Menu & Plat du Jour" };
+                  return { ...d, price: 4000, image: KHADYS_OFFICIAL_SUYA_IMAGE, isDailySpecial: true, isMenuDuJour: true, category: "Menu & Plat du Jour" };
                 }
               }
               if ((d.name.toLowerCase().includes("crin") || d.name.toLowerCase().includes("ademe")) && d.category === "⭐ Menu & Plat du Jour") {
                 updated = true;
-                return { ...d, category: "Plats Traditionnels & Sauces", isDailySpecial: false, isMenuDuJour: false };
+                return { ...d, category: "Menu & Plat du Jour", isDailySpecial: true, isMenuDuJour: true };
               }
-              if (d.name.toLowerCase().includes("tiep") && d.category === "⭐ Menu & Plat du Jour") {
+              if (d.name.toLowerCase().includes("tiep") && (d.category === "⭐ Menu & Plat du Jour" || d.category === "Menu & Plat du Jour")) {
                 updated = true;
-                return { ...d, category: "Spécialités Africaines", isDailySpecial: false, isMenuDuJour: false };
+                return { ...d, category: "Plats Africains", isDailySpecial: false, isMenuDuJour: false };
               }
               return d;
             });
@@ -1225,7 +1225,7 @@ export function App() {
                       onClick={() => handleOpenRestaurant(khadysRestaurant)}
                       className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-slate-700 shadow-sm"
                     >
-                      <span>Carte complète (10 plats)</span>
+                      <span>Carte complète ({khadysRestaurant.menu?.length || 0} plats)</span>
                     </button>
                   )}
                 </div>
@@ -1557,13 +1557,13 @@ export function App() {
         onClose={() => setIsCheckoutOpen(false)}
         items={cartItems}
         restaurantId={
-          selectedRestaurantForMenu?.id || RESTAURANTS_DATA[0].id
+          selectedRestaurantForMenu?.id || khadysRestaurant?.id || RESTAURANTS_DATA[0].id
         }
         restaurantName={
-          selectedRestaurantForMenu?.name || RESTAURANTS_DATA[0].name
+          selectedRestaurantForMenu?.name || khadysRestaurant?.name || RESTAURANTS_DATA[0].name
         }
         restaurantPhone={
-          selectedRestaurantForMenu?.phone || RESTAURANTS_DATA[0].phone
+          selectedRestaurantForMenu?.phone || khadysRestaurant?.phone || RESTAURANTS_DATA[0].phone
         }
         serviceMode={serviceMode}
         city={selectedCity}

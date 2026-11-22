@@ -142,10 +142,12 @@ export function normalizeDishesStock(restaurants: Restaurant[]): Restaurant[] {
     menu: deduplicateMenu(resto?.menu || []).map((dish, index) => {
       const safeImage =
         dish.image && dish.image.trim() !== "" ? dish.image : DEFAULT_DISH_FALLBACK_URL;
+      const cleanCategory = (dish.category || "Plats Africains").replace(/⭐/g, "").trim() || "Plats Africains";
 
       if (typeof dish.stock_count === "number" && !isNaN(dish.stock_count)) {
         return {
           ...dish,
+          category: cleanCategory,
           image: safeImage,
         };
       }
@@ -168,6 +170,7 @@ export function normalizeDishesStock(restaurants: Restaurant[]): Restaurant[] {
 
       return {
         ...dish,
+        category: cleanCategory,
         image: safeImage,
         stock_count: defaultStock,
         isAvailable: defaultStock > 0 && dish.isAvailable !== false,
@@ -195,13 +198,13 @@ export function loadStoredRestaurants(): Restaurant[] {
               (isKhady ? RESTAURANTS_DATA.find((d) => d && d.id === KHADYS_STABLE_LOCAL_ID) : undefined);
 
             if (defaultMatch) {
-              let updatedMenu = deduplicateMenu(resto?.menu || []);
-              if (isKhady && defaultMatch?.menu) {
-                const existingIds = new Set(updatedMenu.map((m) => m?.id).filter(Boolean));
-                const missingDefaults = (defaultMatch.menu || []).filter((m) => m && !existingIds.has(m.id));
-                if (missingDefaults.length > 0) {
-                  updatedMenu = [...updatedMenu, ...missingDefaults];
-                }
+              let updatedMenu = deduplicateMenu(resto?.menu || []).map((d) => ({
+                ...d,
+                category: (d.category || "Plats Africains").replace(/⭐/g, "").trim() || "Plats Africains",
+              }));
+              // Ne réinjecter les plats locaux par défaut que si le menu est totalement vide
+              if (isKhady && updatedMenu.length === 0 && defaultMatch?.menu) {
+                updatedMenu = deduplicateMenu(defaultMatch.menu);
               }
               return {
                 ...resto,
@@ -222,7 +225,10 @@ export function loadStoredRestaurants(): Restaurant[] {
             }
             return {
               ...resto,
-              menu: deduplicateMenu(resto?.menu || []),
+              menu: deduplicateMenu(resto?.menu || []).map((d) => ({
+                ...d,
+                category: (d.category || "Plats Africains").replace(/⭐/g, "").trim() || "Plats Africains",
+              })),
             };
           }).filter(Boolean);
 

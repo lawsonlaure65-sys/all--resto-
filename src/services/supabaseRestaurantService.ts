@@ -516,16 +516,49 @@ export async function persistOrderToSupabase(order: Order): Promise<{ success: b
         }
       }
 
-      const { error: orderErr } = await (client.from("orders") as any).insert(orderPayload);
+      let { data: insertedOrder, error: orderErr } = await (client.from("orders") as any)
+        .insert(orderPayload)
+        .select("id")
+        .maybeSingle();
+
+      // Si public.orders.id est de type UUID, laisser Supabase générer l'UUID et stocker la référence textuelle dans order_number
+      if (orderErr && (orderErr.code === "22P02" || orderErr.message?.toLowerCase().includes("uuid"))) {
+        const uuidSafePayload: Record<string, any> = {
+          ...orderPayload,
+          order_number: order.id,
+        };
+        delete uuidSafePayload.id;
+        const retryRes = await (client.from("orders") as any)
+          .insert(uuidSafePayload)
+          .select("id")
+          .maybeSingle();
+        insertedOrder = retryRes.data;
+        orderErr = retryRes.error;
+      }
+
+      const dbOrderId = insertedOrder?.id || order.id;
+
       if (!orderErr && order.items && order.items.length > 0) {
         const itemsPayload = order.items.map((it) => ({
-          order_id: order.id,
+          order_id: dbOrderId,
+          dish_id: it.menuItem?.id,
+          dish_name: it.menuItem?.name,
           quantity: Math.max(1, Number(it.quantity || 1)),
           unit_price_xof: Math.max(0, Number(it.unitPrice || 0)),
           options_total_xof: 0,
           line_total_xof: Math.max(0, Number(it.totalPrice || (it.unitPrice * (it.quantity || 1)))),
         }));
-        await (client.from("order_items") as any).insert(itemsPayload);
+        const itemsRes = await (client.from("order_items") as any).insert(itemsPayload);
+        if (itemsRes.error && itemsRes.error.code === "PGRST204") {
+          const minimalItemsPayload = order.items.map((it) => ({
+            order_id: dbOrderId,
+            quantity: Math.max(1, Number(it.quantity || 1)),
+            unit_price_xof: Math.max(0, Number(it.unitPrice || 0)),
+            options_total_xof: 0,
+            line_total_xof: Math.max(0, Number(it.totalPrice || (it.unitPrice * (it.quantity || 1)))),
+          }));
+          await (client.from("order_items") as any).insert(minimalItemsPayload);
+        }
       }
     } catch (sqlErr) {
       console.warn("[persistOrderToSupabase] orders/order_items SQL sync note:", sqlErr);

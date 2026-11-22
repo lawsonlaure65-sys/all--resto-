@@ -1,4 +1,4 @@
-import { MenuItem, Restaurant } from "../types";
+import { DishCategory, MenuItem, Restaurant } from "../types";
 import { getSupabaseClient } from "./supabaseClient";
 import { RESTAURANTS_DATA } from "../data/allorestoData";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
@@ -10,6 +10,41 @@ import {
   KHADYS_OFFICIAL_SLUG,
   KHADYS_STABLE_LOCAL_ID,
 } from "./khadysPartnerResolver";
+
+export function normalizeDishCategoryLabel(rawCategory?: string | null): string {
+  if (!rawCategory) return "Plats Africains";
+  const cleaned = String(rawCategory).replace(/⭐/g, "").trim();
+  return cleaned || "Plats Africains";
+}
+
+export function inferDishCategory(rawCategory?: string | null, rawDishCategory?: string | null, flags?: { isMenuDuJour?: boolean; isDailySpecial?: boolean }): DishCategory {
+  if (rawDishCategory && String(rawDishCategory).trim() !== "") {
+    return String(rawDishCategory).trim() as DishCategory;
+  }
+  const catLower = normalizeDishCategoryLabel(rawCategory).toLowerCase();
+  if (catLower.includes("menu") || catLower.includes("jour") || flags?.isMenuDuJour || flags?.isDailySpecial) {
+    return "menu_du_jour";
+  }
+  if (catLower.includes("petit") || catLower.includes("matin")) {
+    return "petit_dejeuner";
+  }
+  if (catLower.includes("grill") || catLower.includes("brais")) {
+    return "grillades";
+  }
+  if (catLower.includes("boisson") || catLower.includes("jus")) {
+    return "boissons";
+  }
+  if (catLower.includes("dessert")) {
+    return "desserts";
+  }
+  if (catLower.includes("entr")) {
+    return "entrees";
+  }
+  if (catLower.includes("accompagn")) {
+    return "accompagnements";
+  }
+  return "africain";
+}
 
 // SQL Schema for Supabase SQL Editor
 export const SUPABASE_SQL_SCHEMA = `-- ============================================================
@@ -145,14 +180,20 @@ CREATE POLICY "Lecture des providers" ON public.payment_providers FOR SELECT USI
 
 // Helper: Convert MenuItem to Supabase row format
 export function mapDishToSupabaseRow(dish: MenuItem, restaurantId: string) {
+  const normalizedCategory = normalizeDishCategoryLabel(dish.category);
+  const resolvedDishCat = inferDishCategory(normalizedCategory, dish.dishCategory, {
+    isMenuDuJour: dish.isMenuDuJour,
+    isDailySpecial: dish.isDailySpecial,
+  });
+
   return {
     id: dish.id,
     restaurant_id: restaurantId,
     name: dish.name,
     description: dish.description || "",
     price: dish.price,
-    category: dish.category || "africain",
-    dish_category: dish.dishCategory || "africain",
+    category: normalizedCategory,
+    dish_category: resolvedDishCat,
     image: resolveDishImageUrl(dish) || (dish.name?.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : ""),
     image_url: resolveDishImageUrl(dish) || (dish.name?.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : ""),
     photo_url: resolveDishImageUrl(dish) || (dish.name?.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : ""),
@@ -187,13 +228,20 @@ export function mapSupabaseRowToDish(row: any): MenuItem {
     resolveDishImageUrl(row) ||
     (row.name?.toLowerCase().includes("brochette") ? KHADYS_OFFICIAL_SUYA_IMAGE : "");
 
+  const normalizedCategory = normalizeDishCategoryLabel(row.category);
+  const resolvedDishCat = inferDishCategory(normalizedCategory, row.dish_category, {
+    isMenuDuJour: Boolean(row.is_menu_du_jour),
+    isDailySpecial: Boolean(row.is_daily_special),
+  });
+  const isMenuSpecial = resolvedDishCat === "menu_du_jour" || normalizedCategory.toLowerCase().includes("menu & plat du jour");
+
   return {
     id: row.id,
     name: row.name,
     description: row.description || "",
     price: Number(row.price),
-    category: row.category || "africain",
-    dishCategory: row.dish_category || "africain",
+    category: normalizedCategory,
+    dishCategory: resolvedDishCat,
     image: resolvedImg,
     isPopular: Boolean(row.is_popular),
     isVegetarian: Boolean(row.is_vegetarian),
@@ -206,10 +254,14 @@ export function mapSupabaseRowToDish(row: any): MenuItem {
     isExpress: Boolean(row.is_express),
     isChefSpecial: Boolean(row.is_chef_special),
     isHealthy: Boolean(row.is_healthy),
-    isDailySpecial: Boolean(row.is_daily_special),
-    isMenuDuJour: Boolean(row.is_menu_du_jour),
+    isDailySpecial: Boolean(row.is_daily_special || isMenuSpecial),
+    isMenuDuJour: Boolean(row.is_menu_du_jour || isMenuSpecial),
     menuDuJourIncludes: row.menu_du_jour_includes || undefined,
-    mealMoments: Array.isArray(row.meal_moments) ? row.meal_moments : ["dejeuner", "diner"],
+    mealMoments: Array.isArray(row.meal_moments)
+      ? row.meal_moments
+      : isMenuSpecial
+      ? ["dejeuner", "diner", "menu_du_jour"]
+      : ["dejeuner", "diner"],
     mealServiceTime: row.meal_service_time || undefined,
     isAvailable: row.is_available !== false,
     preparationTime: Number(row.preparation_time || 20),
@@ -257,10 +309,10 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
   }
 
   try {
-    // Récupérer les restaurants avec id, name et slug
+    // Récupérer les restaurants actifs sans supposer la présence de colonnes optionnelles comme slug
     const { data: restosData, error: restosError } = await client
       .from("restaurants")
-      .select("id, name, slug")
+      .select("*")
       .order("name", { ascending: true });
 
     if (restosError) {
@@ -277,16 +329,18 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
       return { success: false, error: dishesError.message };
     }
 
-    // If no restaurants in Supabase, return default fallback with dishes mapped
+    // If no restaurants in Supabase, return empty list
     if (!restosData || restosData.length === 0) {
       return { success: true, data: [] };
     }
 
+    const activeRestos = restosData.filter((r: any) => r && r.is_active !== false);
+
     // Map dishes per restaurant
-    const restaurants: Restaurant[] = restosData.map((r: any) => {
+    const restaurants: Restaurant[] = activeRestos.map((r: any) => {
       const isKhady = isKhadysFoodRestaurant(r);
       const rawDishes = (dishesData || [])
-        .filter((d: any) => d.restaurant_id === r.id)
+        .filter((d: any) => d && d.restaurant_id === r.id && d.is_available !== false)
         .map(mapSupabaseRowToDish);
 
       // Deduplicate dishes by id
@@ -308,40 +362,32 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
         id: r.id,
         name: isKhady ? KHADYS_OFFICIAL_NAME : r.name,
         slug: isKhady ? KHADYS_OFFICIAL_SLUG : (r.slug || localMatch?.slug),
-        tagline: localMatch?.tagline || "",
-        cuisine: isKhady ? (localMatch?.cuisine || "Gastronomie Sahélienne, Braisés") : (localMatch?.cuisine || "Africain"),
-        cuisineCategory: localMatch?.cuisineCategory || "africain",
-        rating: Number(localMatch?.rating || 4.8),
-        reviewCount: Number(localMatch?.reviewCount || 100),
-        deliveryTime: localMatch?.deliveryTime || "25-40 min",
-        minOrder: Number(localMatch?.minOrder || 1000),
-        deliveryFee: Number(localMatch?.deliveryFee || 500),
-        address: localMatch?.address || "Niamey, Niger",
-        city: localMatch?.city || "Niamey",
-        image: localMatch?.image || "",
-        bannerImage: localMatch?.bannerImage || "",
-        isPromoted: Boolean(localMatch?.isPromoted),
-        promoBadge: localMatch?.promoBadge || undefined,
-        isOpen: localMatch?.isOpen !== false,
-        openingHours: localMatch?.openingHours || "07h30 - 23h00",
-        phone: localMatch?.phone || "+227 96 00 00 00",
-        services: localMatch?.services || ["delivery", "takeaway", "booking"],
+        tagline: r.tagline || localMatch?.tagline || "",
+        cuisine: isKhady ? (r.cuisine || localMatch?.cuisine || "Gastronomie Sahélienne, Braisés") : (r.cuisine || localMatch?.cuisine || "Africain"),
+        cuisineCategory: r.cuisine_category || localMatch?.cuisineCategory || "africain",
+        rating: Number(r.rating || localMatch?.rating || 4.8),
+        reviewCount: Number(r.review_count || localMatch?.reviewCount || 100),
+        deliveryTime: r.delivery_time || localMatch?.deliveryTime || "25-40 min",
+        minOrder: Number(r.min_order || localMatch?.minOrder || 1000),
+        deliveryFee: Number(r.delivery_fee || localMatch?.deliveryFee || 500),
+        address: r.address || localMatch?.address || "Niamey, Niger",
+        city: r.city || localMatch?.city || "Niamey",
+        image: r.image_url || r.image || localMatch?.image || "",
+        bannerImage: r.banner_image || localMatch?.bannerImage || "",
+        isPromoted: Boolean(r.is_promoted ?? localMatch?.isPromoted),
+        promoBadge: r.promo_badge || localMatch?.promoBadge || undefined,
+        isOpen: (r.is_open ?? localMatch?.isOpen) !== false,
+        openingHours: r.opening_hours || localMatch?.openingHours || "07h30 - 23h00",
+        phone: r.phone || localMatch?.phone || "+227 96 00 00 00",
+        services: r.services || localMatch?.services || ["delivery", "takeaway", "booking"],
+        websiteUrl: localMatch?.websiteUrl,
+        whatsappCatalogUrl: localMatch?.whatsappCatalogUrl,
+        whatsappOrderUrl: localMatch?.whatsappOrderUrl,
+        onlineCatalogUrl: localMatch?.onlineCatalogUrl,
+        isPartnerCertified: localMatch?.isPartnerCertified ?? isKhady,
+        partnerStatusBadge: localMatch?.partnerStatusBadge,
         menu: restoDishes,
       };
-    });
-
-    // Conserver les restaurants locaux non encore migrés sur Supabase sans doublons
-    const fetchedIds = new Set(restaurants.map((r) => r.id));
-    const isKhadyFetched = restaurants.some((r) => isKhadysFoodRestaurant(r));
-
-    RESTAURANTS_DATA.forEach((defaultResto) => {
-      const isDefaultKhady = isKhadysFoodRestaurant(defaultResto);
-      const alreadyIncluded =
-        fetchedIds.has(defaultResto.id) || (isDefaultKhady && isKhadyFetched);
-
-      if (!alreadyIncluded) {
-        restaurants.push(defaultResto);
-      }
     });
 
     // Toujours s'assurer que Khady's Food & Event est en tête de liste

@@ -56,14 +56,23 @@ export const RestaurantMenuModal: React.FC<RestaurantMenuModalProps> = ({
   const [filterNigerLocalOnly, setFilterNigerLocalOnly] = useState(false);
   const [filterExpressOnly, setFilterExpressOnly] = useState(false);
 
+  React.useEffect(() => {
+    if (isOpen) {
+      setSelectedCategory("all");
+      setSelectedItemForConfig(null);
+    }
+  }, [isOpen, rawRestaurant?.id]);
+
   if (!rawRestaurant || !isOpen) return null;
 
   const restaurant = translateRestaurant(rawRestaurant) || rawRestaurant;
-  const menuList = restaurant?.menu || rawRestaurant?.menu || [];
-  const categories = Array.from(new Set(menuList.map((m) => m.category)));
+  const rawMenuList = restaurant?.menu || rawRestaurant?.menu || [];
+  const menuList = rawMenuList.filter((m) => m && m.isAvailable !== false);
+  const normalizeCat = (cat?: string) => (cat || "Plats Africains").replace(/⭐/g, "").trim() || "Plats Africains";
+  const categories = Array.from(new Set(menuList.map((m) => normalizeCat(m.category))));
 
   const filteredMenuItems = menuList.filter((m) => {
-    if (selectedCategory !== "all" && m.category !== selectedCategory) return false;
+    if (selectedCategory !== "all" && normalizeCat(m.category) !== selectedCategory) return false;
     if (filterSpicyOnly && !m.isSpicy && (m.spiceLevel || 0) === 0) return false;
     if (filterVegeOnly && !m.isVegetarian && !m.isVegan) return false;
     if (filterHalalOnly && !m.isHalal) return false;

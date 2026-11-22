@@ -21,6 +21,7 @@ import {
 import { Restaurant, ServiceMode } from '../../src/types';
 import { loadStoredRestaurants } from '../../src/services/dishStorageService';
 import { getSupabaseClient } from '../../src/services/supabaseClient';
+import { fetchRestaurantsFromSupabase } from '../../src/services/supabaseDishService';
 import { isKhadysFoodRestaurant, isAllorestoKitchen } from '../../src/services/khadysPartnerResolver';
 
 export interface RestaurantsPageProps {
@@ -74,54 +75,16 @@ export default function RestaurantsPage({
           setRestaurants(localData.filter((r) => !isAllorestoKitchen(r.id, r.name)));
         }
 
-        // 2. Si le client Supabase est connecté, synchroniser
+        // 2. Si le client Supabase est connecté, synchroniser avec les plats réels de public.dishes
         const client = getSupabaseClient();
         if (client) {
           try {
-            const { data, error: supaError } = await client
-              .from('restaurants')
-              .select('*')
-              .order('name', { ascending: true });
-
-            if (supaError) {
-              console.warn('Supabase non disponible, utilisation du stock local:', supaError.message);
-            } else if (data && data.length > 0 && isMounted) {
-              // Mapper les colonnes Supabase potentielles
-              const mapped: Restaurant[] = data.map((item: any) => {
-                const localMatch = localData.find((l) => l.id === (item.id || item.restaurant_id));
-                return {
-                  id: item.id || item.restaurant_id || `resto-${Date.now()}`,
-                  name: item.name || item.restaurant_name || localMatch?.name || 'Restaurant',
-                  tagline: item.description || item.tagline || localMatch?.tagline || '',
-                  cuisine: item.cuisine || localMatch?.cuisine || 'Cuisine variée',
-                  cuisineCategory: item.cuisine_category || item.category || localMatch?.cuisineCategory || 'divers',
-                  rating: Number(item.rating || localMatch?.rating || 4.8),
-                  reviewCount: Number(item.review_count || localMatch?.reviewCount || 100),
-                  deliveryTime: item.delivery_time || localMatch?.deliveryTime || '30-45 min',
-                  minOrder: Number(item.min_order || localMatch?.minOrder || 1500),
-                  deliveryFee: Number(item.delivery_fee || localMatch?.deliveryFee || 1000),
-                  address: item.address || localMatch?.address || 'Niamey',
-                  city: item.city || localMatch?.city || 'Niamey',
-                  quartier: item.quartier || item.district || localMatch?.quartier,
-                  image: item.image_url || item.image || localMatch?.image || '',
-                  bannerImage: item.banner_image || localMatch?.bannerImage || '',
-                  isOpen: item.is_open ?? item.isOpen ?? localMatch?.isOpen ?? true,
-                  openingHours: item.opening_hours || localMatch?.openingHours || '08h00 - 23h00',
-                  phone: item.phone || localMatch?.phone || '+227 96 05 23 10',
-                  services: (item.services || localMatch?.services || ['delivery', 'takeaway']) as ServiceMode[],
-                  menu: item.menu || localMatch?.menu || [],
-                  websiteUrl: item.website_url || localMatch?.websiteUrl,
-                  onlineCatalogUrl: item.online_catalog_url || localMatch?.onlineCatalogUrl,
-                  isPartnerCertified: item.is_partner_certified ?? localMatch?.isPartnerCertified,
-                  partnerStatusBadge: item.partner_status_badge || localMatch?.partnerStatusBadge,
-                  isPromoted: item.is_promoted ?? localMatch?.isPromoted,
-                  promoBadge: item.promo_badge || localMatch?.promoBadge,
-                };
-              });
-
-              // Afficher exclusivement Khady's Food & Event (masquer Allôresto Kitchen en cuisine interne)
-              const khadysOnly = mapped.filter((r) => isKhadysFoodRestaurant(r));
-              const finalPublic = khadysOnly.length > 0 ? khadysOnly : mapped.filter((r) => !isAllorestoKitchen(r.id, r.name));
+            const supaRes = await fetchRestaurantsFromSupabase();
+            if (!supaRes.success) {
+              console.warn('Supabase non disponible, utilisation du stock local:', supaRes.error);
+            } else if (supaRes.data && supaRes.data.length > 0 && isMounted) {
+              const khadysOnly = supaRes.data.filter((r) => isKhadysFoodRestaurant(r));
+              const finalPublic = khadysOnly.length > 0 ? khadysOnly : supaRes.data.filter((r) => !isAllorestoKitchen(r.id, r.name));
               setRestaurants(finalPublic);
             }
           } catch (fetchErr: any) {
