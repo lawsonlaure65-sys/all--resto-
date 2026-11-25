@@ -196,22 +196,18 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
         {/* Header with Title and Close button */}
         <div className="p-5 sm:p-6 border-b border-slate-800/80 bg-slate-900/60 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-orange-500 via-amber-500 to-teal-600 p-0.5 flex items-center justify-center shadow-lg">
-              <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-                <BrandLogo variant="icon" size="sm" />
-              </div>
-            </div>
+            <BrandLogo variant="icon" size="md" />
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-black text-white">
-                  Nouvelle Identité Visuelle Allôresto
+                  Identité Visuelle Officielle Allôresto
                 </h3>
                 <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider">
-                  Nouveau Logo 2026
+                  Logo Officiel
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Design moderne, ludique, intelligent et percutant : La Cloche Gourmande Connectée &amp; Souriante
+                Logotype officiel Allôresto, icône d&apos;application et identité partenaire Bilo Express
               </p>
             </div>
           </div>
@@ -339,7 +335,7 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
                 {/* Live Reworked Logo Display with Background Toggles */}
                 <div className="flex flex-col items-center gap-3">
                   <div
-                    className={`w-48 h-48 sm:w-56 sm:h-56 rounded-3xl p-6 flex flex-col items-center justify-center shadow-2xl transition-colors duration-300 border ${
+                    className={`w-64 h-48 sm:w-72 sm:h-52 rounded-3xl p-6 flex flex-col items-center justify-center shadow-2xl transition-colors duration-300 border ${
                       previewBg === "dark"
                         ? "bg-slate-950 border-slate-800"
                         : previewBg === "light"
@@ -349,33 +345,14 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
                         : "bg-[#E63E00] border-orange-400/30"
                     }`}
                   >
-                    <div className="w-24 h-24 sm:w-28 sm:h-28">
-                      <BrandLogo variant="icon" size="xl" />
-                    </div>
-                    <div className="mt-2 text-center">
-                      <div className="text-xl font-black tracking-tight flex items-center justify-center">
-                        <span
-                          className={
-                            previewBg === "light"
-                              ? "text-slate-950 font-black"
-                              : "text-white font-black"
-                          }
-                        >
-                          Allô
-                        </span>
-                        <span className="text-orange-500 font-black ml-0.5">
-                          resto
-                        </span>
-                        <span className="text-amber-400 font-black ml-0.5">!</span>
-                      </div>
-                      <span
-                        className={`text-[9px] font-bold uppercase tracking-wider block ${
-                          previewBg === "light" ? "text-slate-500" : "text-slate-300"
-                        }`}
-                      >
-                        Vos envies, bien servies !
-                      </span>
-                    </div>
+                    <BrandLogo variant="full" size="xl" showTagline={false} className="items-center" />
+                    <span
+                      className={`mt-3 text-[10px] font-bold uppercase tracking-wider block ${
+                        previewBg === "light" ? "text-slate-600" : "text-slate-300"
+                      }`}
+                    >
+                      Vos envies, bien servies !
+                    </span>
                   </div>
 
                   {/* Bg switchers */}
@@ -545,19 +522,20 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
             <div className="space-y-6">
               {/* Rendu 3D & Mockup */}
               <div className="p-5 rounded-3xl bg-slate-950 border border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-800 group">
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-800 bg-[#fcfcfc] p-4 flex flex-col items-center justify-center group gap-3">
                   <img
-                    src="/src/assets/images/alloresto_brand_logo_1787950661282.jpg"
-                    alt="Rendu 3D Allôresto"
-                    className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-500"
-                    referrerPolicy="no-referrer"
+                    src="/images/alloresto-logo-contacts.png"
+                    alt="Allôresto"
+                    className="w-full max-w-xs h-auto object-contain rounded-xl transform group-hover:scale-[1.02] transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-4">
-                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Aperçu 3D Studio de Marque</span>
-                    </span>
-                  </div>
+                  <a
+                    href="/images/alloresto-logo-contacts.png"
+                    download="alloresto-logo-avec-contacts.png"
+                    className="px-3.5 py-2 rounded-xl bg-[#738033] hover:bg-[#64702b] text-white font-bold text-xs inline-flex items-center gap-1.5 transition shadow-sm"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Télécharger version supports de communication (.png)</span>
+                  </a>
                 </div>
 
                 <div className="space-y-4">
@@ -565,21 +543,23 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
                     Déclinaisons Multi-Supports
                   </span>
                   <h4 className="text-xl font-black text-white">
-                    Parfaite lisibilité du 16px au format 4K
+                    Version Supports de Communication, Pied de page &amp; Favicon
                   </h4>
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    Le nouveau logo vectoriel SVG a été conçu avec des proportions optiques calibrées : les yeux, le sourire et le casque restent parfaitement identifiables même à l&apos;échelle minuscule d&apos;un favicon d&apos;onglet navigateur (16x16 px).
+                    La version avec bande vert olive et coordonnées est destinée au pied de page et aux supports de communication, tandis que la version épurée sans coordonnées reste utilisée pour la barre de navigation et l&apos;icône de l&apos;application.
                   </p>
 
                   {/* Navigation Tab Simulation */}
                   <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
                     <span className="text-[10px] font-bold text-slate-400 uppercase">
-                      Aperçu Favicon Onglet Navigateur (16x16)
+                      Aperçu Favicon Onglet Navigateur
                     </span>
                     <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950 border border-slate-800">
-                      <div className="w-4 h-4">
-                        <BrandLogo variant="icon" size="sm" />
-                      </div>
+                      <img
+                        src="/favicon-32x32.png"
+                        alt="Allôresto"
+                        className="w-4 h-4 rounded-sm object-contain bg-white"
+                      />
                       <span className="text-xs font-bold text-white truncate">
                         Allôresto Niger — Vos envies, bien servies !
                       </span>

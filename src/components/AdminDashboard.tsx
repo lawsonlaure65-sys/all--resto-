@@ -53,6 +53,7 @@ import {
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import AdminSettingsPage from "../../app/admin/settings/page";
 import { getStoredAppSettings, useAppSettings } from "../services/appSettingsService";
+import { BrandLogo } from "./BrandLogo";
 import AdminDriversPage from "../../app/admin/drivers/page";
 import AdminOrdersPage from "../../app/admin/orders/page";
 import { AdminPaymentsView } from "./AdminPaymentsView";
@@ -819,9 +820,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-slate-900 border border-purple-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-fade-in">
-          <div className="text-center space-y-2">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-white mx-auto shadow-xl shadow-purple-600/30">
-              <ShieldCheck className="w-8 h-8" />
+          <div className="text-center space-y-2.5">
+            <div className="flex justify-center">
+              <BrandLogo variant="full" size="md" className="items-center" />
             </div>
             <h3 className="text-2xl font-black text-white">Espace Direction &amp; Admin HQ</h3>
             <p className="text-xs text-slate-400">
@@ -960,11 +961,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Top Header */}
       <div className="p-6 rounded-3xl bg-slate-900 border border-purple-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 shadow-lg shadow-purple-500/20">
-            <ShieldCheck className="w-8 h-8" />
-          </div>
+          <BrandLogo variant="full" size="md" className="shrink-0" />
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-xl sm:text-2xl font-black text-white">Supervision Allôresto Niger 🇳🇪</h2>
               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3 text-emerald-400" />

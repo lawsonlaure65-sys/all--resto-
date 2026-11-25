@@ -225,10 +225,8 @@ export const ReceiptTicketModal: React.FC<ReceiptTicketModalProps> = ({
             <div className="p-5 sm:p-6 space-y-4 text-xs leading-relaxed">
               {/* En-tête officiel du reçu - Identité Légale & Fiscale (Niger) */}
               <div className="text-center space-y-1 pb-3 border-b border-dashed border-slate-300">
-                <div className="flex justify-center mb-1">
-                  <span className="text-2xl font-black tracking-tight text-slate-900 font-sans">
-                    ALLÔ<span className="text-[#F36C21]">RESTO</span>
-                  </span>
+                <div className="flex justify-center mb-1.5">
+                  <BrandLogo variant="full" size="sm" className="items-center" />
                 </div>
                 <h4 className="text-[13px] font-black text-slate-900 uppercase tracking-wider font-sans">
                   {settings.company_name || settings.companyName || "ALLÔRESTO NIGER SARL"}

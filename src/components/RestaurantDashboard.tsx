@@ -51,6 +51,7 @@ import { BilloExpressDispatchModal } from "./BilloExpressDispatchModal";
 import { playKitchenOrderChime } from "../services/kitchenAudioService";
 import { sendOrderConfirmationWhatsApp } from "../utils/whatsappNotifications";
 import { KitchenWhatsAppHub } from "./KitchenWhatsAppHub";
+import { BrandLogo } from "./BrandLogo";
 import {
   getActiveRestaurantSession,
   authenticateRestaurantUser,
@@ -469,12 +470,12 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
         <div className="max-w-md w-full space-y-6">
           {/* Header Card */}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-            <div className="text-center space-y-2">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white mx-auto shadow-lg shadow-orange-500/20">
-                <ChefHat className="w-8 h-8" />
+            <div className="text-center space-y-2.5">
+              <div className="flex justify-center">
+                <BrandLogo variant="full" size="md" className="items-center" />
               </div>
               <h1 className="text-2xl font-black text-white tracking-tight">
-                Allôresto <span className="text-orange-500">Restaurant Pro</span>
+                Espace <span className="text-orange-500">Restaurant Pro</span>
               </h1>
               <p className="text-xs text-slate-400">
                 Espace sécurisé pour les cuisines et gérants de restaurants partenaires à Niamey 🇳🇪
@@ -600,9 +601,7 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
       {/* Top Banner & Session Status */}
       <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-            <Store className="w-7 h-7" />
-          </div>
+          <BrandLogo variant="icon" size="lg" className="shrink-0" />
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-xl sm:text-2xl font-black text-white">{session.restaurantName}</h2>

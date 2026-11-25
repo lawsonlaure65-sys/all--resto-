@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
 import confetti from "canvas-confetti";
-import { X, Store, CheckCircle2, Phone, Mail, MapPin, Utensils, Send, ArrowRight } from "lucide-react";
+import { X, CheckCircle2, Phone, Mail, MapPin, Utensils, Send, ArrowRight } from "lucide-react";
+import { BrandLogo } from "./BrandLogo";
 
 interface PartnerRegistrationModalProps {
   isOpen: boolean;
@@ -70,9 +71,7 @@ export const PartnerRegistrationModal: React.FC<PartnerRegistrationModalProps> =
         {/* Header */}
         <div className="p-4 sm:p-5 bg-gradient-to-r from-orange-600 to-amber-600 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-black/30 flex items-center justify-center">
-              <Store className="w-5 h-5" />
-            </div>
+            <BrandLogo variant="icon" size="md" />
             <div>
               <h3 className="text-base font-black">Rejoindre le Réseau Allôresto</h3>
               <p className="text-xs text-orange-100 opacity-90">

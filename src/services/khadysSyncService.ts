@@ -196,7 +196,7 @@ export function purgeKhadysDailyMenuCache(): { purgedKeys: string[]; preservedKe
 }
 
 /**
- * Récupère le plat / trio du jour programmé chez Khady's Food
+ * Récupère le plat / trio du jour programmé chez Khady's Food depuis Allôresto
  */
 export async function fetchKhadysProgrammedDailyMenu(): Promise<KhadysDailyMenuResponse> {
   // 1. Tenter la route backend locale Allôresto
@@ -211,148 +211,85 @@ export async function fetchKhadysProgrammedDailyMenu(): Promise<KhadysDailyMenuR
       }
     }
   } catch (err) {
-    console.warn("Échec récupération via API locale, tentative base Khady live:", err);
+    console.warn("Échec récupération via API locale, tentative repli Supabase Allôresto:", err);
   }
 
-  // 2. Interrogation directe de la base de données live de Khady's Food (https://veygphkhehdnxefnnlwo.supabase.co)
-  try {
-    const khadyUrl = "https://veygphkhehdnxefnnlwo.supabase.co";
-    const khadyKey =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZleWdwaGtoZWhkbnhlZm5ubHdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MTE0MjgsImV4cCI6MjEwMTA4NzQyOH0.FsSg9wjrvVZ1zNHZH_D7qVxPd3EC1h1yM1mDMvxfAqw";
-
-    // 2.a Interroger en priorité la clé 'plat_du_jour' dans app_settings (source officielle live)
-    let livePdj: any = null;
+  // 2. Repli sur la base Supabase configurée d'Allôresto (table daily_menus)
+  if (isSupabaseConfigured()) {
     try {
-      const setRes = await fetch(`${khadyUrl}/rest/v1/app_settings?key=eq.plat_du_jour&select=*`, {
-        headers: { apikey: khadyKey, Authorization: `Bearer ${khadyKey}` },
-      });
-      if (setRes.ok) {
-        const setData = await setRes.json();
-        if (setData && setData[0] && setData[0].value) {
-          livePdj = setData[0].value;
+      const today = new Date().toISOString().split("T")[0];
+      const lookup = await findKhadysRestaurantInSupabase();
+      const targetRestoId = lookup.found && lookup.id ? lookup.id : KHADYS_OFFICIAL_UUID;
+
+      let { data: row } = await (supabase.from("daily_menus") as any)
+        .select("*")
+        .eq("restaurant_id", targetRestoId)
+        .eq("menu_date", today)
+        .eq("status", "published")
+        .order("published_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!row) {
+        const latestRes = await (supabase.from("daily_menus") as any)
+          .select("*")
+          .eq("restaurant_id", targetRestoId)
+          .eq("status", "published")
+          .order("menu_date", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        row = latestRes.data;
+      }
+
+      if (row) {
+        const dishTitle = (row.dish_name || row.title || "").trim();
+        if (dishTitle && !isPermanentDishName(dishTitle) && !isObsoleteDishName(dishTitle)) {
+          const dishPrice = Number(row.price_xof || row.price_fcfa || row.price || KHADYS_OFFICIAL_TODAY_PRICE);
+          const originalPrice = Math.max(dishPrice, Math.round(dishPrice * 1.15));
+          const dishDesc = row.description || KHADYS_OFFICIAL_TODAY_DESC;
+          const dishImg = row.image_url || row.photo_url || KHADYS_OFFICIAL_SUYA_IMAGE;
+          const dishAccomp = row.accompaniments || KHADYS_OFFICIAL_TODAY_ACCOMP;
+          const portions = typeof row.available_portions === "number" ? row.available_portions : 25;
+
+          return {
+            ...KHADYS_FALLBACK_MENU,
+            source: "alloresto-supabase-daily-menus",
+            title: `Menu du Jour — ${dishTitle}`,
+            mainDish: {
+              dishName: dishTitle,
+              priceFcfa: dishPrice,
+              originalPrice,
+              imageUrl: dishImg,
+              description: dishDesc,
+              accompaniments: dishAccomp,
+              availablePortions: portions,
+              badgeLabel: "🍲 Plat Cuisiné du Jour",
+              type: "PLAT_DU_JOUR",
+            },
+            trio: [
+              {
+                id: `dish-${row.id || "plat-du-jour"}`,
+                type: "PLAT_DU_JOUR",
+                dishName: dishTitle,
+                badgeLabel: "🍲 Plat Cuisiné du Jour",
+                badgeColor: "bg-brand-orange text-white",
+                tagline: "Spécialité cuisinée ce matin par Cheffe Khady à Niamey",
+                description: dishDesc,
+                accompaniments: dishAccomp,
+                price: originalPrice,
+                promoPrice: dishPrice,
+                dishImage: dishImg,
+                remainingStock: portions,
+              },
+              KHADYS_FALLBACK_MENU.trio[1],
+              KHADYS_FALLBACK_MENU.trio[2],
+            ],
+          };
         }
       }
-    } catch (_) {}
-
-    if (livePdj && livePdj.name) {
-      const dishTitle = livePdj.name.trim();
-      const dishPrice = Number(livePdj.promoPrice || livePdj.price || 3000);
-      const dishDesc = livePdj.description || "Plat cuisiné du jour mijoté avec amour par Cheffe Khady.";
-      const dishImg = livePdj.image || KHADYS_OFFICIAL_SUYA_IMAGE;
-      const dishAccomp = livePdj.accompaniments || "Alloco doré croustillant, piment vert maison";
-
-      return {
-        ...KHADYS_FALLBACK_MENU,
-        title: `Menu du Jour — ${dishTitle}`,
-        mainDish: {
-          dishName: dishTitle,
-          priceFcfa: dishPrice,
-          originalPrice: Math.round(dishPrice * 1.15),
-          imageUrl: dishImg,
-          description: dishDesc,
-          accompaniments: dishAccomp,
-          availablePortions: livePdj.remainingStock || 25,
-          badgeLabel: "🍲 Plat Cuisiné du Jour",
-          type: "PLAT_DU_JOUR",
-        },
-        trio: [
-          {
-            id: `dish-${livePdj.id || "plat-du-jour"}`,
-            type: "PLAT_DU_JOUR",
-            dishName: dishTitle,
-            badgeLabel: "🍲 Plat Cuisiné du Jour",
-            badgeColor: "bg-brand-orange text-white",
-            tagline: "Spécialité cuisinée ce matin par Cheffe Khady à Niamey",
-            description: dishDesc,
-            accompaniments: dishAccomp,
-            price: Math.round(dishPrice * 1.15),
-            promoPrice: dishPrice,
-            dishImage: dishImg,
-            remainingStock: livePdj.remainingStock || 25,
-          },
-          KHADYS_FALLBACK_MENU.trio[1],
-          KHADYS_FALLBACK_MENU.trio[2],
-        ],
-      };
+    } catch (sbErr) {
+      console.warn("Échec repli Supabase daily_menus:", sbErr);
     }
-
-    // 2.b Interroger les plats marqués 'is_plat_du_jour = true' sur la base officielle
-    let items: any[] = [];
-    try {
-      const r = await fetch(
-        `${khadyUrl}/rest/v1/menu_items?is_plat_du_jour=eq.true&select=*`,
-        {
-          headers: { apikey: khadyKey, Authorization: `Bearer ${khadyKey}` },
-        }
-      );
-      if (r.ok) {
-        items = await r.json();
-      }
-    } catch (_) {}
-
-    // 2.c Si non trouvé, interroger par catégorie Plat du Jour
-    if (!items || items.length === 0) {
-      try {
-        const r2 = await fetch(
-          `${khadyUrl}/rest/v1/menu_items?category=eq.Plat%20du%20Jour&select=*`,
-          {
-            headers: { apikey: khadyKey, Authorization: `Bearer ${khadyKey}` },
-          }
-        );
-        if (r2.ok) {
-          items = await r2.json();
-        }
-      } catch (_) {}
-    }
-
-    if (items && items.length > 0 && items[0]) {
-      const item = items[0];
-      const dishTitle = item.name ? item.name.trim() : KHADYS_OFFICIAL_TODAY_DISH_NAME;
-      const dishPrice = Number(item.price || KHADYS_OFFICIAL_TODAY_PRICE);
-      const dishDesc = item.description || KHADYS_OFFICIAL_TODAY_DESC;
-      const dishImg = item.image || KHADYS_OFFICIAL_SUYA_IMAGE;
-      const dishAccomp =
-        item.accompaniments ||
-        (dishTitle.toLowerCase().includes("crin")
-          ? "Pâte blanche de maïs ou pâte noire d'igname (cossette)"
-          : KHADYS_OFFICIAL_TODAY_ACCOMP);
-
-      return {
-        ...KHADYS_FALLBACK_MENU,
-        title: `Menu du Jour — ${dishTitle}`,
-        mainDish: {
-          dishName: dishTitle,
-          priceFcfa: dishPrice,
-          originalPrice: Math.round(dishPrice * 1.15),
-          imageUrl: dishImg,
-          description: dishDesc,
-          accompaniments: dishAccomp,
-          availablePortions: 25,
-          badgeLabel: "🍲 Plat Cuisiné du Jour",
-          type: "PLAT_DU_JOUR",
-        },
-        trio: [
-          {
-            id: `dish-${item.id || "plat-du-jour"}`,
-            type: "PLAT_DU_JOUR",
-            dishName: dishTitle,
-            badgeLabel: "🍲 Plat Cuisiné du Jour",
-            badgeColor: "bg-brand-orange text-white",
-            tagline: "Spécialité maison au programme officiel ce vendredi chez Cheffe Khady",
-            description: dishDesc,
-            accompaniments: dishAccomp,
-            price: Math.round(dishPrice * 1.15),
-            promoPrice: dishPrice,
-            dishImage: dishImg,
-            remainingStock: 25,
-          },
-          KHADYS_FALLBACK_MENU.trio[1],
-          KHADYS_FALLBACK_MENU.trio[2],
-        ],
-      };
-    }
-  } catch (directErr) {
-    console.warn("Échec requête directe Supabase Khady:", directErr);
   }
 
   return KHADYS_FALLBACK_MENU;

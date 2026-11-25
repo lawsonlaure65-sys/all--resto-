@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Download, Smartphone, X, Check, Sparkles } from "lucide-react";
+import { Download, X } from "lucide-react";
+import { BrandLogo } from "./BrandLogo";
 
 export const PwaInstallPrompt: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -51,9 +52,7 @@ export const PwaInstallPrompt: React.FC = () => {
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-50 bg-slate-900/95 border border-orange-500/40 backdrop-blur-md rounded-2xl p-4 text-white shadow-2xl shadow-black/80 flex items-center justify-between gap-3 animate-fade-in">
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white shrink-0 shadow-md shadow-orange-500/30">
-          <Smartphone className="w-6 h-6" />
-        </div>
+        <BrandLogo variant="icon" size="md" />
         <div>
           <div className="flex items-center gap-1.5">
             <h4 className="text-xs font-black text-white">Installer l'Application Allôresto</h4>

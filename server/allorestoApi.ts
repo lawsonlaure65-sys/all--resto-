@@ -8,6 +8,8 @@ import {
   KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE,
   KHADYS_OFFICIAL_TODAY_DISH_NAME,
   KHADYS_OFFICIAL_TODAY_PRICE,
+  KHADYS_OFFICIAL_TODAY_ORIGINAL_PRICE,
+  KHADYS_OFFICIAL_TODAY_IMAGE,
   KHADYS_OFFICIAL_TODAY_DESC,
   KHADYS_OFFICIAL_TODAY_ACCOMP,
 } from "../src/data/khadysPlatDuJourImage";
@@ -277,72 +279,107 @@ export function setupAllorestoApiRoutes(app: express.Express) {
   /**
    * GET /api/khadys-food/daily-menu
    * Fournit le plat du jour officiel programmé chez Khady's Food & Event
-   * (Sauce crin-crin fakou frais/Ademe • Spécialité de Cheffe Khady) avec le Trio Gourmand
+   * depuis la base Allôresto (ou les valeurs officielles par défaut) avec le Trio Gourmand
    */
-  app.get("/api/khadys-food/daily-menu", async (_req: Request, res: Response) => {
+  app.get("/api/khadys-food/daily-menu", async (req: Request, res: Response) => {
     try {
+      const KHADYS_ID = "99e2e632-4efd-4a44-8754-b806b50babfe";
       let finalPrice = KHADYS_OFFICIAL_TODAY_PRICE;
-      let finalImage = KHADYS_OFFICIAL_SAUCE_CRINCRIN_FILE;
+      let finalOriginalPrice = KHADYS_OFFICIAL_TODAY_ORIGINAL_PRICE;
+      let finalImage = KHADYS_OFFICIAL_TODAY_IMAGE;
       let finalDishName = KHADYS_OFFICIAL_TODAY_DISH_NAME;
       let finalDesc = KHADYS_OFFICIAL_TODAY_DESC;
       let finalAccompaniments = KHADYS_OFFICIAL_TODAY_ACCOMP;
+      let availablePortions = 25;
+      let sourceLabel = "alloresto-official-catalog";
 
-      // Interrogation live prioritaire de la clé plat_du_jour dans app_settings de Khady's Food
-      try {
-        const khadyUrl = "https://veygphkhehdnxefnnlwo.supabase.co";
-        const khadyKey =
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZleWdwaGtoZWhkbnhlZm5ubHdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1MTE0MjgsImV4cCI6MjEwMTA4NzQyOH0.FsSg9wjrvVZ1zNHZH_D7qVxPd3EC1h1yM1mDMvxfAqw";
+      const client = getServerSupabaseClient(req);
+      if (client) {
+        try {
+          const today = new Date().toISOString().slice(0, 10);
+          let { data: menuRow } = await client
+            .from("daily_menus")
+            .select("*")
+            .eq("restaurant_id", KHADYS_ID)
+            .eq("menu_date", today)
+            .eq("status", "published")
+            .order("published_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        const setRes = await fetch(`${khadyUrl}/rest/v1/app_settings?key=eq.plat_du_jour&select=*`, {
-          headers: { apikey: khadyKey, Authorization: `Bearer ${khadyKey}` },
-        });
-        if (setRes.ok) {
-          const setData = (await setRes.json()) as any[];
-          if (setData && setData[0] && setData[0].value) {
-            const val = setData[0].value;
-            if (val.name) finalDishName = val.name.trim();
-            if (val.promoPrice || val.price) finalPrice = Number(val.promoPrice || val.price);
-            if (val.description) finalDesc = val.description;
-            if (val.accompaniments) finalAccompaniments = val.accompaniments;
-            if (val.image) finalImage = val.image;
+          if (!menuRow) {
+            const latestRes = await client
+              .from("daily_menus")
+              .select("*")
+              .eq("restaurant_id", KHADYS_ID)
+              .eq("status", "published")
+              .order("menu_date", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            menuRow = latestRes.data;
           }
+
+          if (menuRow) {
+            const candidateName = (menuRow.dish_name || menuRow.title || "").trim();
+            const lowerName = candidateName.toLowerCase();
+            const isObsolete =
+              lowerName.includes("tiep") ||
+              lowerName.includes("crin") ||
+              lowerName.includes("fakou") ||
+              lowerName.includes("ademe");
+
+            if (candidateName && !isPermanentDishName(candidateName) && !isObsolete) {
+              finalDishName = candidateName;
+              finalPrice = Number(menuRow.price_xof || menuRow.price_fcfa || menuRow.price || finalPrice);
+              finalOriginalPrice = Math.max(finalPrice, Math.round(finalPrice * 1.15));
+              if (menuRow.description) finalDesc = menuRow.description;
+              if (menuRow.accompaniments) finalAccompaniments = menuRow.accompaniments;
+              if (menuRow.image_url || menuRow.photo_url) {
+                finalImage = menuRow.image_url || menuRow.photo_url;
+              }
+              if (typeof menuRow.available_portions === "number") {
+                availablePortions = menuRow.available_portions;
+              }
+              sourceLabel = "alloresto-supabase-daily-menus";
+            }
+          }
+        } catch (dbErr: any) {
+          console.warn("[/api/khadys-food/daily-menu] Lecture daily_menus ignorée (repli catalogue):", dbErr?.message || dbErr);
         }
-      } catch (err) {
-        console.warn("[/api/khadys-food/daily-menu] Interrogation live app_settings:", err);
       }
 
       return res.json({
         success: true,
-        source: "https://khadysfood.vercel.app",
+        source: sourceLabel,
         restaurantName: "Khady's Food & Event",
-        restaurantId: "99e2e632-4efd-4a44-8754-b806b50babfe",
+        restaurantId: KHADYS_ID,
         title: `Menu du Jour — ${finalDishName}`,
         tagline: "Le Plat du Jour officiel programmé chez Khady's Food & Event",
         mainDish: {
           dishName: finalDishName,
           priceFcfa: finalPrice,
-          originalPrice: 4000,
+          originalPrice: finalOriginalPrice,
           imageUrl: finalImage,
           description: finalDesc,
           accompaniments: finalAccompaniments,
-          availablePortions: 25,
+          availablePortions,
           badgeLabel: "🍲 Plat Cuisiné du Jour",
           type: "PLAT_DU_JOUR",
         },
         trio: [
           {
-            id: "dish-sauce-crincrin",
+            id: "dish-suya-brochettes",
             type: "PLAT_DU_JOUR",
             dishName: finalDishName,
             badgeLabel: "🍲 Plat Cuisiné du Jour",
             badgeColor: "bg-brand-orange text-white",
-            tagline: "Spécialité maison au programme ce vendredi chez Cheffe Khady",
+            tagline: "Spécialité maison au programme chez Cheffe Khady",
             description: finalDesc,
             accompaniments: finalAccompaniments,
-            price: 4000,
+            price: finalOriginalPrice,
             promoPrice: finalPrice,
             dishImage: finalImage,
-            remainingStock: 25,
+            remainingStock: availablePortions,
           },
           {
             id: "dish-doukounou",

@@ -300,11 +300,11 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-1 sm:gap-2 shrink min-w-0">
           <div
             onClick={onOpenLogoModal}
-            className="flex flex-col group cursor-pointer shrink-0"
-            title="Logo Officiel Allôresto by Khady's Food & Event"
+            className="flex flex-col items-start group cursor-pointer shrink-0"
+            title="Allôresto by Khady's Food & Event"
           >
             <BrandLogo variant="full" size="sm" showTagline={false} />
-            <span className="text-[9px] sm:text-[10px] font-extrabold text-amber-400 tracking-tight -mt-0.5 ml-8 sm:ml-9">
+            <span className="text-[9px] sm:text-[10px] font-extrabold text-amber-400 tracking-tight mt-0.5 pl-1 leading-none">
               by Khady&apos;s Food &amp; Event
             </span>
           </div>

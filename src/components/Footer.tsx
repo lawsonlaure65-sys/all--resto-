@@ -62,7 +62,7 @@ export const Footer: React.FC<FooterProps> = ({
               className="cursor-pointer inline-block group"
               title="Découvrir le logo et la charte graphique Allôresto"
             >
-              <BrandLogo variant="full" size="md" showTagline={false} />
+              <BrandLogo variant="full" size="md" showTagline={false} showContacts={true} />
             </div>
 
             <p className="text-xs text-slate-300 font-medium italic">

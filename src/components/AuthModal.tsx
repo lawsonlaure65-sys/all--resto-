@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { UserProfile } from "../types";
 import { supabase } from "../lib/supabase";
+import { BrandLogo } from "./BrandLogo";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -350,9 +351,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </button>
 
         {/* Modal Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 mx-auto">
-            <User className="w-6 h-6" />
+        <div className="text-center space-y-2.5">
+          <div className="flex justify-center">
+            <BrandLogo variant="full" size="md" className="items-center" />
           </div>
           <h3 className="text-xl sm:text-2xl font-black text-white">
             {currentUser
