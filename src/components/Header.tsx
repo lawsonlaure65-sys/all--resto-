@@ -309,17 +309,16 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </div>
 
-          {/* Bouton Voir les restaurants (Accessible Mobile & Desktop) */}
+          {/* Bouton Voir les restaurants (Desktop — sur mobile il est dans la barre dédiée juste dessous) */}
           {onOpenRestaurants && (
             <button
               id="header-restaurants-btn"
               onClick={onOpenRestaurants}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs sm:text-sm cursor-pointer shrink-0 transition active:scale-95 shadow-md shadow-orange-500/25"
+              className="hidden md:flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs sm:text-sm cursor-pointer shrink-0 transition active:scale-95 shadow-md shadow-orange-500/25"
               title="Consulter la liste de tous les restaurants partenaires à Niamey"
             >
               <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white shrink-0" />
-              <span className="hidden xs:inline sm:inline">Voir les restaurants</span>
-              <span className="inline xs:hidden sm:hidden">Restaurants</span>
+              <span>Voir les restaurants</span>
             </button>
           )}
 

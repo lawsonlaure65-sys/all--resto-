@@ -326,10 +326,19 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
                     <a
                       href="/images/alloresto-logo-contacts.png"
                       download="alloresto-logo-avec-contacts.png"
-                      className="px-3.5 py-2 rounded-xl bg-[#738033] hover:bg-[#64702b] text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                      className="px-3.5 py-2 rounded-xl bg-[#83903e] hover:bg-[#717d35] text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5" />
                       <span>Version Contacts (.png)</span>
+                    </a>
+
+                    <a
+                      href="/images/alloresto-logo-badge-contacts.png"
+                      download="alloresto-badge-rond-contacts.png"
+                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Badge Rond Contacts (.png)</span>
                     </a>
                   </div>
                 </div>
@@ -524,20 +533,30 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
             <div className="space-y-6">
               {/* Rendu 3D & Mockup */}
               <div className="p-5 rounded-3xl bg-slate-950 border border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-800 bg-[#fcfcfc] p-4 flex flex-col items-center justify-center group gap-3">
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-800 bg-white p-4 flex flex-col items-center justify-center group gap-3">
                   <img
                     src="/images/alloresto-logo-contacts.png"
                     alt="Allôresto"
                     className="w-full max-w-xs h-auto object-contain rounded-xl transform group-hover:scale-[1.02] transition-transform duration-300"
                   />
-                  <a
-                    href="/images/alloresto-logo-contacts.png"
-                    download="alloresto-logo-avec-contacts.png"
-                    className="px-3.5 py-2 rounded-xl bg-[#738033] hover:bg-[#64702b] text-white font-bold text-xs inline-flex items-center gap-1.5 transition shadow-sm"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Télécharger version supports de communication (.png)</span>
-                  </a>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <a
+                      href="/images/alloresto-logo-contacts.png"
+                      download="alloresto-logo-avec-contacts.png"
+                      className="px-3.5 py-2 rounded-xl bg-[#83903e] hover:bg-[#717d35] text-white font-bold text-xs inline-flex items-center gap-1.5 transition shadow-sm"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Format Carte (.png)</span>
+                    </a>
+                    <a
+                      href="/images/alloresto-logo-badge-contacts.png"
+                      download="alloresto-badge-rond-contacts.png"
+                      className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs inline-flex items-center gap-1.5 transition shadow-sm"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Badge Rond (.png)</span>
+                    </a>
+                  </div>
                 </div>
 
                 <div className="space-y-4">

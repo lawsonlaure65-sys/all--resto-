@@ -103,11 +103,11 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     return (
       <div
         onClick={onClick}
-        className={`inline-flex flex-col items-stretch max-w-full rounded-2xl overflow-hidden border border-slate-200/90 bg-[#fcfcfc] shadow-md transition-transform duration-200 hover:scale-[1.01] select-none ${
+        className={`inline-flex flex-col items-stretch max-w-full rounded-2xl overflow-hidden border border-slate-200/90 bg-white shadow-md transition-transform duration-200 hover:scale-[1.01] select-none p-3 gap-2 ${
           onClick ? "cursor-pointer" : ""
         } ${className}`}
       >
-        <div className="flex items-center justify-center px-4 pt-3 pb-2 bg-[#fcfcfc]">
+        <div className="flex items-center justify-center px-2 pt-1 bg-white">
           <img
             src={ALLORESTO_OFFICIAL_LOGO_URL}
             alt="Allôresto"
@@ -115,7 +115,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
             draggable={false}
           />
         </div>
-        <div className="bg-[#738033] text-white px-3.5 py-2 text-center leading-snug space-y-0.5">
+        <div className="bg-[#83903e] text-white rounded-xl px-3.5 py-2 text-center leading-snug space-y-0.5 shadow-sm">
           <p className="text-[11px] sm:text-xs font-bold tracking-tight whitespace-nowrap">
             +227 70 03 25 52 — Appels &amp; WhatsApp
           </p>
