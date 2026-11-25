@@ -4,7 +4,6 @@ import {
   Phone,
   Mail,
   MapPin,
-  Smartphone,
   ShieldCheck,
   Heart,
   Scale,
@@ -273,7 +272,7 @@ export const Footer: React.FC<FooterProps> = ({
               Installez Allôresto sur votre smartphone en 1 clic pour commander vos déjeuners sans téléchargement lourd sur le Play Store.
             </p>
             <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center gap-3">
-              <Smartphone className="w-6 h-6 text-orange-400 shrink-0" />
+              <BrandLogo variant="icon" size="md" />
               <div>
                 <span className="text-xs font-bold text-white block">PWA Installable &amp; Légère</span>
                 <span className="text-[10px] text-emerald-400 font-semibold">Mode hors-ligne partiel &amp; Cache</span>

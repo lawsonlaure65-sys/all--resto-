@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getSupabaseClient } from '../../../src/services/supabaseClient';
+import { BrandLogo } from '../../../src/components/BrandLogo';
 
 interface RestaurantContractPageProps {
   onClose?: () => void;
@@ -294,9 +295,7 @@ export default function RestaurantContractPage({
         {/* Navigation & Header */}
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-orange-500/20">
-              A
-            </div>
+            <BrandLogo variant="icon" size="md" />
             <div>
               <h1 className="text-xl font-black tracking-tight text-white">Allôresto Niamey 🇳🇪</h1>
               <p className="text-xs text-slate-400">Contrat d'Affiliation &amp; d'Adhésion Restaurant Partenaire</p>

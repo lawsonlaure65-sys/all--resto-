@@ -32,8 +32,8 @@ export const OFFICIAL_DEFAULT_APP_SETTINGS: AppSettings = {
   phone: "+227 96052310",
   email: "lawson.laure65@gmail.com",
   website: "https://alloresto-niamey.vercel.app",
-  logo_url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop&q=80",
-  logoUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop&q=80",
+  logo_url: "/images/alloresto-logo.png",
+  logoUrl: "/images/alloresto-logo.png",
   default_commission_rate: 0,
   delivery_base_fee: 1000,
 };
@@ -68,6 +68,9 @@ export function getStoredAppSettings(): AppSettings {
       const email = isPlaceholderEmail ? OFFICIAL_DEFAULT_APP_SETTINGS.email : (parsed.email || OFFICIAL_DEFAULT_APP_SETTINGS.email);
       const website = isPlaceholderWeb ? OFFICIAL_DEFAULT_APP_SETTINGS.website : (parsed.website || OFFICIAL_DEFAULT_APP_SETTINGS.website);
 
+      const isPlaceholderLogo = !parsed.logo_url || parsed.logo_url.includes("unsplash.com/photo-1555396273-367ea4eb4db5");
+      const logoUrl = isPlaceholderLogo ? OFFICIAL_DEFAULT_APP_SETTINGS.logo_url : parsed.logo_url;
+
       return {
         ...OFFICIAL_DEFAULT_APP_SETTINGS,
         ...parsed,
@@ -79,6 +82,8 @@ export function getStoredAppSettings(): AppSettings {
         phone,
         email,
         website,
+        logo_url: logoUrl,
+        logoUrl,
         currency: parsed.currency || OFFICIAL_DEFAULT_APP_SETTINGS.currency,
       };
     }

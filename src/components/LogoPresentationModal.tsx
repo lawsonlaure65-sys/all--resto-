@@ -307,28 +307,30 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
                   </div>
 
                   <h4 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    La Cloche Gourmande Connectée
+                    Identité Officielle Allôresto &amp; Icône App
                   </h4>
                   <p className="text-xs sm:text-sm text-slate-300 max-w-md leading-relaxed">
-                    Un logo qui fusionne <strong>gastronomie</strong> (cloche de chef), <strong>technologie &amp; dialogue</strong> (arceau d&apos;écouteur &quot;Allô&quot; et ondes aromatiques), <strong>convivialité</strong> (clin d&apos;œil malicieux &amp; sourire gourmand) et <strong>vitesse de livraison</strong> (lignes de propulsion express).
+                    Le nouveau logotype officiel <strong>Allôresto</strong> associe une typographie bordeaux affirmée et un combiné téléphonique stylisé en vert olive. Ce même visuel officiel est utilisé comme icône de l&apos;application, favicon navigateur et version contacts dans le pied de page.
                   </p>
 
                   <div className="flex flex-wrap items-center gap-2 pt-2">
-                    <button
-                      onClick={handleCopySvg}
+                    <a
+                      href="/images/alloresto-logo.png"
+                      download="alloresto-logo-officiel.png"
                       className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md"
                     >
-                      {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedCode ? "SVG Copié !" : "Copier le nouveau SVG"}</span>
-                    </button>
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Télécharger Logo (.png)</span>
+                    </a>
 
-                    <button
-                      onClick={handleDownloadSvg}
-                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                    <a
+                      href="/images/alloresto-logo-contacts.png"
+                      download="alloresto-logo-avec-contacts.png"
+                      className="px-3.5 py-2 rounded-xl bg-[#738033] hover:bg-[#64702b] text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Télécharger (.svg)</span>
-                    </button>
+                      <span>Version Contacts (.png)</span>
+                    </a>
                   </div>
                 </div>
 
@@ -549,20 +551,23 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
                     La version avec bande vert olive et coordonnées est destinée au pied de page et aux supports de communication, tandis que la version épurée sans coordonnées reste utilisée pour la barre de navigation et l&apos;icône de l&apos;application.
                   </p>
 
-                  {/* Navigation Tab Simulation */}
-                  <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">
-                      Aperçu Favicon Onglet Navigateur
+                  {/* Navigation Tab & App Icon Simulation */}
+                  <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">
+                      Aperçu Favicon &amp; Icône de l&apos;Application
                     </span>
-                    <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950 border border-slate-800">
-                      <img
-                        src="/favicon-32x32.png"
-                        alt="Allôresto"
-                        className="w-4 h-4 rounded-sm object-contain bg-white"
-                      />
-                      <span className="text-xs font-bold text-white truncate">
-                        Allôresto Niger — Vos envies, bien servies !
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <BrandLogo variant="icon" size="lg" />
+                      <div className="flex-1 flex items-center gap-2 p-2 rounded-xl bg-slate-950 border border-slate-800">
+                        <img
+                          src="/favicon-32x32.png?v=4"
+                          alt="Allôresto"
+                          className="w-4 h-4 rounded-sm object-contain bg-white"
+                        />
+                        <span className="text-xs font-bold text-white truncate">
+                          Allôresto Niger — Vos envies, bien servies !
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

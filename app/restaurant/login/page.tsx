@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { BrandLogo } from '../../../src/components/BrandLogo';
 
 export default function RestaurantLoginPage() {
   const [identifier, setIdentifier] = useState('manager@sahel-saveurs.ne');
@@ -55,8 +56,8 @@ export default function RestaurantLoginPage() {
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 text-slate-100 font-sans">
       <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 rounded-2xl bg-orange-500/20 text-orange-400 mx-auto flex items-center justify-center text-3xl font-black">
-            🍽️
+          <div className="flex justify-center">
+            <BrandLogo variant="icon" size="xl" />
           </div>
           <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">
             Espace Restaurateur Partenaire
