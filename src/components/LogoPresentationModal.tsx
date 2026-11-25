@@ -404,70 +404,77 @@ export const LogoPresentationModal: React.FC<LogoPresentationModalProps> = ({
                 </div>
               </div>
 
-              {/* The 4 Core Pillars of this Redesign */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* 1. Amusant & Attachant */}
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
-                      <Smile className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h5 className="text-xs font-black text-white">1. Amusant &amp; Convivial</h5>
-                      <span className="text-[10px] text-amber-400 font-bold">Clin d&apos;œil &amp; Pommettes</span>
+              {/* Visual Gallery of All Official Logo Variants */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* 1. Format Carte avec Coordonnées */}
+                <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between gap-3">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-[#a5b550] bg-[#83903e]/15 px-2.5 py-0.5 rounded-full border border-[#83903e]/30 inline-block">
+                      Pied de page &amp; Flyers
+                    </span>
+                    <h5 className="text-xs font-black text-white">Logo avec Coordonnées (Carte)</h5>
+                    <div className="rounded-xl bg-white p-2.5 border border-slate-200 flex items-center justify-center">
+                      <img
+                        src="/images/alloresto-logo-contacts.png"
+                        alt="Allôresto"
+                        className="w-full h-36 object-contain"
+                      />
                     </div>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Un visage expressif intégré au dôme de la cloche qui donne immédiatement le sourire, humanise le service et crée un lien émotionnel fort avec les gourmets de Niamey.
-                  </p>
+                  <a
+                    href="/images/alloresto-logo-contacts.png"
+                    download="alloresto-logo-avec-contacts.png"
+                    className="w-full py-2 px-3 rounded-xl bg-[#83903e] hover:bg-[#717d35] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Télécharger (.png)</span>
+                  </a>
                 </div>
 
-                {/* 2. Intelligent & Double Lecture */}
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
-                      <Radio className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h5 className="text-xs font-black text-white">2. Intelligent &amp; Innovant</h5>
-                      <span className="text-[10px] text-teal-400 font-bold">Casque Allô + Ondes Wi-Fi</span>
+                {/* 2. Badge Rond avec Coordonnées */}
+                <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between gap-3">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 inline-block">
+                      Réseaux &amp; Visuels Plats
+                    </span>
+                    <h5 className="text-xs font-black text-white">Badge Rond avec Coordonnées</h5>
+                    <div className="rounded-xl bg-slate-900 p-2.5 border border-slate-800 flex items-center justify-center">
+                      <img
+                        src="/images/alloresto-logo-badge-contacts.png"
+                        alt="Allôresto"
+                        className="w-36 h-36 object-contain"
+                      />
                     </div>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    La poignée supérieure forme un arceau d&apos;appel &quot;Allô&quot; avec micro intégré diffusant des ondes aromatiques et technologiques pour symboliser la commande en 1 clic.
-                  </p>
+                  <a
+                    href="/images/alloresto-logo-badge-contacts.png"
+                    download="alloresto-badge-rond-contacts.png"
+                    className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Télécharger (.png)</span>
+                  </a>
                 </div>
 
-                {/* 3. Professionnel & Gastronomique */}
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold">
-                      <Utensils className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h5 className="text-xs font-black text-white">3. Professionnel &amp; Gastronomique</h5>
-                      <span className="text-[10px] text-orange-400 font-bold">Cloche &amp; Plateau Argenté</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Les codes du service de luxe (cloche sous plateau métallique) assurent la crédibilité auprès des restaurateurs partenaires et garantissent la fraîcheur des plats livrés.
-                  </p>
-                </div>
-
-                {/* 4. Percutant & Mémorable */}
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center font-bold">
-                      <Zap className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h5 className="text-xs font-black text-white">4. Percutant &amp; Ultra-Rapide</h5>
-                      <span className="text-[10px] text-red-400 font-bold">Lignes de Vitesse &amp; Étoile</span>
+                {/* 3. Icône Application & Favicon */}
+                <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between gap-3">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-orange-400 bg-orange-500/10 px-2.5 py-0.5 rounded-full border border-orange-500/20 inline-block">
+                      App &amp; Favicon
+                    </span>
+                    <h5 className="text-xs font-black text-white">Icône Application (Sans contacts)</h5>
+                    <div className="rounded-xl bg-slate-900 p-2.5 border border-slate-800 flex items-center justify-center h-[164px]">
+                      <BrandLogo variant="icon" size="2xl" />
                     </div>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Des traits de propulsion latéraux et une étincelle dorée soulignent l&apos;efficacité record des livreurs Billo Express à travers tous les quartiers de Niamey.
-                  </p>
+                  <a
+                    href="/icon-512.png"
+                    download="alloresto-icone-app-512.png"
+                    className="w-full py-2 px-3 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Télécharger Icône (.png)</span>
+                  </a>
                 </div>
               </div>
             </div>
