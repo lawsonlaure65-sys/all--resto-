@@ -358,6 +358,15 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
         RESTAURANTS_DATA.find((lr) => lr.id === r.id) ||
         (isKhady ? RESTAURANTS_DATA.find((lr) => lr.id === KHADYS_STABLE_LOCAL_ID) : undefined);
 
+      const hasOutdatedKhadyAddr =
+        isKhady &&
+        (!r.address ||
+          String(r.address).includes("Avenue du Sahel") ||
+          String(r.address).includes("Boulevard de l'Indépendance"));
+
+      const hasOutdatedKhadyCity =
+        isKhady && (!r.city || String(r.city).includes("Plateau"));
+
       return {
         id: r.id,
         name: isKhady ? KHADYS_OFFICIAL_NAME : r.name,
@@ -370,8 +379,13 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
         deliveryTime: r.delivery_time || localMatch?.deliveryTime || "25-40 min",
         minOrder: Number(r.min_order || localMatch?.minOrder || 1000),
         deliveryFee: Number(r.delivery_fee || localMatch?.deliveryFee || 500),
-        address: r.address || localMatch?.address || "Niamey, Niger",
-        city: r.city || localMatch?.city || "Niamey",
+        address: hasOutdatedKhadyAddr
+          ? (localMatch?.address || "Poudrière II, derrière la NIGELEC château 09, Niamey, Niger 🇳🇪")
+          : (r.address || localMatch?.address || "Niamey, Niger"),
+        city: hasOutdatedKhadyCity
+          ? (localMatch?.city || "Niamey - Poudrière II")
+          : (r.city || localMatch?.city || "Niamey"),
+        quartier: localMatch?.quartier,
         image: r.image_url || r.image || localMatch?.image || "",
         bannerImage: r.banner_image || localMatch?.bannerImage || "",
         isPromoted: Boolean(r.is_promoted ?? localMatch?.isPromoted),

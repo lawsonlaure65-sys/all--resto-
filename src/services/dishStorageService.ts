@@ -206,12 +206,27 @@ export function loadStoredRestaurants(): Restaurant[] {
               if (isKhady && updatedMenu.length === 0 && defaultMatch?.menu) {
                 updatedMenu = deduplicateMenu(defaultMatch.menu);
               }
+              const hasOutdatedKhadysAddress =
+                isKhady &&
+                (!resto.address ||
+                  resto.address.includes("Avenue du Sahel") ||
+                  resto.address.includes("Boulevard de l'Indépendance"));
+
               return {
                 ...resto,
                 name: isKhady ? KHADYS_OFFICIAL_NAME : resto.name,
                 slug: isKhady ? KHADYS_OFFICIAL_SLUG : (resto.slug || defaultMatch.slug),
                 tagline: isKhady ? defaultMatch.tagline : resto.tagline,
                 cuisine: isKhady ? defaultMatch.cuisine : resto.cuisine,
+                address: hasOutdatedKhadysAddress
+                  ? defaultMatch.address
+                  : (resto.address || defaultMatch.address),
+                city: hasOutdatedKhadysAddress
+                  ? defaultMatch.city
+                  : (resto.city || defaultMatch.city),
+                quartier: hasOutdatedKhadysAddress
+                  ? defaultMatch.quartier
+                  : (resto.quartier || defaultMatch.quartier),
                 promoBadge: isKhady ? defaultMatch.promoBadge : resto.promoBadge,
                 openingHours: isKhady ? defaultMatch.openingHours : resto.openingHours,
                 websiteUrl: isKhady ? defaultMatch.websiteUrl : (resto.websiteUrl || defaultMatch.websiteUrl),
