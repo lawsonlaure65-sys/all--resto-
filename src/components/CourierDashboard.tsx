@@ -241,12 +241,17 @@ export const CourierDashboard: React.FC<CourierDashboardProps> = ({
     setTimeout(() => setAcceptedToast(null), 5000);
 
     try {
-      await (supabase.from("restaurant_orders") as any)
-        .update({ status: "delivering" })
-        .eq("order_id", order.id);
-      await (supabase.from("orders") as any)
-        .update({ order_status: "delivering" })
-        .eq("id", order.id);
+      const targetKey = order.dbId || order.id;
+      const isUuid =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          targetKey
+        );
+      const q = (supabase.from("orders") as any).update({
+        status: "out_for_delivery",
+        driver_name: activeCourier.name,
+        updated_at: new Date().toISOString(),
+      });
+      await (isUuid ? q.eq("id", targetKey) : q.eq("client_order_ref", targetKey));
     } catch (e) {
       console.warn("[CourierDashboard] take order note:", e);
     }
@@ -260,36 +265,38 @@ export const CourierDashboard: React.FC<CourierDashboardProps> = ({
     setAcceptedToast(`Livraison #${order.id} terminée avec succès ! Commission créditée.`);
     setTimeout(() => setAcceptedToast(null), 5000);
 
-    const isCash = order.paymentMethod === "cash" || order.paymentMethod === "cash_on_delivery";
+    const isCash =
+      order.paymentMethod === "cash" ||
+      order.paymentMethod === "cash_on_delivery" ||
+      order.paymentMethod === "cash_delivery" ||
+      order.paymentMethod === "cash_pickup";
     const tendered = typeof cashTenderedInput === "number" && cashTenderedInput > 0 ? cashTenderedInput : order.total;
     const collected = isCash ? order.total : 0;
 
     try {
-      // 1. Mettre à jour restaurant_orders
-      await (supabase.from("restaurant_orders") as any)
-        .update({
-          status: "delivered",
-          payment_status: "paid",
-          notes: isCash
-            ? `Encaissé en espèces par coursier Billo Express (${activeCourier.name}): ${collected.toLocaleString()} FCFA (Reçu: ${tendered.toLocaleString()} FCFA)`
-            : undefined,
-        })
-        .eq("order_id", order.id);
+      const now = new Date().toISOString();
+      const targetKey = order.dbId || order.id;
+      const isUuid =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          targetKey
+        );
 
-      // 2. Mettre à jour orders avec cash_collected_xof et cash_tendered_xof
+      // Mettre à jour public.orders avec cash_collected_xof et cash_tendered_xof
       const orderUpdate: Record<string, any> = {
-        order_status: "delivered",
-        payment_status: "paid",
+        status: "delivered",
+        payment_status: isCash ? "cash_collected" : "paid",
+        delivered_at: now,
+        updated_at: now,
+        driver_name: activeCourier.name,
       };
       if (isCash) {
         orderUpdate.cash_collected_xof = collected;
         orderUpdate.cash_tendered_xof = tendered;
       }
-      await (supabase.from("orders") as any)
-        .update(orderUpdate)
-        .eq("id", order.id);
+      const q = (supabase.from("orders") as any).update(orderUpdate);
+      await (isUuid ? q.eq("id", targetKey) : q.eq("client_order_ref", targetKey));
 
-      // 3. Enregistrer la transaction réelle dans public.payments
+      // Enregistrer la transaction réelle dans public.payments
       if (isCash) {
         await (supabase.from("payments") as any)
           .insert({

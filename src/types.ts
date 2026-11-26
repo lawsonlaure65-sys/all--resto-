@@ -101,6 +101,9 @@ export interface CartItem {
   totalPrice: number;
   notes?: string;
   participantName?: string; // For Group Orders (e.g., "Amadou", "Mariama")
+  restaurantId?: string;
+  restaurantName?: string;
+  restaurantPhone?: string;
 }
 
 export type PaymentMethod =
@@ -144,10 +147,14 @@ export type OrderStatus = "received" | "preparing" | "ready" | "delivering" | "d
 
 export interface Order {
   id: string;
+  dbId?: string;
+  orderNumber?: number;
+  idempotencyKey?: string;
   createdAt: string;
   customerName: string;
   customerPhone: string;
   deliveryAddress: string;
+  district?: string;
   city: string;
   serviceType: ServiceMode;
   restaurantId: string;

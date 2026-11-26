@@ -1179,12 +1179,16 @@ export const RestaurantDashboard: React.FC<RestaurantDashboardProps> = ({
                             onClick={async () => {
                               order.paymentStatus = "paid";
                               try {
-                                await (supabase.from("restaurant_orders") as any)
-                                  .update({ payment_status: "paid" })
-                                  .eq("order_id", order.id);
-                                await (supabase.from("orders") as any)
-                                  .update({ payment_status: "paid" })
-                                  .eq("id", order.id);
+                                const targetKey = order.dbId || order.id;
+                                const isUuid =
+                                  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+                                    targetKey
+                                  );
+                                const q = (supabase.from("orders") as any).update({
+                                  payment_status: "paid",
+                                  updated_at: new Date().toISOString(),
+                                });
+                                await (isUuid ? q.eq("id", targetKey) : q.eq("client_order_ref", targetKey));
                                 await (supabase.from("payments") as any)
                                   .update({
                                     payment_status: "paid",

@@ -564,11 +564,23 @@ export function App() {
     setSelectedRestaurantForMenu(restaurant);
   };
 
+  const normalizeRestoKey = (id?: string) => {
+    if (!id) return "";
+    if (id === "resto-khadys-food" || id === "99e2e632-4efd-4a44-8754-b806b50babfe") {
+      return "99e2e632-4efd-4a44-8754-b806b50babfe";
+    }
+    if (id === "resto-alloresto-kitchen" || id === "a8168cb5-fe46-4368-85fa-be1a64d854b5") {
+      return "a8168cb5-fe46-4368-85fa-be1a64d854b5";
+    }
+    return id;
+  };
+
   // Add Item to Cart
   const handleAddToCart = (
     item: MenuItem,
     selectedOptions: Record<string, string>,
-    quantity: number
+    quantity: number,
+    explicitRestaurant?: { id: string; name?: string; phone?: string }
   ) => {
     let unitPrice = item.price;
     if (item.options) {
@@ -579,16 +591,55 @@ export function App() {
       });
     }
 
+    const matchedByDish = (restaurants || [])
+      .filter(Boolean)
+      .find((r) => r?.menu?.some((m) => m && m.id === item.id));
+
+    const matchedExplicit = explicitRestaurant?.id
+      ? (restaurants || []).filter(Boolean).find((r) => normalizeRestoKey(r.id) === normalizeRestoKey(explicitRestaurant.id)) ||
+        explicitRestaurant
+      : null;
+
     const parentRestaurant =
-      (restaurants || []).filter(Boolean).find((r) => r?.menu?.some((m) => m && m.id === item.id)) ||
-      (selectedRestaurantForMenu && selectedRestaurantForMenu?.menu?.some((m) => m && m.id === item.id) ? selectedRestaurantForMenu : null) ||
-      (item.category === "Plat du Jour" ? (restaurants || []).filter(Boolean).find((r) => r && (r.id === "resto-khadys-food" || (r.name && r.name.toLowerCase().includes("khady")))) : null) ||
-      selectedRestaurantForMenu;
+      matchedExplicit ||
+      (selectedRestaurantForMenu &&
+      selectedRestaurantForMenu?.menu?.some((m) => m && m.id === item.id)
+        ? selectedRestaurantForMenu
+        : null) ||
+      matchedByDish ||
+      selectedRestaurantForMenu ||
+      null;
+
+    if (!parentRestaurant?.id) {
+      showNotification(
+        "Restaurant introuvable",
+        "Impossible d'associer ce plat à un restaurant. Ouvrez d'abord la fiche du restaurant.",
+        "error",
+        "cart"
+      );
+      return;
+    }
+
+    const existingCartRestoId = cartItems.find((ci) => ci.restaurantId)?.restaurantId;
+    if (
+      existingCartRestoId &&
+      normalizeRestoKey(existingCartRestoId) !== normalizeRestoKey(parentRestaurant.id)
+    ) {
+      const existingRestoName =
+        cartItems.find((ci) => ci.restaurantName)?.restaurantName || "un autre restaurant";
+      showNotification(
+        "Un panier par restaurant",
+        `Votre panier contient déjà des plats de ${existingRestoName}. Finalisez ou videz votre panier avant de commander chez ${parentRestaurant.name || "ce restaurant"}.`,
+        "warning",
+        "cart"
+      );
+      return;
+    }
 
     track("add_to_cart", {
       dish_id: item.id,
       dish_name: item.name,
-      restaurant_name: parentRestaurant?.name || "unknown",
+      restaurant_name: parentRestaurant.name || "unknown",
       price: item.price,
     });
 
@@ -603,6 +654,9 @@ export function App() {
           ...updated[existingIdx],
           quantity: newQ,
           totalPrice: newQ * unitPrice,
+          restaurantId: updated[existingIdx].restaurantId || parentRestaurant.id,
+          restaurantName: updated[existingIdx].restaurantName || parentRestaurant.name,
+          restaurantPhone: updated[existingIdx].restaurantPhone || parentRestaurant.phone,
         };
         return updated;
       } else {
@@ -615,6 +669,9 @@ export function App() {
             selectedOptions,
             unitPrice,
             totalPrice: unitPrice * quantity,
+            restaurantId: parentRestaurant.id,
+            restaurantName: parentRestaurant.name,
+            restaurantPhone: parentRestaurant.phone,
           },
         ];
       }
@@ -844,7 +901,14 @@ export function App() {
       preparationTime: 10,
     };
 
-    handleAddToCart(menuItem, {}, 1);
+    const specialResto = special.restaurantId
+      ? (restaurants || []).find((r) => normalizeRestoKey(r.id) === normalizeRestoKey(special.restaurantId)) || {
+          id: special.restaurantId,
+          name: special.restaurantName,
+        }
+      : undefined;
+
+    handleAddToCart(menuItem, {}, 1, specialResto);
     setIsCartOpen(true);
   };
 
@@ -863,7 +927,11 @@ export function App() {
       preparationTime: 5,
     };
 
-    handleAddToCart(menuItem, {}, 1);
+    const sauceResto =
+      (restaurants || []).find((r) => r?.menu?.some((m) => m && m.id === sauce.id)) ||
+      (restaurants || []).find((r) => normalizeRestoKey(r.id) === "a8168cb5-fe46-4368-85fa-be1a64d854b5");
+
+    handleAddToCart(menuItem, {}, 1, sauceResto);
     setIsCartOpen(true);
   };
 
@@ -1249,7 +1317,7 @@ export function App() {
                       if (dish.options && dish.options.length > 0 && khadysRestaurant) {
                         handleOpenRestaurant(khadysRestaurant);
                       } else {
-                        handleAddToCart(dish, {}, 1);
+                        handleAddToCart(dish, {}, 1, khadysRestaurant || undefined);
                       }
                     }}
                   />
@@ -1552,30 +1620,53 @@ export function App() {
       />
 
       {/* 3. Checkout Modal */}
-      <CheckoutModal
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        items={cartItems}
-        restaurantId={
-          selectedRestaurantForMenu?.id || khadysRestaurant?.id || RESTAURANTS_DATA[0].id
-        }
-        restaurantName={
-          selectedRestaurantForMenu?.name || khadysRestaurant?.name || RESTAURANTS_DATA[0].name
-        }
-        restaurantPhone={
-          selectedRestaurantForMenu?.phone || khadysRestaurant?.phone || RESTAURANTS_DATA[0].phone
-        }
-        serviceMode={serviceMode}
-        city={selectedCity}
-        discount={appliedDiscount}
-        promoCode={appliedPromoCode}
-        tip={selectedTip}
-        onOrderPlaced={handleOrderPlaced}
-        onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
-        initialDistrictName={selectedDistrictName}
-        simulatedFridayPause={simulatedFridayPause}
-        currentLanguage={currentLanguage}
-      />
+      {(() => {
+        const cartRestoId = cartItems.find((ci) => ci.restaurantId)?.restaurantId;
+        const matchedCartRestaurant =
+          (cartRestoId
+            ? (restaurants || []).find(
+                (r) => normalizeRestoKey(r.id) === normalizeRestoKey(cartRestoId)
+              )
+            : undefined) ||
+          (cartItems[0]?.menuItem
+            ? (restaurants || []).find((r) =>
+                r?.menu?.some((m) => m && m.id === cartItems[0].menuItem.id)
+              )
+            : undefined) ||
+          selectedRestaurantForMenu ||
+          null;
+
+        const resolvedCheckoutRestoId = cartRestoId || matchedCartRestaurant?.id || "";
+        const resolvedCheckoutRestoName =
+          cartItems.find((ci) => ci.restaurantName)?.restaurantName ||
+          matchedCartRestaurant?.name ||
+          "";
+        const resolvedCheckoutRestoPhone =
+          cartItems.find((ci) => ci.restaurantPhone)?.restaurantPhone ||
+          matchedCartRestaurant?.phone ||
+          "";
+
+        return (
+          <CheckoutModal
+            isOpen={isCheckoutOpen}
+            onClose={() => setIsCheckoutOpen(false)}
+            items={cartItems}
+            restaurantId={resolvedCheckoutRestoId}
+            restaurantName={resolvedCheckoutRestoName}
+            restaurantPhone={resolvedCheckoutRestoPhone}
+            serviceMode={serviceMode}
+            city={selectedCity}
+            discount={appliedDiscount}
+            promoCode={appliedPromoCode}
+            tip={selectedTip}
+            onOrderPlaced={handleOrderPlaced}
+            onOpenDistrictsDirectory={() => setIsDistrictsModalOpen(true)}
+            initialDistrictName={selectedDistrictName}
+            simulatedFridayPause={simulatedFridayPause}
+            currentLanguage={currentLanguage}
+          />
+        );
+      })()}
 
       {/* 4. Live Order Tracker Modal */}
       <LiveOrderTracker

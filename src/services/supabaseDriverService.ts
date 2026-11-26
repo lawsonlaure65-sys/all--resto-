@@ -142,14 +142,18 @@ export async function assignDriverToOrder(
         },
       ]);
 
-      await client
-        .from("restaurant_orders")
+      const isUuid =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          orderId
+        );
+      const q = client
+        .from("orders")
         .update({
-          order_status: "delivering",
-          courier_name: driverName,
-          courier_phone: driverPhone,
-        })
-        .eq("id", orderId);
+          status: "assigned_to_driver",
+          driver_name: driverName,
+          updated_at: new Date().toISOString(),
+        });
+      await (isUuid ? q.eq("id", orderId) : q.eq("client_order_ref", orderId));
     } catch (e) {
       console.warn("Supabase driver assignment sync error:", e);
     }
@@ -187,12 +191,18 @@ export async function updateDriverMissionStatus(
         .eq("order_id", orderId)
         .eq("driver_id", driverId);
 
-      await client
-        .from("restaurant_orders")
+      const isUuid =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          orderId
+        );
+      const q = client
+        .from("orders")
         .update({
-          order_status: status === "picked_up" ? "delivering" : "delivered",
-        })
-        .eq("id", orderId);
+          status: status === "picked_up" ? "out_for_delivery" : "delivered",
+          ...(status === "delivered" ? { delivered_at: now } : {}),
+          updated_at: now,
+        });
+      await (isUuid ? q.eq("id", orderId) : q.eq("client_order_ref", orderId));
     } catch (e) {
       console.warn("Supabase mission status update error:", e);
     }

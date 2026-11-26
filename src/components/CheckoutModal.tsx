@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { track } from "@vercel/analytics";
 import { motion } from "motion/react";
 import confetti from "canvas-confetti";
@@ -110,6 +110,41 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [onlinePaymentRecord, setOnlinePaymentRecord] = useState<PaymentRecord | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  const submitLockRef = useRef<boolean>(false);
+  const idempotencyKeyRef = useRef<string>("");
+  const clientOrderRefRef = useRef<string>("");
+
+  const cartSignature = useMemo(
+    () =>
+      JSON.stringify({
+        restaurantId,
+        serviceMode,
+        items: items.map((i) => ({ id: i.id, q: i.quantity, p: i.totalPrice })),
+      }),
+    [restaurantId, serviceMode, items]
+  );
+
+  // Génère une clé d'idempotence et une référence commande stables pour cette tentative
+  // (conservées en cas de réessai après erreur réseau pour empêcher tout doublon)
+  useEffect(() => {
+    if (!isOpen) {
+      idempotencyKeyRef.current = "";
+      clientOrderRefRef.current = "";
+      submitLockRef.current = false;
+      setIsSubmitting(false);
+      setValidationError(null);
+      return;
+    }
+
+    const randomUuid =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+    idempotencyKeyRef.current = `idem-${randomUuid}`;
+    clientOrderRefRef.current = `CMD-${Math.floor(1000 + Math.random() * 9000)}`;
+  }, [isOpen, cartSignature]);
+
   // Synchroniser automatiquement avec le profil Supabase connecté s'il existe
   useEffect(() => {
     let isMounted = true;
@@ -205,9 +240,49 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const deliveryFee = calculatedDeliveryFee;
   const grandTotal = Math.max(0, subtotal + deliveryFee - discount + tip);
 
-  const handleSubmitOrder = (e: React.FormEvent) => {
+  const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Verrou synchrone anti-double clic
+    if (submitLockRef.current || isSubmitting) {
+      return;
+    }
+
     setValidationError(null);
+
+    if (!items || items.length === 0) {
+      setValidationError("Votre panier est vide. Ajoutez au moins un plat avant de commander.");
+      return;
+    }
+
+    const itemRestoIds = Array.from(
+      new Set(items.map((it) => it.restaurantId).filter((id): id is string => Boolean(id && id.trim())))
+    );
+    const effectiveRestaurantId = (restaurantId || itemRestoIds[0] || "").trim();
+
+    if (!effectiveRestaurantId) {
+      setValidationError(
+        "Impossible d'identifier le restaurant de votre panier. Veuillez sélectionner un restaurant avant de commander."
+      );
+      return;
+    }
+
+    if (itemRestoIds.length > 1) {
+      setValidationError(
+        "Votre panier contient des articles de plusieurs restaurants. Veuillez commander un restaurant à la fois."
+      );
+      return;
+    }
+
+    if (!customerName.trim() || customerName.trim().length < 2) {
+      setValidationError("Veuillez renseigner votre nom complet.");
+      return;
+    }
+
+    if (!customerPhone.trim() || customerPhone.trim().length < 6) {
+      setValidationError("Veuillez renseigner un numéro de téléphone joignable.");
+      return;
+    }
 
     const isCash = paymentMethod === "cash" || paymentMethod === "cash_on_delivery";
     const cleanRef = paymentReference ? paymentReference.trim() : undefined;
@@ -220,28 +295,46 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       return;
     }
 
+    if (!idempotencyKeyRef.current) {
+      const fallbackSuffix =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      idempotencyKeyRef.current = `idem-${fallbackSuffix}`;
+    }
+    if (!clientOrderRefRef.current) {
+      clientOrderRefRef.current = `CMD-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+
+    submitLockRef.current = true;
     setIsSubmitting(true);
 
-    const finalScheduledTime =
-      scheduledOption === "asap"
-        ? undefined
-        : scheduledOption === "12:30"
-        ? "12:30 (Midi au bureau)"
-        : customScheduledTime;
+    try {
+      const finalScheduledTime =
+        scheduledOption === "asap"
+          ? undefined
+          : scheduledOption === "12:30"
+          ? "12:30 (Midi au bureau)"
+          : customScheduledTime;
 
-    setTimeout(() => {
+      const isPickup = serviceMode === "takeaway" || deliveryZone === "mosquee_pickup";
       const finalAddress =
-        serviceMode === "takeaway" || deliveryZone === "mosquee_pickup"
+        deliveryZone === "mosquee_pickup"
           ? "Point de retrait : Grande Mosquée Mouhamar Kadhafi (Avenue de l'Islam)"
-          : (deliveryAddress.trim() || `Quartier ${activeDistrict?.name || "Niamey"}`);
+          : serviceMode === "takeaway"
+          ? `Retrait sur place : ${restaurantName || "Restaurant"}`
+          : deliveryAddress.trim() || `Quartier ${activeDistrict?.name || "Niamey"}`;
 
       let canonicalPaymentMethod: PaymentMethod = paymentMethod;
-      const isPickup = serviceMode === "takeaway" || deliveryZone === "mosquee_pickup";
       if (paymentMethod === "cash") {
         canonicalPaymentMethod = isPickup ? "cash_pickup" : "cash_delivery";
       } else if (paymentMethod === "mobile_money") {
         canonicalPaymentMethod = "airtel_money";
-      } else if (paymentMethod === "al_izza_business" || paymentMethod === "al_izza_transfer" || paymentMethod === "al_izza_cash") {
+      } else if (
+        paymentMethod === "al_izza_business" ||
+        paymentMethod === "al_izza_transfer" ||
+        paymentMethod === "al_izza_cash"
+      ) {
         canonicalPaymentMethod = "al_izza";
       }
 
@@ -249,17 +342,26 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         ? "cash_on_delivery"
         : "awaiting_mobile_money_validation";
 
+      const resolvedDistrict =
+        deliveryZone === "mosquee_pickup"
+          ? "Point de retrait"
+          : serviceMode === "takeaway"
+          ? "Retrait sur place"
+          : activeDistrict?.name || "Niamey";
+
       const newOrder: Order = {
-        id: "CMD-" + Math.floor(1000 + Math.random() * 9000),
-        createdAt: "À l'instant",
-        customerName: customerName.trim() || "Client Allôresto",
-        customerPhone: customerPhone.trim() || "+227 90 00 00 00",
+        id: clientOrderRefRef.current,
+        idempotencyKey: idempotencyKeyRef.current,
+        createdAt: new Date().toISOString(),
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
         deliveryAddress: finalAddress,
+        district: resolvedDistrict,
         city: city || "Niamey",
-        serviceType: serviceMode,
-        restaurantId,
-        restaurantName,
-        restaurantPhone,
+        serviceType: isPickup ? "takeaway" : "delivery",
+        restaurantId: effectiveRestaurantId,
+        restaurantName: restaurantName || items.find((i) => i.restaurantName)?.restaurantName || "Restaurant partenaire",
+        restaurantPhone: restaurantPhone || items.find((i) => i.restaurantPhone)?.restaurantPhone || "",
         items,
         subtotal,
         deliveryFee,
@@ -274,25 +376,46 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         orderStatus: "received",
         estimatedDeliveryTime:
           scheduledOption === "asap"
-            ? serviceMode === "takeaway" || deliveryZone === "mosquee_pickup"
+            ? isPickup
               ? "20-30 min"
               : "45-60 min"
             : `Prévue pour ${finalScheduledTime}`,
         scheduledTime: finalScheduledTime,
-        deliveryPartner: "Billo Express 🏍️",
+        deliveryPartner: isPickup ? undefined : "Billo Express 🏍️",
         cashChangeAmount: isCash && cashChangeAmount ? String(cashChangeAmount) : undefined,
         receiptProofAttached,
         courierName: undefined,
         courierPhone: undefined,
         kitchenNotes: isCash
-          ? [`À encaisser par le coursier : ${grandTotal.toLocaleString()} FCFA`]
-          : [`Paiement Mobile Money (${canonicalPaymentMethod}) - Réf : ${cleanRef || onlinePaymentRecord?.transaction_id || "Validé"}`],
+          ? [`À encaisser (${isPickup ? "retrait" : "livraison"}) : ${grandTotal.toLocaleString()} FCFA`]
+          : [
+              `Paiement Mobile Money (${canonicalPaymentMethod}) - Réf : ${
+                cleanRef || onlinePaymentRecord?.transaction_id || "Validé"
+              }`,
+            ],
       };
 
-      // Si paiement Mobile Money, enregistrer la transaction dans la table payments
+      // Attente obligatoire de la persistance réelle en base (public.orders + public.order_items)
+      const saveResult = await persistOrderToSupabase(newOrder);
+
+      if (!saveResult.success) {
+        setValidationError(
+          saveResult.error ||
+            "L'enregistrement de la commande a échoué. Votre panier a été conservé, veuillez réessayer."
+        );
+        return;
+      }
+
+      const confirmedOrder: Order = {
+        ...newOrder,
+        dbId: saveResult.id,
+        orderNumber: saveResult.orderNumber,
+      };
+
+      // Enregistrement auxiliaire du paiement Mobile Money une fois la commande confirmée en base
       if (!isCash) {
         processPayment({
-          orderId: newOrder.id,
+          orderId: confirmedOrder.dbId || confirmedOrder.id,
           amount: grandTotal,
           paymentMethod: String(canonicalPaymentMethod),
           phoneNumber: customerPhone.trim() || mobileMoneyNumber.trim() || "+227 90 00 00 00",
@@ -301,15 +424,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         }).catch((err) => console.warn("Erreur enregistrement transaction:", err));
       }
 
-      // Persistance de la commande dans Supabase
-      persistOrderToSupabase(newOrder).catch((err) => console.warn("Erreur sauvegarde commande:", err));
-
       if (notifyWhatsApp) {
         track("whatsapp_click", {
           source: "alloresto",
-          restaurant_name: restaurantName || "unknown",
+          restaurant_name: confirmedOrder.restaurantName || "unknown",
         });
-        const message = generateWhatsAppOrderConfirmation(newOrder, currentLanguage);
+        const message = generateWhatsAppOrderConfirmation(confirmedOrder, currentLanguage);
         const waText = encodeURIComponent(message);
         window.open(`https://wa.me/22770032552?text=${waText}`, "_blank");
       }
@@ -320,10 +440,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         origin: { y: 0.6 },
       });
 
-      setIsSubmitting(false);
-      onOrderPlaced(newOrder);
+      onOrderPlaced(confirmedOrder);
       onClose();
-    }, 1200);
+    } catch (err: any) {
+      setValidationError(
+        err?.message ||
+          "Une erreur inattendue est survenue. Votre panier est conservé, veuillez réessayer."
+      );
+    } finally {
+      submitLockRef.current = false;
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -346,14 +473,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              {restaurantName} &bull; Total à régler :{" "}
+              {restaurantName || "Restaurant sélectionné"} &bull; Total à régler :{" "}
               <strong className="text-orange-400">{grandTotal.toLocaleString()} FCFA</strong>
             </p>
           </div>
 
           <button
+            type="button"
+            disabled={isSubmitting}
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white bg-slate-900 border border-slate-800 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-slate-400 hover:text-white bg-slate-900 border border-slate-800 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <X className="w-5 h-5" />
           </button>

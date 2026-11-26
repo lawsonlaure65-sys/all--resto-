@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { getSupabaseClient } from '../../../src/services/supabaseClient';
+import { supabase as defaultSupabase } from '../../../src/lib/supabase';
+import { RESTAURANTS_DATA } from '../../../src/data/allorestoData';
 import {
   Clock,
   AlertTriangle,
@@ -10,21 +12,14 @@ import {
   RefreshCw,
   Settings,
   MessageSquare,
-  Phone,
-  Gift,
   Sparkles,
-  Filter,
   Search,
   Check,
-  ChefHat,
+  Store,
   Bike,
-  ShieldCheck,
-  ChevronRight,
-  Info,
 } from 'lucide-react';
 import {
   AdminDeliveryDelayModal,
-  DelayModalOrder,
 } from '../../../src/components/AdminDeliveryDelayModal';
 import { AdminDelaySettingsModal } from '../../../src/components/AdminDelaySettingsModal';
 import {
@@ -38,111 +33,176 @@ export interface OrderItem {
   name: string;
   quantity: number;
   price: number;
+  notes?: string;
 }
+
+export type CanonicalOrderStatus =
+  | 'pending_confirmation'
+  | 'confirmed'
+  | 'preparing'
+  | 'ready_for_pickup'
+  | 'assigned_to_driver'
+  | 'out_for_delivery'
+  | 'delivered'
+  | 'cancelled';
 
 export interface AdminOrder {
   id: string;
+  display_ref: string;
+  order_number?: number;
+  fulfillment: 'delivery' | 'pickup';
   customer_name: string;
   customer_phone: string;
+  restaurant_id?: string;
   restaurant_name: string;
   delivery_address: string;
   district: string;
   items: OrderItem[];
-  total_amount: number;
+  subtotal_amount: number;
+  discount_amount: number;
+  tip_amount: number;
   delivery_fee: number;
-  payment_method: 'airtel_money' | 'flooz' | 'al_izza' | 'cash';
-  payment_status: 'paid' | 'pending';
-  status: 'pending' | 'confirmed' | 'cooking' | 'delivering' | 'delivered' | 'cancelled';
+  total_amount: number;
+  payment_method: string;
+  payment_status: string;
+  mobile_money_reference?: string;
+  status: CanonicalOrderStatus;
   driver_name?: string;
   created_at: string;
+  notes?: string;
+  scheduled_time?: string;
   delay_minutes?: number;
   delay_reason?: string;
   delay_notified_at?: string;
   delay_notified_count?: number;
 }
 
-// Generates dynamic sample orders relative to current time so delays are live and demonstrative
-const getInitialSampleOrders = (): AdminOrder[] => {
-  const now = Date.now();
-  return [
-    {
-      id: 'ORD-9821',
-      customer_name: 'Fatima Amadou',
-      customer_phone: '+227 90 22 33 44',
-      restaurant_name: 'Cuisine & Saveurs du Sahel',
-      delivery_address: 'Villa 14, Rue du Grand Marché',
-      district: 'Plateau',
-      items: [
-        { id: '1', name: 'Choukouya de Mouton Royal', quantity: 2, price: 6500 },
-        { id: '2', name: 'Jus de Bissap Glacé', quantity: 2, price: 1000 },
-      ],
-      total_amount: 15000,
-      delivery_fee: 1000,
-      payment_method: 'airtel_money',
-      payment_status: 'paid',
-      status: 'delivering',
-      driver_name: 'Moussa Ibrahim (Moto RN-8821-B)',
-      created_at: new Date(now - 42 * 60 * 1000).toISOString(), // 42 minutes ago (delay detected!)
-    },
-    {
-      id: 'ORD-9820',
-      customer_name: 'Dr. Boubacar Seydou',
-      customer_phone: '+227 96 55 66 77',
-      restaurant_name: 'Le Dambou d’Or Niamey',
-      delivery_address: 'Bâtiment Rectorat UAM',
-      district: 'Harobanda',
-      items: [
-        { id: '3', name: 'Dambou Blanc & Moringa Bio', quantity: 3, price: 3500 },
-        { id: '4', name: 'Capitaine Grillé du Fleuve', quantity: 1, price: 8000 },
-      ],
-      total_amount: 19500,
-      delivery_fee: 1000,
-      payment_method: 'flooz',
-      payment_status: 'paid',
-      status: 'cooking',
-      driver_name: 'En attente d’assignation Billo Express',
-      created_at: new Date(now - 36 * 60 * 1000).toISOString(), // 36 minutes ago (delay detected!)
-    },
-    {
-      id: 'ORD-9819',
-      customer_name: 'Mariama Hassane',
-      customer_phone: '+227 94 11 22 33',
-      restaurant_name: 'Fast Food Le Sahel',
-      delivery_address: 'Cité Députés, Porte 08',
-      district: 'Koira Kano',
-      items: [
-        { id: '5', name: 'Burger Sahel Double Steak', quantity: 2, price: 4000 },
-        { id: '6', name: 'Frites de Patate Douce', quantity: 2, price: 1500 },
-      ],
-      total_amount: 12000,
-      delivery_fee: 1000,
-      payment_method: 'cash',
-      payment_status: 'pending',
-      status: 'confirmed',
-      driver_name: 'Salifou Bello (KTM 150cc)',
-      created_at: new Date(now - 14 * 60 * 1000).toISOString(), // 14 minutes ago (on time)
-    },
-    {
-      id: 'ORD-9818',
-      customer_name: 'Abdoul-Kader',
-      customer_phone: '+227 88 99 00 11',
-      restaurant_name: 'Massa & Douceurs de Niamey',
-      delivery_address: 'Face Station Dan Kassoua',
-      district: 'Yantala',
-      items: [
-        { id: '7', name: 'Lot de 10 Massas Sucrés', quantity: 2, price: 2000 },
-        { id: '8', name: 'Bouillie de Mil au Lait Caillé', quantity: 2, price: 1500 },
-      ],
-      total_amount: 8000,
-      delivery_fee: 1000,
-      payment_method: 'paid' as any,
-      payment_status: 'paid',
-      status: 'delivered',
-      driver_name: 'Oumarou Sani',
-      created_at: new Date(now - 85 * 60 * 1000).toISOString(), // 85 minutes ago (delivered)
-    },
-  ];
+const KNOWN_RESTAURANT_NAMES: Record<string, string> = {
+  '99e2e632-4efd-4a44-8754-b806b50babfe': "Khady's Food & Event",
+  'resto-khadys-food': "Khady's Food & Event",
+  'a8168cb5-fe46-4368-85fa-be1a64d854b5': 'Allôresto Kitchen (Cuisine Centrale)',
+  'resto-alloresto-kitchen': 'Allôresto Kitchen (Cuisine Centrale)',
 };
+
+function resolveRestaurantName(restaurantId?: string | null, restaurantName?: string | null): string {
+  if (restaurantName && restaurantName.trim()) return restaurantName.trim();
+  if (!restaurantId) return 'Restaurant non précisé';
+  if (KNOWN_RESTAURANT_NAMES[restaurantId]) return KNOWN_RESTAURANT_NAMES[restaurantId];
+  const found = RESTAURANTS_DATA.find((r) => r.id === restaurantId);
+  return found?.name || restaurantId;
+}
+
+function normalizeDbStatus(raw?: string | null): CanonicalOrderStatus {
+  const s = String(raw || 'pending_confirmation').toLowerCase();
+  if (s === 'pending' || s === 'received' || s === 'to_confirm') return 'pending_confirmation';
+  if (s === 'cooking' || s === 'in_preparation') return 'preparing';
+  if (s === 'ready') return 'ready_for_pickup';
+  if (s === 'delivering') return 'out_for_delivery';
+  if (
+    s === 'pending_confirmation' ||
+    s === 'confirmed' ||
+    s === 'preparing' ||
+    s === 'ready_for_pickup' ||
+    s === 'assigned_to_driver' ||
+    s === 'out_for_delivery' ||
+    s === 'delivered' ||
+    s === 'cancelled'
+  ) {
+    return s;
+  }
+  return 'pending_confirmation';
+}
+
+function formatPaymentMethodLabel(method?: string): string {
+  const m = String(method || '').toLowerCase();
+  if (m === 'airtel_money') return '🔴 Airtel Money';
+  if (m === 'moov_money' || m === 'flooz') return '🔵 Moov Flooz';
+  if (m === 'al_izza') return '🟡 Al Izza';
+  if (m === 'mynita') return '📱 MyNita';
+  if (m === 'amanata') return '💰 Amanata';
+  if (m === 'zamany_cash') return '🟠 Zamany Cash';
+  if (m === 'zeyna') return '✨ Zeyna';
+  if (m === 'cash_pickup') return '🏪 Espèces (Retrait)';
+  if (m === 'cash_delivery' || m === 'cash' || m === 'cash_on_delivery') {
+    return '💵 Espèces (Livraison)';
+  }
+  return m || 'Non précisé';
+}
+
+function formatStatusLabel(status: CanonicalOrderStatus): string {
+  switch (status) {
+    case 'pending_confirmation':
+      return '⏳ En attente';
+    case 'confirmed':
+      return '✅ Confirmée';
+    case 'preparing':
+      return '🍳 En préparation';
+    case 'ready_for_pickup':
+      return '🛍️ Prête (retrait / coursier)';
+    case 'assigned_to_driver':
+      return '📋 Livreur assigné';
+    case 'out_for_delivery':
+      return '🛵 En livraison';
+    case 'delivered':
+      return '🎉 Terminée / Livrée';
+    case 'cancelled':
+      return '❌ Annulée';
+  }
+}
+
+function mapSupabaseOrderRow(row: any): AdminOrder {
+  const fulfillment: 'delivery' | 'pickup' =
+    row.fulfillment === 'pickup' ? 'pickup' : 'delivery';
+
+  const rawItems = Array.isArray(row.order_items) ? row.order_items : [];
+  const items: OrderItem[] = rawItems.map((it: any, idx: number) => ({
+    id: it.id || `item-${row.id}-${idx}`,
+    name: it.product_name || it.dish_name || 'Plat Allôresto',
+    quantity: Math.max(1, Number(it.quantity || 1)),
+    price: Math.max(0, Number(it.unit_price_xof ?? 0)),
+    notes: it.notes || undefined,
+  }));
+
+  const displayRef =
+    row.client_order_ref ||
+    (row.order_number ? `CMD-${row.order_number}` : String(row.id).slice(0, 8).toUpperCase());
+
+  const defaultAddress =
+    fulfillment === 'pickup' ? 'Retrait sur place' : 'Adresse non précisée';
+  const defaultDistrict =
+    fulfillment === 'pickup' ? 'Retrait sur place' : 'Niamey';
+
+  return {
+    id: String(row.id),
+    display_ref: displayRef,
+    order_number: typeof row.order_number === 'number' ? row.order_number : undefined,
+    fulfillment,
+    customer_name: row.customer_name || 'Client Allôresto',
+    customer_phone: row.customer_phone || '',
+    restaurant_id: row.restaurant_id || undefined,
+    restaurant_name: resolveRestaurantName(row.restaurant_id, row.restaurant_name),
+    delivery_address: row.delivery_address || defaultAddress,
+    district: row.district || defaultDistrict,
+    items,
+    subtotal_amount: Number(row.subtotal_xof ?? 0),
+    discount_amount: Number(row.discount_xof ?? 0),
+    tip_amount: Number(row.tip_xof ?? 0),
+    delivery_fee: Number(row.delivery_fee_xof ?? 0),
+    total_amount: Number(row.total_xof ?? 0),
+    payment_method: String(row.payment_method || (fulfillment === 'pickup' ? 'cash_pickup' : 'cash_delivery')),
+    payment_status: String(row.payment_status || 'cash_due'),
+    mobile_money_reference: row.mobile_money_reference || undefined,
+    status: normalizeDbStatus(row.status),
+    driver_name: row.driver_name || undefined,
+    created_at: row.created_at || new Date().toISOString(),
+    notes: row.notes || undefined,
+    scheduled_time: row.scheduled_time || undefined,
+    delay_minutes: typeof row.delay_minutes === 'number' ? row.delay_minutes : undefined,
+    delay_reason: row.delay_reason || undefined,
+    delay_notified_at: row.delay_notified_at || undefined,
+    delay_notified_count: typeof row.delay_notified_count === 'number' ? row.delay_notified_count : undefined,
+  };
+}
 
 interface AdminOrdersPageProps {
   isEmbedded?: boolean;
@@ -152,7 +212,9 @@ interface AdminOrdersPageProps {
 export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: AdminOrdersPageProps = {}) {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [fulfillmentFilter, setFulfillmentFilter] = useState<'all' | 'delivery' | 'pickup'>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [delayFilter, setDelayFilter] = useState<'all' | 'delayed_unnotified' | 'delayed_notified' | 'on_time'>('all');
@@ -162,7 +224,10 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
   const [delayConfig, setDelayConfig] = useState<DelayAutomationConfig>(loadDelayAutomationConfig());
   const [showDelaySettings, setShowDelaySettings] = useState<boolean>(false);
   const [orderForDelayModal, setOrderForDelayModal] = useState<AdminOrder | null>(null);
-  const [toastNotification, setToastNotification] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+  const [toastNotification, setToastNotification] = useState<{
+    message: string;
+    type: 'success' | 'info' | 'error';
+  } | null>(null);
 
   useEffect(() => {
     loadOrders();
@@ -170,76 +235,120 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
     setDelayConfig(loadedConfig);
   }, []);
 
-  const showToast = (message: string, type: 'success' | 'info' = 'success') => {
+  const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToastNotification({ message, type });
-    setTimeout(() => setToastNotification(null), 4000);
+    setTimeout(() => setToastNotification(null), 5000);
   };
 
   const loadOrders = async () => {
     setLoading(true);
-    let initialList: AdminOrder[] = [];
+    setLoadError(null);
 
-    // 1. Check localStorage for previously modified or saved orders
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('alloresto_admin_orders');
-        if (stored) {
-          initialList = JSON.parse(stored);
-        }
-      } catch (e) {
-        console.warn('Erreur chargement local orders:', e);
-      }
-    }
-
-    if (!initialList || initialList.length === 0) {
-      initialList = getInitialSampleOrders();
-    }
-
-    // 2. Try Supabase if available
     try {
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false });
+      const client = getSupabaseClient() || defaultSupabase;
+      if (!client) {
+        setOrders([]);
+        setLoadError("Client Supabase non configuré. Impossible de charger les commandes.");
+        return;
+      }
 
-        if (!error && data && data.length > 0) {
-          initialList = data;
+      // Lecture directe sur public.orders + public.order_items (aucune donnée de démonstration)
+      const { data, error } = await (client.from('orders') as any)
+        .select('*, order_items(*)')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (!error && Array.isArray(data)) {
+        setOrders(data.map(mapSupabaseOrderRow));
+        return;
+      }
+
+      // Repli technique si la relation PostgREST order_items n'est pas encore en cache : requêtes séparées sur orders + order_items
+      const { data: plainOrders, error: plainErr } = await (client.from('orders') as any)
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (plainErr) {
+        setOrders([]);
+        setLoadError(
+          plainErr.message ||
+            "Erreur lors de la lecture des commandes dans Supabase (vérifiez la session admin et les droits RLS)."
+        );
+        return;
+      }
+
+      const rows = Array.isArray(plainOrders) ? plainOrders : [];
+      const orderIds = rows.map((o: any) => o.id).filter(Boolean);
+      let itemsByOrderId: Record<string, any[]> = {};
+
+      if (orderIds.length > 0) {
+        const { data: itemRows } = await (client.from('order_items') as any)
+          .select('*')
+          .in('order_id', orderIds);
+        if (Array.isArray(itemRows)) {
+          itemsByOrderId = itemRows.reduce((acc: Record<string, any[]>, item: any) => {
+            if (!acc[item.order_id]) acc[item.order_id] = [];
+            acc[item.order_id].push(item);
+            return acc;
+          }, {});
         }
       }
-    } catch (e) {
-      console.warn('Utilisation commandes locales:', e);
+
+      setOrders(
+        rows.map((o: any) =>
+          mapSupabaseOrderRow({ ...o, order_items: itemsByOrderId[o.id] || [] })
+        )
+      );
+    } catch (e: any) {
+      setOrders([]);
+      setLoadError(
+        e?.message || 'Erreur réseau lors du chargement des commandes depuis Supabase.'
+      );
     } finally {
-      setOrders(initialList);
       setLoading(false);
     }
   };
 
-  const persistOrders = (updatedOrders: AdminOrder[]) => {
-    setOrders(updatedOrders);
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('alloresto_admin_orders', JSON.stringify(updatedOrders));
-      } catch (e) {
-        console.warn('Erreur sauvegarde localStorage orders:', e);
-      }
-    }
-  };
-
-  const handleUpdateStatus = async (orderId: string, newStatus: AdminOrder['status']) => {
-    const updated = orders.map((order) =>
-      order.id === orderId ? { ...order, status: newStatus } : order
+  const handleUpdateStatus = async (orderId: string, newStatus: CanonicalOrderStatus) => {
+    const previousOrders = orders;
+    setOrders((prev) =>
+      prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order))
     );
-    persistOrders(updated);
+    if (selectedOrder?.id === orderId) {
+      setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
+    }
 
     try {
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
+      const client = getSupabaseClient() || defaultSupabase;
+      if (!client) {
+        throw new Error('Connexion Supabase indisponible.');
       }
-    } catch (e) {
-      console.warn('Mise à jour locale uniquement:', e);
+
+      const now = new Date().toISOString();
+      const payload: Record<string, any> = {
+        status: newStatus,
+        updated_at: now,
+      };
+      if (newStatus === 'confirmed') payload.confirmed_at = now;
+      if (newStatus === 'delivered') payload.delivered_at = now;
+      if (newStatus === 'cancelled') payload.cancelled_at = now;
+
+      const { error } = await (client.from('orders') as any)
+        .update(payload)
+        .eq('id', orderId);
+
+      if (error) {
+        throw error;
+      }
+
+      showToast(`Statut mis à jour : ${formatStatusLabel(newStatus)}`, 'success');
+    } catch (e: any) {
+      setOrders(previousOrders);
+      showToast(
+        `Échec de la mise à jour du statut : ${e?.message || 'erreur Supabase'}`,
+        'error'
+      );
     }
   };
 
@@ -264,22 +373,46 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
   };
 
   // Handle delay notification sent from modal
-  const handleDelayNotificationSent = (orderId: string, delayMinutes: number, reason: string) => {
+  const handleDelayNotificationSent = async (
+    orderId: string,
+    delayMinutes: number,
+    reason: string
+  ) => {
     const targetOrder = orders.find((o) => o.id === orderId);
-    const updated = orders.map((o) => {
-      if (o.id === orderId) {
-        return {
-          ...o,
-          delay_minutes: delayMinutes,
-          delay_reason: reason,
-          delay_notified_at: new Date().toISOString(),
-          delay_notified_count: (o.delay_notified_count || 0) + 1,
-        };
-      }
-      return o;
-    });
+    const now = new Date().toISOString();
+    const nextCount = (targetOrder?.delay_notified_count || 0) + 1;
 
-    persistOrders(updated);
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              delay_minutes: delayMinutes,
+              delay_reason: reason,
+              delay_notified_at: now,
+              delay_notified_count: nextCount,
+            }
+          : o
+      )
+    );
+
+    try {
+      const client = getSupabaseClient() || defaultSupabase;
+      if (client) {
+        await (client.from('orders') as any)
+          .update({
+            delay_minutes: delayMinutes,
+            delay_reason: reason,
+            delay_notified_at: now,
+            delay_notified_count: nextCount,
+            updated_at: now,
+          })
+          .eq('id', orderId);
+      }
+    } catch {
+      // ignore optional delay columns if not yet migrated
+    }
+
     showToast(
       `📲 Notification WhatsApp de retard (+${delayMinutes} min) envoyée à ${targetOrder?.customer_name || 'client'} !`,
       'success'
@@ -306,22 +439,32 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       const metrics = getOrderDelayMetrics(order);
+      const q = searchTerm.toLowerCase();
 
-      // Search query filter
       const matchesSearch =
-        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customer_phone.includes(searchTerm) ||
-        order.restaurant_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.district.toLowerCase().includes(searchTerm.toLowerCase());
+        !q ||
+        order.id.toLowerCase().includes(q) ||
+        order.display_ref.toLowerCase().includes(q) ||
+        order.customer_name.toLowerCase().includes(q) ||
+        order.customer_phone.toLowerCase().includes(q) ||
+        order.restaurant_name.toLowerCase().includes(q) ||
+        order.district.toLowerCase().includes(q) ||
+        order.delivery_address.toLowerCase().includes(q);
 
-      // Status filter
+      const matchesFulfillment =
+        fulfillmentFilter === 'all' || order.fulfillment === fulfillmentFilter;
+
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
 
-      // Payment filter
-      const matchesPayment = paymentFilter === 'all' || order.payment_method === paymentFilter;
+      let matchesPayment = true;
+      if (paymentFilter === 'cash') {
+        matchesPayment = order.payment_method.startsWith('cash');
+      } else if (paymentFilter === 'flooz') {
+        matchesPayment = order.payment_method === 'moov_money' || order.payment_method === 'flooz';
+      } else if (paymentFilter !== 'all') {
+        matchesPayment = order.payment_method === paymentFilter;
+      }
 
-      // Delay filter
       let matchesDelay = true;
       if (delayFilter === 'delayed_unnotified') {
         matchesDelay = metrics.isDelayed && !metrics.alreadyNotified;
@@ -331,9 +474,9 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
         matchesDelay = !metrics.isDelayed && !metrics.isTerminated;
       }
 
-      return matchesSearch && matchesStatus && matchesPayment && matchesDelay;
+      return matchesSearch && matchesFulfillment && matchesStatus && matchesPayment && matchesDelay;
     });
-  }, [orders, searchTerm, statusFilter, paymentFilter, delayFilter, delayConfig]);
+  }, [orders, searchTerm, fulfillmentFilter, statusFilter, paymentFilter, delayFilter, delayConfig]);
 
   // Global Delay Metrics
   const delayedOrders = useMemo(() => {
@@ -345,26 +488,67 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
   }, [delayedOrders]);
 
   const activeOrdersCount = orders.filter(
-    (o) => o.status === 'confirmed' || o.status === 'cooking' || o.status === 'delivering'
+    (o) =>
+      o.status === 'pending_confirmation' ||
+      o.status === 'confirmed' ||
+      o.status === 'preparing' ||
+      o.status === 'ready_for_pickup' ||
+      o.status === 'assigned_to_driver' ||
+      o.status === 'out_for_delivery'
   ).length;
 
-  const totalRevenue = orders.reduce((acc, curr) => acc + curr.total_amount, 0);
+  const totalRevenue = orders
+    .filter((o) => o.status !== 'cancelled')
+    .reduce((acc, curr) => acc + curr.total_amount, 0);
 
   return (
     <div className={`min-h-screen ${isEmbedded ? 'p-0' : 'bg-slate-950 p-4 md:p-8 text-slate-100'}`}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Toast Notification Banner */}
         {toastNotification && (
-          <div className="p-4 rounded-2xl bg-emerald-950 border border-emerald-500/50 text-emerald-200 text-xs font-bold flex items-center justify-between shadow-xl animate-fade-in">
+          <div
+            className={`p-4 rounded-2xl border text-xs font-bold flex items-center justify-between shadow-xl animate-fade-in ${
+              toastNotification.type === 'error'
+                ? 'bg-rose-950 border-rose-500/50 text-rose-200'
+                : 'bg-emerald-950 border-emerald-500/50 text-emerald-200'
+            }`}
+          >
             <div className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-400" />
+              {toastNotification.type === 'error' ? (
+                <AlertTriangle className="w-4 h-4 text-rose-400" />
+              ) : (
+                <Check className="w-4 h-4 text-emerald-400" />
+              )}
               <span>{toastNotification.message}</span>
             </div>
             <button
+              type="button"
               onClick={() => setToastNotification(null)}
-              className="text-emerald-400 hover:text-white cursor-pointer"
+              className="opacity-80 hover:opacity-100 cursor-pointer"
             >
               ✕
+            </button>
+          </div>
+        )}
+
+        {/* Load Error Banner */}
+        {loadError && (
+          <div className="p-4 rounded-2xl bg-rose-950/90 border border-rose-500/50 text-rose-100 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-black text-rose-200">
+                  Impossible de charger les commandes réelles depuis Supabase
+                </p>
+                <p className="text-rose-100/90 mt-0.5">{loadError}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={loadOrders}
+              className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs cursor-pointer shrink-0"
+            >
+              Réessayer
             </button>
           </div>
         )}
@@ -381,7 +565,7 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Tableau de bord logistique, suivi en temps réel des livraisons et gestion des retards clients via WhatsApp.
+              Commandes réelles Supabase (`public.orders`) : livraisons &amp; retraits sur place.
             </p>
           </div>
 
@@ -418,9 +602,7 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
           </div>
         </header>
 
-        {/* ======================================================== */}
         {/* DEDICATED BANNER: WHATSAPP DELIVERY DELAY NOTIFICATIONS */}
-        {/* ======================================================== */}
         <div className="p-5 rounded-3xl bg-gradient-to-r from-amber-950/70 via-slate-900 to-slate-950 border border-amber-500/40 shadow-xl space-y-4">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div className="flex items-start sm:items-center gap-3.5">
@@ -451,14 +633,12 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
                   </span>
                 </div>
                 <p className="text-xs text-slate-300">
-                  Avertissez proactivement vos clients par WhatsApp en cas d&apos;embouteillage, forte affluence ou intempéries avec excuses et geste commercial offert.
+                  Avertissez proactivement vos clients par WhatsApp en cas d&apos;embouteillage, forte affluence ou intempéries.
                 </p>
               </div>
             </div>
 
-            {/* Quick Action Controls */}
             <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-start lg:justify-end">
-              {/* Quick Toggle */}
               <button
                 type="button"
                 onClick={handleToggleAutoAlerts}
@@ -471,7 +651,6 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
                 <span>{delayConfig.autoAlertEnabled ? 'Désactiver Détection' : 'Activer Détection'}</span>
               </button>
 
-              {/* Notify First Delayed Order Button */}
               {unnotifiedDelayedOrders.length > 0 ? (
                 <button
                   type="button"
@@ -479,13 +658,15 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
                   className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20 animate-pulse"
                 >
                   <Send className="w-4 h-4" />
-                  <span>Notifier Retard #{unnotifiedDelayedOrders[0].id}</span>
+                  <span>Notifier Retard #{unnotifiedDelayedOrders[0].display_ref}</span>
                 </button>
-              ) : (
+              ) : orders.length > 0 ? (
                 <button
                   type="button"
                   onClick={() => {
-                    const firstOngoing = orders.find((o) => o.status !== 'delivered' && o.status !== 'cancelled') || orders[0];
+                    const firstOngoing =
+                      orders.find((o) => o.status !== 'delivered' && o.status !== 'cancelled') ||
+                      orders[0];
                     if (firstOngoing) setOrderForDelayModal(firstOngoing);
                   }}
                   className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
@@ -493,7 +674,7 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   <span>Tester une alerte type</span>
                 </button>
-              )}
+              ) : null}
 
               <button
                 type="button"
@@ -507,7 +688,6 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
             </div>
           </div>
 
-          {/* Quick delay status pills */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800/80 text-xs">
             <div
               onClick={() => setDelayFilter(delayFilter === 'delayed_unnotified' ? 'all' : 'delayed_unnotified')}
@@ -521,11 +701,13 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
                 <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
                 <span className="font-bold">Retards à notifier immédiatement</span>
               </div>
-              <span className={`px-2.5 py-0.5 rounded-full font-mono font-black text-xs ${
-                unnotifiedDelayedOrders.length > 0
-                  ? 'bg-amber-500 text-slate-950'
-                  : 'bg-slate-800 text-slate-400'
-              }`}>
+              <span
+                className={`px-2.5 py-0.5 rounded-full font-mono font-black text-xs ${
+                  unnotifiedDelayedOrders.length > 0
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'bg-slate-800 text-slate-400'
+                }`}
+              >
                 {unnotifiedDelayedOrders.length}
               </span>
             </div>
@@ -571,17 +753,20 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
           <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
             <span className="text-xs text-slate-400 font-medium">Volume Total</span>
             <div className="text-2xl font-black text-white mt-1">{orders.length}</div>
-            <span className="text-[11px] text-slate-500">Commandes enregistrées</span>
+            <span className="text-[11px] text-slate-500">
+              {orders.filter((o) => o.fulfillment === 'delivery').length} livraisons &bull;{' '}
+              {orders.filter((o) => o.fulfillment === 'pickup').length} retraits
+            </span>
           </div>
 
           <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
             <span className="text-xs text-slate-400 font-medium">En cours d&apos;exécution</span>
             <div className="text-2xl font-black text-orange-400 mt-1">{activeOrdersCount}</div>
-            <span className="text-[11px] text-orange-300/80">Cuisine ou livraison active</span>
+            <span className="text-[11px] text-orange-300/80">Cuisine, retrait ou livraison active</span>
           </div>
 
           <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
-            <span className="text-xs text-slate-400 font-medium">Livrées avec succès</span>
+            <span className="text-xs text-slate-400 font-medium">Terminées avec succès</span>
             <div className="text-2xl font-black text-emerald-400 mt-1">
               {orders.filter((o) => o.status === 'delivered').length}
             </div>
@@ -593,7 +778,7 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
             <div className="text-2xl font-black text-amber-400 mt-1">
               {totalRevenue.toLocaleString()} FCFA
             </div>
-            <span className="text-[11px] text-slate-400">Total paniers + livraison</span>
+            <span className="text-[11px] text-slate-400">Hors commandes annulées</span>
           </div>
         </div>
 
@@ -603,7 +788,7 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Rechercher (ID, client, téléphone, quartier)..."
+              placeholder="Rechercher (réf, client, tél, restaurant, quartier)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
@@ -611,6 +796,17 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            {/* Filter by Fulfillment Mode */}
+            <select
+              value={fulfillmentFilter}
+              onChange={(e) => setFulfillmentFilter(e.target.value as any)}
+              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 cursor-pointer"
+            >
+              <option value="all">Tous modes (Livraison &amp; Retrait)</option>
+              <option value="delivery">🛵 Livraison uniquement</option>
+              <option value="pickup">🏪 Retrait sur place uniquement</option>
+            </select>
+
             {/* Filter by Delay */}
             <select
               value={delayFilter}
@@ -631,14 +827,16 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
+              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 cursor-pointer"
             >
               <option value="all">Tous statuts</option>
-              <option value="pending">⏳ En attente</option>
+              <option value="pending_confirmation">⏳ En attente</option>
               <option value="confirmed">✅ Confirmée</option>
-              <option value="cooking">🍳 En cuisine</option>
-              <option value="delivering">🛵 En livraison</option>
-              <option value="delivered">🎉 Livrée</option>
+              <option value="preparing">🍳 En préparation</option>
+              <option value="ready_for_pickup">🛍️ Prête</option>
+              <option value="assigned_to_driver">📋 Livreur assigné</option>
+              <option value="out_for_delivery">🛵 En livraison</option>
+              <option value="delivered">🎉 Terminée / Livrée</option>
               <option value="cancelled">❌ Annulée</option>
             </select>
 
@@ -646,20 +844,28 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
             <select
               value={paymentFilter}
               onChange={(e) => setPaymentFilter(e.target.value)}
-              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
+              className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500 cursor-pointer"
             >
               <option value="all">Tous paiements</option>
+              <option value="cash">Espèces</option>
               <option value="airtel_money">Airtel Money</option>
               <option value="flooz">Moov Flooz</option>
               <option value="al_izza">Al Izza</option>
-              <option value="cash">Espèces</option>
+              <option value="mynita">MyNita</option>
+              <option value="amanata">Amanata</option>
+              <option value="zamany_cash">Zamany Cash</option>
             </select>
 
-            {(searchTerm || statusFilter !== 'all' || paymentFilter !== 'all' || delayFilter !== 'all') && (
+            {(searchTerm ||
+              fulfillmentFilter !== 'all' ||
+              statusFilter !== 'all' ||
+              paymentFilter !== 'all' ||
+              delayFilter !== 'all') && (
               <button
                 type="button"
                 onClick={() => {
                   setSearchTerm('');
+                  setFulfillmentFilter('all');
                   setStatusFilter('all');
                   setPaymentFilter('all');
                   setDelayFilter('all');
@@ -679,6 +885,7 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
               <thead className="bg-slate-950 text-slate-400 font-bold border-b border-slate-800 uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="py-3.5 px-4">Commande</th>
+                  <th className="py-3.5 px-4">Mode</th>
                   <th className="py-3.5 px-4">Client</th>
                   <th className="py-3.5 px-4">Restaurant</th>
                   <th className="py-3.5 px-4">Destination</th>
@@ -691,10 +898,18 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {filteredOrders.length === 0 ? (
+                {loading ? (
                   <tr>
-                    <td colSpan={10} className="py-8 text-center text-slate-500">
-                      Aucune commande ne correspond aux critères sélectionnés.
+                    <td colSpan={11} className="py-10 text-center text-slate-400">
+                      Chargement des commandes réelles depuis Supabase...
+                    </td>
+                  </tr>
+                ) : filteredOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={11} className="py-10 text-center text-slate-500">
+                      {orders.length === 0
+                        ? 'Aucune commande enregistrée dans Supabase pour le moment.'
+                        : 'Aucune commande ne correspond aux critères sélectionnés.'}
                     </td>
                   </tr>
                 ) : (
@@ -705,17 +920,34 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
                         {/* ID */}
                         <td className="py-3 px-4 font-mono font-bold text-white">
                           <div className="flex items-center gap-1.5">
-                            <span>{order.id}</span>
+                            <span>{order.display_ref}</span>
                             {metrics.isDelayed && !metrics.alreadyNotified && (
                               <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
                             )}
                           </div>
                           <div className="text-[10px] text-slate-500 font-normal">
-                            {new Date(order.created_at).toLocaleTimeString([], {
+                            {new Date(order.created_at).toLocaleString([], {
+                              day: '2-digit',
+                              month: '2-digit',
                               hour: '2-digit',
                               minute: '2-digit',
                             })}
                           </div>
+                        </td>
+
+                        {/* Mode (Livraison vs Retrait) */}
+                        <td className="py-3 px-4">
+                          {order.fulfillment === 'pickup' ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold">
+                              <Store className="w-3 h-3" />
+                              Retrait
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold">
+                              <Bike className="w-3 h-3" />
+                              Livraison
+                            </span>
+                          )}
                         </td>
 
                         {/* Customer */}
@@ -730,7 +962,7 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
                         {/* Destination */}
                         <td className="py-3 px-4">
                           <div className="text-white font-medium">{order.district}</div>
-                          <div className="text-[10px] text-slate-400 truncate max-w-[140px]">
+                          <div className="text-[10px] text-slate-400 truncate max-w-[160px]">
                             {order.delivery_address}
                           </div>
                         </td>
@@ -742,36 +974,42 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
 
                         {/* Payment */}
                         <td className="py-3 px-4">
-                          <span className="capitalize px-2 py-0.5 rounded-lg bg-slate-800 border border-slate-700 text-[10px] font-bold block w-fit">
-                            {order.payment_method === 'airtel_money' && '🔴 Airtel Money'}
-                            {order.payment_method === 'flooz' && '🔵 Moov Flooz'}
-                            {order.payment_method === 'al_izza' && '🟡 Al Izza'}
-                            {order.payment_method === 'cash' && '💵 Espèces'}
+                          <span className="px-2 py-0.5 rounded-lg bg-slate-800 border border-slate-700 text-[10px] font-bold block w-fit">
+                            {formatPaymentMethodLabel(order.payment_method)}
                           </span>
+                          {order.mobile_money_reference && (
+                            <span className="text-[9px] text-orange-300 font-mono block mt-0.5">
+                              Réf: {order.mobile_money_reference}
+                            </span>
+                          )}
                         </td>
 
                         {/* Status */}
                         <td className="py-3 px-4">
                           <select
                             value={order.status}
-                            onChange={(e) => handleUpdateStatus(order.id, e.target.value as AdminOrder['status'])}
+                            onChange={(e) =>
+                              handleUpdateStatus(order.id, e.target.value as CanonicalOrderStatus)
+                            }
                             className={`text-[11px] font-bold px-2 py-1 rounded-lg border focus:outline-none cursor-pointer ${
                               order.status === 'delivered'
                                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                                : order.status === 'delivering'
+                                : order.status === 'out_for_delivery' || order.status === 'assigned_to_driver'
                                 ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
-                                : order.status === 'cooking'
+                                : order.status === 'preparing' || order.status === 'ready_for_pickup'
                                 ? 'bg-orange-500/20 text-orange-300 border-orange-500/40'
                                 : order.status === 'cancelled'
                                 ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
                                 : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                             }`}
                           >
-                            <option value="pending">⏳ En attente</option>
+                            <option value="pending_confirmation">⏳ En attente</option>
                             <option value="confirmed">✅ Confirmée</option>
-                            <option value="cooking">🍳 En cuisine</option>
-                            <option value="delivering">🛵 En livraison</option>
-                            <option value="delivered">🎉 Livrée</option>
+                            <option value="preparing">🍳 En préparation</option>
+                            <option value="ready_for_pickup">🛍️ Prête</option>
+                            <option value="assigned_to_driver">📋 Livreur assigné</option>
+                            <option value="out_for_delivery">🛵 En livraison</option>
+                            <option value="delivered">🎉 Terminée / Livrée</option>
                             <option value="cancelled">❌ Annulée</option>
                           </select>
                         </td>
@@ -788,9 +1026,7 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
                                 <div className="space-y-0.5">
                                   <span className="px-2 py-0.5 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold flex items-center gap-1 w-fit">
                                     <Check className="w-3 h-3 text-emerald-400" />
-                                    <span>
-                                      Notifié (+{order.delay_minutes || 15}m)
-                                    </span>
+                                    <span>Notifié (+{order.delay_minutes || 15}m)</span>
                                   </span>
                                   <span className="text-[9px] text-slate-400 block">
                                     {order.delay_notified_count || 1} alerte(s) envoyée(s)
@@ -823,13 +1059,16 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
 
                         {/* Courier */}
                         <td className="py-3 px-4 text-[11px] text-slate-300">
-                          {order.driver_name || <span className="text-slate-500 italic">Non assigné</span>}
+                          {order.fulfillment === 'pickup' ? (
+                            <span className="text-emerald-400/90 italic">Retrait comptoir</span>
+                          ) : (
+                            order.driver_name || <span className="text-slate-500 italic">Non assigné</span>
+                          )}
                         </td>
 
                         {/* Actions */}
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
-                            {/* WhatsApp Delay Notification Trigger Button */}
                             {!metrics.isTerminated && (
                               <button
                                 type="button"
@@ -870,14 +1109,20 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg space-y-4 shadow-2xl animate-fade-in my-auto max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-white">Commande {selectedOrder.id}</h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-bold text-white">
+                      Commande {selectedOrder.display_ref}
+                    </h3>
                     <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] font-bold">
-                      {selectedOrder.status}
+                      {formatStatusLabel(selectedOrder.status)}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-orange-950 text-orange-300 border border-orange-500/30 text-[10px] font-bold">
+                      {selectedOrder.fulfillment === 'pickup' ? 'Retrait sur place' : 'Livraison'}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400">
-                    Passée le {new Date(selectedOrder.created_at).toLocaleString()}
+                  <p className="text-xs text-slate-400 mt-1">
+                    Passée le {new Date(selectedOrder.created_at).toLocaleString()} &bull; ID:{' '}
+                    <span className="font-mono text-[10px]">{selectedOrder.id}</span>
                   </p>
                 </div>
                 <button
@@ -908,7 +1153,8 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
                       <span>Client déjà notifié sur WhatsApp</span>
                     </div>
                     <div className="text-slate-300 text-[10px]">
-                      Retard annoncé : +{selectedOrder.delay_minutes || 15} min &bull; Motif : {selectedOrder.delay_reason || 'Affluence cuisine'}
+                      Retard annoncé : +{selectedOrder.delay_minutes || 15} min &bull; Motif :{' '}
+                      {selectedOrder.delay_reason || 'Affluence cuisine'}
                     </div>
                   </div>
                 ) : (
@@ -940,33 +1186,80 @@ export default function AdminOrdersPage({ isEmbedded = false, onNavigate }: Admi
 
               <div className="space-y-3 text-xs">
                 <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                  <div className="text-slate-400 font-medium">Informations Client :</div>
+                  <div className="text-slate-400 font-medium">Restaurant &amp; Client :</div>
+                  <div className="text-amber-300 font-bold">{selectedOrder.restaurant_name}</div>
                   <div className="font-bold text-white text-sm">{selectedOrder.customer_name}</div>
                   <div className="text-emerald-400 font-mono">{selectedOrder.customer_phone}</div>
-                  <div className="text-orange-400">{selectedOrder.delivery_address} ({selectedOrder.district})</div>
+                  <div className="text-orange-400">
+                    {selectedOrder.delivery_address} ({selectedOrder.district})
+                  </div>
+                  {selectedOrder.scheduled_time && (
+                    <div className="text-slate-300 text-[11px]">
+                      Créneau souhaité : {selectedOrder.scheduled_time}
+                    </div>
+                  )}
+                  {selectedOrder.notes && (
+                    <div className="text-slate-400 text-[11px] pt-1 border-t border-slate-800">
+                      Notes : {selectedOrder.notes}
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
                   <div className="text-slate-400 font-medium">Plats Commandés :</div>
-                  {selectedOrder.items?.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-slate-200">
-                      <span>{item.quantity}x {item.name}</span>
-                      <span className="font-bold">{(item.price * item.quantity).toLocaleString()} FCFA</span>
-                    </div>
-                  ))}
+                  {selectedOrder.items.length === 0 ? (
+                    <div className="text-slate-500 italic">Aucun détail d&apos;article enregistré.</div>
+                  ) : (
+                    selectedOrder.items.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-slate-200">
+                        <span>
+                          {item.quantity}x {item.name}
+                        </span>
+                        <span className="font-bold">
+                          {(item.price * item.quantity).toLocaleString()} FCFA
+                        </span>
+                      </div>
+                    ))
+                  )}
                   <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-slate-400">
+                    <span>Sous-total</span>
+                    <span>{selectedOrder.subtotal_amount.toLocaleString()} FCFA</span>
+                  </div>
+                  {selectedOrder.discount_amount > 0 && (
+                    <div className="flex justify-between items-center text-emerald-400">
+                      <span>Remise</span>
+                      <span>-{selectedOrder.discount_amount.toLocaleString()} FCFA</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-slate-400">
                     <span>Frais de livraison ({selectedOrder.district})</span>
                     <span>{selectedOrder.delivery_fee.toLocaleString()} FCFA</span>
                   </div>
+                  {selectedOrder.tip_amount > 0 && (
+                    <div className="flex justify-between items-center text-slate-400">
+                      <span>Pourboire</span>
+                      <span>{selectedOrder.tip_amount.toLocaleString()} FCFA</span>
+                    </div>
+                  )}
                   <div className="pt-1 flex justify-between items-center text-white font-black text-sm">
                     <span>Total Commande</span>
-                    <span className="text-amber-400">{selectedOrder.total_amount.toLocaleString()} FCFA</span>
+                    <span className="text-amber-400">
+                      {selectedOrder.total_amount.toLocaleString()} FCFA
+                    </span>
                   </div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                  <div className="text-slate-400 font-medium">Livreur Affecté :</div>
-                  <div className="text-white font-bold">{selectedOrder.driver_name || 'En attente d’assignation radar Billo Express'}</div>
+                  <div className="text-slate-400 font-medium">Logistique &amp; Paiement :</div>
+                  <div className="text-white font-bold">
+                    {selectedOrder.fulfillment === 'pickup'
+                      ? 'Retrait client sur place'
+                      : selectedOrder.driver_name || "En attente d'assignation Billo Express"}
+                  </div>
+                  <div className="text-slate-300 text-[11px]">
+                    {formatPaymentMethodLabel(selectedOrder.payment_method)} &bull; Statut paiement :{' '}
+                    <span className="font-mono text-orange-300">{selectedOrder.payment_status}</span>
+                  </div>
                 </div>
               </div>
 
