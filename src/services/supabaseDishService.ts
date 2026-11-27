@@ -362,10 +362,14 @@ export async function fetchRestaurantsFromSupabase(): Promise<{
         isKhady &&
         (!r.address ||
           String(r.address).includes("Avenue du Sahel") ||
-          String(r.address).includes("Boulevard de l'Indépendance"));
+          String(r.address).includes("Boulevard de l'Indépendance") ||
+          String(r.address).toLowerCase().includes("koubia"));
 
       const hasOutdatedKhadyCity =
-        isKhady && (!r.city || String(r.city).includes("Plateau"));
+        isKhady &&
+        (!r.city ||
+          String(r.city).includes("Plateau") ||
+          String(r.city).toLowerCase().includes("koubia"));
 
       return {
         id: r.id,

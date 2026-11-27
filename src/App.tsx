@@ -1238,7 +1238,7 @@ export function App() {
                     <span className="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/40 text-[10px] font-black uppercase tracking-wider">
                       👑 Restaurant Fondateur • Ouvert jusqu’à 22 h
                     </span>
-                    <span className="text-xs text-slate-400 font-medium">Koubia &bull; Service continu &amp; Sur commande</span>
+                    <span className="text-xs text-slate-400 font-medium">Poudrière II, derrière la NIGELEC château 09 &bull; Service continu &amp; Sur commande</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-black text-white mt-1">
                     Menu Officiel Khady&apos;s Food &amp; Event
@@ -1382,6 +1382,7 @@ export function App() {
                 {[
                   { id: "all", label: `Tous (${clientVisibleRestaurants.length})` },
                   { id: "Plateau", label: "Plateau" },
+                  { id: "Poudrière", label: "Poudrière II" },
                   { id: "Yantala", label: "Yantala" },
                   { id: "Koubia", label: "Koubia" },
                   { id: "Harobanda", label: "Harobanda" },

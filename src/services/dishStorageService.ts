@@ -210,7 +210,9 @@ export function loadStoredRestaurants(): Restaurant[] {
                 isKhady &&
                 (!resto.address ||
                   resto.address.includes("Avenue du Sahel") ||
-                  resto.address.includes("Boulevard de l'Indépendance"));
+                  resto.address.includes("Boulevard de l'Indépendance") ||
+                  resto.address.toLowerCase().includes("koubia") ||
+                  (resto.city || "").toLowerCase().includes("koubia"));
 
               return {
                 ...resto,

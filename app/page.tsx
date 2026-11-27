@@ -176,7 +176,7 @@ export default function HomePage() {
               Menu Validé Khady&apos;s Food &amp; Event
             </h2>
             <p className="text-sm text-slate-400 mt-1">
-              Quartier Koubia, Niamey &bull; Livraison rapide par taxi-moto ou à emporter
+              Poudrière II, derrière la NIGELEC château 09, Niamey &bull; Livraison rapide par taxi-moto ou à emporter
             </p>
           </div>
 
